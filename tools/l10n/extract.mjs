@@ -101,7 +101,7 @@ for (const f of files(join(root, 'lib'), ['.php'])) {
 	}
 	// Modules: labels, descriptions, groups, presets, the core and the reasons of the score view (translated by the server)
 	if (base.endsWith('Service/Modules.php')) {
-		for (const m of src.matchAll(new RegExp("'(?:label|description)' => (" + STR + ')', 'g'))) add(unq(m[1]), 'module')
+		for (const m of src.matchAll(new RegExp("'(?:label|description|rights)' => (" + STR + ')', 'g'))) add(unq(m[1]), 'module')
 		for (const name of ['GROUPS', 'CORE']) {
 			const block = src.match(new RegExp('public const ' + name + ' = \\[([\\s\\S]*?)\\];'))
 			for (const m of block[1].matchAll(new RegExp('(?:^|=>|\\t)\\s*(' + STR + '),', 'gm'))) add(unq(m[1]), 'module ' + name.toLowerCase())

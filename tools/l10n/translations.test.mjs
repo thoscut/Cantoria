@@ -12,6 +12,9 @@ import { describe, expect, it } from 'vitest'
 import { GERMAN, LANGUAGES, placeholders, pluralCount } from './languages.mjs'
 import * as german from './translations.mjs'
 
+/** German texts over 200 characters today (October 2026): the number may only go down */
+const LONG_TEXTS = 78
+
 const modules = Object.fromEntries(await Promise.all(Object.keys(LANGUAGES).map(async (lang) => [lang, await import(`./translations.${lang}.mjs`)])))
 
 /**
@@ -32,6 +35,7 @@ function serverPlural(pluralForm) {
  * so. "Stand" is the revision of a version, "Ausgabe" the loan of a folder,
  * "Freigabe" the release by the rights and "Schleife" the loop of the
  * playback; sharing is "teilen", repeats in the score are "Wiederholungen".
+ * "Tonhöhe" is the pitch one sings, moving the playback is "Transponieren".
  */
 const TERMS = [
 	{ german: /\bStand(e?s)?\b|\bStände\b/, source: /revision/i },
@@ -39,6 +43,8 @@ const TERMS = [
 	{ german: /Freigabe|freigegeben|freigeben|freizugeben/, source: /releas/i },
 	{ german: /Schleife/, source: /loop/i },
 	{ german: /Wiederhol/, source: /repeat|again|repetition/i },
+	{ german: /Tonhöhe/, source: /pitch/i },
+	{ german: /Transponier/, source: /transpos/i },
 ]
 
 /**
@@ -62,6 +68,14 @@ describe('German translations', () => {
 			}
 		}
 		expect(wrong).toEqual([])
+	})
+
+	// Plain language (guideline 11): a text over 200 characters is hard to
+	// take in at once; it belongs into the guide behind a link. The texts
+	// that are that long today may stay or get shorter, no new ones come.
+	it('add no further text over 200 characters', () => {
+		const long = Object.values(german.singular).filter((value) => texts(value).some((text) => text.length > 200))
+		expect(long.length).toBeLessThanOrEqual(LONG_TEXTS)
 	})
 
 	it('keep the placeholders of the source', () => {

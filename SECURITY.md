@@ -88,7 +88,7 @@ below explain the reasons.
 | CSV files for people neutralise formulas; the catalog CSV keeps its cells for the round trip | `CatalogCsvTest::testWriteForPeopleNeutralizesHeaderAndCells`, `testCatalogCsvKeepsFormulaLikeCellsForTheRoundTrip`; `StatisticsCsvTest::testCellsThatLookLikeFormulasAreNeutralized` |
 | Clients and notifications get no internal error texts | `NotifierTest::testExportFailureShowsNoInternalDetails`, `testLinksStayInsideTheApp`; `ApiV1ControllerTest::testErrorsBecomeOcsExceptions` |
 | The app page allows WebAssembly and nothing else beyond Nextcloud's policy | CS `testTheAppPageAllowsWebAssemblyButNoScriptEval` |
-| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
+| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
 | The audit log has no route to change or delete entries | review: the route list of CS `testEveryRouteIsCoreOrBelongsToAModule` names every route |
 
 ## Design notes
@@ -305,10 +305,13 @@ public links stop working at once.
   account, so these pieces are kept per browser; each visit with a network
   is the check (the page carries the time the server made it), and a
   revoked or expired link is removed from the device at the next one.
-- The concert folder (module `concert_folder`) keeps on the device of the
-  conductor or the catalog librarian what they may view in the score view,
-  never an internal preservation copy; the same check at every start with a
-  network and the same lock after 30 days apply. It only reads.
+- The concert folder (module `concert_folder`) does not open an internal
+  preservation copy. With the module `offline` it keeps on the device of
+  the conductor or the catalog librarian only what the rights allow as a
+  copy (`RightsPolicy::deviceCopyDenial`: confirmed public domain or a
+  license for download or self-printing); the same check at every start
+  with a network and the same lock after 30 days apply. Without the module
+  it keeps nothing. It only reads.
 
 ### Interface for agents
 

@@ -11,6 +11,7 @@ import {
 	DEFAULT_FILTERS,
 	EMPTY_CONTEXT,
 	filterEntries,
+	activeFilterCount,
 	hasActiveFilters,
 	isEntryConfirmed,
 	normalizeText,
@@ -157,6 +158,14 @@ describe('hasActiveFilters', () => {
 		expect(hasActiveFilters(filters({ unconfirmed: true }))).toBe(true)
 		expect(hasActiveFilters(filters({ noValidVersion: true }))).toBe(true)
 		expect(hasActiveFilters(filters({ reviewOpen: true }))).toBe(true)
+	})
+})
+
+describe('activeFilterCount', () => {
+	it('counts the filters besides the search', () => {
+		expect(activeFilterCount(filters({}))).toBe(0)
+		expect(activeFilterCount(filters({ search: 'Mond' }))).toBe(0)
+		expect(activeFilterCount(filters({ unconfirmed: true, binder: 2, musicxml: true }))).toBe(3)
 	})
 })
 

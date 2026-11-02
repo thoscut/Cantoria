@@ -57,5 +57,10 @@
     "node": "^24.0.0",
     "npm": "^11.3.0"
   },
-  "description": "Cantoria – das Notenarchiv für Chöre (Nextcloud-App)"
+  "description": "Cantoria – das Notenarchiv für Chöre (Nextcloud-App)",
+  "overrides": {
+    "webdav": {
+      "minimatch": "^11.0.4"
+    }
+  }
 }

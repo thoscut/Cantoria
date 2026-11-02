@@ -17,7 +17,7 @@ on:
 
 concurrency:
   group: docs-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -39,3 +39,16 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Check the documentation
         run: npx vitest run src/__tests__/docs.test.ts src/__tests__/security.test.ts
+
+  reuse:
+    # Documentation alone skips the CI workflow, so the licence check of new
+    # documents and screenshots runs here as well.
+    name: REUSE compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check copyright and license information (reuse lint)
+        uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0

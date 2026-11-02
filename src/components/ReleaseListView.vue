@@ -21,6 +21,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import ChoirSystemCompare from './ChoirSystemCompare.vue'
+import HelpTerm from './HelpTerm.vue'
 import PrintMirrorSync from './PrintMirrorSync.vue'
 import ViewHeader from './ViewHeader.vue'
 import { errorMessage, fetchReleaseList } from '../api.ts'
@@ -151,7 +152,11 @@ function rightsText(row: ReleaseRow): string {
 			:print-filter="printFilter"
 			reloadable
 			:loading="loading"
-			@reload="load" />
+			@reload="load">
+			<template v-if="target === 'portal'" #term>
+				<HelpTerm term="singersPortal" />
+			</template>
+		</ViewHeader>
 
 		<div class="release-list__filters no-print">
 			<NcSelect v-model="statusOption"

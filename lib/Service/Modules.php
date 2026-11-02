@@ -88,6 +88,8 @@ class Modules {
 	public const NOTIFY_PREFIX = 'notify_';
 
 	public const CONFIG_PREFIX = 'module_';
+	/** Set once the administration changed the modules (a scenario, a preset or a switch): the step of the setup is done */
+	public const CHOSEN_KEY = 'modules_chosen';
 
 	/** Reasons in the score view (English source strings, translated by the controller) */
 	public const PLAYBACK_OFF = 'Playback is switched off.';
@@ -124,7 +126,43 @@ class Modules {
 	public const PRESET_LABELS = [
 		self::SIMPLE => ['label' => 'Simple', 'description' => 'Catalog, files and the score view with playback.'],
 		self::STANDARD => ['label' => 'Standard', 'description' => 'For most choirs: everything except practice audio files, the print station, the proposals inbox, checksums, the folder book, annual snapshots and statistics.'],
-		self::COMPLETE => ['label' => 'Complete', 'description' => 'All functions. The interface for agents, the sharing with choir members and the public, and the mirror folder of the print station are switched on separately.'],
+		self::COMPLETE => ['label' => 'Complete', 'description' => 'All functions. The interface for agents, the sharing with choir members and the public, practising without a network, the concert folder and the folders for the print station and a choir system are switched on separately.'],
+	];
+
+	/**
+	 * What Cantoria should do for a choir (milestone 0.19), in words instead
+	 * of module names: a preset, and the modules outside the presets that the
+	 * scenario switches on or off. Choosing one also switches on what they
+	 * require. `rights` says what the rights must allow for it to work.
+	 * English source strings.
+	 *
+	 * @var array<string, array{preset: string, modules: array<string, bool>, label: string, description: string, rights: ?string}>
+	 */
+	public const SCENARIOS = [
+		'archive' => ['preset' => self::SIMPLE,
+			'modules' => [self::CONCERT_FOLDER => false, self::MEMBER_LINKS => false, self::MEMBER_PRACTICE_AUDIO => false, self::OFFLINE => false,
+				self::PUBLIC_LINKS => false, self::PUBLIC_REPERTOIRE => false],
+			'label' => 'Keep the archive in order',
+			'description' => 'Catalog, files and the score view with playback, for the music librarians.',
+			'rights' => null],
+		'concerts' => ['preset' => self::STANDARD,
+			'modules' => [self::CONCERT_FOLDER => true, self::MEMBER_LINKS => false, self::MEMBER_PRACTICE_AUDIO => false, self::OFFLINE => false,
+				self::PUBLIC_LINKS => false, self::PUBLIC_REPERTOIRE => false],
+			'label' => 'Archive, rights and concerts',
+			'description' => 'Adds rights and licenses, releases, concerts and song lists, and the concert folder for the conductor. Nothing leaves the archive roles.',
+			'rights' => null],
+		'singers' => ['preset' => self::STANDARD,
+			'modules' => [self::CONCERT_FOLDER => true, self::MEMBER_LINKS => true, self::MEMBER_PRACTICE_AUDIO => true, self::OFFLINE => true,
+				self::PUBLIC_LINKS => false, self::PUBLIC_REPERTOIRE => false],
+			'label' => 'Also practising for the singers',
+			'description' => 'Adds the page "Shared with me" for the choir members: the pieces shared with them, to play and practise on their phone, also without a network.',
+			'rights' => 'Choir members see only versions released for the singers\' portal. Keeping a piece on a device needs confirmed public domain or a license for download or self-printing. The role "Choir members" needs a group.'],
+		'public' => ['preset' => self::STANDARD,
+			'modules' => [self::CONCERT_FOLDER => true, self::MEMBER_LINKS => true, self::MEMBER_PRACTICE_AUDIO => true, self::OFFLINE => true,
+				self::PUBLIC_LINKS => true, self::PUBLIC_REPERTOIRE => true],
+			'label' => 'Also public pages',
+			'description' => 'Adds public links without login and a public page with the repertoire.',
+			'rights' => 'Only for confirmed public domain or a license for online publication. Enter the imprint and the privacy policy under Administration → Theming first.'],
 	];
 
 	/**
@@ -200,7 +238,7 @@ class Modules {
 			'description' => 'Programmes with rights warnings and deadlines, confirmation of what was sung, song order and lists.'],
 		self::CONCERT_FOLDER => ['group' => 'concerts', 'requires' => ['concerts', 'score_viewer'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Concert folder',
-			'description' => 'The conductor and the catalog librarian open the programmes still to be sung in their order, with score and scan of each item, and keep a whole programme on their device for the rehearsal and the concert without a network. Rights as in the score view; internal preservation copies are never kept on a device. Kept pieces are checked at every start with a network and locked after 30 days without one. Only reads. Not part of any preset.'],
+			'description' => 'The conductor and the catalog librarian open the programmes still to be sung in their order, with score and scan of each item, also in a stage view that keeps the screen on. With "Practising without a network" they make a whole programme available on their device for the rehearsal and the concert, where the rights allow a copy. Internal preservation copies are not opened here. Only reads. Not part of any preset.'],
 		'performance_import' => ['group' => 'concerts', 'requires' => ['concerts'], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Import of performance lists',
 			'description' => 'Imports an existing list of performances and song lists (.xlsx or .csv); unclear programme lines are resolved by hand.'],
@@ -290,10 +328,10 @@ class Modules {
 			'description' => 'Choir members make a WAV or MIDI file of one voice of a shared excerpt, where the rights allow practice audio files. Every export is recorded. Not part of any preset.'],
 		self::OFFLINE => ['group' => 'sharing', 'requires' => [], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Practising without a network',
-			'description' => 'Choir members keep pieces shared with them on their device and view, play and practise them without a network (with the sharing with choir members); so can visitors of a public link to a piece whose public domain is confirmed (with public links). Only for versions whose rights allow choir members to save and print the notes; expired and revoked links are removed at the next start with a network, and kept pieces are locked after 30 days without one. Nothing is written to the server without a network. Not part of any preset.'],
+			'description' => 'Pieces are kept on a device and viewed, played and practised without a network: by choir members (with the sharing with choir members), by visitors of a public link to a piece whose public domain is confirmed (with public links) and in the concert folder. Only where the rights allow a copy. Kept pieces are checked at every start with a network and locked after 30 days without one. Without this module nothing is kept on a device. Not part of any preset.'],
 		self::PUBLIC_LINKS => ['group' => 'sharing', 'requires' => ['excerpt_links', 'playback', 'publication'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public links',
-			'description' => 'Links that show and play an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls; no downloads, no account names. Not part of any preset.'],
+			'description' => 'Links that show and play an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls, and name no accounts. What a browser shows can be saved; the scan is added only where the rights allow it. Not part of any preset.'],
 		self::PUBLIC_REPERTOIRE => ['group' => 'sharing', 'requires' => ['rights'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public repertoire page',
 			'description' => 'A public page with the works the catalog librarian chooses among those with a version confirmed as public domain: title, composer and lyricist, life dates, scoring and links to CPDL and IMSLP. Not part of any preset.'],
@@ -405,6 +443,39 @@ class Modules {
 	}
 
 	/**
+	 * What a scenario switches on and off: its preset, its own modules and
+	 * everything they require.
+	 *
+	 * @return array<string, bool>
+	 * @throws InvalidInputException for an unknown scenario
+	 */
+	public static function scenarioValues(string $scenario): array {
+		$definition = self::SCENARIOS[$scenario] ?? null;
+		if ($definition === null) {
+			throw new InvalidInputException('Unknown scenario: %s', [$scenario]);
+		}
+		$values = $definition['modules'] + self::presetValues($definition['preset']);
+		foreach (array_keys(array_filter($definition['modules'])) as $key) {
+			foreach (self::requirements($key) as $required) {
+				$values[$required] = true;
+			}
+		}
+		return $values;
+	}
+
+	/**
+	 * Whether the administration has chosen what Cantoria does for the
+	 * choir: the step "Functions for your choir" of the setup.
+	 */
+	public function chosen(): bool {
+		try {
+			return $this->appConfig->getValueBool(Application::APP_ID, self::CHOSEN_KEY);
+		} catch (\Throwable) {
+			return false;
+		}
+	}
+
+	/**
 	 * Whether a module is active: its own switch is on and every module it
 	 * requires is active.
 	 *
@@ -508,24 +579,32 @@ class Modules {
 	}
 
 	/**
+	 * Sets the switches of a scenario (SCENARIOS); the modules outside it
+	 * keep their switch.
+	 *
+	 * @return array{enabled: list<string>, alsoEnabled: list<string>, disabled: list<string>, inactive: list<string>, activated: list<string>}
+	 * @throws InvalidInputException for an unknown scenario
+	 */
+	public function applyScenario(string $scenario): array {
+		return $this->write(self::scenarioValues($scenario), []);
+	}
+
+	/**
 	 * Writes every switch that has no stored value yet, so that a later
 	 * change of the defaults switches nothing (repair step on installation
-	 * and update). An installation from before the modules (< 0.1.27) keeps
-	 * every function it had: all switches on, except planned modules and
-	 * OUTSIDE_PRESETS (the interface for agents starts off everywhere). A
-	 * new installation gets the preset "standard".
+	 * and update): the value of the preset "standard", off for modules
+	 * outside the presets.
 	 *
 	 * @return list<string> the keys written
 	 */
-	public function writeBaseline(bool $existingInstallation): array {
+	public function writeBaseline(): array {
 		$standard = self::presetValues(self::STANDARD);
 		$written = [];
 		foreach (array_keys(self::MODULES) as $key) {
 			if ($this->appConfig->hasKey(Application::APP_ID, self::CONFIG_PREFIX . $key, null)) {
 				continue;
 			}
-			$value = self::inPresets($key) && ($existingInstallation || $standard[$key]);
-			$this->appConfig->setValueBool(Application::APP_ID, self::CONFIG_PREFIX . $key, $value);
+			$this->appConfig->setValueBool(Application::APP_ID, self::CONFIG_PREFIX . $key, self::inPresets($key) && $standard[$key]);
 			$written[] = $key;
 		}
 		$this->active = null;

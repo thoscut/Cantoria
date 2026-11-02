@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Release archive of a tagged version (docs/release.md): built twice from
+# the tag with tools/release/package.sh, which checks the tag, a clean
+# checkout and the CHANGELOG entry; both builds must give the same bytes
+# (reproducible build). The archive and its checksum are kept as an
+# artifact of the run. Signing for the app store needs the private key and
+# stays with a maintainer: tools/release/package.sh --sign on the same tag
+# builds the same files and signs them (docs/release.md).
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    name: Release archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: node:24
+    steps:
+      - name: Install job tools
+        run: apt-get update -qq && apt-get install -y -qq --no-install-recommends libxml2-utils >/dev/null
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build the archive
+        run: |
+          tools/release/package.sh
+          mkdir -p "$RUNNER_TEMP/first"
+          mv build/release/*.tar.gz "$RUNNER_TEMP/first/"
+      - name: Build it again and compare (reproducible build)
+        run: |
+          tools/release/package.sh
+          for archive in build/release/*.tar.gz; do
+            cmp "$archive" "$RUNNER_TEMP/first/$(basename "$archive")"
+          done
+          cd build/release && sha256sum ./*.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-archive
+          path: build/release/

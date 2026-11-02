@@ -4,8 +4,9 @@
 -->
 <script setup lang="ts">
 /**
- * The setup in five steps at the top of the settings page: archive folder,
- * roles and groups, access to the archive folder, import, file sync. Each
+ * The setup in six steps at the top of the settings page: archive folder,
+ * roles and groups, access to the archive folder, the functions for the
+ * choir, import, file sync. Each
  * step shows its state in words and with an icon (never by colour alone),
  * says what to do and links the place where it is done. The states are
  * derived from what the page has loaded; nothing is stored.
@@ -44,6 +45,8 @@ function title(key: StepKey): string {
 		return t('cantoria', 'Roles and groups')
 	case 'access':
 		return t('cantoria', 'Access to the archive folder')
+	case 'modules':
+		return t('cantoria', 'Functions for your choir')
 	case 'import':
 		return t('cantoria', 'Import catalog')
 	default:
@@ -107,6 +110,8 @@ function hint(step: SetupStep): string {
 		return step.status === 'problem'
 			? t('cantoria', 'Some accounts cannot open the archive folder. Share it with their groups (reading is enough) and check again.')
 			: t('cantoria', 'Check whether everybody with a role can open the archive folder.')
+	case 'modules':
+		return t('cantoria', 'Choose what Cantoria should do for your choir: keep the archive in order, plan concerts, let the singers practise, or publish pages.')
 	case 'import':
 		return t('cantoria', 'A music librarian imports the catalog in the app: Archive management → Import catalog.')
 	default:
@@ -127,6 +132,8 @@ function target(key: StepKey): { href: string, label: string } {
 		return { href: '#' + SETTINGS_SECTIONS.roles, label: t('cantoria', 'To roles and groups') }
 	case 'access':
 		return { href: '#' + SETTINGS_SECTIONS.access, label: t('cantoria', 'To the access check') }
+	case 'modules':
+		return { href: '#' + SETTINGS_SECTIONS.modules, label: t('cantoria', 'To the functions') }
 	default:
 		return { href: appUrl, label: t('cantoria', 'Open Cantoria') }
 	}
@@ -155,7 +162,7 @@ function target(key: StepKey): { href: string, label: string } {
 			</li>
 		</ol>
 		<p>
-			<GuideLink :href="adminGuideUrl(ADMIN_GUIDE.setup)" :label="t('cantoria', 'Setting up in five steps (administration guide)')" />
+			<GuideLink :href="adminGuideUrl(ADMIN_GUIDE.setup)" :label="t('cantoria', 'Setting up in six steps (administration guide)')" />
 		</p>
 	</div>
 </template>

@@ -170,4 +170,14 @@ class TaskController extends Controller {
 			return ['ok' => true];
 		});
 	}
+
+	/**
+	 * Extends a link to a new last day and keeps its token (milestone 0.19).
+	 */
+	#[NoAdminRequired]
+	#[RequiresModule('excerpt_links')]
+	#[FrontpageRoute(verb: 'POST', url: '/api/links/{id}/extend', requirements: ['id' => '\d+'])]
+	public function extendLink(int $id, ?string $expires = null): JSONResponse {
+		return $this->run(fn (string $uid) => $this->links->view($this->links->extend($id, $expires, $uid), $uid));
+	}
 }

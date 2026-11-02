@@ -161,6 +161,34 @@ class RightsPolicy {
 	}
 
 	/**
+	 * Whether the conductor or the catalog librarian may keep the score and
+	 * the scan of a version on their own device (concert folder, milestone
+	 * 0.19): a copy that stays there for weeks is no viewing in the archive
+	 * (§ 53 (4) UrhG). Confirmed public domain, or a license for download
+	 * or self-printing; never an internal preservation copy.
+	 *
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function deviceCopyDenial(WorkVersion $version, string $uid, ?Copy $copy = null): ?string {
+		$denial = $this->viewDenial($version, $uid, $copy);
+		if ($denial !== null) {
+			return $denial;
+		}
+		if (self::isPreservationCopy($version, $copy)) {
+			return 'Internal preservation copy: it is not kept on a device.';
+		}
+		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+			return null;
+		}
+		$day = $this->rights->today($uid);
+		$licenses = $this->licenses->findByVersion($version->getId());
+		if ($this->rights->hasLicense($licenses, 'member_download', $day) || $this->rights->hasLicense($licenses, 'self_print', $day)) {
+			return null;
+		}
+		return 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".';
+	}
+
+	/**
 	 * Playback of a link for choir members: the release for members and the
 	 * rights for playback (see playDenial).
 	 *

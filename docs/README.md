@@ -12,6 +12,7 @@ documentation for developers is in English.
 | Using the app | [User guide](user-guide.md) | [Benutzerhandbuch](de/benutzerhandbuch.md) |
 | Running the app | [Administration guide](admin-guide.md) | [Administrationshandbuch](de/administrationshandbuch.md) |
 | The essentials in a few minutes | – | [Schnellstart](de/schnellstart.md) |
+| One page for the singers, to pass on | [For choir members](for-choir-members.md) | [Für Chormitglieder](de/fuer-chormitglieder.md) |
 | The law behind the rights checks | [Legal background](legal-background.md) | [Rechtlicher Hintergrund](de/rechtlicher-hintergrund.md) |
 | Data protection templates for the choir | [Privacy templates](privacy-templates.md) | [Datenschutz-Vorlagen](de/datenschutz-vorlagen.md) |
 | Running it next to a member app or choir website | [Alongside a choir system](alongside-a-choir-system.md) | [Neben einem Chorsystem](de/neben-einem-chorsystem.md) |
@@ -24,13 +25,13 @@ documentation for developers is in English.
 | a music librarian who keeps the catalog, the rights and the backups | [User guide](user-guide.md) |
 | a conductor who chooses versions, answers questions and plans concerts | [User guide](user-guide.md) |
 | a board member or auditor who reads the catalog and the audit log | [User guide](user-guide.md) |
-| a choir member who practises with the excerpts shared with you | [User guide, "As a choir member"](user-guide.md#as-a-choir-member) |
+| a choir member who practises with the excerpts shared with you | [For choir members](for-choir-members.md), one page; details in the [user guide, "As a choir member"](user-guide.md#as-a-choir-member) |
 
 ## Running the app
 
 | You are … | Read |
 |---|---|
-| a Nextcloud administrator who installs and sets up the app | [Administration guide](admin-guide.md), starting with [Setting up in five steps](admin-guide.md#setting-up-in-five-steps) |
+| a Nextcloud administrator who installs and sets up the app | [Administration guide](admin-guide.md), starting with [Setting up in six steps](admin-guide.md#setting-up-in-six-steps) |
 | a music librarian to whom an admin gave the settings page | [Administration guide, "Giving the settings to a group"](admin-guide.md#giving-the-settings-to-a-group) |
 | responsible for backups and data protection | [Administration guide](admin-guide.md) and [SECURITY.md](../SECURITY.md) |
 | deciding whether to share excerpts with choir members or the public | [Administration guide, section 14](admin-guide.md#14-sharing-with-choir-members-and-the-public) and [SECURITY.md](../SECURITY.md) |

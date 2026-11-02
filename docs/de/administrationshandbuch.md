@@ -13,10 +13,10 @@ danach übernimmt. Die tägliche Arbeit mit der App beschreibt das
 
 **Inhalt**
 
-- [Einrichten in fünf Schritten](#einrichten-in-fünf-schritten) – der kurze Weg
+- [Einrichten in sechs Schritten](#einrichten-in-sechs-schritten) – der kurze Weg
 1. [Installation](#1-installation)
 2. [Rollen und Gruppen](#2-rollen-und-gruppen) – die Einstellungsseite, sie einer Gruppe übertragen
-3. [Archivordner](#3-archivordner) – ihn freigeben, die Zugriffsprüfung
+3. [Archivordner](#3-archivordner) – ihn teilen, die Zugriffsprüfung
 4. [Erster Import](#4-erster-import)
 5. [Sicherung und Wiederherstellung](#5-sicherung-und-wiederherstellung)
 6. [Benachrichtigungen](#6-benachrichtigungen)
@@ -32,10 +32,10 @@ danach übernimmt. Die tägliche Arbeit mit der App beschreibt das
 16. [Spiegelordner für die Druckstation](#16-spiegelordner-für-die-druckstation)
 - [Häufige Probleme](#häufige-probleme) – eine Meldung, ihre Ursache und was zu tun ist
 
-## Einrichten in fünf Schritten
+## Einrichten in sechs Schritten
 
 Öffne nach der [Installation](#1-installation) **Verwaltungseinstellungen →
-Cantoria**. Die Liste **Einrichtung** oben auf der Seite zeigt diese fünf
+Cantoria**. Die Liste **Einrichtung** oben auf der Seite zeigt diese sechs
 Schritte, jeden als *Erledigt*, *Noch zu tun* oder *Bitte prüfen*, mit einem
 Link an die Stelle, wo er erledigt wird.
 
@@ -48,18 +48,26 @@ Link an die Stelle, wo er erledigt wird.
    oder verlieren.
 3. **Zugriff auf den Archivordner** – teile den Ordner mit den Gruppen der
    Rollen (Lesen genügt) und wähle **Zugriff prüfen**, bis niemand mehr
-   aufgeführt ist ([Den Archivordner freigeben](#den-archivordner-freigeben)).
-4. **Werkverzeichnis importieren** – die Archivverwaltung, in der App:
+   aufgeführt ist ([Den Archivordner teilen](#den-archivordner-teilen)).
+4. **Funktionen für euren Chor** – wähle unter **Was soll Cantoria für euren
+   Chor tun?**, wofür ihr die App nutzt: das Archiv ordnen, Konzerte planen,
+   Üben für den Chor oder öffentliche Seiten
+   ([Was soll Cantoria für euren Chor tun?](#was-soll-cantoria-für-euren-chor-tun)).
+   Erledigt ist der Schritt, sobald die Administration hier etwas gewählt
+   oder einen Schalter geändert hat.
+5. **Werkverzeichnis importieren** – die Archivverwaltung, in der App:
    **Archivverwaltung → Werkverzeichnis importieren**, zuerst ein Probelauf
    ([Abschnitt 4](#4-erster-import)).
-5. **Dateiabgleich** – die Archivverwaltung, in der App: **Archivverwaltung →
+6. **Dateiabgleich** – die Archivverwaltung, in der App: **Archivverwaltung →
    Dateiabgleich starten**; er verknüpft die Dateien des Archivordners mit den
    Exemplaren.
 
-Die Schritte 1 bis 3 kann auch eine Gruppe erledigen, der du die
+Die Schritte 1 bis 4 kann auch eine Gruppe erledigen, der du die
 Einstellungsseite überträgst
 ([Die Einstellungen einer Gruppe übertragen](#die-einstellungen-einer-gruppe-übertragen));
-die Schritte 4 und 5 brauchen die Rolle „Bestand“. Um die App erst
+was das Archiv für Chormitglieder, die Öffentlichkeit oder Werkzeuge öffnet,
+schaltet nur die Administration ein. Die Schritte 5 und 6 brauchen die Rolle
+„Bestand“. Um die App erst
 auszuprobieren, nimm die [Demodaten](../../tools/demo/README.md) (englisch).
 
 ## 1. Installation
@@ -161,7 +169,7 @@ sie ab.
 > Werkverzeichnisses schreibt sie nur, wenn sie auch eine Rolle hat. Nimm
 > dich dafür in eine Gruppe mit der Rolle auf, die du brauchst. Um Noten und
 > Scans zu öffnen, braucht ihr Konto wie alle anderen Zugriff auf den
-> Archivordner ([Abschnitt 3](#den-archivordner-freigeben)).
+> Archivordner ([Abschnitt 3](#den-archivordner-teilen)).
 
 **Repertoire** in denselben Einstellungen legt fest, wann ein Werk zum
 aktuellen Repertoire zählt (standardmäßig in den letzten 3 Jahren gesungen)
@@ -253,13 +261,13 @@ relativ zu den Dateien des Kontos). Ist ein Archivordner gesetzt, endet der
 Befehl mit der Zugriffsprüfung unten in Kurzform und nennt die Konten der
 Rollengruppen, die den Ordner nicht öffnen können.
 
-### Den Archivordner freigeben
+### Den Archivordner teilen
 
 Die App liest Dateien nur mit den Rechten der Person, die sie benutzt. Wer
 eine Rolle hat, aber mit dem eigenen Konto den Archivordner nicht öffnen
 kann, sieht das Werkverzeichnis, aber keine Noten, Scans oder Übe-Dateien;
-die Notenansicht sagt dann „Die Datei liegt in einem Ordner, der für dein
-Konto nicht freigegeben ist“. Die Administration ohne Rolle ist keine
+die Notenansicht sagt dann „Die Datei liegt in einem Ordner, der nicht mit
+deinem Konto geteilt ist“. Die Administration ohne Rolle ist keine
 Ausnahme: Um Noten zu öffnen, braucht auch sie Zugriff auf den Ordner.
 
 - Teile den Archivordner mit den **Gruppen der Rollen**, oder lege ihn in
@@ -411,14 +419,7 @@ festgelegt hat. Ein Jahresstand bleibt über Jahre und nennt deshalb
 **niemanden**: Er enthält das Werkverzeichnis ohne Konten, ohne Mappenbuch,
 Protokoll, Aufgaben, Vorschläge und Links. Die Prüfsummen stammen aus dem
 Prüfsummen-Job, solange eine Datei seitdem unverändert ist, sonst werden sie
-berechnet. Jahresstände von vor 0.10 enthalten noch Namen; lösche sie, wenn
-du sie nicht mehr brauchst.
-
-**Update von einer Version vor 0.10.** Frühere Versionen schrieben
-Sicherungen und Jahresstände nach `_cantoria-app` im Archivordner. Die
-erste Sicherung nach dem Update verschiebt sie in den Sicherungsordner. Was
-sich nicht verschieben lässt (zum Beispiel ohne Löschrecht im Archivordner),
-nennt die Einstellungsseite; verschiebe es von Hand oder lösche es.
+berechnet.
 
 Öffne die CSV-Dateien in einer Tabellenkalkulation über
 deren Importdialog (alle Spalten als Text) statt per Doppelklick, oder nimm
@@ -594,7 +595,7 @@ Erleichterung für selbst betriebene Instanzen:
 | `occ cantoria:export [--extended] [--full]` | schreibt die CSV-Datei des Werkverzeichnisses, alle Felder oder die vollständige Sicherung (JSON) auf die Standardausgabe |
 | `occ cantoria:file-sync <account>` | startet den Dateiabgleich; abgelehnt (Exit-Code 1), solange ein anderer läuft |
 | `occ cantoria:restore <file> [<account>]` | stellt eine vollständige Sicherung in ein leeres Werkverzeichnis wieder her |
-| `occ cantoria:modules list\|enable\|disable\|preset` | zeigt und schaltet die Module (Abschnitt 12) |
+| `occ cantoria:modules list\|enable\|disable\|preset\|scenario` | zeigt und schaltet die Module (Abschnitt 12) |
 | `occ cantoria:privacy-report <Konto oder Name>` | schreibt, was die App über eine Person speichert, als JSON (Auskunft, Art. 15 DSGVO; Abschnitt 10) |
 | `occ cantoria:privacy-erase <Konto oder Name> [--execute]` | entfernt eine Person aus Mappenbuch und Protokoll (Löschung, Art. 17 DSGVO); ein Probelauf, solange `--execute` fehlt |
 
@@ -727,13 +728,43 @@ Regeln:
 
 Jede Änderung eines Schalters steht im Protokoll (Objekttyp `settings`).
 
+### Was soll Cantoria für euren Chor tun?
+
+Statt einzelne Module zu suchen, wählst du oben auf der Seite, wofür euer
+Chor die App nutzt. Jede Wahl nennt, was die Rechte dafür erlauben müssen,
+und fragt vorher nach, mit der Liste der Schalter, die sich ändern:
+
+| Wahl | Schaltet ein |
+|---|---|
+| **Das Archiv ordnen** | die Voreinstellung **Einfach**: Werkverzeichnis, Dateien und die Notenansicht mit Abspielen |
+| **Archiv, Rechte und Konzerte** | die Voreinstellung **Standard** und die Konzertmappe |
+| **Dazu Üben für den Chor** | dazu „Mit mir geteilt“ für die Chormitglieder, ihre Übe-Dateien und das Üben ohne Netz (mit allem, was diese brauchen, z. B. den Übe-Audio-Dateien) |
+| **Dazu öffentliche Seiten** | dazu öffentliche Links und die öffentliche Repertoire-Seite |
+
+Die Wahlen bauen aufeinander auf; eine engere schaltet ab, was nur die
+weiteren brauchen (die Daten bleiben). Die Schnittstelle für Agenten, der
+Spiegelordner der Druckstation und der Übergabeordner für ein Chorsystem
+bleiben, wie sie sind. Darüber steht, welcher Wahl die Schalter gerade
+entsprechen, zum Beispiel *Derzeit: am nächsten an „Archiv, Rechte und
+Konzerte“, mit 2 Abweichungen: Auswertungen (an), Kalender (aus).* Die
+einzelnen Schalter darunter bleiben jederzeit änderbar; die
+Benachrichtigungen sind eingeklappt.
+
+Die Chormitglieder sehen nur Fassungen, die für das Chorportal freigegeben
+sind; auf einem Gerät behalten lässt sich ein Stück nur mit bestätigter
+Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck, und die
+Rolle „Chormitglieder“ braucht eine Gruppe. Öffentliche Seiten gehen nur
+mit bestätigter Gemeinfreiheit oder einer Lizenz für die
+Online-Veröffentlichung; trage vorher Impressum und Datenschutzerklärung
+unter **Verwaltungseinstellungen → Design** ein.
+
 ### Voreinstellungen
 
 | Voreinstellung | Schaltet ein |
 |---|---|
 | **Einfach** | den Kern, die Notenansicht mit Abspielen und die Benachrichtigungen (vom Kern bleibt nur die über eine fehlgeschlagene wöchentliche Sicherung) |
 | **Standard** | alles außer Übe-Audio-Dateien, Druckstation, Vorschlagseingang, Prüfsummen, Mappenbuch, Jahresständen und Auswertungen |
-| **Vollständig** | alles außer der Schnittstelle für Agenten, den vier Modulen zum Teilen und dem Spiegelordner für die Druckstation |
+| **Vollständig** | alles außer der Schnittstelle für Agenten, den Modulen zum Teilen und für das Üben ohne Netz, der Konzertmappe, dem Spiegelordner für die Druckstation und dem Übergabeordner für ein Chorsystem |
 
 Eine Voreinstellung setzt alle Schalter auf einmal; die Einstellungen fragen
 vorher nach und listen, was sich ändert.
@@ -783,8 +814,7 @@ einmal, um Stand 1 mit seiner Prüfsumme festzuhalten; bei einem großen
 Archiv dauert dieser Abgleich etwas länger. Er läuft als das Konto, das den
 Dateiabgleich startet und daher Zugriff auf den Archivordner braucht.
 
-**Bestehende Installationen** behalten jede Funktion: Ein Update von einer
-Version vor 0.1.27 speichert alle Schalter als eingeschaltet. Die Schalter
+Die Schalter
 werden bei jeder Installation und jedem Update gespeichert; eine spätere
 Änderung der Standardwerte schaltet daher an einer bestehenden Installation
 nie etwas um; ein Modul, das eine spätere Version hinzufügt, bekommt seinen
@@ -843,7 +873,7 @@ können (siehe Abschnitt 16).
 | Übe-Audio für Chormitglieder | Links für Chormitglieder, Übe-Audio-Dateien | aus (in keiner Voreinstellung) | Chormitglieder erstellen keine Übe-Dateien; der Server lehnt jede Anfrage ab. |
 | Öffentliche Links | Ausschnitt-Links, Wiedergabe, Veröffentlichung | aus (in keiner Voreinstellung) | Jeder öffentliche Link antwortet mit derselben 404-Seite; keine neuen öffentlichen Links. Vorhandene Links bleiben erhalten und laufen ab wie bisher. |
 | Öffentliche Repertoireseite | Rechtebestätigung und Lizenzen | aus (in keiner Voreinstellung) | `/apps/cantoria/repertoire` antwortet mit 404; die Werkfelder für die Seite sind ausgeblendet. |
-| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“ und von öffentlichen Links lässt sich nichts auf einem Gerät speichern; der nächste Besuch mit Netz entfernt, was dort gespeichert war. |
+| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“, von öffentlichen Links und aus der Konzertmappe lässt sich nichts auf einem Gerät speichern; der nächste Besuch mit Netz entfernt, was dort gespeichert war. Wirkt nur zusammen mit **Links für Chormitglieder**, **Öffentliche Links** oder **Konzertmappe**. |
 | Schnittstelle für Agenten | – | aus (in keiner Voreinstellung) | Die API für Agenten (`/ocs/v2.php/apps/cantoria/api/v1/…`) antwortet mit 404; der MCP-Server meldet die Schnittstelle als abgeschaltet. Sonst ändert sich nichts. |
 
 ### Kommandozeile
@@ -856,6 +886,7 @@ occ cantoria:modules list            # table: switch, active, needs (--json for 
 occ cantoria:modules enable calendar # also switches on "concerts" if needed
 occ cantoria:modules disable statistics practice_audio
 occ cantoria:modules preset standard # simple | standard | complete
+occ cantoria:modules scenario singers # archive | concerts | singers | public
 ```
 
 Die Schlüssel der Module stehen in `docs/api.md` („Modules and the personal
@@ -951,7 +982,7 @@ zu „Vollständig“: Schalte sie einzeln ein, nachdem der Chor entschieden hat
 | **Übe-Audio für Chormitglieder** | Chormitglieder erstellen eine WAV- oder MIDI-Datei einer Stimme eines solchen Stücks oder Ausschnitts, wo die Rechte Übe-Audio-Dateien erlauben. Jede Datei steht im Protokoll. |
 | **Öffentliche Links** | Ein Link, der ein ganzes Stück oder einen Ausschnitt ohne Anmeldung zeigt und abspielt (`/apps/cantoria/p/<token>`), auf Wunsch mit dem Scan (PDF). Nur für Fassungen, die zur Veröffentlichung freigegeben sind und bestätigt gemeinfrei sind oder eine Lizenz zur Online-Veröffentlichung haben. |
 | **Öffentliche Repertoireseite** | `/apps/cantoria/repertoire`: die Werke, die die Archivverwaltung unter denen mit einer bestätigt gemeinfreien Fassung auswählt, mit Lebensdaten, Besetzung und Links zu CPDL und IMSLP. |
-| **Üben ohne Netz** | Chormitglieder speichern Stücke aus „Mit mir geteilt“ auf ihrem Gerät und können sie dort ohne Netz ansehen, abspielen und üben: im Browser, ohne App zum Installieren. Nur für Links, deren Fassung Chormitglieder speichern und drucken dürfen. Mit **Öffentliche Links** können Besucher einen öffentlichen Link ebenso speichern, nur wo die Gemeinfreiheit der Fassung bestätigt ist. |
+| **Üben ohne Netz** | Chormitglieder machen Stücke aus „Mit mir geteilt“ auf ihrem Gerät ohne Netz verfügbar und können sie dort ansehen, abspielen und üben: im Browser, ohne App zum Installieren. Nur für Links, deren Fassung Chormitglieder speichern und drucken dürfen. Mit **Öffentliche Links** können Besucher einen öffentlichen Link ebenso mitnehmen, nur wo die Gemeinfreiheit der Fassung bestätigt ist; mit der **Konzertmappe** die Chorleitung ein Programm. |
 
 Was die Schalter auch sagen: Chormitglieder und die Öffentlichkeit bekommen
 immer nur den Inhalt für die Ansicht (das ganze Stück oder die Takte eines
@@ -965,8 +996,8 @@ Monaten ab und lassen sich widerrufen. [SECURITY.md](../../SECURITY.md)
 
 1. Lege eine Gruppe für die Chormitglieder an, zum Beispiel „Chor“, und nimm
    ihre Konten auf. Nimm keine Gruppe, die auch eine Archivrolle hat: Ein
-   Konto mit Archivrolle bekommt immer das Archiv, nicht „Für mich
-   freigegeben“.
+   Konto mit Archivrolle bekommt immer das Archiv, nicht „Mit mir
+   geteilt“.
 2. Einstellungen → **Rollen und Gruppen** → **Chormitglieder (nur geteilte
    Ausschnitte)**: Wähle die Gruppe und **Rollen speichern** (oder
    `occ cantoria:setup <account> --role member=Choir`).
@@ -1004,7 +1035,7 @@ ohne Namen.
 offline`):
 
 - **Was gespeichert wird, und wo.** Nichts wird gespeichert, bevor ein
-  Chormitglied bei einem Stück **Auf diesem Gerät speichern** wählt, auf
+  Chormitglied bei einem Stück **Ohne Netz verfügbar** einschaltet, auf
   Wunsch **Mit dem Scan (PDF)**. Dann liegen die Noten des Links, der Scan,
   falls gewählt, die Seite „Mit mir geteilt“ und ihre Skripte im Browser
   dieses Geräts (ein Service Worker der App unter
@@ -1022,15 +1053,19 @@ offline`):
   gespeicherten Stücke gesperrt, und ein abgelaufener Link wird nie
   gezeigt, auch ohne Netz. Ein Stück, das vom Gerät kommt, zählt nicht als
   Aufruf des Links.
-- **Geräte.** Es braucht HTTPS und einen aktuellen Browser. Auf iPhone und
-  iPad die Seite auf den Home-Bildschirm legen: Sonst kann Safari die
-  gespeicherten Stücke nach einigen Tagen ohne Nutzung löschen. Auf einem
+- **Geräte.** Es braucht HTTPS und einen aktuellen Browser. Die Stücke
+  liegen je Browser, nicht je Gerät. Auf iPhone und iPad die Seite zuerst
+  auf den Home-Bildschirm legen, von dort öffnen und dann die Stücke
+  einschalten: Der Home-Bildschirm hat einen eigenen Speicher und eine
+  eigene Anmeldung, getrennt von Safari, und Safari kann Gespeichertes nach
+  einigen Tagen ohne Nutzung löschen. Die Seite sagt das vor dem ersten
+  Stück. Bei jedem Start mit Netz legt die Seite ihre Skripte neu ab, damit
+  sie nach einem Update der App auch ohne Netz öffnet. Auf einem
   geteilten Gerät löschen Chormitglieder alles mit **Alles auf diesem Gerät
   löschen**; das Abmelden bei Nextcloud löscht es nicht. Öffnet ein anderes
   Konto die Seite im selben Browser, werden die Stücke des vorigen entfernt.
 - **Öffentliche Links.** Wo die Gemeinfreiheit der Fassung bestätigt ist,
-  bietet auch die Seite eines öffentlichen Links **Auf diesem Gerät
-  speichern**. Besucher haben kein Konto, deshalb wird je Browser
+  bietet auch die Seite eines öffentlichen Links **Ohne Netz verfügbar**. Besucher haben kein Konto, deshalb wird je Browser
   gespeichert; jeder Besuch mit Netz ist der Abgleich, und ein widerrufener
   oder abgelaufener Link wird beim nächsten vom Gerät entfernt. Eine Lizenz
   reicht hier nie: Sie deckt das öffentliche Zeigen, keine Kopie auf dem
@@ -1043,14 +1078,20 @@ offline`):
 concert_folder`, Gruppe **Konzerte und Repertoire**, in keiner
 Voreinstellung): Die Rollen „Chorleitung“ und „Bestand“ bekommen eine eigene Seite,
 `/apps/cantoria/concert-folder` (auch in der Navigation), mit den
-Programmen, die noch zu singen sind, und Noten und Scan jedes Stücks; ein
-ganzes Programm lässt sich für Probe und Konzert ohne Netz auf dem Gerät
-speichern. Es gelten die Rechte der Notenansicht; eine interne
-Erhaltungskopie wird nie auf einem Gerät gespeichert. Sie nutzt denselben
-Service Worker mit einem eigenen Speicher, denselben Abgleich bei jedem
-Start mit Netz und dieselbe Sperre nach 30 Tagen. Die Mappe liest nur. Ein
-anderes Konto im selben Browser oder ein Besuch ohne die Rolle entfernt,
-was gespeichert war. Sie braucht das Modul **Üben ohne Netz** nicht.
+Programmen, die noch zu singen sind, und Noten und Scan jedes Stücks, auch
+in einer Bühnenansicht, bei der der Bildschirm anbleibt. Zum Ansehen
+gelten die Rechte der Notenansicht; eine interne Erhaltungskopie öffnet die
+Mappe nicht, denn sie ist eine Kopie für das Archiv und kein Material für
+Probe und Konzert. Mit dem Modul **Üben ohne Netz** lässt sich ein ganzes
+Programm für Probe und Konzert ohne Netz auf dem Gerät speichern, aber nur
+die Stücke, deren Rechte eine Kopie erlauben: bestätigte Gemeinfreiheit
+oder eine Lizenz für Download oder Selbstausdruck (§ 53 Abs. 4 UrhG; eine
+Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen). Sie
+nutzt denselben Service Worker mit einem eigenen Speicher, denselben
+Abgleich bei jedem Start mit Netz und dieselbe Sperre nach 30 Tagen. Die
+Mappe liest nur. Ein anderes Konto im selben Browser oder ein Besuch ohne
+die Rolle entfernt, was gespeichert war; ist **Üben ohne Netz** aus,
+entfernt der nächste Besuch alles.
 
 **Häufige Probleme:**
 
@@ -1063,7 +1104,7 @@ was gespeichert war. Sie braucht das Modul **Üben ohne Netz** nicht.
 | „Die Noten dieses Links sind gerade nicht verfügbar.“ oder „Der Scan dieses Links ist gerade nicht verfügbar.“ | Das Konto, das den Archivordner gewählt hat (Einstellungen → Archivordner), muss noch vorhanden sein und den Ordner sehen. Die MusicXML-Datei oder der PDF-Scan muss noch darin liegen und mit dem Exemplar verknüpft sein. |
 | Ein öffentlicher Scan zeigt „nicht gefunden“ | Dieselben Gründe wie bei der Seite, oder die PDF-Datei liegt nicht mehr im Archivordner; verknüpfe den Scan erneut und erstelle einen neuen Link. |
 | Ein öffentlicher Link zeigt „nicht gefunden“ | Er ist abgelaufen, wurde widerrufen, die Fassung ist nicht mehr freigegeben, oder das Modul ist ausgeschaltet; die Seite sagt nicht, was davon. Erstelle bei Bedarf einen neuen Link. |
-| **Auf diesem Gerät speichern** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke speichern (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Auf diesem Gerät**. Bei einem einzelnen Stück steht „Lässt sich nicht auf diesem Gerät speichern“, wenn die Rechte das Speichern nicht erlauben. |
+| **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke speichern (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
 | Gespeicherte Stücke sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und speichere die Stücke erneut. |
 
 ## 15. Mappenbuch: Löschfrist
@@ -1263,19 +1304,19 @@ Ursache und was zu tun ist.
 
 ### Die Noten können nicht angezeigt werden
 
-*„Die Datei liegt in einem Ordner, der für dein Konto nicht freigegeben
+*„Die Datei liegt in einem Ordner, der nicht mit deinem Konto geteilt
 ist“* (*The score cannot be shown – The file lies in a folder that is not
 shared with your account*). Dasselbe Konto bekommt auch einen Hinweis oben in
 der App und im Reiter „Dateien“.
 
 - **Ursache:** Die App liest Dateien nur mit den Rechten der Person, die sie
-  benutzt, und der Archivordner ist nicht für dieses Konto freigegeben. Das
+  benutzt, und der Archivordner ist nicht mit diesem Konto geteilt. Das
   passiert auch der Administration ohne Rolle.
 - **Zu tun:** Teile den Archivordner mit der Gruppe der Rolle der Person
   oder lege ihn in einen Team-Ordner; Lesen genügt. Danach darf
   **Verwaltungseinstellungen → Cantoria → Zugriff auf den Archivordner →
   Zugriff prüfen** niemanden mehr aufführen
-  ([Den Archivordner freigeben](#den-archivordner-freigeben)). Wer die
+  ([Den Archivordner teilen](#den-archivordner-teilen)). Wer die
   Einstellungen ändern darf, bekommt direkt in der Meldung eine Schaltfläche
   zur Prüfung.
 

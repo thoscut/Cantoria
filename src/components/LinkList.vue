@@ -7,22 +7,24 @@
  * Active links: who can open them (archive roles, choir members or the
  * public), what they share (the whole piece or measures, with the scan or
  * not), until when they are valid, how often they were opened (a count
- * only, no names). The creator and the catalog role can revoke a link and
- * copy a link for choir members or a public link; the server sends its
- * token only to them.
+ * only, no names). The creator and the catalog role can revoke a link,
+ * extend it (its address stays, and so does what choir members keep on
+ * their devices) and copy a link for choir members or a public link; the
+ * server sends its token only to them.
  */
 import type { ExcerptLink } from '../types.ts'
 
-import { mdiContentCopy, mdiLinkOff } from '@mdi/js'
+import { mdiCalendarRefresh, mdiContentCopy, mdiLinkOff } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
 import { n, t } from '../l10n.ts'
 import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import ActionDialog from './ActionDialog.vue'
-import { errorMessage, linkUrl, revokeLink } from '../api.ts'
+import DateField from './DateField.vue'
+import { errorMessage, extendLink, linkUrl, revokeLink } from '../api.ts'
 import { copyText } from '../clipboard.ts'
-import { formatDate, formatDateTime } from '../format.ts'
+import { formatDate, formatDateTime, toIsoDate } from '../format.ts'
 import { referenceWords } from '../labels.ts'
 import { scopeText } from '../sharing/linkScope.ts'
 import { entriesById, isLibrarian, openEntry } from '../store.ts'
@@ -109,6 +111,49 @@ async function revoke(): Promise<void> {
 		busy.value = false
 	}
 }
+
+/** Days a link may last at most, as on the server */
+const MAX_DAYS = 183
+
+const extending = ref<ExcerptLink | null>(null)
+const newExpiry = ref('')
+const today = toIsoDate(new Date())
+const latest = (() => {
+	const date = new Date()
+	date.setDate(date.getDate() + MAX_DAYS)
+	return toIsoDate(date)
+})()
+
+/**
+ * @param link - excerpt link
+ */
+function startExtending(link: ExcerptLink): void {
+	extending.value = link
+	newExpiry.value = latest
+	error.value = ''
+}
+
+async function extend(): Promise<void> {
+	if (!extending.value) {
+		return
+	}
+	if (newExpiry.value === '' || newExpiry.value < today || newExpiry.value > latest) {
+		error.value = t('cantoria', 'Please choose a day between today and {date}.', { date: formatDate(latest) })
+		return
+	}
+	busy.value = true
+	error.value = ''
+	try {
+		await extendLink(extending.value.id, newExpiry.value)
+		showSuccess(t('cantoria', 'The link is valid until {date}.', { date: formatDate(newExpiry.value) }))
+		extending.value = null
+		emit('changed')
+	} catch (caught) {
+		error.value = errorMessage(caught)
+	} finally {
+		busy.value = false
+	}
+}
 </script>
 
 <template>
@@ -155,6 +200,15 @@ async function revoke(): Promise<void> {
 					</NcButton>
 					<NcButton v-if="canRevoke(link)"
 						variant="tertiary"
+						:aria-label="t('cantoria', 'Extend link')"
+						:title="t('cantoria', 'Extend link')"
+						@click="startExtending(link)">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiCalendarRefresh" />
+						</template>
+					</NcButton>
+					<NcButton v-if="canRevoke(link)"
+						variant="tertiary"
 						:aria-label="t('cantoria', 'Revoke link')"
 						@click="revoking = link; error = ''">
 						<template #icon>
@@ -177,6 +231,24 @@ async function revoke(): Promise<void> {
 			<p class="link-list__title">
 				{{ place(revoking) }}
 			</p>
+		</ActionDialog>
+
+		<ActionDialog v-if="extending !== null"
+			:name="t('cantoria', 'Extend link')"
+			:submit-label="t('cantoria', 'Extend')"
+			:busy="busy"
+			:error="error"
+			@submit="extend"
+			@close="extending = null">
+			<p class="link-list__title">
+				{{ place(extending) }}
+			</p>
+			<p>{{ t('cantoria', 'The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.') }}</p>
+			<DateField v-model="newExpiry"
+				:min="today"
+				:max="latest"
+				required
+				:label="t('cantoria', 'Valid until (at most six months)')" />
 		</ActionDialog>
 	</div>
 </template>

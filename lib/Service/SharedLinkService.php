@@ -56,9 +56,9 @@ use OCP\Files\File;
  * @psalm-type Credit = array{role: string, name: string}
  * @psalm-type MemberLink = array{token: string, title: string, composer: string, measure_from: ?string, measure_to: ?string,
  *     voice: ?string, verse: ?int, tempo: ?int, note: ?string, expires: ?string, canPlay: bool, canExportAudio: bool, reason: ?string,
- *     scan: bool, offline: bool, practiceKey: string, credits: list<Credit>, notices: list<string>}
+ *     scan: bool, scanSize: ?int, offline: bool, practiceKey: string, credits: list<Credit>, notices: list<string>}
  * @psalm-type PublicExcerpt = array{title: string, composer: string, measureFrom: ?string, measureTo: ?string, voice: ?string,
- *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, practiceKey: string, expires: ?string, offline: bool, served: string, xml: string,
+ *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, served: string, xml: string,
  *     credits: list<Credit>, notices: list<string>}
  */
 class SharedLinkService {
@@ -130,6 +130,7 @@ class SharedLinkService {
 					&& $this->policy->memberPracticeAudioDenial($version, $today, $copy) === null,
 				'reason' => $playDenial,
 				'scan' => $link->getScanFileId() !== null && $saveDenial === null,
+				'scanSize' => $saveDenial === null ? $this->scanSize($link) : null,
 				// kept on the device (milestone 0.15): a copy, like saving the scan
 				'offline' => $saveDenial === null && $this->modules->isEnabled(Modules::OFFLINE),
 				'practiceKey' => self::practiceKey($version),
@@ -234,6 +235,7 @@ class SharedLinkService {
 			'tempo' => $link->getTempo(),
 			'canPlay' => $this->policy->publicPlayDenial($version, $today, $copy) === null,
 			'scan' => $link->getScanFileId() !== null,
+			'scanSize' => $this->scanSize($link),
 			'practiceKey' => self::practiceKey($version),
 			// Kept on a device (milestone 0.15): only confirmed public domain, as visitors have no license
 			'expires' => $link->getExpires(),
@@ -338,6 +340,23 @@ class SharedLinkService {
 		$from = $link->getMeasureFrom();
 		$to = $link->getMeasureTo();
 		return $from === null || $to === null ? MusicXmlExcerpt::whole($xml) : MusicXmlExcerpt::cut($xml, $from, $to);
+	}
+
+	/**
+	 * Size in bytes of the scan of a link, as the file sync last saw it, for
+	 * the switch "With the scan (PDF, 2.4 MB)"; null without a scan or when
+	 * unknown.
+	 */
+	private function scanSize(ExcerptLink $link): ?int {
+		$id = $link->getScanFileId();
+		if ($id === null) {
+			return null;
+		}
+		try {
+			return $this->files->find($id)->getSize();
+		} catch (DoesNotExistException) {
+			return null;
+		}
 	}
 
 	/**

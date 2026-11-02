@@ -11,6 +11,7 @@ import {
 	applyModules,
 	cardActive,
 	cardShown,
+	closestScenario,
 	dependentsOf,
 	fieldActive,
 	HIDEABLE_VIEWS,
@@ -258,6 +259,18 @@ describe('module settings', () => {
 		const diff = presetChanges({ score_viewer: true, playback: true, practice_audio: true, excerpt_links: false, concerts: false, calendar: true }, modules)
 		expect(diff.on.map((m) => m.key)).toEqual(['practice_audio'])
 		expect(diff.off.map((m) => m.key)).toEqual(['excerpt_links', 'concerts'])
+	})
+
+	it('finds the scenario the switches come closest to', () => {
+		const scenario = (key: string, values: Record<string, boolean>) => ({ key, label: key, description: '', rights: null, modules: values })
+		const narrow = scenario('archive', { score_viewer: true, concerts: false })
+		const wide = scenario('concerts', { score_viewer: true, concerts: true, calendar: true })
+		const closest = closestScenario([narrow, wide], modules)
+		expect(closest?.scenario.key).toBe(modules.find((m) => m.key === 'concerts')?.enabled ? 'concerts' : 'archive')
+		const exact = closestScenario([scenario('now', Object.fromEntries(modules.map((m) => [m.key, m.enabled]))), wide], modules)
+		expect(exact?.scenario.key).toBe('now')
+		expect(exact?.differences).toEqual([])
+		expect(closestScenario([], modules)).toBeNull()
 	})
 
 	it('names modules in the order of the settings', () => {

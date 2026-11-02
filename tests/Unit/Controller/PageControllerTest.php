@@ -14,7 +14,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The page "Access forbidden" links the section of the guide about a
+ * The page "No access yet" links the section of the guide about a
  * missing role, in the language of the account (the anchors themselves are
  * checked against the guides in src/__tests__/docs.test.ts).
  */

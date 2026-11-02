@@ -124,14 +124,14 @@ function forget(mark: Mark): void {
 .practice-marks {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--default-grid-baseline);
 	flex-basis: 100%;
 }
 
 .practice-marks__new {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: calc(2 * var(--default-grid-baseline));
 	align-items: flex-end;
 }
 
@@ -143,7 +143,7 @@ function forget(mark: Mark): void {
 .practice-marks__list {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px 12px;
+	gap: var(--default-grid-baseline) calc(3 * var(--default-grid-baseline));
 	margin: 0;
 	padding: 0;
 	list-style: none;

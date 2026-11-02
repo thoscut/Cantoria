@@ -150,7 +150,7 @@ describe('errorText', () => {
 	it('explains the rate limit, other errors and a lost connection', () => {
 		expect(errorText(429, null)).toBe('Too many requests. Please wait a moment and try again.')
 		expect(errorText(500, { error: '' })).toContain('Please try again in a moment.')
-		expect(errorText(403, null)).toContain('ask the music librarians')
+		expect(errorText(403, null)).toContain('The administration assigns the roles')
 		expect(errorText(null, null)).toBe('The server cannot be reached. Please check your connection.')
 	})
 })

@@ -67,11 +67,15 @@ class PageController extends Controller {
 			return $this->memberPage($this->userId);
 		}
 		if ($this->userId === null || !$this->roles->hasAccess($this->userId)) {
+			// a choir member whose page is switched off asks the conductor, not the administration
+			$memberPageOff = $this->userId !== null && $this->roles->isMember($this->userId);
 			$response = new TemplateResponse(Application::APP_ID, 'forbidden', [
-				'heading' => $this->l->t('Access forbidden'),
-				'message' => $this->l->t('You have no access to the music archive: your account has no role in it. Please ask the administration to add your account to the group of your role.'),
+				'heading' => $this->l->t('No access yet'),
+				'message' => $memberPageOff
+					? $this->l->t('The page for choir members is switched off at the moment. Please ask the conductor.')
+					: $this->l->t('You have no access to the music archive: your account has no role in it. Please ask the administration to add your account to the group of your role.'),
 				'guideUrl' => self::noAccessGuideUrl($this->l->getLanguageCode()),
-				'guideLabel' => $this->l->t('No access to the music archive (guide)'),
+				'guideLabel' => $this->l->t('No access to the music archive (guide, opens in a new tab)'),
 			], TemplateResponse::RENDER_AS_ERROR);
 			$response->setStatus(Http::STATUS_FORBIDDEN);
 			return $response;

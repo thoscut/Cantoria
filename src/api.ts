@@ -15,9 +15,8 @@ import type {
 	CalendarAddResult,
 	CalendarUpdate,
 	ChecksumStatus,
-	ChoirSystemReport,
-	EndingLicense,
 	ChoirEvent,
+	ChoirSystemReport,
 	Contribution,
 	CorrectionInput,
 	CorrectionOrder,
@@ -25,6 +24,7 @@ import type {
 	CountInput,
 	Detail,
 	DueResult,
+	EndingLicense,
 	Entry,
 	EventDetail,
 	EventInput,
@@ -54,6 +54,8 @@ import type {
 	PersonImportReport,
 	PersonalView,
 	PracticeAudioInput,
+	ProgrammeShareOptions,
+	ProgrammeShareResult,
 	Proposal,
 	ProtectionReviewRow,
 	ReleaseRow,
@@ -439,6 +441,8 @@ function normalizeModuleSettings(data: ModuleSettings): ModuleSettings {
 		groups: list(data.groups),
 		presets: list<ModuleSettings['presets'][number]>(data.presets)
 			.map((preset) => ({ ...preset, modules: preset.modules && !Array.isArray(preset.modules) ? preset.modules : {} })),
+		scenarios: list<ModuleSettings['scenarios'][number]>(data.scenarios)
+			.map((scenario) => ({ ...scenario, modules: scenario.modules && !Array.isArray(scenario.modules) ? scenario.modules : {} })),
 		core: list(data.core),
 		publicModules: list<string>(data.publicModules),
 		legalPages: data.legalPages,
@@ -452,12 +456,12 @@ export async function fetchModuleSettings(): Promise<ModuleSettings> {
 }
 
 /**
- * Switch modules on or off, or apply a preset (admins only). Switching on
- * also switches on what a module requires.
+ * Switch modules on or off, or apply a preset or a scenario (admins only).
+ * Switching on also switches on what a module requires.
  *
- * @param change - `{ modules: { key: on } }` or `{ preset: name }`
+ * @param change - `{ modules: { key: on } }`, `{ preset: name }` or `{ scenario: name }`
  */
-export async function saveModules(change: { modules: Record<string, boolean> } | { preset: string }): Promise<ModuleSettingsResult> {
+export async function saveModules(change: { modules: Record<string, boolean> } | { preset: string } | { scenario: string }): Promise<ModuleSettingsResult> {
 	const { data } = await axios.put<ModuleSettingsResult>(apiUrl('/settings/modules'), change)
 	const changes = data.changes ?? {}
 	return {
@@ -611,6 +615,42 @@ export async function resolveLink(token: string): Promise<ResolvedLink> {
 
 export async function revokeLink(id: number): Promise<void> {
 	await axios.post(apiUrl('/links/{id}/revoke', { id }))
+}
+
+/**
+ * Extend a link to a new last day; its token stays (milestone 0.19).
+ *
+ * @param id - link id
+ * @param expires - new last day (YYYY-MM-DD); empty: the latest
+ */
+export async function extendLink(id: number, expires: string): Promise<ExcerptLink> {
+	const { data } = await axios.post<ExcerptLink>(apiUrl('/links/{id}/extend', { id }), { expires })
+	return data
+}
+
+/**
+ * What sharing a programme with the choir members would do, per piece.
+ *
+ * @param eventId - concert or song list
+ */
+export async function fetchProgrammeShareOptions(eventId: number): Promise<ProgrammeShareOptions> {
+	const { data } = await axios.get<ProgrammeShareOptions>(apiUrl('/events/{id}/share-options', { id: eventId }))
+	return { ...data, items: list(data?.items) }
+}
+
+/**
+ * Share the chosen pieces of a programme with the choir members.
+ *
+ * @param eventId - concert or song list
+ * @param input - what to share
+ * @param input.items - ids of the programme items
+ * @param input.expires - last day (YYYY-MM-DD)
+ * @param input.note - note for the choir members
+ * @param input.scan - offer the scans where allowed
+ */
+export async function shareProgramme(eventId: number, input: { items: number[], expires: string, note: string, scan: boolean }): Promise<ProgrammeShareResult> {
+	const { data } = await axios.post<ProgrammeShareResult>(apiUrl('/events/{id}/share', { id: eventId }), input)
+	return data
 }
 
 /**

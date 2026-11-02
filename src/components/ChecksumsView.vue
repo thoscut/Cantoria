@@ -161,7 +161,8 @@ async function confirmAccept(): Promise<void> {
 									<NcButton variant="tertiary"
 										:href="fileUrl(mismatch)"
 										target="_blank"
-										rel="noopener noreferrer">
+										rel="noopener noreferrer"
+										:aria-label="t('cantoria', 'Open file {path} (opens in a new tab)', { path: mismatch.path })">
 										<template #icon>
 											<NcIconSvgWrapper :path="mdiOpenInNew" />
 										</template>

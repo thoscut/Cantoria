@@ -45,6 +45,7 @@ use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\NotificationService;
 use OCA\Cantoria\Service\PerformanceImportService;
 use OCA\Cantoria\Service\PracticeAudioService;
+use OCA\Cantoria\Service\ProgrammeShareService;
 use OCA\Cantoria\Service\RepertoireService;
 use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\RightsService;
@@ -109,7 +110,7 @@ $widget = Server::get(DueWidget::class);
 $widgetLinks = fn (): array => array_map(fn ($item): string => $item->getLink(), $widget->getItemsV2($uid, null, 100)->getItems());
 $l = Server::get(IFactory::class)->get(Application::APP_ID, 'en');
 $eventController = new EventController(Server::get(IRequest::class), $uid, Server::get(Roles::class), $events,
-	Server::get(EventItemMapper::class), Server::get(PerformanceImportService::class), Server::get(RepertoireService::class),
+	Server::get(EventItemMapper::class), Server::get(PerformanceImportService::class), Server::get(ProgrammeShareService::class), Server::get(RepertoireService::class),
 	Server::get(UserFiles::class), $l, Server::get(LoggerInterface::class));
 $middleware = new ModuleMiddleware($modules, $l);
 /** The answer of the middleware for a route: null when the route may run. */

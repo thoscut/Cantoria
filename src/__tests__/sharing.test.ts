@@ -57,7 +57,7 @@ const words = {
 	verse: (verse: string) => `verse ${verse}`,
 }
 
-const allowed: CircleOption = { available: true, allowed: true, reason: null, scan: true, scanReason: null, playback: true, practiceAudio: true }
+const allowed: CircleOption = { available: true, allowed: true, reason: null, scan: true, scanReason: null, playback: true, practiceAudio: true, offline: true }
 
 const previewWords = {
 	scope: 'Shared',
@@ -73,6 +73,8 @@ const previewWords = {
 	playback: 'Playback',
 	practiceFiles: 'Practice files',
 	scan: 'Scan (PDF)',
+	offline: 'Without a network',
+	offlineNo: 'No: the rights allow no copy',
 	yes: 'Yes',
 	no: 'No',
 }
@@ -142,8 +144,16 @@ describe('what the recipients see', () => {
 			{ label: 'Playback', value: 'Yes' },
 			{ label: 'Practice files', value: 'Yes' },
 			{ label: 'Scan (PDF)', value: 'Yes' },
+			{ label: 'Without a network', value: 'Yes' },
 			{ label: 'Valid until', value: '23.04.2027' },
 		])
+	})
+
+	it('says whether the singers can keep it on their device, while the module is on', () => {
+		const offline = (value: boolean | null) => previewRows({ ...input, option: { ...allowed, offline: value } }, previewWords)
+			.find((row) => row.label === 'Without a network')?.value
+		expect(offline(false)).toBe('No: the rights allow no copy')
+		expect(offline(null)).toBeUndefined()
 	})
 
 	it('names the measures of an excerpt, or that they are missing', () => {
@@ -154,7 +164,7 @@ describe('what the recipients see', () => {
 	it('has no practice files for the public and no scan row without a scan', () => {
 		const rows = previewRows({ ...input, circle: 'public', scan: null, verse: '2', tempo: '80', option: { ...allowed, playback: false, practiceAudio: false } },
 			previewWords)
-		expect(rows.map((row) => row.label)).toEqual(['Shared', 'Focus voice', 'Verse', 'Tempo', 'Playback', 'Valid until'])
+		expect(rows.map((row) => row.label)).toEqual(['Shared', 'Focus voice', 'Verse', 'Tempo', 'Playback', 'Without a network', 'Valid until'])
 		expect(rows.find((row) => row.label === 'Tempo')?.value).toBe('80 %')
 		expect(rows.find((row) => row.label === 'Playback')?.value).toBe('No')
 		expect(previewRows({ ...input, scan: false }, previewWords).find((row) => row.label === 'Scan (PDF)')?.value).toBe('No')

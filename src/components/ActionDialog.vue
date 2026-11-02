@@ -24,12 +24,15 @@ const props = withDefaults(defineProps<{
 	size?: 'small' | 'normal' | 'large'
 	/** 'error' for actions that cannot easily be undone */
 	variant?: 'primary' | 'error'
+	/** the action is done and the dialog shows its result: Cancel is gone */
+	done?: boolean
 }>(), {
 	busy: false,
 	error: '',
 	submitDisabled: false,
 	size: 'normal',
 	variant: 'primary',
+	done: false,
 })
 
 const emit = defineEmits<{
@@ -76,7 +79,7 @@ function onUpdateOpen(open: boolean): void {
 			</NcNoteCard>
 		</div>
 		<template #actions>
-			<NcButton :disabled="busy" @click="emit('close')">
+			<NcButton v-if="!done" :disabled="busy" @click="emit('close')">
 				{{ t('cantoria', 'Cancel') }}
 			</NcButton>
 			<NcButton type="submit" :variant="variant" :disabled="busy || submitDisabled">

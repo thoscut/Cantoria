@@ -36,7 +36,7 @@ const ORDER = 20
  * the Material Design package: the icons of the app would come with it into
  * this script (shared chunk).
  */
-const ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="currentColor" fill-rule="evenodd" d="M2 2h4l2 2h6a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM7 9.33V5H10L13 8V11H12V9L9 7.5V10.65A3.1 2.15 -20 1 1 7 9.33z"/></svg>'
+const ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="currentColor" d="M13.36 3.5A7 7 0 1 0 13.36 12.5L11.83 11.21A5 5 0 1 1 11.83 4.79ZM8.7 3.6H10.1C11.6 4 12.8 5 12.7 6.6 12.2 5.7 11.2 5.3 10.1 5.2V10.4A2.15 1.6-20 1 1 8.7 9.25Z"/></svg>'
 
 const state = loadState<FilesState | null>('cantoria', 'files', null)
 const root = '/files/' + (getCurrentUser()?.uid ?? '')

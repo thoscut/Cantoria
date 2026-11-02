@@ -5,25 +5,29 @@
 <script setup lang="ts">
 /**
  * Settings "Modules" (Administration → Cantoria): the core that is
- * always on, the presets and one switch per module, grouped. Labels and
+ * always on, what Cantoria should do for the choir in words (scenarios,
+ * with the one the switches match or come closest to), the presets and one
+ * switch per module, grouped; the notifications folded. Labels and
  * descriptions come translated from the server. Switching a module on also
  * switches on what it requires (the server does it); switching off a module
  * that others need asks first and lists them. The server checks everything
  * again. Needs no catalog: it loads its own data and tells the page about
  * each change (`changed`).
  */
-import type { ModuleChanges, ModuleInfo, ModulePreset, ModuleSettings } from '../types.ts'
+import type { ModuleChanges, ModuleInfo, ModulePreset, ModuleScenario, ModuleSettings } from '../types.ts'
 
-import { t } from '../l10n.ts'
+import { mdiCheckCircleOutline } from '@mdi/js'
+import { n, t } from '../l10n.ts'
 import { computed, onMounted, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import ActionDialog from './ActionDialog.vue'
 import { errorMessage, fetchModuleSettings, saveModules } from '../api.ts'
 import { focusAfterDialog } from '../focus.ts'
-import { inactiveBecause, moduleLabels, presetChanges, stopsWorking, switchedOnWith } from '../modules.ts'
+import { closestScenario, inactiveBecause, moduleLabels, presetChanges, stopsWorking, switchedOnWith } from '../modules.ts'
 import { showError } from '../toasts.ts'
 
 const emit = defineEmits<{
@@ -134,7 +138,7 @@ function announce(changes: ModuleChanges): void {
  *
  * @param change - switches or a preset
  */
-async function apply(change: { modules: Record<string, boolean> } | { preset: string }): Promise<boolean> {
+async function apply(change: { modules: Record<string, boolean> } | { preset: string } | { scenario: string }): Promise<boolean> {
 	busy.value = true
 	statusText.value = ''
 	try {
@@ -143,6 +147,7 @@ async function apply(change: { modules: Record<string, boolean> } | { preset: st
 			modules: result.modules,
 			groups: result.groups,
 			presets: result.presets,
+			scenarios: result.scenarios,
 			core: result.core,
 			publicModules: result.publicModules,
 			legalPages: result.legalPages,
@@ -230,6 +235,71 @@ function cancelPreset(): void {
 	focusAfterDialog(() => document.getElementById(`module-preset-${key}`))
 }
 
+// ---- scenarios -----------------------------------------------------------------
+
+/** The scenario the switches match or come closest to */
+const closest = computed(() => closestScenario(settings.value?.scenarios ?? [], modules.value))
+
+/** Where the switches stand, in words */
+const currentText = computed(() => {
+	const found = closest.value
+	if (found === null) {
+		return ''
+	}
+	const count = found.differences.length
+	if (count === 0) {
+		return t('cantoria', 'Currently: “{scenario}”.', { scenario: found.scenario.label })
+	}
+	if (count > 4) {
+		return n('cantoria', 'Currently closest to “{scenario}”, with %n difference.', 'Currently closest to “{scenario}”, with %n differences.', count, { scenario: found.scenario.label })
+	}
+	const named = found.differences.map((module) => module.enabled
+		? t('cantoria', '{module} (on)', { module: module.label })
+		: t('cantoria', '{module} (off)', { module: module.label })).join(', ')
+	return n('cantoria', 'Currently closest to “{scenario}”, with %n difference: {modules}.', 'Currently closest to “{scenario}”, with %n differences: {modules}.', count, { scenario: found.scenario.label, modules: named })
+})
+
+/**
+ * Whether the switches are exactly as a scenario sets them.
+ *
+ * @param scenario - the scenario
+ */
+function isCurrent(scenario: ModuleScenario): boolean {
+	return closest.value?.scenario.key === scenario.key && closest.value.differences.length === 0
+}
+
+const pendingScenario = ref<ModuleScenario | null>(null)
+
+const scenarioDiff = computed(() => (pendingScenario.value === null
+	? { on: [], off: [] }
+	: presetChanges(pendingScenario.value.modules, modules.value)))
+
+async function confirmScenario(): Promise<void> {
+	const scenario = pendingScenario.value
+	if (scenario === null) {
+		return
+	}
+	await apply({ scenario: scenario.key })
+	pendingScenario.value = null
+	await focusAfterDialog(() => document.getElementById(`module-scenario-${scenario.key}`))
+}
+
+function cancelScenario(): void {
+	const key = pendingScenario.value?.key ?? ''
+	pendingScenario.value = null
+	focusAfterDialog(() => document.getElementById(`module-scenario-${key}`))
+}
+
+/**
+ * How many modules of a group are switched on, for a folded group.
+ *
+ * @param group - the group with its modules
+ * @param group.modules - its modules
+ */
+function onCount(group: { modules: ModuleInfo[] }): number {
+	return group.modules.filter((module) => module.enabled).length
+}
+
 /**
  * What switching a module on also switches on, for its description.
  *
@@ -273,6 +343,39 @@ function alsoOnText(module: ModuleInfo): string {
 				</ul>
 			</section>
 
+			<section aria-labelledby="module-settings-scenarios">
+				<h3 id="module-settings-scenarios">
+					{{ t('cantoria', 'What should Cantoria do for your choir?') }}
+				</h3>
+				<p v-if="currentText" class="module-settings__current">
+					{{ currentText }}
+				</p>
+				<ul class="module-settings__scenarios">
+					<li v-for="scenario in settings.scenarios"
+						:key="scenario.key"
+						:class="['module-settings__scenario', { 'module-settings__scenario--current': isCurrent(scenario) }]">
+						<strong class="module-settings__scenario-title">{{ scenario.label }}</strong>
+						<span :id="`module-scenario-${scenario.key}-description`" class="module-settings__scenario-text">
+							<span>{{ scenario.description }}</span>
+							<span v-if="scenario.rights" class="module-settings__muted">{{ scenario.rights }}</span>
+						</span>
+						<span v-if="isCurrent(scenario)" class="module-settings__scenario-state">
+							<NcIconSvgWrapper :path="mdiCheckCircleOutline" :size="20" inline />
+							{{ t('cantoria', 'Current') }}
+						</span>
+						<NcButton v-else
+							:id="`module-scenario-${scenario.key}`"
+							:disabled="busy"
+							:aria-describedby="`module-scenario-${scenario.key}-description`"
+							aria-haspopup="dialog"
+							@click="pendingScenario = scenario">
+							{{ t('cantoria', 'Choose') }}
+							<span class="hidden-visually">{{ scenario.label }}</span>
+						</NcButton>
+					</li>
+				</ul>
+			</section>
+
 			<section aria-labelledby="module-settings-presets">
 				<h3 id="module-settings-presets">
 					{{ t('cantoria', 'Presets') }}
@@ -300,30 +403,59 @@ function alsoOnText(module: ModuleInfo): string {
 				</NcNoteCard>
 			</div>
 
-			<fieldset v-for="group in groups"
-				:key="group.key"
-				class="module-settings__group"
-				:disabled="busy">
-				<legend>{{ group.label }}</legend>
-				<div v-for="module in group.modules" :key="module.key" class="module-settings__module">
-					<NcCheckboxRadioSwitch :id="switchId(module.key)"
-						type="switch"
-						:model-value="module.enabled"
-						:disabled="busy"
-						@update:model-value="onToggle(module, $event)">
-						{{ module.label }}
-						<template #description>
-							<span class="module-settings__description">{{ module.description }}</span>
-							<span v-if="needsText(module)" class="module-settings__description">{{ needsText(module) }}</span>
-							<span v-if="alsoOnText(module)" class="module-settings__description">{{ alsoOnText(module) }}</span>
-							<span v-if="legalText(module)" class="module-settings__description module-settings__description--inactive">{{ legalText(module) }}</span>
-							<span v-if="inactiveText(module)" class="module-settings__description module-settings__description--inactive">
-								{{ inactiveText(module) }}
-							</span>
-						</template>
-					</NcCheckboxRadioSwitch>
-				</div>
-			</fieldset>
+			<template v-for="group in groups" :key="group.key">
+				<details v-if="group.key === 'notifications'" class="module-settings__fold">
+					<summary>
+						{{ group.label }}
+						<span class="module-settings__muted">{{ t('cantoria', '({on} of {total} switched on)', { on: onCount(group), total: group.modules.length }) }}</span>
+					</summary>
+					<fieldset class="module-settings__group" :disabled="busy">
+						<legend class="hidden-visually">
+							{{ group.label }}
+						</legend>
+						<div v-for="module in group.modules" :key="module.key" class="module-settings__module">
+							<NcCheckboxRadioSwitch :id="switchId(module.key)"
+								type="switch"
+								:model-value="module.enabled"
+								:disabled="busy"
+								@update:model-value="onToggle(module, $event)">
+								{{ module.label }}
+								<template #description>
+									<span class="module-settings__description">{{ module.description }}</span>
+									<span v-if="needsText(module)" class="module-settings__description">{{ needsText(module) }}</span>
+									<span v-if="alsoOnText(module)" class="module-settings__description">{{ alsoOnText(module) }}</span>
+									<span v-if="inactiveText(module)" class="module-settings__description module-settings__description--inactive">
+										{{ inactiveText(module) }}
+									</span>
+								</template>
+							</NcCheckboxRadioSwitch>
+						</div>
+					</fieldset>
+				</details>
+				<fieldset v-else
+					class="module-settings__group"
+					:disabled="busy">
+					<legend>{{ group.label }}</legend>
+					<div v-for="module in group.modules" :key="module.key" class="module-settings__module">
+						<NcCheckboxRadioSwitch :id="switchId(module.key)"
+							type="switch"
+							:model-value="module.enabled"
+							:disabled="busy"
+							@update:model-value="onToggle(module, $event)">
+							{{ module.label }}
+							<template #description>
+								<span class="module-settings__description">{{ module.description }}</span>
+								<span v-if="needsText(module)" class="module-settings__description">{{ needsText(module) }}</span>
+								<span v-if="alsoOnText(module)" class="module-settings__description">{{ alsoOnText(module) }}</span>
+								<span v-if="legalText(module)" class="module-settings__description module-settings__description--inactive">{{ legalText(module) }}</span>
+								<span v-if="inactiveText(module)" class="module-settings__description module-settings__description--inactive">
+									{{ inactiveText(module) }}
+								</span>
+							</template>
+						</NcCheckboxRadioSwitch>
+					</div>
+				</fieldset>
+			</template>
 		</template>
 
 		<ActionDialog v-if="pendingOff !== null"
@@ -339,6 +471,38 @@ function alsoOnText(module: ModuleInfo): string {
 				</li>
 			</ul>
 			<p>{{ t('cantoria', 'Their switches stay as they are; they work again when you switch {module} on. No data are deleted.', { module: pendingOff.module.label }) }}</p>
+		</ActionDialog>
+
+		<ActionDialog v-if="pendingScenario !== null"
+			:name="t('cantoria', 'Choose “{scenario}”?', { scenario: pendingScenario.label })"
+			:submit-label="t('cantoria', 'Choose')"
+			:busy="busy"
+			@submit="confirmScenario"
+			@close="cancelScenario">
+			<p>{{ pendingScenario.description }}</p>
+			<NcNoteCard v-if="pendingScenario.rights" type="info">
+				{{ pendingScenario.rights }}
+			</NcNoteCard>
+			<template v-if="scenarioDiff.on.length > 0">
+				<p>{{ t('cantoria', 'Switched on:') }}</p>
+				<ul class="module-settings__list">
+					<li v-for="module in scenarioDiff.on" :key="module.key">
+						{{ module.label }}
+					</li>
+				</ul>
+			</template>
+			<template v-if="scenarioDiff.off.length > 0">
+				<p>{{ t('cantoria', 'Switched off:') }}</p>
+				<ul class="module-settings__list">
+					<li v-for="module in scenarioDiff.off" :key="module.key">
+						{{ module.label }}
+					</li>
+				</ul>
+			</template>
+			<p v-if="scenarioDiff.on.length === 0 && scenarioDiff.off.length === 0">
+				{{ t('cantoria', 'The switches already match.') }}
+			</p>
+			<p>{{ t('cantoria', 'The data of switched-off functions are kept. The single switches below stay changeable.') }}</p>
 		</ActionDialog>
 
 		<ActionDialog v-if="pendingPreset !== null"
@@ -410,6 +574,64 @@ function alsoOnText(module: ModuleInfo): string {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: calc(2 * var(--default-grid-baseline));
+}
+
+.module-settings__current {
+	margin: 0 0 calc(2 * var(--default-grid-baseline));
+	font-weight: bold;
+}
+
+.module-settings__scenarios {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 24em), 1fr));
+	gap: calc(2 * var(--default-grid-baseline));
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.module-settings__scenario {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--default-grid-baseline);
+	padding: calc(2 * var(--default-grid-baseline)) calc(3 * var(--default-grid-baseline));
+	border: 1px solid var(--color-border-maxcontrast);
+	border-radius: var(--border-radius-large, 8px);
+}
+
+/* the current one: a thicker border, and the word "Current" says it too */
+.module-settings__scenario--current {
+	border: 2px solid var(--color-primary-element);
+}
+
+.module-settings__scenario-text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline);
+	flex-grow: 1;
+}
+
+.module-settings__scenario-state {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
+	min-height: var(--default-clickable-area);
+	font-weight: bold;
+}
+
+.module-settings__fold summary {
+	padding-block: var(--default-grid-baseline);
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.module-settings__fold summary .module-settings__muted {
+	font-weight: normal;
+}
+
+.module-settings__fold[open] summary {
+	margin-block-end: calc(2 * var(--default-grid-baseline));
 }
 
 .module-settings__busy {

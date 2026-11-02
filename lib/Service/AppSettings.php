@@ -14,12 +14,10 @@ use OCA\Cantoria\Exception\InvalidInputException;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
-use OCP\Files\Node;
 use OCP\Files\NotPermittedException;
 use OCP\IAppConfig;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
-use Psr\Log\LoggerInterface;
 
 /**
  * App settings: the archive folder with the score files, its sub folder for
@@ -36,15 +34,12 @@ class AppSettings {
 	/** App config: Nextcloud file id of the backup folder (0: not created yet) */
 	public const BACKUP_FOLDER_KEY = 'backup_folder_id';
 	/** Backups in the export folder of versions before 0.10, moved to the backup folder */
-	private const OLD_BACKUP_PATTERN = '/^\d{8}-\d{6}_(backup_.+\.json|catalog_.+\.ods|catalog_(weekly|manual)(-\d+)?\.csv)$/';
-	private const OLD_SNAPSHOT_FOLDER = 'annual-snapshots';
 
 	public function __construct(
 		private IAppConfig $appConfig,
 		private IRootFolder $rootFolder,
 		private IFactory $l10nFactory,
 		private IUserManager $userManager,
-		private LoggerInterface $logger,
 	) {
 	}
 
@@ -146,9 +141,6 @@ class AppSettings {
 			throw new InvalidInputException('The account %s may not create the backup folder in its files.', [$info['user']]);
 		}
 		$this->appConfig->setValueInt(Application::APP_ID, self::BACKUP_FOLDER_KEY, $folder->getId());
-		if ($archive instanceof Folder) {
-			$this->moveOldBackups($archive, $folder);
-		}
 		return $folder;
 	}
 
@@ -168,52 +160,6 @@ class AppSettings {
 			return $folder === null ? null : $home->getRelativePath($folder->getPath());
 		} catch (\Throwable) {
 			return null;
-		}
-	}
-
-	/**
-	 * Whether the export folder in the archive folder still holds backups or
-	 * annual snapshots of versions before 0.10 (as an account sees it).
-	 */
-	public function hasOldBackups(string $uid): bool {
-		try {
-			$archive = $this->archiveFolder($uid);
-			$export = $archive->nodeExists(self::EXPORT_FOLDER) ? $archive->get(self::EXPORT_FOLDER) : null;
-		} catch (\Throwable) {
-			return false;
-		}
-		return $export instanceof Folder && self::oldBackups($export) !== [];
-	}
-
-	/**
-	 * @return list<Node>
-	 */
-	private static function oldBackups(Folder $export): array {
-		$nodes = [];
-		foreach ($export->getDirectoryListing() as $node) {
-			$name = $node->getName();
-			if (($node instanceof File && preg_match(self::OLD_BACKUP_PATTERN, $name) === 1)
-				|| ($node instanceof Folder && $name === self::OLD_SNAPSHOT_FOLDER)) {
-				$nodes[] = $node;
-			}
-		}
-		return $nodes;
-	}
-
-	private function moveOldBackups(Folder $archive, Folder $backups): void {
-		try {
-			$export = $archive->nodeExists(self::EXPORT_FOLDER) ? $archive->get(self::EXPORT_FOLDER) : null;
-			if (!$export instanceof Folder) {
-				return;
-			}
-			foreach (self::oldBackups($export) as $node) {
-				if (!$backups->nodeExists($node->getName())) {
-					$node->move($backups->getPath() . '/' . $node->getName());
-				}
-			}
-		} catch (\Throwable $e) {
-			// The settings page shows what is left (hasOldBackups()).
-			$this->logger->warning('Cantoria: old backups could not be moved out of the archive folder: ' . $e->getMessage());
 		}
 	}
 

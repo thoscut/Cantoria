@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Service;
 
+use OCA\Cantoria\AppInfo\Application;
 use OCA\Cantoria\Exception\AccessDeniedException;
 use OCA\Cantoria\Exception\InvalidInputException;
 use OCP\IAppConfig;
@@ -66,18 +67,27 @@ class ModuleSettings {
 			$values[(string)$key] = Input::bool($wanted[$key], (string)$key);
 		}
 		if (!$admin) {
-			// The modules that open the archive to the outside (agents, choir
-			// members, the public, the print station) are switched on by an
-			// administrator only, also when another module needs them.
-			foreach (array_keys(array_filter($values)) as $key) {
-				foreach ([$key, ...Modules::requirements($key)] as $module) {
-					if (in_array($module, Modules::OUTSIDE_PRESETS, true) && !$this->modules->isSwitchedOn($module)) {
-						throw new AccessDeniedException('Only an administrator can switch on the modules that open the archive to agents, choir members, the public or the print station.');
-					}
+			$this->requireAdminFor($values);
+		}
+		return $this->record($this->modules->change($values), $uid, null);
+	}
+
+	/**
+	 * The modules that open the archive to the outside (agents, choir
+	 * members, the public, the print station) are switched on by an
+	 * administrator only, also when another module needs them.
+	 *
+	 * @param array<string, bool> $values
+	 * @throws AccessDeniedException
+	 */
+	private function requireAdminFor(array $values): void {
+		foreach (array_keys(array_filter($values)) as $key) {
+			foreach ([$key, ...Modules::requirements($key)] as $module) {
+				if (in_array($module, Modules::OUTSIDE_PRESETS, true) && !$this->modules->isSwitchedOn($module)) {
+					throw new AccessDeniedException('Only an administrator can switch on the modules that open the archive to agents, choir members, the public or the print station.');
 				}
 			}
 		}
-		return $this->record($this->modules->change($values), $uid, null);
 	}
 
 	/**
@@ -89,11 +99,22 @@ class ModuleSettings {
 	}
 
 	/**
+	 * @return ModuleChanges
+	 * @throws InvalidInputException
+	 */
+	public function applyScenario(string $scenario, ?string $uid, bool $admin = true): array {
+		if (!$admin) {
+			$this->requireAdminFor(Modules::scenarioValues($scenario));
+		}
+		return $this->record($this->modules->applyScenario($scenario), $uid, 'scenario ' . $scenario);
+	}
+
+	/**
 	 * Everything the settings show, translated: the modules with their
 	 * switch (`enabled`) and whether they are active (`active`), the groups,
 	 * the presets and the core.
 	 *
-	 * @return array{modules: list<array{key: string, group: string, label: string, description: string, requires: list<string>, enabled: bool, active: bool}>, groups: list<array{key: string, label: string}>, presets: list<array{key: string, label: string, description: string, modules: array<string, bool>}>, core: list<string>, publicModules: list<string>, legalPages: array{imprint: bool, privacy: bool}}
+	 * @return array{modules: list<array{key: string, group: string, label: string, description: string, requires: list<string>, enabled: bool, active: bool}>, groups: list<array{key: string, label: string}>, presets: list<array{key: string, label: string, description: string, modules: array<string, bool>}>, scenarios: list<array{key: string, label: string, description: string, rights: ?string, modules: array<string, bool>}>, core: list<string>, publicModules: list<string>, legalPages: array{imprint: bool, privacy: bool}}
 	 */
 	public function describe(IL10N $l): array {
 		$active = $this->modules->states();
@@ -121,8 +142,19 @@ class ModuleSettings {
 				'modules' => Modules::presetValues($preset),
 			];
 		}
+		$scenarios = [];
+		foreach (Modules::SCENARIOS as $key => $scenario) {
+			$scenarios[] = [
+				'key' => $key,
+				'label' => $l->t($scenario['label']),
+				'description' => $l->t($scenario['description']),
+				'rights' => $scenario['rights'] === null ? null : $l->t($scenario['rights']),
+				'modules' => Modules::scenarioValues($key),
+			];
+		}
 		return [
 			'modules' => $modules,
+			'scenarios' => $scenarios,
 			'groups' => array_map(fn (string $group): array => ['key' => $group, 'label' => $l->t(Modules::GROUPS[$group] ?? $group)],
 				array_keys($groups)),
 			'presets' => $presets,
@@ -137,8 +169,9 @@ class ModuleSettings {
 	 * @return ModuleChanges
 	 */
 	private function record(array $changes, ?string $uid, ?string $preset): array {
+		$this->appConfig->setValueBool(Application::APP_ID, Modules::CHOSEN_KEY, true);
 		$operation = $this->audit->newOperation();
-		$reason = $preset === null ? null : 'preset ' . $preset;
+		$reason = $preset === null || str_starts_with($preset, 'scenario ') ? $preset : 'preset ' . $preset;
 		foreach ([...$changes['enabled'], ...$changes['alsoEnabled']] as $key) {
 			$this->audit->record($operation, $uid, 'settings', null, 'changed', Modules::CONFIG_PREFIX . $key, 'off', 'on', $reason);
 		}

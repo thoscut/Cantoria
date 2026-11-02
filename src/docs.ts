@@ -19,6 +19,7 @@ const DOCS = 'https://github.com/thoscut/choircoresmanager/blob/main/docs/'
 const FILES = {
 	admin: { en: 'admin-guide.md', de: 'de/administrationshandbuch.md' },
 	user: { en: 'user-guide.md', de: 'de/benutzerhandbuch.md' },
+	members: { en: 'for-choir-members.md', de: 'de/fuer-chormitglieder.md' },
 } as const
 
 /** A section of a guide: GitHub's anchor of its heading in each language. */
@@ -31,11 +32,11 @@ export interface GuideSection {
 
 /** Sections of the administration guide. */
 export const ADMIN_GUIDE = {
-	setup: { en: 'setting-up-in-five-steps', de: 'einrichten-in-fünf-schritten' },
+	setup: { en: 'setting-up-in-six-steps', de: 'einrichten-in-sechs-schritten' },
 	roles: { en: '2-roles-and-groups', de: '2-rollen-und-gruppen' },
 	delegation: { en: 'giving-the-settings-to-a-group', de: 'die-einstellungen-einer-gruppe-übertragen' },
 	archive: { en: '3-archive-folder', de: '3-archivordner' },
-	sharing: { en: 'sharing-the-archive-folder', de: 'den-archivordner-freigeben' },
+	sharing: { en: 'sharing-the-archive-folder', de: 'den-archivordner-teilen' },
 	access: { en: 'checking-who-can-open-the-archive-folder', de: 'prüfen-wer-den-archivordner-öffnen-kann' },
 	import: { en: '4-first-import', de: '4-erster-import' },
 	backup: { en: '5-backups-and-restore', de: '5-sicherung-und-wiederherstellung' },
@@ -58,6 +59,7 @@ export const USER_GUIDE = {
 	termRelease: { en: 'release', de: 'freigabe' },
 	termValidVersion: { en: 'valid-version', de: 'geltende-fassung' },
 	termPreservationCopy: { en: 'internal-preservation-copy', de: 'interne-erhaltungskopie' },
+	termPortal: { en: 'singers-portal-choir-system-and-shared-with-me', de: 'chorportal-chorsystem-und-mit-mir-geteilt' },
 } as const satisfies Record<string, GuideSection>
 
 /**
@@ -82,6 +84,14 @@ export function userGuideUrl(section: GuideSection): string {
 /** The guide behind "Help": the user guide in the language of the user. */
 export function helpUrl(): string {
 	return DOCS + (isGerman() ? FILES.user.de : FILES.user.en)
+}
+
+/**
+ * The one-page guide for choir members (milestone 0.19), which the conductor
+ * can pass on; linked from the empty page "Shared with me".
+ */
+export function membersGuideUrl(): string {
+	return DOCS + (isGerman() ? FILES.members.de : FILES.members.en)
 }
 
 /**

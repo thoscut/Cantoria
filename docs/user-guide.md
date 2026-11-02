@@ -73,6 +73,22 @@ the confirmed rights or from a valid license for that use. Internal
 preservation copies are never released (see
 [Releases: singers' portal and print station](#releases-singers-portal-and-print-station)).
 
+### Singers' portal, choir system and "Shared with me"
+
+Three terms are close to each other and mean different things:
+
+| Term | What it is | Who uses it |
+|---|---|---|
+| **Singers' portal** | in Cantoria, the release of a version for the choir and the list of what the choir may get | the music librarians |
+| **Choir system** | the choir's member app or website outside Cantoria; it can get the hand-over folder | the choir, outside Cantoria |
+| **Shared with me** | the page of the choir members in Cantoria with the pieces shared with them | the choir members |
+
+So the singers' portal says *what* the choir may get; the choir system or
+"Shared with me" is *where* it gets it (see
+[Alongside a choir system](alongside-a-choir-system.md)). **Available
+without a network** is a piece that a choir member or the conductor has kept
+in the browser of their own device, to open it without a network, too.
+
 ### Valid version
 
 The valid version is the version the conductor has chosen as the one the
@@ -599,9 +615,10 @@ Where the administration has switched them on, a whole piece or an excerpt
 can be shared beyond the archive roles: with the **choir members** (they
 sign in and see it under "Shared with me") or with **everyone** through a
 public link without signing in. Both get only what you share, the whole
-piece or the chosen measures, never the score file; the server sends only
-that and checks the rights on every call. Optionally the link also offers
-the **scan (PDF)** of the copy.
+piece or the chosen measures as notation, not the score file of the
+archive; the server checks the rights on every call. Optionally the link
+also offers the **scan (PDF)** of the copy. What arrives in a browser can be
+saved there, so do not promise a publisher "no download".
 
 #### How to share a whole piece with the choir
 
@@ -620,8 +637,8 @@ Music librarians, operations and the conductor share from the score viewer
    months). **Note (optional)**: the choir members see this note, for
    example "Please practise until Thursday".
 6. Where the copy has a scan, **Include the scan (PDF)** offers it too (with
-   several scans, choose one under **Which scan?**). The recipients open it
-   in the PDF viewer of their browser. Whoever sees the scan can also save
+   several scans, choose one under **Which scan?**). The recipients see the
+   scan in the page. Whoever sees the scan can also save
    it; share it only where that is fine. The whole PDF is shared, also with
    a link to some measures.
 7. **What the recipients see** lists what is shared (**Whole piece** or the
@@ -658,6 +675,34 @@ excerpt.
 (**Internal**, **For choir members**, **Public**), what it shares
 (**Whole piece** or the measures, and **with scan (PDF)**), validity and
 number of calls; **Revoke link** stops a link at once for everyone.
+**Extend link** gives it a new last day (at most six months from today).
+The link keeps its address: whoever got it by message can go on using it,
+and what choir members made available without a network stays on their
+devices. The creator of the link and the catalog librarian can extend it; a
+revoked link cannot be extended.
+
+#### Sharing a whole programme with the choir
+
+Before a concert the choir members usually need every piece. Instead of
+sharing each piece on its own:
+
+1. Open the concert or song list under **Concerts**.
+2. Choose **Share with the choir …**.
+3. The dialog checks the rights of each piece and says for each what
+   happens: *A new link for the choir members*, *Already shared until …:
+   the link is extended and keeps its address*, or why not. The pieces that
+   can be shared are ticked; untick what the choir does not need yet.
+4. **Valid until** is set to two weeks after the concert (at most six
+   months). The choir members see a **Note** with each new link. Where the
+   rights allow it, **Include the scans (PDF) where the rights allow it**
+   adds the scans.
+5. Choose **Share … pieces**. At the end the dialog says how many links are
+   new, how many were extended, and which pieces were not shared and why.
+
+Each piece is shared as if you shared it on its own: as the whole piece,
+with the same rights and the same entry in the audit log. Where a piece
+says *Available without a network.*, the choir members can keep it on
+their device and practise it on the train, too.
 
 > [!NOTE]
 > The whole piece plays in the full order of the score, with all repeats,
@@ -675,8 +720,8 @@ number of calls; **Revoke link** stops a link at once for everyone.
 #### Public links
 
 A public link shows and plays a whole piece or an excerpt to anyone who has
-the link, without signing in: without the score file, without names and
-without a note. Choose **Public (without signing in)** in the same dialog.
+the link, without signing in: as notation, not the score file of the
+archive, without names and without a note. Choose **Public (without signing in)** in the same dialog.
 It is only possible when
 
 - the version is **released for publication**: the catalog librarian sets
@@ -761,8 +806,8 @@ changed, they stay open.
    (only where playback is allowed; the rights check is the same as
    always).
 3. **Scan**: when a PDF scan is linked to the copy, **Show scan beside the
-   score** shows it next to the score, and **Open scan in a new window** opens
-   it in a second window, both at the **Page of the scan** (the page of the
+   score** shows it next to the score, and **Open the scan in a new tab**
+   opens it in a tab of its own, both at the **Page of the scan** (the page of the
    point, or the page you last looked at). Both use the browser's own PDF
    viewer; nothing is sent to another server. The second window helps on
    small screens and with a magnifier.
@@ -948,6 +993,11 @@ Conductors and music librarians plan concerts:
    license for the binders and without a recorded number of originals.
 4. **Fix programme** when it is settled; it can still be changed until the
    concert is confirmed as sung.
+5. **Share with the choir …** gives the choir members every piece at once
+   (see [Sharing a whole programme with the
+   choir](#sharing-a-whole-programme-with-the-choir)); **Open in the concert
+   folder** shows the programme as it is on the tablet at the rehearsal and
+   the concert.
 
 Deadline notifications go to the conductor and the music librarians 10, 8
 and 6 weeks before the concert. If a concert does not take place, **Cancel
@@ -978,19 +1028,43 @@ With the module "Concert folder", conductors and music librarians open
 **Concert folder** in the navigation: a page of its own with the
 programmes still to be sung (draft or fixed), the next one first, each piece
 in its order. Choose a piece to see, play and practise it with the same
-tools as on a shared page (tempo, voices, count-in, metronome, pitch,
-mixer, passages, lyrics, recording yourself); **Show the scan (PDF)** opens
-the scan inside the page, and **Next** turns to the next piece of the
-programme.
+tools as on a shared page (see [Shared with me](#shared-with-me)); **Show
+the scan (PDF)** opens the scan inside the page. On a narrow screen, such as
+an iPad upright, the programme list folds away once a piece is open;
+**Programme: …, piece 3 of 12** opens it again.
 
-For the rehearsal or the concert without a network, choose **Keep all …
-pieces on this device** at a programme, with a network, optionally **With
-the scans (PDF)**. Without a network, open the concert folder as usual (a
-bookmark or the home screen): the kept pieces open from the device. As on
-"Shared with me", every start with a network checks them with the server,
-and after 30 days without one they are locked. An internal preservation copy
-can be viewed, but never kept on a device. The concert folder only reads:
-**Confirm as sung** stays in the concert in the archive.
+For the rehearsal and the stage:
+
+- **Stage view** shows only the piece, on the whole screen where the
+  browser can, and keeps the screen on. Press **Stage view** again or
+  Escape to leave it.
+- **Next** is in the bar that stays at the top and at the end of the notes;
+  **Previous: …** and **Next: …** are below the title.
+- A page-turn pedal (Page Down, Page Up) turns system by system. After the
+  last system Page Down announces the next piece and puts the focus on
+  **Next: …**; one more press opens it.
+- If a recording of yourself is not saved, the folder asks before another
+  piece discards it.
+
+With the module "Practising without a network", switch on **All … pieces
+available without a network** at a programme, with a network, for the
+rehearsal or the concert. The switch **With the scans (PDF, …)** below it
+can be changed before or afterwards; it names the space the scans need.
+Below the switch you see the progress ("3 of 12 pieces ready …") and, if
+something goes wrong, why and what to do. Without a network, open the
+concert folder as usual (a bookmark or the home screen): the pieces come
+from the device and are marked **Available without a network** in the list.
+As on "Shared with me", every start with a network checks them with the
+server, and after 30 days without one they are locked. Without the module
+the concert folder keeps nothing on the device.
+
+A piece becomes available without a network only where the rights allow a
+copy on the device: confirmed public domain, or a license for download or
+self-printing. Otherwise the folder says why at the piece. The concert
+folder does not open an internal preservation copy: it is a copy for the
+archive, not material for the rehearsal and the concert; add another copy
+of the version to the programme. The concert folder only reads: **Confirm
+as sung** stays in the concert in the archive.
 
 ### Concerts in your calendar
 
@@ -1657,84 +1731,103 @@ in large print; **Annual report as CSV** downloads its tables.
 
 Choir members have no role in the music archive. Where the administration
 has switched on links for choir members, they see only the page **Shared
-with me** with the pieces and excerpts shared with the choir. If you see no
-music archive at all, see
-[No access to the music archive](#no-access-to-the-music-archive).
+with me** with the pieces and excerpts shared with the choir. For passing
+on to the choir there is the one-page
+[guide for choir members](for-choir-members.md). If you do not see Cantoria
+at all, see [No access to the music archive](#no-access-to-the-music-archive).
 
 ### Shared with me
 
-Choir members sign in to Nextcloud and open **Music archive**. They see
-**Shared with me**: the pieces and excerpts shared with the choir, with
-title, composer, **Whole piece** or the measures, voice, the note and how
-long each is valid, whether it can be played (**Playback: yes** or
-**Playback: no**) and whether the scan is included (**with scan (PDF)**).
+Choir members sign in to Nextcloud and open **Cantoria**. They see
+**Shared with me**: the pieces and excerpts shared with the choir. Each
+entry of the list is short: the title, composer and **Whole piece** or the
+measures with the voice, how long it is valid and, where it is switched on,
+**Available without a network**.
 
-![The page "Shared with me" of a choir member: the whole piece "Der Mond ist aufgegangen" with the note of the conductor, the validity, the link "Open the scan (PDF)", the playback controls with count-in and loop, and the score with the alto highlighted.](screenshots/shared-with-me.png)
+![The page "Shared with me" of a choir member with the piece "Der Mond ist aufgegangen" and the score with the alto highlighted.](screenshots/shared-with-me.png)
 
 1. Choose a piece in the list (a link sent to you opens it directly). The
    notes appear below the list, on a wide screen beside it, for a whole
-   piece all pages of it.
+   piece all pages of it. Above them are the note of the conductor, the
+   validity and what is allowed (**Playback: yes**, **Practice files:
+   yes**, **with scan (PDF)**). **Other pieces (…)** below the title takes
+   you back to the list on a phone.
 2. **Play**, **Pause** and **Stop**, **Smaller** and **Larger** (the size;
-   your browser remembers it for the next piece) and **Settings** are in a bar that stays at the top while you scroll
-   through the notes. **Settings** shows or hides the other choices; on a
-   phone they are hidden at first. Under **Voices during playback** choose
-   **All equal**, **Focus voice louder** or **Focus voice only**, and set
-   the tempo. **Focus voice** chooses another voice. Space plays and
-   pauses. **Count-in** clicks one or two bars before the music. A click or
-   a tap on a note starts there; with the keyboard, the arrow keys left and
-   right in the score go to the previous or next measure.
-3. To practise a passage, enter **From measure** and **To measure** and
-   choose **Show**; **Loop** plays the shown measures again and again.
-   **All measures** shows everything again. **Starting tones**,
-   **Metronome**, **Pitch**, **Mixer**, remembered passages and **Record
-   myself** work as in the score view (see
-   [How to practise with starting tones, metronome, pitch, mixer, passages and recordings](#how-to-practise-with-starting-tones-metronome-pitch-mixer-passages-and-recordings)).
-4. **Open the scan (PDF)** (where included) opens the scan in the PDF viewer
-   of your browser, in a new tab.
-5. **Text reference** and **Description of the piece** (or **of the
-   excerpt**) describe it in words.
-6. Where practice files are offered (**Practice files: yes**): choose the
-   voice and "Focus voice louder" or "Focus voice only", then under
-   **Practice file** the format **WAV (audio)** or **MIDI** and **Make
-   practice file**. The file covers the shown measures; it is made in your
-   browser, and every practice file is recorded in the audit log of the
-   music archive.
+   your browser remembers it for the next piece) and **Voice, measures and
+   practising** are in a bar that stays at the top while you scroll through
+   the notes. **Voice, measures and practising** shows or hides the
+   settings; on a phone they are hidden at first. They come in three
+   groups, in the order they are usually needed:
+   - **My voice**: choose your voice under **Focus voice**, and under
+     **Voices during playback** **All equal**, **Focus voice louder** or
+     **Focus voice only**.
+   - **Measures and tempo**: enter **From measure** and **To measure** and
+     choose **Show**; **Loop** plays the shown measures again and again,
+     **All measures** shows everything again. Below are the tempo and the
+     **Count-in**, which clicks one or two bars before the music.
+   - **More for practising** (folded at first): starting tones, metronome,
+     transposing, mixer, lyrics, your pitch, remembered passages and
+     recording yourself; they work as in the score view (see
+     [How to practise with starting tones, metronome, pitch, mixer, passages and recordings](#how-to-practise-with-starting-tones-metronome-pitch-mixer-passages-and-recordings)).
 
-Your browser remembers the tempo, **Pitch**, **Metronome**, the **Mixer**
-and the passages of each piece, also for a new link to the same piece.
+   Space plays and pauses. A tap or a click on a note starts there; with the
+   keyboard, the arrow keys left and right in the score go to the previous
+   or next measure. A running recording stays visible in the bar; before
+   another piece discards a recording that is not saved, the page asks.
+3. **Show the scan (PDF)** (where included) opens the scan inside the page.
+4. **Text reference** and **Description of the piece** (or **of the
+   excerpt**) describe it in words.
+5. Where practice files are offered (**Practice files: yes**): set the
+   voice and "Focus voice louder" or "Focus voice only" under **Voice,
+   measures and practising**, then under **Practice file** the format **WAV
+   (audio)** or **MIDI** and **Make practice file**. The file covers the
+   shown measures; it is made in your browser, and every practice file is
+   recorded in the audit log of the music archive.
+
+Your browser remembers the tempo, **Transpose**, **Metronome**, the
+**Mixer** and the passages of each piece, also for a new link to the same
+piece.
 
 ### Practising without a network
 
-Where the administration has switched it on, a piece can be kept on your
-device and then be viewed, played and practised without a network, for
-example on the train or in a church without Wi-Fi. No app to install: it
-works in the browser.
+Where the administration has switched it on, you can make a piece
+available without a network and then view, play and practise it without
+one, for example on the train or in a church without Wi-Fi. No app to
+install: it works in the browser.
 
-1. With a network, open **Shared with me** and choose **Keep on this
-   device** in the list for each piece you need; **With the scan (PDF)**
-   also keeps the scan, which may need a lot of space. **Keep all … pieces
-   on this device**, above the list, keeps every piece that may be kept at
-   once, without the scans. Some pieces say "Cannot be kept on this
-   device": their rights allow viewing, not saving.
-2. Without a network, open the same page as usual (a bookmark or the home
-   screen). A note says that the pieces kept on this device are shown.
-   Playing, count-in, metronome, pitch, mixer, passages, lyrics and
-   recording yourself all work; **Practice file** needs a network.
-3. Each start with a network checks the kept pieces: expired or revoked
-   links disappear from the device. After 30 days without a network the
-   kept pieces are locked until the page is opened once with one.
-4. **On this device**, at the bottom of the page, shows how many pieces are
-   kept and the space used. **Delete everything on this device** removes
-   the kept pieces, passages and settings; do this on a shared device.
-   Signing out of Nextcloud does not delete them.
+1. **On an iPhone or iPad, first:** add the page to the home screen (Share
+   → **Add to Home Screen**), open it from there and sign in. Safari and the
+   home screen keep pieces apart: what you keep in Safari is missing on the
+   home screen, and the other way round. The page says so before the first
+   piece.
+2. With a network, open **Shared with me**, choose a piece and switch on
+   **Available without a network** above the notes. **With the scan (PDF,
+   …)** below it takes the scan along, too; it names the space and can be
+   changed at any time. **Make all … pieces available without a network
+   (without scans)** above the list takes every piece that may be kept at
+   once and shows the progress ("3 of 12 pieces ready …"). Some pieces say
+   "Not available without a network: the rights do not allow downloading
+   it".
+3. Without a network, open the same page as usual (a bookmark or the home
+   screen). A note says that the pieces come from the device. Playing,
+   count-in, metronome, transposing, mixer, passages, lyrics and recording
+   yourself all work; **Practice file** needs a network.
+4. Each start with a network checks the pieces: expired or revoked links
+   disappear from the device. After 30 days without a network the pieces
+   are locked until the page is opened once with one.
+5. **Without a network**, at the bottom of the page, shows how many pieces
+   are available and the space used. Cantoria keeps them in this browser on
+   this device; another browser does not see them. **Delete everything on
+   this device** removes the pieces, passages and settings; do this on a
+   shared device. Signing out of Nextcloud does not delete them.
 
-On an iPhone or iPad, add the page to the home screen (Share → **Add to
-Home Screen**) and open it from there: otherwise Safari may delete the kept
-pieces after some days without use. **Show the scan (PDF)** opens the scan
-inside the page, also without a network where it was kept.
+If something goes wrong, the reason is right below the switch, for example
+"There is no connection" or "There is not enough space on this device".
+**Show the scan (PDF)** opens the scan inside the page, also without a
+network where it was taken along.
 
 A **public link** to a piece whose public domain is confirmed offers
-**Keep on this device** at the bottom of its page, too: then the page opens
+**Available without a network** above the notes, too: then the page opens
 without a network while the link is valid. Each visit with a network checks
 it; a link that was revoked or has expired disappears from the device at
 the next visit. Open it with a network at least every 30 days.
@@ -1758,7 +1851,7 @@ what you notice, and says what to do. Problems of the setup are in the
 ### No access to the music archive
 
 *"You have no access to the music archive."* Your account has no role in the
-music archive; the app, or the page "Access forbidden", says so. Roles are
+music archive; the app, or the page "No access yet", says so. Roles are
 bound to Nextcloud groups, not to persons. Ask the administration to add your
 account to the group of your role (see the
 [administration guide](admin-guide.md#2-roles-and-groups)). Choir members

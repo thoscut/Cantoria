@@ -35,7 +35,8 @@ const display = computed(() => {
 	case 'preservation':
 		return { text: t('cantoria', 'Internal preservation copy – do not share'), icon: mdiShieldLockOutline, tone: 'error' }
 	case 'protected':
-		return { text: t('cantoria', 'protected'), icon: mdiLockOutline, tone: 'error' }
+		// Protected is no error: the lock and the word say it, in the tone of information
+		return { text: t('cantoria', 'protected'), icon: mdiLockOutline, tone: 'info' }
 	case 'open':
 		return { text: t('cantoria', 'open'), icon: mdiHelpCircleOutline, tone: 'neutral' }
 	case 'unconfirmed':
@@ -79,6 +80,10 @@ const display = computed(() => {
 	--badge-color: var(--color-error-text, var(--color-error));
 }
 
+.rights-badge--info {
+	--badge-color: var(--color-info-text, var(--color-info, #00679e));
+}
+
 .rights-badge--warning {
 	--badge-color: var(--color-warning-text, var(--color-warning));
 }
@@ -96,5 +101,18 @@ const display = computed(() => {
 
 .rights-badge__text {
 	overflow-wrap: anywhere;
+}
+
+/* Windows contrast themes: system colours, the frame stays */
+@media (forced-colors: active) {
+	.rights-badge {
+		border-color: CanvasText;
+		background-color: Canvas;
+		color: CanvasText;
+	}
+
+	.rights-badge__icon {
+		color: CanvasText;
+	}
 }
 </style>

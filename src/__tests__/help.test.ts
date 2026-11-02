@@ -57,6 +57,6 @@ describe('documentation links', () => {
 		expect(adminGuideUrl(ADMIN_GUIDE.archive)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/admin-guide.md#3-archive-folder')
 		setLanguage('de_DE')
 		expect(adminGuideUrl(ADMIN_GUIDE.archive)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/de/administrationshandbuch.md#3-archivordner')
-		expect(adminGuideUrl(ADMIN_GUIDE.setup)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/de/administrationshandbuch.md#einrichten-in-f%C3%BCnf-schritten')
+		expect(adminGuideUrl(ADMIN_GUIDE.delegation)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/de/administrationshandbuch.md#die-einstellungen-einer-gruppe-%C3%BCbertragen')
 	})
 })

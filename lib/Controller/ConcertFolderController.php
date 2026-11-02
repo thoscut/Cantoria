@@ -64,10 +64,10 @@ class ConcertFolderController extends Controller {
 	public function page(): TemplateResponse {
 		if ($this->userId === null || !$this->folder->mayOpen($this->userId)) {
 			$response = new TemplateResponse(Application::APP_ID, 'forbidden', [
-				'heading' => $this->l->t('Access forbidden'),
+				'heading' => $this->l->t('No access yet'),
 				'message' => $this->l->t('The concert folder is for the conductor and the catalog librarian.'),
 				'guideUrl' => PageController::noAccessGuideUrl($this->l->getLanguageCode()),
-				'guideLabel' => $this->l->t('No access to the music archive (guide)'),
+				'guideLabel' => $this->l->t('No access to the music archive (guide, opens in a new tab)'),
 			], TemplateResponse::RENDER_AS_ERROR);
 			$response->setStatus(Http::STATUS_FORBIDDEN);
 			return $response;
@@ -75,6 +75,8 @@ class ConcertFolderController extends Controller {
 		$this->initialState->provideInitialState('folder', [
 			'concerts' => $this->translated($this->folder->concerts($this->userId)),
 			'version' => $this->apps->getAppVersion(Application::APP_ID),
+			// pieces are kept on the device only with the module "offline" (milestone 0.19)
+			'offline' => $this->folder->offlineOn(),
 		]);
 		$response = PageController::withScorePolicy(new TemplateResponse(Application::APP_ID, 'concert-folder'), false, true);
 		// The service worker keeps only this page of the archive on the device

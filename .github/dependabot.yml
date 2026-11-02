@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
+# SPDX-License-Identifier: CC0-1.0
+
+# Weekly pull requests for dependency updates. Every update runs the CI like
+# any other pull request; security updates come at once.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories: ['/', '/tools/mcp', '/tools/outreach']
+    schedule:
+      interval: weekly
+    groups:
+      # One pull request for the minor and patch updates of a directory
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: composer
+    directories: ['/', '/vendor-bin/*']
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly

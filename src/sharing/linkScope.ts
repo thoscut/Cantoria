@@ -114,6 +114,10 @@ export interface PreviewWords {
 	playback: string
 	practiceFiles: string
 	scan: string
+	/** "Without a network" */
+	offline: string
+	/** why it cannot be kept on a device */
+	offlineNo: string
 	yes: string
 	no: string
 }
@@ -162,6 +166,10 @@ export function previewRows(input: PreviewInput, words: PreviewWords): { label: 
 	}
 	if (input.scan !== null) {
 		rows.push({ label: words.scan, value: input.scan ? words.yes : words.no })
+	}
+	// whether the singers can practise it on the train (milestone 0.19)
+	if (input.option.offline !== undefined && input.option.offline !== null) {
+		rows.push({ label: words.offline, value: input.option.offline ? words.yes : words.offlineNo })
 	}
 	rows.push({ label: words.validUntil, value: input.validUntil })
 	return rows

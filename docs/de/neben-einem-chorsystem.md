@@ -54,8 +54,9 @@ Anbieter ab; frag dort nach, bevor du dich darauf verlässt.
 
 ## Der Weg zurück: einen Export vergleichen
 
-Was wirklich im Chorsystem ist, steht in Cantoria als „Im Chorportal
-seit“. Statt es von Hand zu pflegen, exportiere die Liste der Stücke aus dem
+Was wirklich im Chorsystem ist, hält Cantoria im Feld „Im Chorportal seit“
+fest: Das Chorportal ist in Cantoria die Liste dessen, was der Chor bekommen
+darf, das Chorsystem der Ort, wo er es tatsächlich bekommt. Statt es von Hand zu pflegen, exportiere die Liste der Stücke aus dem
 Chorsystem und vergleiche sie mit der Liste **Chorportal**
 ([Benutzerhandbuch](benutzerhandbuch.md#mit-dem-chorsystem-vergleichen)). Die
 Abweichungen werden Vorschläge im Eingang; nichts ändert sich, bevor die Rolle

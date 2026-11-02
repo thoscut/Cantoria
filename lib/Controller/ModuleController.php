@@ -58,21 +58,25 @@ class ModuleController extends Controller {
 	}
 
 	/**
-	 * Switches modules on and off, or applies a preset; one of both.
+	 * Switches modules on and off, or applies a preset or a scenario; one of
+	 * them.
 	 *
 	 * @param array<array-key, mixed>|null $modules module key => on (request data)
 	 */
 	#[AuthorizedAdminSetting(settings: Admin::class)]
 	#[FrontpageRoute(verb: 'PUT', url: '/api/settings/modules')]
-	public function update(?array $modules = null, ?string $preset = null): JSONResponse {
-		return $this->run(function (string $uid) use ($modules, $preset) {
+	public function update(?array $modules = null, ?string $preset = null, ?string $scenario = null): JSONResponse {
+		return $this->run(function (string $uid) use ($modules, $preset, $scenario) {
 			$this->roles->requireSettingsAccess($uid);
-			if (($modules === null) === ($preset === null)) {
+			if (count(array_filter([$modules, $preset, $scenario], fn (mixed $value): bool => $value !== null)) !== 1) {
 				throw new InvalidInputException('Please choose a module or a preset.');
 			}
-			$changes = $preset !== null
-				? $this->moduleSettings->applyPreset($preset, $uid)
-				: $this->moduleSettings->change($modules ?? [], $uid, $this->roles->isAdmin($uid));
+			$admin = $this->roles->isAdmin($uid);
+			$changes = match (true) {
+				$preset !== null => $this->moduleSettings->applyPreset($preset, $uid),
+				$scenario !== null => $this->moduleSettings->applyScenario($scenario, $uid, $admin),
+				default => $this->moduleSettings->change($modules ?? [], $uid, $admin),
+			};
 			return $this->moduleSettings->describe($this->l) + ['changes' => $changes];
 		});
 	}

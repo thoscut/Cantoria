@@ -23,6 +23,7 @@ export type HelpTermKey =
 	| 'validVersion'
 	| 'preservationCopy'
 	| 'revision'
+	| 'singersPortal'
 
 export interface HelpTermText {
 	/** the term as it appears in the interface */
@@ -79,7 +80,7 @@ export function helpTerm(term: HelpTermKey): HelpTermText {
 	case 'preservationCopy':
 		return {
 			name: t('cantoria', 'Internal preservation copy'),
-			text: t('cantoria', 'A copy kept only for the archive, e.g. the scan of a protected print. It is never shared, played or exported.'),
+			text: t('cantoria', 'A copy kept only for the archive, e.g. a paper copy of a crumbling original of your own. It is never shared, played or exported. A digital scan of a protected print is usually not covered by the law for such copies.'),
 			section: USER_GUIDE.termPreservationCopy,
 		}
 	case 'revision':
@@ -87,6 +88,12 @@ export function helpTerm(term: HelpTermKey): HelpTermText {
 			name: t('cantoria', 'Revision'),
 			text: t('cantoria', 'A revision is one state of the MusicXML of a version, numbered 1, 2, 3 …: after a correction or a better transcription. The current revision is the one exports and printouts name.'),
 			section: USER_GUIDE.revisions,
+		}
+	case 'singersPortal':
+		return {
+			name: t('cantoria', 'Singers\' portal'),
+			text: t('cantoria', 'In Cantoria, the list of what the choir may get. Where the choir gets it is the choir system outside Cantoria, or the page "Shared with me" of the choir members.'),
+			section: USER_GUIDE.termPortal,
 		}
 	}
 	return { name: '', text: '', section: USER_GUIDE.termVersion }

@@ -93,14 +93,11 @@ class Person extends Entity implements JsonSerializable {
 	/**
 	 * Without a known death only the year of birth is kept, also in the
 	 * free text (milestone 0.11, data minimisation).
-	 *
-	 * @return bool whether something changed
 	 */
-	public function keepBirthYearOnly(): bool {
+	public function keepBirthYearOnly(): void {
 		if ($this->died !== null) {
-			return false;
+			return;
 		}
-		$before = [$this->born, $this->bornPrecision, $this->lifeDatesText, $this->notes];
 		$born = LifeDates::birthYearOnly(['born' => $this->born, 'born_precision' => $this->bornPrecision, 'died' => $this->died]);
 		$this->setValue('born', $born['born']);
 		$this->setValue('born_precision', $born['born_precision']);
@@ -109,7 +106,6 @@ class Person extends Entity implements JsonSerializable {
 				$this->setValue($field, LifeDates::yearsOnly($text));
 			}
 		}
-		return $before !== [$this->born, $this->bornPrecision, $this->lifeDatesText, $this->notes];
 	}
 
 	/**

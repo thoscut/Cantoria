@@ -101,14 +101,14 @@ const next = computed(() => shownLine(lines.value[lineIndex.value + 1]))
 .practice-lyrics {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--default-grid-baseline);
 	flex-basis: 100%;
 }
 
 .practice-lyrics__choices {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 16px;
+	gap: calc(2 * var(--default-grid-baseline)) calc(4 * var(--default-grid-baseline));
 	align-items: center;
 }
 
@@ -134,5 +134,16 @@ const next = computed(() => shownLine(lines.value[lineIndex.value + 1]))
 	font-weight: bold;
 	text-decoration: underline;
 	text-decoration-thickness: 2px;
+}
+
+/* A low screen (a phone held sideways): one line, smaller */
+@media (max-height: 560px) {
+	.practice-lyrics__now {
+		font-size: 1.2em;
+	}
+
+	.practice-lyrics__next {
+		display: none;
+	}
 }
 </style>

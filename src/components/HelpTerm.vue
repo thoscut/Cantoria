@@ -33,8 +33,8 @@ const headingId = useId()
 <template>
 	<NcPopover popup-role="dialog" class="help-term">
 		<template #trigger>
+			<!-- the normal size: a target of at least 34 px, also on a touch screen -->
 			<NcButton variant="tertiary-no-background"
-				size="small"
 				class="help-term__button"
 				:aria-label="t('cantoria', 'Explain: {term}', { term: help.name })"
 				:title="t('cantoria', 'Explain: {term}', { term: help.name })">

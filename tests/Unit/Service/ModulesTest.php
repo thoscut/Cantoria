@@ -93,20 +93,13 @@ final class ModulesTest extends TestCase {
 
 		// A new installation: everything off; "complete" opens nothing of it
 		$modules = $this->modules();
-		$modules->writeBaseline(false);
+		$modules->writeBaseline();
 		foreach ($sharing as $key) {
 			self::assertFalse($modules->isEnabled($key), $key . ' is off on a new installation');
 		}
 		$modules->applyPreset(Modules::COMPLETE);
 		foreach ($sharing as $key) {
 			self::assertFalse($modules->isEnabled($key), $key . ' stays off with "complete"');
-		}
-		// An installation from before the modules keeps its functions, but gets nothing new that opens the archive
-		$this->moduleConfig = [];
-		$old = $this->modules();
-		$old->writeBaseline(true);
-		foreach ($sharing as $key) {
-			self::assertFalse($old->isEnabled($key), $key . ' stays off on an update');
 		}
 
 		// Switching on practice audio for choir members also switches on what it needs
@@ -296,9 +289,9 @@ final class ModulesTest extends TestCase {
 		self::assertFalse(Modules::presetValues(Modules::STANDARD)[Modules::ANNUAL_SNAPSHOT]);
 		self::assertTrue(Modules::presetValues(Modules::COMPLETE)[Modules::ANNUAL_SNAPSHOT]);
 
-		// An installation updated from 0.1.27 or later gets the default of the new modules.
+		// An updated installation gets the default of the new modules.
 		$modules = $this->modules(['statistics' => true]);
-		$modules->writeBaseline(false);
+		$modules->writeBaseline();
 		self::assertTrue($modules->isEnabled(Modules::UNIFIED_SEARCH));
 		self::assertFalse($modules->isEnabled(Modules::ANNUAL_SNAPSHOT));
 	}
@@ -310,25 +303,12 @@ final class ModulesTest extends TestCase {
 
 	public function testANewInstallationGetsTheStandard(): void {
 		$modules = $this->modules();
-		$written = $modules->writeBaseline(false);
+		$written = $modules->writeBaseline();
 		self::assertSame(array_keys(Modules::MODULES), $written);
 		foreach (Modules::presetValues(Modules::STANDARD) as $key => $on) {
 			self::assertSame($on, $this->moduleConfig['module_' . $key], $key);
 		}
 		self::assertFalse($this->moduleConfig['module_agent_api']);
-	}
-
-	public function testAnExistingInstallationKeepsEveryFunction(): void {
-		$modules = $this->modules();
-		$modules->writeBaseline(true);
-		foreach (array_keys(Modules::presetValues(Modules::COMPLETE)) as $key) {
-			self::assertTrue($this->moduleConfig['module_' . $key], $key);
-			// e.g. the notification of the print station waits for its module
-			$waits = array_intersect(Modules::requirements($key), Modules::OUTSIDE_PRESETS) !== [];
-			self::assertSame(!$waits, $modules->isEnabled($key), $key);
-		}
-		self::assertFalse($this->moduleConfig['module_agent_api'], 'the interface for agents starts off');
-		self::assertFalse($this->moduleConfig['module_print_mirror'], 'the mirror folder of the print station starts off');
 	}
 
 	public function testTheFolderBookIsOnlyInCompleteAndTheMirrorFolderInNoPreset(): void {
@@ -359,12 +339,12 @@ final class ModulesTest extends TestCase {
 
 	public function testStoredSwitchesAreNeverOverwritten(): void {
 		$modules = $this->modules(['statistics' => true, 'concerts' => false]);
-		$written = $modules->writeBaseline(false);
+		$written = $modules->writeBaseline();
 		self::assertNotContains('statistics', $written);
 		self::assertNotContains('concerts', $written);
 		self::assertTrue($this->moduleConfig['module_statistics']);
 		self::assertFalse($this->moduleConfig['module_concerts']);
-		self::assertSame([], $modules->writeBaseline(true), 'a second run writes nothing');
+		self::assertSame([], $modules->writeBaseline(), 'a second run writes nothing');
 	}
 
 	public function testWithoutStoredSwitchesTheStandardApplies(): void {

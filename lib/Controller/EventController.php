@@ -18,6 +18,7 @@ use OCA\Cantoria\Exception\InvalidInputException;
 use OCA\Cantoria\Exception\UserFacingException;
 use OCA\Cantoria\Service\EventService;
 use OCA\Cantoria\Service\PerformanceImportService;
+use OCA\Cantoria\Service\ProgrammeShareService;
 use OCA\Cantoria\Service\RepertoireService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\UserFiles;
@@ -55,6 +56,7 @@ class EventController extends Controller {
 		private EventService $events,
 		private EventItemMapper $items,
 		private PerformanceImportService $performanceImport,
+		private ProgrammeShareService $programmeShare,
 		private RepertoireService $repertoire,
 		private UserFiles $userFiles,
 		private IL10N $l,
@@ -250,5 +252,47 @@ class EventController extends Controller {
 			return $this->performanceImport->import($file['content'], $file['name'], $uid, $dryRun,
 				$ownChoir === null || trim($ownChoir) === '' ? null : trim($ownChoir));
 		});
+	}
+
+	/**
+	 * What sharing a programme with the choir members would do, per piece
+	 * (milestone 0.19).
+	 */
+	#[NoAdminRequired]
+	#[RequiresModule('excerpt_links')]
+	#[RequiresModule('member_links')]
+	#[FrontpageRoute(verb: 'GET', url: '/api/events/{id}/share-options', requirements: ['id' => '\d+'])]
+	public function shareOptions(int $id): JSONResponse {
+		return $this->run(function (string $uid) use ($id) {
+			$options = $this->programmeShare->options($id, $uid);
+			$options['items'] = array_map(fn (array $item): array => ['reason' => $this->reasonText($item['reason'])] + $item, $options['items']);
+			return $options;
+		});
+	}
+
+	/**
+	 * Shares the chosen pieces of a programme with the choir members: one
+	 * link per piece, or an existing one extended (milestone 0.19).
+	 *
+	 * @param list<int> $items
+	 */
+	#[NoAdminRequired]
+	#[RequiresModule('excerpt_links')]
+	#[RequiresModule('member_links')]
+	#[UserRateLimit(limit: 30, period: 600)]
+	#[FrontpageRoute(verb: 'POST', url: '/api/events/{id}/share', requirements: ['id' => '\d+'])]
+	public function share(int $id, array $items = [], ?string $expires = null, ?string $note = null, bool $scan = false): JSONResponse {
+		return $this->run(function (string $uid) use ($id, $items, $expires, $note, $scan) {
+			$result = $this->programmeShare->share($id, ['items' => $items, 'expires' => $expires, 'note' => $note, 'scan' => $scan], $uid);
+			$result['failed'] = array_map(fn (array $failed): array => ['reason' => $this->reasonText($failed['reason'])] + $failed, $result['failed']);
+			return $result;
+		});
+	}
+
+	/**
+	 * @param array{message: string, parameters: list<string|int>}|null $reason
+	 */
+	private function reasonText(?array $reason): ?string {
+		return $reason === null ? null : $this->l->t($reason['message'], $reason['parameters']);
 	}
 }

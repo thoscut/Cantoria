@@ -72,7 +72,7 @@ class PublicRepertoireController extends Controller {
 			// string extraction reads lib/)
 			'texts' => [
 				'heading' => $this->l->t('Repertoire in the public domain'),
-				'intro' => $this->l->t('Works from our repertoire that are in the public domain. The links lead to the free score libraries CPDL and IMSLP on the internet.'),
+				'intro' => $this->l->t('Works from our repertoire that are in the public domain. The links lead to the score libraries CPDL and IMSLP on the internet. Not every edition offered there is free in every country.'),
 				'empty' => $this->l->t('No works are listed yet.'),
 				'composer' => $this->l->t('Composer'),
 				'lyricist' => $this->l->t('Lyricist'),

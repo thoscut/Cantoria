@@ -20,6 +20,7 @@
  * with the arrow keys.
  */
 import type { Click, CountInBars } from '../score/countIn.ts'
+import type { RecorderState, VoiceOption } from '../components/PlaybackSettings.vue'
 import type { MemberPracticeAudioInput } from '../types.ts'
 import type { PlayMode, ScorePlayer as ScorePlayerType } from '../score/player.ts'
 import type { PracticePart } from '../score/practice.ts'
@@ -31,24 +32,19 @@ import type { Timeline } from '../score/timeline.ts'
 import type { VerovioToolkit } from '../score/toolkit.ts'
 import type { Voice } from '../score/voices.ts'
 
-import { mdiAlertCircleOutline, mdiChevronUp, mdiDownload, mdiMagnifyMinusOutline, mdiMagnifyPlusOutline, mdiPause, mdiPlay, mdiStop, mdiTuneVariant } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiChevronUp, mdiDownload, mdiMagnifyMinusOutline, mdiMagnifyPlusOutline, mdiPause, mdiPlay, mdiRecordCircleOutline, mdiStop, mdiTuneVariant } from '@mdi/js'
 import { n, t } from '../l10n.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcRadioGroup from '@nextcloud/vue/components/NcRadioGroup'
 import NcRadioGroupButton from '@nextcloud/vue/components/NcRadioGroupButton'
-import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
+import PlaybackSettings from '../components/PlaybackSettings.vue'
 import PracticeLyrics from '../components/PracticeLyrics.vue'
-import PracticeMarks from '../components/PracticeMarks.vue'
 import PracticePitch from '../components/PracticePitch.vue'
-import PracticeRecorder from '../components/PracticeRecorder.vue'
-import PracticeTools from '../components/PracticeTools.vue'
 import { startingTonesText, transposeText } from '../practiceLabels.ts'
 import { countInFor, metronomeClicks, slotAt, storeCountIn, storedCountIn } from '../score/countIn.ts'
 import { markFocus } from '../score/emphasis.ts'
@@ -60,7 +56,7 @@ import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { partGains, practiceFileName, practiceMidi, SAMPLE_RATE } from '../score/practice.ts'
 import { mixChanged, mixedGains, startingTones, transposedFifths, transposeTimeline } from '../score/practising.ts'
-import { moveOldMarks, sharedPieceKey, storedPracticeSettings, storePracticeSettings } from '../score/practiceSettings.ts'
+import { sharedPieceKey, storedPracticeSettings, storePracticeSettings } from '../score/practiceSettings.ts'
 import { RenderCancelled, renderTimeline } from '../score/render.ts'
 import { sanitizeSvg } from '../score/sanitize.ts'
 import { measureStarts, nextPass, noteStarts } from '../score/timeline.ts'
@@ -106,17 +102,16 @@ const props = withDefaults(defineProps<{
 })
 
 const summaryId = useId()
-const tempoId = useId()
-const tempoHintId = useId()
 const exportStatusId = useId()
 const scoreHintId = useId()
 const settingsId = useId()
 
 /**
- * The settings below the bar: shown on a large screen, folded on a phone,
- * so that the score starts high up (the bar with play and size stays).
+ * The settings below the bar: shown on a large screen, folded on a phone
+ * and on a low screen (a phone held sideways), so that the score starts
+ * high up (the bar with play and size stays).
  */
-const settingsShown = ref(window.matchMedia?.('(min-width: 1024px)').matches ?? true)
+const settingsShown = ref(window.matchMedia?.('(min-width: 1024px) and (min-height: 640px)').matches ?? true)
 
 // ---- loading ----------------------------------------------------------------
 
@@ -289,6 +284,13 @@ function indexElements(): void {
 // ---- voices -----------------------------------------------------------------
 
 const focusKey = ref('')
+/** A recording of oneself runs, or waits unsaved (milestone 0.19) */
+const recorderState = ref<RecorderState>('idle')
+/** For the page: a recording would be lost when another piece is opened */
+const unsavedRecording = defineModel<boolean>('unsavedRecording', { default: false })
+watch(recorderState, (state) => {
+	unsavedRecording.value = state !== 'idle'
+})
 
 /**
  * Name of a voice for display.
@@ -299,11 +301,6 @@ function labelOf(voice: Voice): string {
 	return voiceLabel(voice, (part, number, staff) => part !== ''
 		? t('cantoria', '{part}, voice {number}', { part, number })
 		: t('cantoria', 'Staff {staff}, voice {number}', { staff, number }))
-}
-
-interface VoiceOption {
-	id: string
-	label: string
 }
 
 const voiceOptions = computed<VoiceOption[]>(() => [
@@ -342,7 +339,6 @@ const countInChoice = computed<'0' | '1' | '2'>({
 	},
 })
 // Passages and settings remembered per piece in this browser (milestone 0.15)
-moveOldMarks(props.practiceKey, props.title, props.composer)
 const marksKey = sharedPieceKey(props.practiceKey, props.title, props.composer)
 const remembered = props.practiceKey ? storedPracticeSettings(props.practiceKey, [TEMPO_MIN, TEMPO_MAX]) : null
 // the own tempo, unless the link now suggests another one
@@ -1132,8 +1128,15 @@ onBeforeUnmount(() => {
 					<template #icon>
 						<NcIconSvgWrapper :path="settingsShown ? mdiChevronUp : mdiTuneVariant" />
 					</template>
-					<span class="excerpt-viewer__settings-label">{{ t('cantoria', 'Settings') }}</span>
+					<span class="excerpt-viewer__settings-label">{{ t('cantoria', 'Voice, measures and practising') }}</span>
 				</NcButton>
+				<!-- e.g. "Next: …" of the concert folder, in reach while the score scrolls -->
+				<slot name="bar" />
+				<!-- A running recording stays in view while its tool is folded; Stop ends it -->
+				<span v-if="recorderState === 'recording'" class="excerpt-viewer__recording">
+					<NcIconSvgWrapper :path="mdiRecordCircleOutline" :size="20" aria-hidden="true" />
+					{{ t('cantoria', 'Recording …') }}
+				</span>
 				<!-- The lyrics stay in view with the bar while the score scrolls -->
 				<PracticeLyrics v-if="canPlay && lyricsVoice"
 					v-model:shown="lyricsShown"
@@ -1158,119 +1161,60 @@ onBeforeUnmount(() => {
 			</NcNoteCard>
 
 			<div v-show="settingsShown" :id="settingsId" class="excerpt-viewer__controls">
-				<section v-if="canPlay" class="excerpt-viewer__group" :aria-label="t('cantoria', 'Playback')">
-					<NcRadioGroup v-model="mode" :label="t('cantoria', 'Voices during playback')">
-						<NcRadioGroupButton value="all" :label="t('cantoria', 'All equal')" />
-						<NcRadioGroupButton value="focus"
-							:label="t('cantoria', 'Focus voice louder')"
-							:disabled="!focusVoice" />
-						<NcRadioGroupButton value="solo"
-							:label="t('cantoria', 'Focus voice only')"
-							:disabled="!focusVoice" />
-					</NcRadioGroup>
-					<label class="excerpt-viewer__slider" :for="tempoId">
-						<span>{{ tempoText }}</span>
-						<input :id="tempoId"
-							v-model.number="tempoPercent"
-							type="range"
-							:min="TEMPO_MIN"
-							:max="TEMPO_MAX"
-							step="5"
-							:aria-describedby="tempoHintId"
-							:aria-valuetext="t('cantoria', '{percent} % of the tempo', { percent: tempoPercent })">
-						<span :id="tempoHintId" class="excerpt-viewer__hint">{{ t('cantoria', 'Percent of the tempo in the score.') }}</span>
-					</label>
-					<NcRadioGroup v-model="countInChoice" :label="t('cantoria', 'Count-in')">
-						<NcRadioGroupButton value="0" :label="t('cantoria', 'Off')" />
-						<NcRadioGroupButton value="1" :label="t('cantoria', '1 bar')" />
-						<NcRadioGroupButton value="2" :label="t('cantoria', '2 bars')" />
-					</NcRadioGroup>
-					<div class="excerpt-viewer__switches">
-						<NcCheckboxRadioSwitch v-model="repeats" type="switch">
-							{{ t('cantoria', 'Play repeats') }}
-						</NcCheckboxRadioSwitch>
-						<NcCheckboxRadioSwitch v-model="loop" type="switch">
-							{{ t('cantoria', 'Loop') }}
-						</NcCheckboxRadioSwitch>
-					</div>
-					<PracticeTools v-model:mix="mix"
-						v-model:transpose="transpose"
-						v-model:metronome="metronome"
-						:voices="mixerVoices"
-						:playing="playing"
-						@tones="giveStartingTones" />
-					<PracticeLyrics v-if="lyricsVoice"
-						v-model:shown="lyricsShown"
-						v-model:step="lyricsStep"
-						part="choices"
-						:syllables="syllables"
-						:position="position"
-						:voice-label="labelOf(lyricsVoice)" />
-					<PracticePitch v-model:shown="pitchShown"
-						v-model:problem="pitchProblem"
-						part="choices"
-						:notes="pitchNotes"
-						:position="position"
-						:playing="playing"
-						:voice-label="focusVoice ? labelOf(focusVoice) : null"
-						:fifths="soundFifths"
-						@announce="announce" />
-					<PracticeMarks :piece="marksKey"
-						:from="shownNumbers.first"
-						:to="shownNumbers.last"
-						@apply="applyMark"
-						@announce="announce" />
-					<PracticeRecorder :title="title"
-						:playing="playing"
-						:position="playbackPosition"
-						:start-playback="playFrom"
-						:pause-playback="pausePlayback"
-						@announce="announce" />
-				</section>
-
-				<NcSelect v-model="focusOption"
-					class="excerpt-viewer__voice"
-					:input-label="t('cantoria', 'Focus voice')"
-					:options="voiceOptions"
-					:clearable="false"
-					:searchable="false" />
-
-				<section class="excerpt-viewer__group" :aria-label="t('cantoria', 'Measures')">
-					<form class="excerpt-viewer__buttons" @submit.prevent="applyRange">
-						<!-- NcTextField puts a class on its input, not on its box: the width is set here -->
-						<div class="excerpt-viewer__measure-field">
-							<NcTextField v-model="rangeFrom"
-								:label="t('cantoria', 'From measure')"
-								:error="rangeError !== ''" />
-						</div>
-						<div class="excerpt-viewer__measure-field">
-							<NcTextField v-model="rangeTo"
-								:label="t('cantoria', 'To measure')"
-								:error="rangeError !== ''" />
-						</div>
-						<NcButton type="submit">
-							{{ t('cantoria', 'Show') }}
-						</NcButton>
-						<NcButton v-if="range" variant="tertiary" @click="showAllMeasures">
-							{{ t('cantoria', 'All measures') }}
-						</NcButton>
-					</form>
-				</section>
+				<PlaybackSettings v-model:focus="focusOption"
+					v-model:mode="mode"
+					v-model:range-from="rangeFrom"
+					v-model:range-to="rangeTo"
+					v-model:loop="loop"
+					v-model:tempo="tempoPercent"
+					v-model:count-in="countInChoice"
+					v-model:repeats="repeats"
+					v-model:mix="mix"
+					v-model:transpose="transpose"
+					v-model:metronome="metronome"
+					v-model:lyrics-shown="lyricsShown"
+					v-model:lyrics-step="lyricsStep"
+					v-model:pitch-shown="pitchShown"
+					v-model:pitch-problem="pitchProblem"
+					v-model:recorder="recorderState"
+					:voice-options="voiceOptions"
+					:can-play="canPlay"
+					:range-active="range !== null"
+					:range-error="rangeError"
+					:range-hint="rangeHint"
+					:tempo-label="tempoText"
+					:tempo-min="TEMPO_MIN"
+					:tempo-max="TEMPO_MAX"
+					:tempo-hint="t('cantoria', 'Percent of the tempo in the score.')"
+					:mixer-voices="mixerVoices"
+					:playing="playing"
+					:lyrics-voice-label="lyricsVoice ? labelOf(lyricsVoice) : null"
+					:syllables="syllables"
+					:position="position"
+					:pitch-voice-label="focusVoice ? labelOf(focusVoice) : null"
+					:pitch-notes="pitchNotes"
+					:fifths="soundFifths"
+					:marks-key="marksKey"
+					:shown-from="shownNumbers.first"
+					:shown-to="shownNumbers.last"
+					:title="title"
+					:playback-position="playbackPosition"
+					:start-playback="playFrom"
+					:pause-playback="pausePlayback"
+					@apply-range="applyRange"
+					@show-all="showAllMeasures"
+					@tones="giveStartingTones"
+					@apply-mark="applyMark"
+					@announce="announce" />
 			</div>
-			<p v-if="rangeError" class="excerpt-viewer__error" role="alert">
+			<p v-if="!settingsShown && rangeError" class="excerpt-viewer__error" role="alert">
 				{{ rangeError }}
-			</p>
-			<p class="excerpt-viewer__hint">
-				{{ rangeHint }}
-				<template v-if="canPlay">
-					{{ t('cantoria', '"Loop" plays the shown measures again and again.') }}
-				</template>
 			</p>
 
 			<p :id="summaryId" class="excerpt-viewer__summary">
 				{{ summary }}
 				<template v-if="canPlay">
-					· {{ t('cantoria', 'Click a note to play from there.') }}
+					· {{ t('cantoria', 'Tap or click a note to play from there.') }}
 				</template>
 			</p>
 			<p v-if="canPlay" :id="scoreHintId" class="hidden-visually">
@@ -1311,7 +1255,7 @@ onBeforeUnmount(() => {
 					{{ t('cantoria', 'Practice file') }}
 				</h3>
 				<p class="excerpt-viewer__hint">
-					{{ t('cantoria', 'A practice file of the shown measures ({measures}) for your own practising, made in your browser from the playback above: {choice}. Choose the voice and "Focus voice louder" or "Focus voice only" above. Every practice file is recorded in the audit log of the music archive.', { measures: rangeText, choice: exportChoice }) }}
+					{{ t('cantoria', 'A practice file of the shown measures ({measures}), made in your browser from the playback: {choice}. The voice and how it sounds are set under "Voice, measures and practising". Every practice file is recorded in the audit log of the music archive.', { measures: rangeText, choice: exportChoice }) }}
 				</p>
 				<div class="excerpt-viewer__buttons">
 					<NcRadioGroup v-model="format" :label="t('cantoria', 'Format')">
@@ -1388,15 +1332,11 @@ onBeforeUnmount(() => {
 }
 
 .excerpt-viewer__controls {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-start;
-	gap: calc(2 * var(--default-grid-baseline)) calc(6 * var(--default-grid-baseline));
+	padding-bottom: calc(2 * var(--default-grid-baseline));
+	border-bottom: 1px solid var(--color-border);
 }
 
-.excerpt-viewer__group,
-.excerpt-viewer__buttons,
-.excerpt-viewer__switches {
+.excerpt-viewer__buttons {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;
@@ -1404,33 +1344,18 @@ onBeforeUnmount(() => {
 	min-width: 0;
 }
 
-.excerpt-viewer__group {
-	gap: calc(2 * var(--default-grid-baseline)) calc(4 * var(--default-grid-baseline));
+.excerpt-viewer__recording {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
+	color: var(--color-error-text, var(--color-error));
+	font-weight: bold;
 }
 
 .excerpt-viewer__note {
 	flex: 1 1 20em;
 }
 
-.excerpt-viewer__voice {
-	min-width: 14em;
-}
-
-.excerpt-viewer__slider {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	min-width: 12em;
-}
-
-.excerpt-viewer__slider input[type='range'] {
-	width: 100%;
-	min-height: var(--default-clickable-area);
-	margin: 0;
-	accent-color: var(--color-primary-element);
-}
-
-.excerpt-viewer__slider input[type='range']:focus-visible,
 .excerpt-viewer__score:focus-visible,
 .excerpt-viewer__description summary:focus-visible {
 	outline: 2px solid var(--color-main-text);
@@ -1440,10 +1365,6 @@ onBeforeUnmount(() => {
 .excerpt-viewer__hint,
 .excerpt-viewer__summary {
 	color: var(--color-text-maxcontrast);
-}
-
-.excerpt-viewer__measure-field {
-	width: 8em;
 }
 
 .excerpt-viewer__error {
@@ -1550,6 +1471,60 @@ onBeforeUnmount(() => {
 	transform-origin: center;
 }
 
+/* Windows contrast themes: system colours for the score (see ScoreViewer.vue) */
+@media (forced-colors: active) {
+	.excerpt-viewer__page :deep(svg.definition-scale),
+	.excerpt-viewer__page :deep(.score-muted .score-shared) {
+		color: CanvasText;
+		fill: CanvasText;
+	}
+
+	.excerpt-viewer__page :deep(g.layer.score-focus) {
+		color: Highlight;
+		fill: Highlight;
+	}
+
+	.excerpt-viewer__page :deep(.score-muted) {
+		color: GrayText;
+		fill: GrayText;
+	}
+
+	.excerpt-viewer__page :deep(g.note.score-playing) {
+		color: LinkText;
+		fill: LinkText;
+	}
+}
+
+/* Printing: the score only, black on white, the focus voice bold */
+@media print {
+	.excerpt-viewer > :not(.excerpt-viewer__score):not(.excerpt-viewer__reference) {
+		display: none !important;
+	}
+
+	.excerpt-viewer__score {
+		height: auto !important;
+		overflow: visible !important;
+		border: none;
+	}
+
+	.excerpt-viewer__page {
+		break-inside: avoid;
+	}
+
+	.excerpt-viewer__page :deep(svg.definition-scale),
+	.excerpt-viewer__page :deep(g.layer.score-focus),
+	.excerpt-viewer__page :deep(.score-muted),
+	.excerpt-viewer__page :deep(g.note.score-playing) {
+		color: #000;
+		fill: #000;
+	}
+
+	.excerpt-viewer__page :deep(g.note.score-playing g.notehead) {
+		stroke: none;
+		transform: none;
+	}
+}
+
 @media (min-width: 1024px) and (min-height: 640px) {
 	.excerpt-viewer__score {
 		height: max(16em, min(65vh, 40em));
@@ -1576,10 +1551,12 @@ onBeforeUnmount(() => {
 	}
 }
 
-@media (max-width: 512px) {
-	.excerpt-viewer__slider,
-	.excerpt-viewer__voice {
-		min-width: 100%;
+/* A low screen, e.g. a phone held sideways: the bar never takes more
+   than part of the height, so that the score stays in view */
+@media (max-height: 560px) {
+	.excerpt-viewer__bar {
+		max-height: 45vh;
+		overflow-y: auto;
 	}
 }
 </style>

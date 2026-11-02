@@ -219,6 +219,27 @@ export function hasActiveFilters(filters: Filters): boolean {
 }
 
 /**
+ * How many filters besides the search are set: the number on the button
+ * that opens the filters on a phone.
+ *
+ * @param filters - current filters
+ */
+export function activeFilterCount(filters: Filters): number {
+	return [
+		filters.binder !== null,
+		filters.rightsStatus !== null,
+		filters.repertoire !== null,
+		filters.musicxml,
+		filters.preservationCopy,
+		filters.status !== DEFAULT_FILTERS.status,
+		filters.unconfirmed,
+		filters.noValidVersion,
+		filters.reviewOpen,
+		filters.copiesUnlicensed,
+	].filter(Boolean).length
+}
+
+/**
  * Apply search and filters.
  *
  * A shelf mark in the search field matches exactly (and ignores the status

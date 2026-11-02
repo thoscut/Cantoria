@@ -8,7 +8,7 @@ Daily work with the app is described in the [user guide](user-guide.md).
 
 **Contents**
 
-- [Setting up in five steps](#setting-up-in-five-steps) – the short way
+- [Setting up in six steps](#setting-up-in-six-steps) – the short way
 1. [Installation](#1-installation)
 2. [Roles and groups](#2-roles-and-groups) – the settings page, giving it to a group
 3. [Archive folder](#3-archive-folder) – sharing it, the access check
@@ -27,10 +27,10 @@ Daily work with the app is described in the [user guide](user-guide.md).
 16. [Mirror folder for the print station](#16-mirror-folder-for-the-print-station)
 - [Common problems](#common-problems) – a message, its cause and what to do
 
-## Setting up in five steps
+## Setting up in six steps
 
-After the [installation](#1-installation), open **Administration → Music
-archive**. The list **Setting up** at the top of the page shows these five
+After the [installation](#1-installation), open **Administration →
+Cantoria**. The list **Setting up** at the top of the page shows these six
 steps, each as *done*, *missing* or *problem*, with a link to the place where
 it is done.
 
@@ -43,15 +43,22 @@ it is done.
 3. **Access to the archive folder** – share the folder with the groups of the
    roles (reading is enough) and **Check access** until nobody is listed
    ([Sharing the archive folder](#sharing-the-archive-folder)).
-4. **Import the catalog** – a music librarian, in the app: **Archive
+4. **Functions for your choir** – under **What should Cantoria do for your
+   choir?**, choose what you use the app for: keeping the archive in order,
+   planning concerts, practising for the singers or public pages
+   ([What should Cantoria do for your choir?](#what-should-cantoria-do-for-your-choir)).
+   The step is done once the administration has chosen something here or
+   changed a switch.
+5. **Import the catalog** – a music librarian, in the app: **Archive
    management → Import catalog**, a dry run first
    ([section 4](#4-first-import)).
-5. **File sync** – a music librarian, in the app: **Archive management →
+6. **File sync** – a music librarian, in the app: **Archive management →
    Run file sync**; it links the files of the archive folder to the copies.
 
-Steps 1 to 3 can also be done by a group you give the settings page
-([Giving the settings to a group](#giving-the-settings-to-a-group)); steps 4
-and 5 need the catalog role. To try the app first, use the
+Steps 1 to 4 can also be done by a group you give the settings page
+([Giving the settings to a group](#giving-the-settings-to-a-group)); only
+admins switch on what opens the archive to choir members, the public or
+tools. Steps 5 and 6 need the catalog role. To try the app first, use the
 [demo data](../tools/demo/README.md).
 
 ## 1. Installation
@@ -376,14 +383,7 @@ every archive file), as the account that set the archive folder. A snapshot
 is kept for years and therefore names **nobody**: it holds the catalog
 without accounts, without the folder book, the audit log, tasks, proposals
 and links. The checksums come from the checksum job while a file is
-unchanged since, otherwise they are computed. Snapshots made before 0.10
-still hold names; delete them when you no longer need them.
-
-**Updating from a version before 0.10.** Earlier versions wrote backups and
-snapshots into `_cantoria-app` inside the archive folder. The first
-backup after the update moves them into the backup folder. Whatever cannot
-be moved (for example without permission to delete in the archive folder)
-is named on the settings page; move it by hand or delete it.
+unchanged since, otherwise they are computed.
 
 Open the CSV files in a spreadsheet program
 through its import dialog (all columns as text) rather than by double-click,
@@ -541,7 +541,7 @@ commands are a convenience for self-hosted instances:
 | `occ cantoria:export [--extended] [--full]` | writes the catalog CSV, all fields, or the complete backup (JSON) to standard output |
 | `occ cantoria:file-sync <account>` | runs the file sync; refused (exit code 1) while another one is running |
 | `occ cantoria:restore <file> [<account>]` | restores a complete backup into an empty catalog |
-| `occ cantoria:modules list\|enable\|disable\|preset` | shows and switches the modules (section 12) |
+| `occ cantoria:modules list\|enable\|disable\|preset\|scenario` | shows and switches the modules (section 12) |
 | `occ cantoria:privacy-report <account or name>` | writes what the app stores about a person as JSON (access, Art. 15 GDPR; section 10) |
 | `occ cantoria:privacy-erase <account or name> [--execute]` | removes a person from the folder book and the audit log (erasure, Art. 17 GDPR); a dry run unless `--execute` is given |
 
@@ -632,8 +632,8 @@ problem, is in the [accessibility statement](accessibility.md).
 ## 12. Modules and presets
 
 Not every choir needs every function. Everything outside the core is a
-**module** that admins switch on and off under **Administration → Music
-archive → Modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
+**module** that admins switch on and off under **Administration →
+Cantoria → Modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
 fields, search, status), the start page, the file sync with the archive
 folder, roles, the audit log, CSV import and export, backup and restore, and
 the settings.
@@ -661,13 +661,41 @@ Rules:
 Every change of a switch is recorded in the audit log (object type
 `settings`).
 
+### What should Cantoria do for your choir?
+
+Instead of looking for single modules, choose at the top of the page what
+your choir uses the app for. Each choice says what the rights must allow
+for it and asks first, with the list of the switches that change:
+
+| Choice | Switches on |
+|---|---|
+| **Keep the archive in order** | the preset **Simple**: catalog, files and the score view with playback |
+| **Archive, rights and concerts** | the preset **Standard** and the concert folder |
+| **Also practising for the singers** | also "Shared with me" for the choir members, their practice files and practising without a network (with everything they need, e.g. the practice audio files) |
+| **Also public pages** | also public links and the public repertoire page |
+
+The choices build on each other; a narrower one switches off what only the
+wider ones need (the data stay). The interface for agents, the mirror
+folder of the print station and the hand-over folder for a choir system
+stay as they are. Above them the page says which choice the switches match
+at the moment, for example *Currently closest to "Archive, rights and
+concerts", with 2 differences: Statistics (on), Calendar (off).* The single
+switches below can be changed at any time; the notifications are folded.
+
+Choir members see only versions released for the singers' portal; a piece
+can be kept on a device only with confirmed public domain or a license for
+download or self-printing, and the role "Choir members" needs a group.
+Public pages need confirmed public domain or a license for online
+publication; enter the imprint and the privacy policy under
+**Administration → Theming** first.
+
 ### Presets
 
 | Preset | Switches on |
 |---|---|
 | **Simple** | the core, the score view with playback and the notifications (of the core only the one about a failed weekly backup is left) |
 | **Standard** | everything except practice audio files, the print station, the proposals inbox, checksums, the folder book, annual snapshots and statistics |
-| **Complete** | everything except the interface for agents, the four sharing modules and the mirror folder for the print station |
+| **Complete** | everything except the interface for agents, the modules for sharing and for practising without a network, the concert folder, the mirror folder for the print station and the hand-over folder for a choir system |
 
 A preset sets every switch at once; the settings ask first and list what
 changes.
@@ -711,8 +739,7 @@ MusicXML of the copies once to record revision 1 with its checksum; on a
 large archive that sync takes a little longer. It runs as the account that
 starts the file sync, which needs access to the archive folder.
 
-**Existing installations** keep every function: an update from a version
-before 0.1.27 stores all switches as on. The switches are stored on every
+The switches are stored on every
 installation and update, so a later change of the defaults never switches
 anything at an existing installation; a module added by a later version gets
 its default. The **interface for agents** starts off everywhere and is
@@ -768,7 +795,7 @@ writes files into a folder others can open (see section 16).
 | Practice audio for choir members | Links for choir members, Practice audio files | off (in no preset) | Choir members make no practice files; the server refuses every request. |
 | Public links | Excerpt links, Playback, Publication | off (in no preset) | Every public link answers the same 404 page; no new public links. Existing links are kept and expire as before. |
 | Public repertoire page | Rights confirmation and licenses | off (in no preset) | `/apps/cantoria/repertoire` answers 404; the work fields for the page are hidden. |
-| Practising without a network | – | off (in no preset) | Nothing can be kept on a device from "Shared with me" or a public link; the next visit with a network removes what was kept there. |
+| Practising without a network | – | off (in no preset) | Nothing can be kept on a device from "Shared with me", a public link or the concert folder; the next visit with a network removes what was kept there. Works only together with **Links for choir members**, **Public links** or **Concert folder**. |
 | Interface for agents | – | off (in no preset) | The API for agents (`/ocs/v2.php/apps/cantoria/api/v1/…`) answers 404; the MCP server reports the interface as switched off. Nothing else changes. |
 
 ### Command line
@@ -781,6 +808,7 @@ occ cantoria:modules list            # table: switch, active, needs (--json for 
 occ cantoria:modules enable calendar # also switches on "concerts" if needed
 occ cantoria:modules disable statistics practice_audio
 occ cantoria:modules preset standard # simple | standard | complete
+occ cantoria:modules scenario singers # archive | concerts | singers | public
 ```
 
 Module keys are listed in `docs/api.md` ("Modules and the personal view").
@@ -866,7 +894,7 @@ one by one, after the choir has decided.
 | **Practice audio for choir members** | Choir members make a WAV or MIDI file of one voice of such a piece or excerpt, where the rights allow practice audio files. Every file is recorded in the audit log. |
 | **Public links** | A link that shows and plays a whole piece or an excerpt without login (`/apps/cantoria/p/<token>`), optionally with the scan (PDF). Only for versions released for publication that are confirmed public domain or have a license for online publication. |
 | **Public repertoire page** | `/apps/cantoria/repertoire`: the works the catalog librarian chooses among those with a version confirmed as public domain, with life dates, scoring and links to CPDL and IMSLP. |
-| **Practising without a network** | Choir members keep pieces of "Shared with me" on their device and view, play and practise them there without a network: in the browser, no app to install. Only for links whose version choir members may save and print. With **Public links**, visitors can keep a public link the same way, only where the public domain of the version is confirmed. |
+| **Practising without a network** | Choir members make pieces of "Shared with me" available without a network on their device and view, play and practise them there: in the browser, no app to install. Only for links whose version choir members may save and print. With **Public links**, visitors can take a public link along the same way, only where the public domain of the version is confirmed; with the **Concert folder**, the conductor a programme. |
 
 Whatever the switches say, choir members and the public only ever get the
 content for the view (the whole piece or the measures of an excerpt), never
@@ -914,7 +942,7 @@ counted, but without names.
 enable offline`):
 
 - **What is kept, and where.** Nothing is kept until a choir member chooses
-  **Keep on this device** for a piece, optionally **With the scan (PDF)**.
+  **Available without a network** for a piece, optionally **With the scan (PDF)**.
   Then the notes of the link, the scan if chosen, the page "Shared with me"
   and its scripts are stored in the browser of that device (a service
   worker of the app at `/apps/cantoria/offline-worker`, which only
@@ -930,14 +958,19 @@ enable offline`):
   ones are removed. Without a check for 30 days the kept pieces are locked,
   and an expired link is never shown, also without a network. A piece shown
   from the device does not count as a call of the link.
-- **Devices.** It needs HTTPS and a current browser. On iPhone and iPad,
-  add the page to the home screen: otherwise Safari may delete the kept
-  pieces after some days without use. On a shared device, choir members
+- **Devices.** It needs HTTPS and a current browser. Pieces are kept per
+  browser, not per device. On iPhone and iPad, add the page to the home
+  screen first, open it from there and then switch the pieces on: the home
+  screen has a storage and a sign-in of its own, apart from Safari, and
+  Safari may delete what it kept after some days without use. The page
+  says so before the first piece. At every start with a network the page
+  keeps its scripts again, so that it opens without a network also after an
+  update of the app. On a shared device, choir members
   delete everything with **Delete everything on this device**; signing out
   of Nextcloud does not delete it. When another account opens the page in
   the same browser, the pieces of the previous one are removed.
 - **Public links.** Where the public domain of the version is confirmed,
-  the page of a public link offers **Keep on this device**, too. Visitors
+  the page of a public link offers **Available without a network**, too. Visitors
   have no account, so their pieces are kept per browser; each visit with a
   network is the check, and a revoked or expired link is removed from the
   device at the next one. A license is never enough here: it covers the
@@ -950,14 +983,20 @@ enable offline`):
 enable concert_folder`, group **Concerts and repertoire**, in no preset):
 the conductor and the catalog librarian get a page of their own,
 `/apps/cantoria/concert-folder` (also in the navigation), with the
-programmes still to be sung and the score and scan of each item; a whole
-programme can be kept on the device for the rehearsal and the concert
-without a network. The rights are those of the score view; an internal
-preservation copy is never kept on a device. It uses the same service
+programmes still to be sung and the score and scan of each item, also in a
+stage view that keeps the screen on. Viewing follows the rights of the
+score view; the folder does not open an internal preservation copy, which
+is a copy for the archive and no material for the rehearsal and the
+concert. With the module **Practising without a network** a whole
+programme can be kept on the device for the rehearsal and the concert, but
+only the pieces whose rights allow a copy: confirmed public domain, or a
+license for download or self-printing (§ 53 (4) UrhG; a copy that stays on
+the tablet for weeks is more than viewing). It uses the same service
 worker, with a cache of its own, the same check at every start with a
 network and the same lock after 30 days. The folder only reads. Another
 account in the same browser, or a visit without the role, removes what was
-kept. It does not need the module **Practising without a network**.
+kept; with **Practising without a network** off, the next visit removes
+everything.
 
 **Common problems:**
 
@@ -970,7 +1009,7 @@ kept. It does not need the module **Practising without a network**.
 | "The score of this link is not available at the moment." or "The scan of this link is not available at the moment." | The account that chose the archive folder (Settings → Archive folder) must still exist and see the folder, and the MusicXML file or the PDF scan must still be in it and linked to the copy. |
 | A public scan shows "not found" | The same reasons as for the page, or the PDF is no longer in the archive folder; make a new link with the scan linked again. |
 | A public link shows "not found" | It has expired, was revoked, the version is no longer released, or the module is off; the page does not tell which. Make a new link if needed. |
-| **Keep on this device** is missing | The module **Practising without a network** is off, or the browser cannot keep pieces (no HTTPS, a private window); the page says so under **On this device**. For a single piece it says "Cannot be kept on this device" when the rights do not allow saving. |
+| **Available without a network** is missing | The module **Practising without a network** is off, or the browser cannot keep pieces (no HTTPS, a private window); the page says so under **Without a network**. For a single piece it says "Not available without a network" with the reason when the rights do not allow a copy. |
 | Kept pieces are gone on an iPhone or iPad | Safari deletes the storage of a page after some days without use unless it was added to the home screen. Add it, open it once with a network and keep the pieces again. |
 
 ## 15. Folder book: retention period
@@ -1156,7 +1195,7 @@ cause and what to do.
 
 *"The file lies in a folder that is not shared with your account"*
 (*Die Noten können nicht angezeigt werden – Die Datei liegt in einem Ordner,
-der für dein Konto nicht freigegeben ist*). The same account also gets a note
+der nicht mit deinem Konto geteilt ist*). The same account also gets a note
 at the top of the app and on the tab "Files".
 
 - **Cause:** the app reads files only with the permissions of the person who

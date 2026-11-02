@@ -11,7 +11,7 @@
  */
 import type { RecordingProblem } from '../score/recording.ts'
 
-import { mdiContentSaveOutline, mdiDeleteOutline, mdiMicrophone, mdiPlay, mdiStop } from '@mdi/js'
+import { mdiContentSaveOutline, mdiDeleteOutline, mdiMicrophone, mdiPlay, mdiRecordCircleOutline, mdiStop } from '@mdi/js'
 import { t } from '../l10n.ts'
 import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -40,6 +40,14 @@ const emit = defineEmits<{
 type State = 'idle' | 'starting' | 'recording' | 'ready'
 
 const state = ref<State>('idle')
+/**
+ * For the view: a recording runs (shown in its bar, also while this tool is
+ * folded) or waits unsaved (the view asks before it is lost).
+ */
+const shownState = defineModel<'idle' | 'recording' | 'ready'>('state', { default: 'idle' })
+watch(state, (value) => {
+	shownState.value = value === 'starting' ? 'idle' : value
+})
 const problem = ref<RecordingProblem | null>(null)
 const recording = shallowRef<{ url: string, type: string, from: number } | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
@@ -168,7 +176,8 @@ onBeforeUnmount(() => {
 				{{ t('cantoria', 'Stop recording') }}
 			</NcButton>
 			<span v-if="state === 'recording'" class="practice-recorder__live">
-				● {{ t('cantoria', 'Recording …') }}
+				<NcIconSvgWrapper :path="mdiRecordCircleOutline" :size="20" aria-hidden="true" />
+				{{ t('cantoria', 'Recording …') }}
 			</span>
 		</div>
 		<p v-if="problem" class="practice-recorder__error" role="alert">
@@ -203,7 +212,7 @@ onBeforeUnmount(() => {
 			</div>
 		</template>
 		<p class="practice-recorder__hint">
-			{{ t('cantoria', 'The playback starts with the recording. The recording stays in this browser and is gone when you leave the page, unless you save it. Use headphones so that the accompaniment is not recorded, too.') }}
+			{{ t('cantoria', 'The playback starts with the recording. The recording stays in this browser until you leave the piece; save it to keep it. Use headphones.') }}
 		</p>
 	</div>
 </template>
@@ -212,18 +221,21 @@ onBeforeUnmount(() => {
 .practice-recorder {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--default-grid-baseline);
 	flex-basis: 100%;
 }
 
 .practice-recorder__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: calc(2 * var(--default-grid-baseline));
 	align-items: center;
 }
 
 .practice-recorder__live {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
 	color: var(--color-error-text, var(--color-error));
 	font-weight: bold;
 }

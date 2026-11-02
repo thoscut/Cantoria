@@ -20,6 +20,7 @@ use OCA\Cantoria\Exception\AccessDeniedException;
 use OCA\Cantoria\Exception\InvalidInputException;
 use OCA\Cantoria\Exception\NotFoundException;
 use OCA\Cantoria\Exception\UnknownLinkException;
+use OCA\Cantoria\Exception\UserFacingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IUserManager;
@@ -51,12 +52,13 @@ use OCP\IUserManager;
  * account.
  *
  * @psalm-type LinkView = array<string, string|int|bool|null>
- * @psalm-type CircleOption = array{available: bool, allowed: bool, reason: ?string, scan: bool, scanReason: ?string, playback: bool, practiceAudio: bool}
+ * @psalm-type CircleOption = array{available: bool, allowed: bool, reason: ?string, scan: bool, scanReason: ?string, playback: bool, practiceAudio: bool, offline: ?bool}
  * @psalm-type ScanOption = array{id: int, name: string}
  */
 class LinkService {
 	public const MAX_DAYS = 183;
-	private const CREATORS = [Roles::LIBRARIAN, Roles::CONDUCTOR, Roles::OPERATIONS];
+	/** Roles that make, extend and share links */
+	public const CREATORS = [Roles::LIBRARIAN, Roles::CONDUCTOR, Roles::OPERATIONS];
 	/** Fields a request may set when creating a link */
 	private const FIELDS = ['measure_from', 'measure_to', 'voice', 'verse', 'tempo', 'note', 'task_id', 'expires', 'circle', 'scan_file_id'];
 	/** The module of each circle beyond the archive roles */
@@ -138,13 +140,7 @@ class LinkService {
 		} else {
 			$scanFileId = null;
 		}
-		$latest = (new \DateTimeImmutable($today))->modify('+' . self::MAX_DAYS . ' days')->format('Y-m-d');
-		$expires = $values['expires'] ?? null;
-		if ($expires === null || $expires === '') {
-			$expires = $latest;
-		} elseif (!is_string($expires) || !FieldValue::isDate($expires) || $expires < $today || $expires > $latest) {
-			throw new InvalidInputException('The expiry date must lie between today and six months from now.');
-		}
+		$expires = self::expiry($values['expires'] ?? null, $today);
 
 		$link = new ExcerptLink();
 		$this->tokens->issue($link);
@@ -204,6 +200,76 @@ class LinkService {
 		}
 		if ($scanFileId !== null) {
 			$this->audit->record($operation, $uid, 'link', $link->getId(), 'created', 'scan_file_id', null, $scanFileId);
+		}
+		return $link;
+	}
+
+	/**
+	 * The last day of a link: given, between today and MAX_DAYS from today,
+	 * or else the latest.
+	 *
+	 * @throws InvalidInputException
+	 */
+	public static function expiry(mixed $value, string $today): string {
+		$latest = self::latestExpiry($today);
+		if ($value === null || $value === '') {
+			return $latest;
+		}
+		if (!is_string($value) || !FieldValue::isDate($value) || $value < $today || $value > $latest) {
+			throw new InvalidInputException('The expiry date must lie between today and six months from now.');
+		}
+		return $value;
+	}
+
+	/**
+	 * The latest last day a link made today may have.
+	 */
+	public static function latestExpiry(string $today): string {
+		return (new \DateTimeImmutable($today))->modify('+' . self::MAX_DAYS . ' days')->format('Y-m-d');
+	}
+
+	/**
+	 * Extends a link to a new last day and keeps its token (milestone 0.19):
+	 * what choir members keep on their devices stays, and a link sent by
+	 * message keeps working. For the creator and the catalog librarian; the
+	 * rights are checked again as when the link was made. An expired link
+	 * can be extended, a revoked one not.
+	 *
+	 * @param mixed $expires the new last day; empty: the latest
+	 * @throws UserFacingException
+	 */
+	public function extend(int $linkId, mixed $expires, string $uid): ExcerptLink {
+		$this->roles->requireRole($uid, self::CREATORS);
+		try {
+			$link = $this->links->find($linkId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException('Not found.');
+		}
+		if ($link->getCreatedBy() !== $uid && !$this->roles->hasAnyRole($uid, [Roles::LIBRARIAN])) {
+			throw new AccessDeniedException('Only the creator or the catalog librarian can extend this link.');
+		}
+		if ($link->getRevoked() !== null) {
+			throw new InvalidInputException('A revoked link cannot be extended. Please make a new one.');
+		}
+		$circle = $link->getCircle();
+		$module = self::CIRCLE_MODULES[$circle] ?? null;
+		if ($module !== null) {
+			$this->modules->requireEnabled($module);
+		}
+		[$version, , $copy] = $this->load($link->getCopyId(), $uid);
+		$today = $this->rights->today($uid);
+		if ($module !== null) {
+			$denial = $this->shareDenial($circle, $version, $today, $copy);
+			if ($denial !== null) {
+				throw new AccessDeniedException($denial);
+			}
+		}
+		$new = self::expiry($expires, $today);
+		$old = $link->getExpires();
+		if ($new !== $old) {
+			$link->setExpires($new);
+			$link = $this->links->update($link);
+			$this->audit->record($this->audit->newOperation(), $uid, 'link', $linkId, 'extended', 'expires', $old, $new);
 		}
 		return $link;
 	}
@@ -269,7 +335,7 @@ class LinkService {
 	private function circleOption(string $circle, WorkVersion $version, Copy $copy, bool $hasScore, string $today): array {
 		if (!$this->modules->isEnabled(self::CIRCLE_MODULES[$circle] ?? '')) {
 			return ['available' => false, 'allowed' => false, 'reason' => self::SWITCHED_OFF, 'scan' => false, 'scanReason' => null, 'playback' => false,
-				'practiceAudio' => false];
+				'practiceAudio' => false, 'offline' => null];
 		}
 		$members = $circle === ExcerptLink::CIRCLE_MEMBERS;
 		$denial = $this->shareDenial($circle, $version, $today, $copy) ?? ($hasScore ? null : self::NO_SCORE);
@@ -284,6 +350,9 @@ class LinkService {
 			'playback' => $denial === null && $playDenial === null,
 			'practiceAudio' => $members && $denial === null && $playDenial === null && $this->modules->isEnabled(Modules::MEMBER_PRACTICE_AUDIO)
 				&& $this->policy->memberPracticeAudioDenial($version, $today, $copy) === null,
+			// whether the recipients can keep it on their device (milestone 0.19); null: the module is off
+			'offline' => !$this->modules->isEnabled(Modules::OFFLINE) ? null
+				: $denial === null && ($members ? $scanDenial === null : $version->getRightsStatus() === 'public_domain' && $version->isConfirmed()),
 		];
 	}
 

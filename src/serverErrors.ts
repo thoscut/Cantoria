@@ -21,7 +21,7 @@ export function statusMessage(status: number, requestId = ''): string {
 		return t('cantoria', 'You are no longer logged in. Please reload the page and log in again.')
 	}
 	if (status === 403) {
-		return t('cantoria', 'Your account may not do this. Please ask the music librarians for the role you need.')
+		return t('cantoria', 'Your account may not do this. The administration assigns the roles; about a shared piece, ask the conductor.')
 	}
 	if (status === 404) {
 		return t('cantoria', 'This no longer exists or is switched off. Please reload the page.')

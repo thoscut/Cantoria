@@ -11,7 +11,7 @@
  * Pure functions, no Vue, easy to test. The server checks everything again.
  */
 import type { StartParams, ViewName } from './startParams.ts'
-import type { ModuleInfo, PersonalView } from './types.ts'
+import type { ModuleInfo, ModuleScenario, PersonalView } from './types.ts'
 
 import { dueTarget } from './dueTargets.ts'
 import { DEFAULT_VIEW } from './startParams.ts'
@@ -339,6 +339,26 @@ export function presetChanges(preset: Readonly<Record<string, boolean>>, modules
 		on: modules.filter((module) => preset[module.key] === true && !module.enabled),
 		off: modules.filter((module) => preset[module.key] === false && module.enabled),
 	}
+}
+
+/**
+ * The scenario the switches match, or come closest to (milestone 0.19):
+ * the one with the fewest differences, the first of equals. The
+ * differences are the modules whose switch is not as the scenario sets it.
+ *
+ * @param scenarios - the scenarios, from the narrowest to the widest
+ * @param modules - all modules of the settings
+ */
+export function closestScenario(scenarios: readonly ModuleScenario[], modules: readonly ModuleInfo[]): { scenario: ModuleScenario, differences: ModuleInfo[] } | null {
+	let best: { scenario: ModuleScenario, differences: ModuleInfo[] } | null = null
+	for (const scenario of scenarios) {
+		const { on, off } = presetChanges(scenario.modules, modules)
+		const differences = modules.filter((module) => on.includes(module) || off.includes(module))
+		if (best === null || differences.length < best.differences.length) {
+			best = { scenario, differences }
+		}
+	}
+	return best
 }
 
 /**

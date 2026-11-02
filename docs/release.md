@@ -88,7 +88,11 @@ The internal builds before 0.6.0 were numbered 0.1.x.
    [tests/README.md](../tests/README.md)); release only from a commit whose
    CI run is green. When the supported range in `<dependencies>` changes,
    change the Nextcloud versions of the `integration` job as well.
-4. Tag the version in the repository.
+4. Tag the version (`git tag -a v<version>`) and push the tag. The
+   workflow **Release** (`.github/workflows/release.yml`) builds the archive
+   twice from the tag, checks that both builds are the same bytes and keeps
+   the archive with its checksum as an artifact of the run. It does not sign
+   and does not upload.
 5. Build and sign on a machine with Node.js, PHP and a Nextcloud instance
    (for `occ integrity:sign-app`):
 
@@ -97,11 +101,18 @@ The internal builds before 0.6.0 were numbered 0.1.x.
    ```
 
    The script checks `appinfo/info.xml` against the app store schema (with
-   `xmllint`), builds the frontend and the translations, copies only the
-   runtime files together with the license texts (`LICENSES/`, `REUSE.toml`),
-   refuses to package internal or development files, writes the code
-   signature (`appinfo/signature.json`) into the archive and prints the
-   archive signature.
+   `xmllint`); for a final version (no `-dev.N`) it also needs a clean
+   working tree, the tag `v<version>` on `HEAD` and the entry in
+   `CHANGELOG.md`. It builds the frontend and the translations, copies only
+   the runtime files together with the license texts (`LICENSES/`,
+   `REUSE.toml`), adds the texts of the GPL, LGPL and SIL Open Font License
+   for the bundled Verovio and its music fonts (downloaded with a fixed
+   checksum), checks `js/third-party-licenses.txt` (every bundled package
+   with its license, written by the build), refuses to package internal or
+   development files, writes the code signature (`appinfo/signature.json`)
+   into the archive, checks the archive signature against the certificate
+   and prints it. The archive is reproducible: files sorted, times of the
+   last commit, no owner names.
 6. Attach `build/release/cantoria-<version>.tar.gz` to the release in the
    repository (the app store downloads it from a public HTTPS URL) and upload
    that URL with the printed signature on apps.nextcloud.com (account → upload

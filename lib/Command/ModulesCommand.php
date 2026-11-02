@@ -25,12 +25,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  *   occ cantoria:modules enable <module>…   (also switches on what they need)
  *   occ cantoria:modules disable <module>…  (names what stops working)
  *   occ cantoria:modules preset simple|standard|complete
+ *   occ cantoria:modules scenario archive|concerts|singers|public
  * Every changed switch is recorded in the audit log (without an account).
  *
  * @psalm-import-type ModuleChanges from ModuleSettings
  */
 class ModulesCommand extends Command {
-	private const ACTIONS = ['list', 'enable', 'disable', 'preset'];
+	private const ACTIONS = ['list', 'enable', 'disable', 'preset', 'scenario'];
 
 	public function __construct(
 		private Modules $modules,
@@ -42,10 +43,11 @@ class ModulesCommand extends Command {
 	#[\Override]
 	protected function configure(): void {
 		$this->setName('cantoria:modules')
-			->setDescription('List, switch on and off the modules of the music archive, or apply a preset')
+			->setDescription('List, switch on and off the modules of the music archive, or apply a preset or a scenario')
 			->addArgument('action', InputArgument::REQUIRED, implode('|', self::ACTIONS))
 			->addArgument('names', InputArgument::OPTIONAL | InputArgument::IS_ARRAY,
-				'modules (enable, disable) or the preset (' . implode(', ', Modules::PRESETS) . ')')
+				'modules (enable, disable), the preset (' . implode(', ', Modules::PRESETS) . ') or the scenario ('
+				. implode(', ', array_keys(Modules::SCENARIOS)) . ')')
 			->addOption('json', null, InputOption::VALUE_NONE, 'list: print JSON');
 	}
 
@@ -57,20 +59,27 @@ class ModulesCommand extends Command {
 			$this->list($output, $input->getOption('json') === true);
 			return 0;
 		}
-		if (!in_array($action, ['enable', 'disable', 'preset'], true)) {
+		if (!in_array($action, ['enable', 'disable', 'preset', 'scenario'], true)) {
 			$output->writeln('<error>Unknown action: ' . $action . ' (' . implode(', ', self::ACTIONS) . ')</error>');
 			return 1;
 		}
-		if ($action === 'preset' ? count($names) !== 1 : $names === []) {
-			$output->writeln($action === 'preset'
-				? '<error>Please name one preset: ' . implode(', ', Modules::PRESETS) . '</error>'
+		$single = match ($action) {
+			'preset' => Modules::PRESETS,
+			'scenario' => array_keys(Modules::SCENARIOS),
+			default => null,
+		};
+		if ($single !== null ? count($names) !== 1 : $names === []) {
+			$output->writeln($single !== null
+				? '<error>Please name one ' . $action . ': ' . implode(', ', $single) . '</error>'
 				: '<error>Please name at least one module.</error>');
 			return 1;
 		}
 		try {
-			$changes = $action === 'preset'
-				? $this->moduleSettings->applyPreset($names[0], null)
-				: $this->moduleSettings->change(array_fill_keys($names, $action === 'enable'), null);
+			$changes = match ($action) {
+				'preset' => $this->moduleSettings->applyPreset($names[0], null),
+				'scenario' => $this->moduleSettings->applyScenario($names[0], null),
+				default => $this->moduleSettings->change(array_fill_keys($names, $action === 'enable'), null),
+			};
 		} catch (InvalidInputException $e) {
 			$output->writeln('<error>' . vsprintf($e->getMessage(), array_map('strval', $e->getParameters())) . '</error>');
 			return 1;

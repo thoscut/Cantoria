@@ -399,6 +399,40 @@ export interface CircleOption {
 	playback: boolean
 	/** choir members can make practice files of it */
 	practiceAudio: boolean
+	/** the recipients can keep it on their device (milestone 0.19); null while the module "offline" is off */
+	offline?: boolean | null
+}
+
+/** A piece of a programme in the dialog "Share the programme with the choir" (milestone 0.19). */
+export interface ProgrammeShareItem {
+	/** id of the programme item */
+	id: number
+	title: string
+	shelfmark: string | null
+	/** the piece may be shared with the choir members */
+	allowed: boolean
+	/** translated reason why not */
+	reason: string | null
+	/** a scan may be offered with it */
+	scan: boolean
+	/** the singers can keep it on their device; null while the module "offline" is off */
+	offline: boolean | null
+	/** an active link to the whole piece that is extended instead of making a second one */
+	existing: { id: number, expires: string | null } | null
+}
+
+export interface ProgrammeShareOptions {
+	/** suggested last day: two weeks after the concert */
+	expires: string
+	/** the latest last day a link may have */
+	latest: string
+	items: ProgrammeShareItem[]
+}
+
+export interface ProgrammeShareResult {
+	created: number
+	extended: number
+	failed: { id: number, title: string, reason: string }[]
 }
 
 export interface LinkOptions {
@@ -434,6 +468,8 @@ export interface MemberLink {
 	reason: string | null
 	/** the link offers the scan (PDF) */
 	scan?: boolean
+	/** size of the scan in bytes, when known */
+	scanSize?: number | null
 	/** the rights allow keeping the piece on the device (module "offline", milestone 0.15) */
 	offline?: boolean
 	/** key of the piece for what is remembered in the browser while practising (milestone 0.15) */
@@ -470,6 +506,8 @@ export interface FolderItem {
 	score: boolean
 	/** the item has a scan (PDF) the account may view */
 	scan: boolean
+	/** size of the scan in bytes, when known */
+	scanSize?: number | null
 	canPlay: boolean
 	/** translated reason why the score cannot be viewed or played */
 	reason: string | null
@@ -497,6 +535,8 @@ export interface FolderPageState {
 	concerts: FolderConcert[]
 	/** version of the app, names the cache of the page */
 	version: string
+	/** programmes can be kept on the device: module "offline" (milestone 0.19) */
+	offline?: boolean
 }
 
 /** Initial state `excerpt` of a public link: the excerpt, already cut by the server, or the whole piece. */
@@ -512,6 +552,8 @@ export interface PublicExcerpt {
 	canPlay: boolean
 	/** the link offers the scan (PDF) at `/p/{token}/scan` */
 	scan?: boolean
+	/** size of the scan in bytes, when known */
+	scanSize?: number | null
 	/** key of the piece for what is remembered in the browser while practising (milestone 0.15) */
 	practiceKey?: string
 	/** last valid day of the link (YYYY-MM-DD), null without end */
@@ -845,15 +887,16 @@ export interface Settings {
 	groupsMissing: string[]
 	/** imported copies and files found by the file sync (setup steps) */
 	catalog: { copies: number, files: number }
+	/** the functions for the choir were chosen (a scenario, a preset or a switch) */
+	modulesChosen?: boolean
 	/** role key => English label */
 	roleLabels: Record<string, string>
 	archive: ArchiveInfo
 	/**
 	 * Backups and annual snapshots: a folder in the files of the account that
-	 * set the archive folder, outside it (null until the first backup);
-	 * oldBackups: some of versions before 0.10 are still in the archive folder
+	 * set the archive folder, outside it (null until the first backup)
 	 */
-	backups: { path: string | null, oldBackups: boolean }
+	backups: { path: string | null }
 	/** null while the module "repertoire" is not active */
 	repertoire: RepertoireThresholds | null
 	/** the module "folder_book" is active: its retention period */
@@ -948,11 +991,23 @@ export interface ModulePreset {
 	modules: Record<string, boolean>
 }
 
+/** What Cantoria should do for a choir, in words (milestone 0.19). */
+export interface ModuleScenario {
+	key: string
+	label: string
+	description: string
+	/** what the rights must allow for it to work, or null */
+	rights: string | null
+	/** module key => on, as the scenario sets it */
+	modules: Record<string, boolean>
+}
+
 /** `GET /api/settings/modules` */
 export interface ModuleSettings {
 	modules: ModuleInfo[]
 	groups: ModuleGroup[]
 	presets: ModulePreset[]
+	scenarios: ModuleScenario[]
 	/** the core, always on (translated) */
 	core: string[]
 	/** modules with pages for everyone (milestone 0.11) */

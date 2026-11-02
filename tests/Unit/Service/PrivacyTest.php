@@ -129,8 +129,9 @@ final class PrivacyTest extends TestCase {
 		$person->setBornPrecision('exact');
 		$person->setDiedPrecision('living');
 		$person->setLifeDatesText('geb. 12.3.1960');
-		self::assertTrue($person->keepBirthYearOnly());
+		$person->keepBirthYearOnly();
 		self::assertSame(['1960', 'year', 'geb. 1960'], [$person->getBorn(), $person->getBornPrecision(), $person->getLifeDatesText()]);
-		self::assertFalse($person->keepBirthYearOnly(), 'nothing left to shorten');
+		$person->keepBirthYearOnly();
+		self::assertSame(['1960', 'year', 'geb. 1960'], [$person->getBorn(), $person->getBornPrecision(), $person->getLifeDatesText()], 'nothing left to shorten');
 	}
 }

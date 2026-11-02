@@ -320,7 +320,8 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 				</template>
 			</NcAppNavigationItem>
 			<li v-if="currentView === 'catalog'" class="catalog-filters">
-				<p v-if="entriesStatus === 'ready'" class="catalog-filters__count" aria-live="polite">
+				<!-- not a live region: the count above the list announces it, once -->
+				<p v-if="entriesStatus === 'ready'" class="catalog-filters__count">
 					{{ countText }}
 				</p>
 

@@ -26,6 +26,7 @@ use OCA\Cantoria\Exception\NotFoundException;
 use OCA\Cantoria\Service\ConcertFolderService;
 use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\MusicXmlExcerpt;
+use OCA\Cantoria\Service\ProgrammeCopies;
 use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\ScanService;
@@ -39,11 +40,13 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The concert folder of the conductor (milestone 0.15): the programmes
- * still to be sung in their order, the rights of the score view, and never
- * an internal preservation copy on a device.
+ * still to be sung in their order, the rights of the score view, copies on
+ * a device only with the module "offline" and the rights for them, and no
+ * internal preservation copy at all (milestone 0.19).
  */
 #[CoversClass(ConcertFolderService::class)]
 #[UsesClass(Modules::class)]
+#[UsesClass(ProgrammeCopies::class)]
 #[UsesClass(MusicXmlExcerpt::class)]
 #[UsesClass(SharedLinkService::class)]
 final class ConcertFolderTest extends TestCase {
@@ -54,8 +57,10 @@ final class ConcertFolderTest extends TestCase {
 
 	/**
 	 * @param array<int, string> $viewDenials version id => reason
+	 * @param array<int, string> $deviceDenials version id => why it may not be kept on a device
+	 * @param list<string> $off modules switched off
 	 */
-	private function folder(array $viewDenials = [], bool $conductor = true): ConcertFolderService {
+	private function folder(array $viewDenials = [], bool $conductor = true, array $deviceDenials = [], array $off = []): ConcertFolderService {
 		$roles = $this->createStub(Roles::class);
 		$roles->method('hasAnyRole')->willReturn($conductor);
 		$events = [
@@ -102,12 +107,13 @@ final class ConcertFolderTest extends TestCase {
 			: [self::file(1, $copyId, 'musicxml', 'a.musicxml'), self::file(3, $copyId, 'score_pdf', 'z.pdf'), self::file(4, $copyId, 'score_pdf', 'a.pdf')]);
 		$policy = $this->createStub(RightsPolicy::class);
 		$policy->method('viewDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $viewDenials[$version->getId()] ?? null);
+		$policy->method('deviceCopyDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $deviceDenials[$version->getId()] ?? null);
 		$policy->method('playDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $viewDenials[$version->getId()] ?? ($version->getId() === 31 ? 'Rights not clarified.' : null));
 		$scores = $this->createStub(ScoreService::class);
 		$scores->method('content')->willReturn(['content' => self::SCORE, 'mime' => 'application/vnd.recordare.musicxml+xml', 'name' => 'a.musicxml', 'type' => 'musicxml']);
 		$scores->method('scoreText')->willReturn(['xml' => self::SCORE, 'entry' => null]);
-		return new ConcertFolderService($roles, $eventMapper, $itemMapper, $copies, $versions, $works, $files, $policy, $scores,
-			$this->createStub(ScanService::class), $this->modulesWithout());
+		return new ConcertFolderService($roles, $eventMapper, $itemMapper, $versions, $works, $files, $policy, $scores,
+			$this->createStub(ScanService::class), $this->modulesWithout($off), new ProgrammeCopies($copies, $files));
 	}
 
 	private static function event(int $id, string $status, string $date, string $title): Event {
@@ -173,11 +179,26 @@ final class ConcertFolderTest extends TestCase {
 		self::assertSame(['Zugabe ohne Noten', false, false, false], [$none['title'], $none['score'], $none['scan'], $none['offline']]);
 	}
 
-	public function testAPreservationCopyIsShownButNeverKeptOnADevice(): void {
+	public function testAPreservationCopyIsNotOpenedForTheRehearsalAndTheConcert(): void {
 		$item = $this->folder()->concerts('carla')[1]['items'][0];
-		self::assertTrue($item['score']);
-		self::assertFalse($item['offline']);
-		self::assertSame('Internal preservation copy: it is not kept on a device.', $item['offlineReason']);
+		self::assertSame([false, false, false, false], [$item['score'], $item['scan'], $item['canPlay'], $item['offline']]);
+		self::assertSame(ConcertFolderService::PRESERVATION_COPY, $item['reason'], 'it says why and what to do');
+		$this->expectException(AccessDeniedException::class);
+		$this->folder()->score(13, 'carla');
+	}
+
+	public function testAPieceIsKeptOnADeviceOnlyWithTheRightsForACopy(): void {
+		$reason = 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license.';
+		$item = $this->folder([], true, [31 => $reason])->concerts('carla')[0]['items'][0];
+		self::assertSame([true, false, $reason], [$item['score'], $item['offline'], $item['offlineReason']], 'viewing as in the score view, but no copy');
+	}
+
+	public function testWithoutTheModuleOfflineNothingIsKeptOnADevice(): void {
+		$folder = $this->folder([], true, [], [Modules::OFFLINE]);
+		self::assertFalse($folder->offlineOn());
+		$item = $folder->concerts('carla')[0]['items'][0];
+		self::assertSame([true, false, null], [$item['score'], $item['offline'], $item['offlineReason']], 'no reason per piece: the page offers nothing');
+		self::assertTrue($this->folder()->offlineOn());
 	}
 
 	public function testWithoutTheRightToViewNothingIsShownOrKept(): void {

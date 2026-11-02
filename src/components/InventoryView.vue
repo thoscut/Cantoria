@@ -129,7 +129,10 @@ function isInvalid(copyId: number): boolean {
 async function save(): Promise<void> {
 	saveError.value = ''
 	if (payload.value.invalid.length > 0) {
-		saveError.value = t('cantoria', 'Please enter whole numbers (0 or more) for the marked copies.')
+		// Name the copies: the red frame alone is not enough (and not seen by everyone)
+		const shelfmarks = (inventory.value?.rows ?? []).filter((row) => isInvalid(row.copyId)).map((row) => row.shelfmark)
+		saveError.value = n('cantoria', 'Please enter whole numbers (0 or more) for %n copy: {shelfmarks}.', 'Please enter whole numbers (0 or more) for %n copies: {shelfmarks}.',
+			shelfmarks.length, { shelfmarks: shelfmarks.join(', ') })
 		return
 	}
 	if (payload.value.counts.length === 0) {

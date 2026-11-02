@@ -189,10 +189,11 @@ async function servedAt(page: Response): Promise<string> {
  *
  * @param name - the collection of the page
  * @param pieces - the pieces, as the server offers them
- * @param withScan - also keep the scans (PDF), where the server offers them
+ * @param withScan - also keep the scans (PDF), where the server offers them; a piece without notes always keeps its scan
  * @param version - version of the app (cache of the scripts)
+ * @param onProgress - called after each piece with the number kept so far
  */
-export async function keepPieces(name: CollectionName, pieces: PieceForDevice[], withScan: boolean, version: string): Promise<Catalog> {
+export async function keepPieces(name: CollectionName, pieces: PieceForDevice[], withScan: boolean, version: string, onProgress?: (done: number) => void): Promise<Catalog> {
 	const collection = COLLECTIONS[name]
 	const addresses = ADDRESSES[name]
 	const account = await accountKey(name)
@@ -207,11 +208,14 @@ export async function keepPieces(name: CollectionName, pieces: PieceForDevice[],
 	for (const piece of pieces) {
 		let checked: string | undefined
 		if (addresses.score) {
-			await keep(cache, addresses.score(piece.key))
+			if (piece.score !== false) {
+				await keep(cache, addresses.score(piece.key))
+			}
 		} else {
 			checked = await servedAt(await keep(cache, addresses.page(piece.key), collection.header))
 		}
-		const scan = withScan && piece.scan === true
+		// a piece with only a scan keeps the scan, or there would be nothing
+		const scan = piece.scan === true && (withScan || piece.score === false)
 		if (scan) {
 			await keep(cache, addresses.scan(piece.key))
 		} else {
@@ -220,6 +224,7 @@ export async function keepPieces(name: CollectionName, pieces: PieceForDevice[],
 		kept[piece.key] = { title: piece.title, composer: piece.composer, expires: piece.expires, scan, kept: now, ...(checked ? { checked } : {}) }
 		// written after each piece, so that a failure keeps what is already on the device
 		await writeCatalog(collection, { v: 1, account, checked: catalog?.checked ?? now, pieces: kept })
+		onProgress?.(pieces.indexOf(piece) + 1)
 	}
 	if (addresses.score) {
 		const page = await fetch(addresses.page(''), { credentials: 'same-origin', cache: 'no-store' })

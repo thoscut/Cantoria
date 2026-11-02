@@ -14,7 +14,6 @@
 import type { Mix } from './practising.ts'
 
 import { readStored, removeStoredStarting, writeStored } from '../storage.ts'
-import { storedMarks, storeMarks } from './marks.ts'
 import { TRANSPOSE_MAX } from './practising.ts'
 
 /** Settings for practising one piece */
@@ -44,29 +43,6 @@ const PREFIX = 'practice.'
  */
 export function sharedPieceKey(practiceKey: string | null | undefined, title: string, composer: string): string {
 	return practiceKey ? `piece:${practiceKey}` : `shared:${title}|${composer}`
-}
-
-/**
- * Move the passages remembered under title and composer (milestone 0.13)
- * to the practice key, once, unless the key already has passages.
- *
- * @param practiceKey - practice key of the server
- * @param title - title of the piece
- * @param composer - composer
- */
-export function moveOldMarks(practiceKey: string | null | undefined, title: string, composer: string): void {
-	if (!practiceKey) {
-		return
-	}
-	const old = sharedPieceKey(null, title, composer)
-	const marks = storedMarks(old)
-	if (marks.length > 0) {
-		const key = sharedPieceKey(practiceKey, title, composer)
-		if (storedMarks(key).length === 0) {
-			storeMarks(key, marks)
-		}
-		storeMarks(old, [])
-	}
 }
 
 /**

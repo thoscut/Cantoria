@@ -15,9 +15,9 @@ Schritte in Cantoria. Ausführlich beschreiben es das
 
 > [!TIP]
 > Die App öffnet Dateien nur mit den Rechten deines eigenen Kontos. Meldet
-> sie „Die Datei liegt in einem Ordner, der für dein Konto nicht freigegeben
-> ist“, bitte die Archivverwaltung, den Archivordner für dich oder deine
-> Gruppe freizugeben; Leserechte genügen.
+> sie „Die Datei liegt in einem Ordner, der nicht mit deinem Konto geteilt
+> ist“, bitte die Archivverwaltung, den Archivordner mit dir oder deiner
+> Gruppe zu teilen; Leserechte genügen.
 
 **Inhalt**
 
@@ -286,7 +286,7 @@ Die App erinnert dich 10, 8 und 6 Wochen vor dem Konzert an die Fristen.
 ### Kein Zugang zum Notenarchiv
 
 „Du hast keinen Zugang zum Notenarchiv.“ Dein Konto hat keine Rolle im
-Notenarchiv; die App oder die Seite „Zugriff verboten“ sagt dir das. Rollen
+Notenarchiv; die App oder die Seite „Noch kein Zugang“ sagt dir das. Rollen
 hängen an Nextcloud-Gruppen. Bitte die Administration, dein Konto in die
 Gruppe deiner Rolle aufzunehmen (siehe
 [Administrationshandbuch](administrationshandbuch.md#2-rollen-und-gruppen)).
@@ -295,9 +295,9 @@ eingeschaltet ist.
 
 ### Datei lässt sich nicht öffnen
 
-Der Archivordner ist nicht für dein Konto freigegeben; mit der Datei und
+Der Archivordner ist nicht mit deinem Konto geteilt; mit der Datei und
 deiner Rolle ist alles in Ordnung. Bitte die Archivverwaltung, den
-Archivordner für dich oder deine Gruppe freizugeben; Leserechte genügen.
+Archivordner mit dir oder deiner Gruppe zu teilen; Leserechte genügen.
 Lade danach die Seite neu.
 
 ### Ein Exemplar fehlt im Werkverzeichnis

@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 /**
- * The page Administration → Cantoria: the setup in five steps, archive
+ * The page Administration → Cantoria: the setup in six steps, archive
  * folder, roles and groups, access to the archive folder, modules,
  * repertoire, and for admins the complete backup and restore. Each section
  * links its part of the administration guide.

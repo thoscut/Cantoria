@@ -11,8 +11,10 @@
  * file, no practice file, no names of accounts, no notes. When the link
  * offers the scan, it opens inside the page.
  * With the module "offline" (milestone 0.15) a piece whose public domain is
- * confirmed can be kept on this device; then the page itself comes from the
- * device when there is no network. Each visit with a network is its check.
+ * confirmed can be made available without a network; then the page itself
+ * comes from the device when there is no network. Each visit with a network
+ * is its check. The switch stands above the notes, as on the other pages
+ * (milestone 0.19).
  */
 import type { Catalog, PieceForDevice } from '../offline/rules.ts'
 import type { PublicExcerpt } from '../types.ts'
@@ -20,17 +22,19 @@ import type { PublicExcerpt } from '../types.ts'
 import { mdiAlertCircleOutline } from '@mdi/js'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
-import { computed, onMounted, ref } from 'vue'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import { computed, onMounted, ref, useId } from 'vue'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import Attribution from './Attribution.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
+import KeepOffline from './KeepOffline.vue'
 import ScanFrame from './ScanFrame.vue'
 import { formatDateTime } from '../format.ts'
 import { askToPersist, checkPublicPiece, forgetPieces, keepPieces, offlineSupported, setUpWorker } from '../offline/device.ts'
+import { deviceErrorText } from '../offline/errors.ts'
 import { MAX_DAYS_UNCHECKED, usable } from '../offline/rules.ts'
+import { useLeaveGuard } from './leaveGuard.ts'
 
 /**
  * The excerpt from the page, or null if it is missing.
@@ -68,6 +72,10 @@ const keeping = ref(false)
 const keepError = ref('')
 const deviceStatus = ref('')
 const kept = computed(() => catalog.value?.pieces[token] !== undefined)
+const deviceHeadingId = useId()
+/** A recording of oneself waits unsaved */
+const recordingUnsaved = ref(false)
+useLeaveGuard(recordingUnsaved)
 const scanKept = computed(() => catalog.value?.pieces[token]?.scan === true)
 
 const piece: PieceForDevice = {
@@ -100,16 +108,14 @@ async function setKept(keep: boolean, withScan: boolean): Promise<void> {
 		if (keep) {
 			catalog.value = await keepPieces('public', [piece], withScan, version)
 			await askToPersist()
-			deviceStatus.value = t('cantoria', '"{title}" is kept on this device.', { title: piece.title })
+			deviceStatus.value = t('cantoria', '"{title}" is available without a network.', { title: piece.title })
 		} else {
 			catalog.value = await forgetPieces('public', [token])
 			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: piece.title })
 		}
 	} catch (error) {
-		keepError.value = t('cantoria', '"{title}" could not be kept on this device: {reason}', {
-			title: piece.title,
-			reason: error instanceof Error && error.message !== '' ? error.message : t('cantoria', 'Please check the network and the space on the device.'),
-		})
+		console.warn('Cantoria: keeping the piece on this device failed', error)
+		keepError.value = deviceErrorText(error)
 	} finally {
 		keeping.value = false
 	}
@@ -163,14 +169,42 @@ onMounted(async () => {
 			<NcNoteCard v-if="fromDevice" type="info" role="status">
 				{{ t('cantoria', 'No network: this piece is shown from this device. {checked}', { checked: checkedText }) }}
 			</NcNoteCard>
+			<!-- Above the notes, as on the other pages: one switch, the scan below it -->
+			<section v-if="offlineOn" class="public-excerpt__device no-print" :aria-labelledby="deviceHeadingId">
+				<h3 :id="deviceHeadingId" class="public-excerpt__device-title">
+					{{ t('cantoria', 'Without a network') }}
+				</h3>
+				<KeepOffline :kept="kept"
+					:scan-kept="scanKept"
+					:scan-offered="excerpt.scan === true"
+					:scan-size="excerpt.scanSize ?? null"
+					allowed
+					:without-network="fromDevice"
+					:busy="keeping"
+					:progress="keeping ? t('cantoria', 'Making it available without a network …') : ''"
+					:error="keepError"
+					:lock="kept ? lockText : ''"
+					:first-keep="!kept"
+					@change="setKept" />
+				<p class="public-excerpt__composer">
+					{{ kept
+						? t('cantoria', 'Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.', { days: MAX_DAYS_UNCHECKED })
+						: t('cantoria', 'Keep this piece in this browser to view, play and practise it without a network.') }}
+				</p>
+				<p class="hidden-visually" role="status">
+					{{ deviceStatus }}
+				</p>
+			</section>
 			<ScanFrame v-if="excerpt.scan && (!fromDevice || scanKept)"
+				class="no-print"
 				collection="public"
 				:piece-key="token"
 				:title="excerpt.title" />
 			<p v-else-if="excerpt.scan" class="public-excerpt__composer">
-				{{ t('cantoria', 'The scan is not kept on this device.') }}
+				{{ t('cantoria', 'The scan is not available without a network.') }}
 			</p>
-			<ExcerptViewer :xml="excerpt.xml"
+			<ExcerptViewer v-model:unsaved-recording="recordingUnsaved"
+				:xml="excerpt.xml"
 				:title="excerpt.title"
 				:composer="excerpt.composer"
 				:measure-from="excerpt.measureFrom"
@@ -181,38 +215,6 @@ onMounted(async () => {
 				:can-play="excerpt.canPlay"
 				:practice-key="excerpt.practiceKey ?? null"
 				:offline="fromDevice" />
-			<section v-if="offlineOn" class="public-excerpt__device" :aria-label="t('cantoria', 'On this device')">
-				<NcCheckboxRadioSwitch type="switch"
-					:model-value="kept"
-					:disabled="fromDevice || keeping"
-					@update:model-value="(on: boolean) => setKept(on, false)">
-					{{ t('cantoria', 'Keep on this device') }}
-				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch v-if="kept && excerpt.scan"
-					type="switch"
-					:model-value="scanKept"
-					:disabled="fromDevice || keeping"
-					@update:model-value="(on: boolean) => setKept(true, on)">
-					{{ t('cantoria', 'With the scan (PDF)') }}
-				</NcCheckboxRadioSwitch>
-				<p class="public-excerpt__composer">
-					{{ kept
-						? t('cantoria', 'Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.', { days: MAX_DAYS_UNCHECKED })
-						: t('cantoria', 'Keep this piece in this browser to view, play and practise it without a network.') }}
-				</p>
-				<p v-if="kept && lockText" class="public-excerpt__composer">
-					{{ lockText }}
-				</p>
-				<p v-if="keeping" class="public-excerpt__composer">
-					{{ t('cantoria', 'Keeping on this device …') }}
-				</p>
-				<NcNoteCard v-if="keepError" type="error" role="alert">
-					{{ keepError }}
-				</NcNoteCard>
-				<p class="hidden-visually" role="status">
-					{{ deviceStatus }}
-				</p>
-			</section>
 		</template>
 		<NcEmptyContent v-else
 			:name="t('cantoria', 'The score cannot be shown')"
@@ -263,16 +265,27 @@ onMounted(async () => {
 	align-items: flex-start;
 	gap: var(--default-grid-baseline);
 	max-width: 80ch;
-	padding-top: calc(2 * var(--default-grid-baseline));
-	border-top: 1px solid var(--color-border);
 }
 
 .public-excerpt__device p {
 	margin: 0;
 }
 
+.public-excerpt__device-title {
+	margin: 0;
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
 .public-excerpt__composer {
 	margin: 0;
 	color: var(--color-text-maxcontrast);
+}
+
+/* Printing: the piece and its notices, black on white */
+@media print {
+	.no-print {
+		display: none !important;
+	}
 }
 </style>

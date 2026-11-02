@@ -10,12 +10,89 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Share a whole programme with the choir.** In a concert or rehearsal,
+  "Share with the choir …" shares the pieces of the programme with the
+  chosen groups in one step; pieces that may not be shared are named with
+  their reason instead of being left out silently. "Open in the concert
+  folder" opens the folder at the first piece that is not struck.
+- **Extend links.** A link that is about to run out can be extended in the
+  list of links (at most half a year from today) instead of being created
+  again.
+- **Choose what Cantoria does for the choir, in words.** Administration →
+  Cantoria → Modules starts with four scenarios (keep an archive, plan
+  concerts, support singers, show the repertoire publicly); each names the
+  modules it switches on and what that means for rights. The page says
+  which scenario the current switches are closest to. `occ cantoria:modules
+  scenario <name>` applies one on the command line, the OCS route takes
+  `scenario`. The setup checklist has a new step "Functions for your
+  choir" and now has six steps.
+- **Concert folder on stage:** stage view (whole screen, screen stays on),
+  "Next" in the bar and at the end of the notes, the page-turn pedal moves
+  on after the last system.
+- A one-page guide for choir members in English and German, a section on
+  the terms "singers' portal", "choir system" and "Shared with me" with a
+  help button in the interface, and a table in the accessibility statement
+  of how each part was checked and what is not yet accessible.
+- The guides are checked against the interface: a message quoted in a
+  guide must be a text of the interface (`src/__tests__/docs.test.ts`).
+- CI keeps every run on `main`, audits the shipped npm dependencies, checks
+  REUSE for the documentation and runs Dependabot. The release workflow
+  builds a reproducible, checked archive with the license notices of the
+  bundled packages; `docs/release.md` describes tag and release.
+
 ### Changed
+
+- **One panel for practising.** Voice, measures and tempo with the loop,
+  and the further tools are one panel in the score view and on a shared
+  view, in the order of the most frequent way of practising. Size, lyrics,
+  pitch display and a running recording sit in the bar at the top. On a
+  low screen the panel starts folded. "Transponieren" is no longer called
+  "Tonhöhe".
+- **One way to keep pieces without a network** on "Shared with me", in the
+  concert folder and on a public link: one switch above the notes, the scan
+  switch below it with its size, progress and errors in plain words. Safari
+  on iPhone and iPad gets the hint about the home screen before the first
+  piece.
+- "Shared with me": short list entries with a badge, details of the chosen
+  piece, "Other pieces" back to the list. "No access yet" names whom to ask.
+  A recording that is not saved is no longer lost without a question.
+- **Contrast mode and print.** Score, excerpt, pitch display and rights
+  badges keep their meaning in the contrast mode of the system (forced
+  colours); a score, the concert folder and public pages print without the
+  controls. The chosen row of the catalog has a second mark besides colour.
+- Same controls for the same tasks: the review in the score view opens as a
+  panel that says whether it is open, the scan is chosen from a list, links
+  that open a new tab say so.
+- Calmer catalog table: repertoire in one line, open reviews as a count,
+  the sort arrow only on the sorted column. On a phone, "Filters" names the
+  number of filters set. The inventory names the shelf marks it could not
+  check.
+- Honest texts: links send the shared measures and, if added, the scan;
+  backups lie outside the archive folder; preservation copies and CPDL or
+  IMSLP are described without false assurance.
+- Cantoria has a mark of its own (a C with an eighth note) as app icon, in
+  the Files app and on the dashboard. The App Store text names practising,
+  playing without a network, sharing a programme and the six setup steps.
+- **One migration for the first release.** The 18 migrations of the
+  internal builds are folded into `Version001700Date20261030000000`; an
+  instance that ran them skips it. A test keeps released migrations
+  unchanged (`tests/Unit/Migration/ReleasedMigrationsTest.php`). The log
+  gets an index on the account (`cantoria_audit_user`) for information on
+  a person.
 
 - The German guides show every screenshot in the German interface
   (`docs/screenshots/de/`); `tools/screenshots` takes a German twin of each
   picture of the English guides, and a test keeps the German guides free of
   English pictures.
+
+### Removed
+
+- Upgrade code for internal builds that were never published: the module
+  switches of installations before 0.1.27, moving backups of versions
+  before 0.10 out of the archive folder, and moving practice passages
+  stored under title and composer to the practice key.
 
 ## [0.16.1] - 2026-10-29
 

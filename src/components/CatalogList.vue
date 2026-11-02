@@ -11,7 +11,7 @@
  */
 import type { Entry, SortOrder } from '../types.ts'
 
-import { mdiFilterRemoveOutline, mdiMagnify } from '@mdi/js'
+import { mdiFilterRemoveOutline, mdiFilterVariant, mdiMagnify, mdiTextBoxCheckOutline } from '@mdi/js'
 import { n, t } from '../l10n.ts'
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -19,10 +19,11 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { emit as emitEvent } from '@nextcloud/event-bus'
 import { useIsMobile } from '@nextcloud/vue/composables/useIsMobile'
 import AppNotices from './AppNotices.vue'
 import RightsBadge from './RightsBadge.vue'
-import { isEntryConfirmed, songListCount } from '../catalog.ts'
+import { activeFilterCount, isEntryConfirmed, songListCount } from '../catalog.ts'
 import { formatDate } from '../format.ts'
 import { repertoireClassLabel, repertoireSourceLabel } from '../labels.ts'
 import {
@@ -43,6 +44,12 @@ import { useStickyHeader } from '../stickyHeader.ts'
 const CARD_BREAKPOINT = 700
 
 const isMobile = useIsMobile()
+const filterCount = computed(() => activeFilterCount(filters))
+
+/** Open the navigation with the filters (on a phone it is closed) */
+function openFilters(): void {
+	emitEvent('toggle-navigation', { open: true })
+}
 const root = useTemplateRef<HTMLElement>('root')
 
 // Focused rows scroll below the sticky header, not under it (WCAG 2.4.11)
@@ -190,6 +197,23 @@ function repertoireDetail(entry: Entry): string {
 }
 
 /**
+ * The same, short enough for one line of the table: the numbers only. The
+ * full text is the title of the cell and stands in the sidebar.
+ *
+ * @param entry - catalog entry
+ */
+function repertoireShort(entry: Entry): string {
+	const parts = [entry.repertoire_source === 'performances' && entry.performances
+		? n('cantoria', '%n performance', '%n performances', entry.performances)
+		: (entry.repertoire_source === 'import' ? '' : repertoireSourceLabel(entry.repertoire_source))]
+	const songLists = songListCount(entry)
+	if (songLists > 0) {
+		parts.push(n('cantoria', '%n song list', '%n song lists', songLists))
+	}
+	return parts.filter((part) => part !== '').join(' · ')
+}
+
+/**
  * Open review points of the transcription, as text ('' when there are none
  * or the review is switched off).
  *
@@ -242,6 +266,18 @@ function statusText(entry: Entry): string {
 				<p class="catalog__count" aria-live="polite">
 					{{ countText }}
 				</p>
+				<!-- On a phone the filters are in the navigation, which is closed: a way there -->
+				<NcButton v-if="isMobile"
+					variant="secondary"
+					aria-haspopup="true"
+					@click="openFilters">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiFilterVariant" />
+					</template>
+					{{ filterCount > 0
+						? n('cantoria', 'Filters (%n set)', 'Filters (%n set)', filterCount)
+						: t('cantoria', 'Filters') }}
+				</NcButton>
 				<NcSelect v-model="sortOption"
 					class="catalog__sort"
 					:input-label="t('cantoria', 'Sort by')"
@@ -350,14 +386,22 @@ function statusText(entry: Entry): string {
 							:rights-confirmed="confirmation(entry)"
 							:preservation-copy="entry.preservation_copy" />
 					</td>
-					<td>
+					<td :title="repertoireDetail(entry) || undefined">
 						{{ repertoireText(entry) }}
-						<span v-if="repertoireDetail(entry)" class="catalog-table__detail">{{ repertoireDetail(entry) }}</span>
+						<span v-if="repertoireShort(entry)" class="catalog-table__detail">
+							<span aria-hidden="true">{{ repertoireShort(entry) }}</span>
+							<span class="hidden-visually">{{ repertoireDetail(entry) }}</span>
+						</span>
 					</td>
 					<td class="catalog-table__files" :title="filesTitle(entry)">
 						{{ entry.files }}
 						<span v-if="entry.has_musicxml" class="musicxml-tag">MusicXML</span>
-						<span v-if="reviewText(entry)" class="review-tag">{{ reviewText(entry) }}</span>
+						<!-- in the narrow column: a symbol with the number, the words for screen readers and as title -->
+						<span v-if="reviewText(entry)" class="review-count" :title="reviewText(entry)">
+							<NcIconSvgWrapper :path="mdiTextBoxCheckOutline" :size="16" inline />
+							<span aria-hidden="true">{{ entry.review_open }}</span>
+							<span class="hidden-visually">{{ reviewText(entry) }}</span>
+						</span>
 					</td>
 				</tr>
 			</tbody>
@@ -478,6 +522,18 @@ function statusText(entry: Entry): string {
 	background-color: var(--color-primary-element-light);
 }
 
+/* not only a colour: a bar at the start of the row and the shelf mark
+   underlined, as on the pages of the choir members */
+.catalog-table__row--selected > td:first-child {
+	box-shadow: inset 4px 0 0 var(--color-primary-element);
+}
+
+.catalog-table__row--selected .catalog-table__open {
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 3px;
+}
+
 .catalog-table__detail {
 	display: block;
 	color: var(--color-text-maxcontrast);
@@ -492,14 +548,21 @@ function statusText(entry: Entry): string {
 	min-width: 6em;
 }
 
-.catalog-table__files .musicxml-tag,
-.catalog-table__files .review-tag {
+.catalog-table__files .musicxml-tag {
 	margin-inline-start: var(--default-grid-baseline);
 }
 
-.catalog-table__files .review-tag {
-	display: table;
-	margin: var(--default-grid-baseline) 0 0;
+.review-count {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	margin-inline-start: var(--default-grid-baseline);
+	padding: 0 var(--default-grid-baseline);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-pill, 999px);
+	font-size: var(--font-size-small, 13px);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
 }
 
 .catalog-table__sort,
@@ -524,6 +587,11 @@ function statusText(entry: Entry): string {
 	color: var(--color-main-text);
 	font-weight: bold;
 	text-decoration: none;
+}
+
+/* not only bold: an arrow says which column sorts (screen readers hear aria-sort) */
+.catalog-table th[aria-sort='ascending'] .catalog-table__sort::after {
+	content: ' ↑' / '';
 }
 
 .catalog-table__open {
@@ -575,6 +643,7 @@ function statusText(entry: Entry): string {
 .catalog-card--selected {
 	border-color: var(--color-primary-element);
 	background-color: var(--color-primary-element-light);
+	box-shadow: inset 4px 0 0 var(--color-primary-element);
 }
 
 .catalog-card__head {

@@ -35,11 +35,12 @@ on:
       - '.github/pull_request_template.md'
   workflow_dispatch:
 
-# A newer push to the same branch or pull request cancels the older run, so
-# runner minutes are spent on the current state only.
+# A newer push to a pull request cancels the older run, so runner minutes
+# are spent on the current state only. On main every commit keeps its run:
+# a cancelled run there would leave a commit without a result.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -233,6 +234,10 @@ jobs:
           key: npm-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Audit the dependencies in the release archive
+        # Build tools (devDependencies) are not shipped; their reports are
+        # handled through the dependency updates (.github/dependabot.yml).
+        run: npm audit --omit=dev --audit-level=moderate
       - name: Lint
         run: npm run lint
       - name: Stylelint
@@ -274,6 +279,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Audit the runtime dependencies
+        run: npm audit --omit=dev --audit-level=moderate
       - name: Build and test (node:test, HTTP mocked)
         run: npm test
 

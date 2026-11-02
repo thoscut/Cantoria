@@ -89,7 +89,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/backup-restore.png"><img src="docs/screenshots/backup-restore.png" width="280" alt="Archive management with the buttons for a backup now, the download of the complete backup and the restore into an empty catalog."></a>
       <h3>Backups</h3>
-      <p>Every week the app writes the catalog as CSV and ODS (with the audit log) and a complete JSON backup into the archive folder. Librarians can make a backup at any time, download it and restore it into an empty catalog, in the web interface or with <code>occ cantoria:restore</code>. Paper stays the fallback: every list prints in A4 black and white.</p>
+      <p>Every week the app writes the catalog as CSV and ODS (with the audit log) and a complete JSON backup into a backup folder outside the archive folder, which the role groups do not see. Librarians can make a backup at any time, download it and restore it into an empty catalog, in the web interface or with <code>occ cantoria:restore</code>. Paper stays the fallback: every list prints in A4 black and white.</p>
     </td>
   </tr>
   <tr>
@@ -114,7 +114,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/shared-with-me.png"><img src="docs/screenshots/shared-with-me.png" width="280" alt="The page Shared with me of a choir member: a whole piece with the note of the conductor, the link to the scan, the playback controls with count-in and loop, and the score with the alto highlighted."></a>
       <h3>Sharing with choir members and the public</h3>
-      <p>If the administration switches it on, the conductor or the music librarians share an excerpt from the score viewer: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars and checks the rights on every call; choir members and the public never receive a file of the archive. These modules are off until switched on.</p>
+      <p>If the administration switches it on, the conductor or the music librarians share an excerpt from the score viewer: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars, adds the scan only where the rights allow it and checks the rights on every call; what arrives in a browser can be saved there. These modules are off until switched on.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/revisions.png"><img src="docs/screenshots/revisions.png" width="280" alt="The revisions of a version: revision 2, a correction in the app, current since today, revision 1 as first recorded, and their comparison with one changed note and a note for choir members."></a>
@@ -131,7 +131,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/admin-settings.png"><img src="docs/screenshots/admin-settings.png" width="280" alt="The access check under Administration, Music archive: per role and group how many accounts can open the archive folder, who cannot, and how to give access."></a>
       <h3>Easy to set up</h3>
-      <p>Administration → Cantoria guides through five steps (archive folder, roles and groups, access, import, file sync) and shows what is done and what needs attention. It checks who of the role groups cannot open the archive folder and says what to do. Admins can give the page to a group, such as the music librarians. In the app, a "?" next to the terms explains them, empty views name the next step, and accounts without a role learn whom to ask.</p>
+      <p>Administration → Cantoria guides through six steps (archive folder, roles and groups, access, the functions for the choir, import, file sync) and shows what is done and what needs attention. It checks who of the role groups cannot open the archive folder and says what to do. Admins can give the page to a group, such as the music librarians. In the app, a "?" next to the terms explains them, empty views name the next step, and accounts without a role learn whom to ask.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/files-action.png"><img src="docs/screenshots/files-action.png" width="280" alt="The Files app with the actions menu of a MusicXML file and the action Open in Cantoria."></a>

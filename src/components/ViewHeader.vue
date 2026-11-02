@@ -71,9 +71,13 @@ function print(): void {
 			{{ printLine }}
 		</p>
 		<div class="view-header__text">
-			<h2 class="view-header__title">
-				{{ title }}
-			</h2>
+			<div class="view-header__heading">
+				<h2 class="view-header__title">
+					{{ title }}
+				</h2>
+				<!-- e.g. the "?" of a term (HelpTerm) -->
+				<slot name="term" />
+			</div>
 			<p v-if="description" class="view-header__description">
 				{{ description }}
 			</p>
@@ -124,6 +128,12 @@ function print(): void {
 .view-header__text {
 	flex: 1 1 20em;
 	min-width: 0;
+}
+
+.view-header__heading {
+	display: flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
 }
 
 .view-header__title {

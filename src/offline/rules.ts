@@ -83,6 +83,8 @@ export interface PieceForDevice {
 	expires: string | null
 	offline?: boolean
 	scan?: boolean
+	/** false: there are no notes, only the scan (an item of the concert folder) */
+	score?: boolean
 }
 
 export type RequestKind = 'page' | 'score' | 'scan' | 'asset' | 'other'

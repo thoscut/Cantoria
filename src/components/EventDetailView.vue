@@ -28,10 +28,13 @@ import {
 	mdiDeleteOutline,
 	mdiDownload,
 	mdiLockOutline,
+	mdiMusicBoxMultipleOutline,
 	mdiPencilOutline,
 	mdiPrinterOutline,
+	mdiShareVariantOutline,
 } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
+import { generateUrl } from '@nextcloud/router'
 import { n, t } from '../l10n.ts'
 import { computed, nextTick, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -47,6 +50,7 @@ import ActionDialog from './ActionDialog.vue'
 import AppNotices from './AppNotices.vue'
 import CalendarDialog from './CalendarDialog.vue'
 import EventDialog from './EventDialog.vue'
+import ProgrammeShareDialog from './ProgrammeShareDialog.vue'
 import {
 	addEventItem,
 	calendarFileUrl,
@@ -109,6 +113,20 @@ const editable = computed(() => canPlanEvents.value && event.value !== null && !
 	&& event.value.status !== 'sung' && event.value.status !== 'cancelled')
 
 const isCancelled = computed(() => event.value?.status === 'cancelled')
+/** Still to be sung: draft or fixed */
+const upcoming = computed(() => event.value !== null && ['draft', 'fixed'].includes(event.value.status))
+/** The whole programme can be shared with the choir members (milestone 0.19) */
+const canShareProgramme = computed(() => upcoming.value && items.value.length > 0 && isModuleActive('excerpt_links') && isModuleActive('member_links')
+	&& hasAnyRole(['librarian', 'conductor', 'operations']))
+/** The programme opens in the concert folder, at its first piece (milestone 0.19) */
+const concertFolderUrl = computed(() => {
+	if (!upcoming.value || !isModuleActive('concert_folder') || !hasAnyRole(['librarian', 'conductor'])) {
+		return null
+	}
+	const first = items.value.find((item) => item.struck !== true)
+	return generateUrl('/apps/cantoria/concert-folder') + (first ? '?item=' + first.id : '')
+})
+const sharing = ref(false)
 
 const canConfirmSung = computed(() => editable.value && isConcert.value
 	&& event.value?.event_date !== null && event.value?.event_date !== undefined && event.value.event_date <= today)
@@ -480,6 +498,18 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Confirm as sung') }}
 						</NcButton>
+						<NcButton v-if="canShareProgramme" :disabled="busy" @click="sharing = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiShareVariantOutline" />
+							</template>
+							{{ t('cantoria', 'Share with the choir …') }}
+						</NcButton>
+						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiMusicBoxMultipleOutline" />
+							</template>
+							{{ t('cantoria', 'Open in the concert folder') }}
+						</NcButton>
 						<NcButton :href="songOrderUrl(event.id)" download>
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiDownload" />
@@ -782,6 +812,10 @@ function revisionText(item: EventItem): string {
 			<p>{{ t('cantoria', 'Remove {piece} from this programme?', { piece: itemTitle(removing) }) }}</p>
 		</ActionDialog>
 
+		<ProgrammeShareDialog v-if="sharing && event"
+			:event-id="event.id"
+			:title="event.title || t('cantoria', '(no title)')"
+			@close="sharing = false" />
 		<CalendarDialog v-if="calendarDialogOpen && event"
 			:event-id="event.id"
 			:deadlines="withDeadlines && !event.imported"

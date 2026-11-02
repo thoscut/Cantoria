@@ -314,7 +314,7 @@ try {
 	$excerpt = $shared->publicExcerpt($link->issuedToken());
 	$check('the public excerpt has only the measures', $excerpt !== null && $measures($excerpt['xml']) === ['9', '10', '11', '12']);
 	$check('and nothing internal', $excerpt !== null && array_keys($excerpt) === ['title', 'composer', 'measureFrom', 'measureTo', 'voice', 'verse',
-		'tempo', 'canPlay', 'scan', 'practiceKey', 'expires',
+		'tempo', 'canPlay', 'scan', 'scanSize', 'practiceKey', 'expires',
 		'offline', 'served', 'xml', 'credits', 'notices']);
 
 	$publicWhole = $links->create($public->getId(), ['circle' => 'public', 'voice' => 'Alto', 'scan_file_id' => $scanId], $uid);

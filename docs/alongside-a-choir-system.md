@@ -51,8 +51,10 @@ on its provider; ask them before you rely on it.
 
 ## The way back: comparing an export
 
-What is really in the choir system is recorded in Cantoria as "In
-singers' portal since". Instead of keeping it by hand, export the list of
+What is really in the choir system is recorded in Cantoria in the field "In
+singers' portal since": in Cantoria the singers' portal is the list of what
+the choir may get, the choir system the place where it really gets it.
+Instead of keeping it by hand, export the list of
 pieces from the choir system and compare it with the list **Singers'
 portal** ([user guide](user-guide.md#comparing-with-the-choir-system)). The
 differences become proposals in the inbox; nothing changes until the

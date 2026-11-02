@@ -120,11 +120,12 @@ export function normalizeSettings(data: unknown): Settings {
 		groupsMissing: list(raw.groupsMissing).filter((group): group is string => typeof group === 'string'),
 		roleLabels,
 		archive: archive(raw.archive),
-		backups: { path: typeof backups.path === 'string' ? backups.path : null, oldBackups: backups.oldBackups === true },
+		backups: { path: typeof backups.path === 'string' ? backups.path : null },
 		repertoire: raw.repertoire === null || raw.repertoire === undefined
 			? null
 			: { current: count(thresholds.current), dormant: count(thresholds.dormant) },
 		catalog: { copies: count(catalog.copies), files: count(catalog.files) },
+		modulesChosen: raw.modulesChosen === true,
 		folderBook: raw.folderBook === true,
 		printMirror: raw.printMirror === true,
 		choirHandover: raw.choirHandover === true,
@@ -282,7 +283,7 @@ export function parseThresholds(current: string, dormant: string): RepertoireThr
 export type StepStatus = 'done' | 'missing' | 'problem' | 'unchecked'
 
 /** The steps of the setup, in the order in which they are done. */
-export type StepKey = 'archive' | 'roles' | 'access' | 'import' | 'fileSync'
+export type StepKey = 'archive' | 'roles' | 'access' | 'modules' | 'import' | 'fileSync'
 
 export interface SetupStep {
 	key: StepKey
@@ -290,10 +291,11 @@ export interface SetupStep {
 }
 
 /**
- * The setup in five steps, derived from what the server already reports:
+ * The setup in six steps, derived from what the server already reports:
  * archive folder, the groups of the catalog role, the access check (only
- * known after it ran on this page), imported copies and files found by the
- * file sync. Nothing of it is stored.
+ * known after it ran on this page), whether the functions for the choir
+ * were chosen, imported copies and files found by the file sync. Only the
+ * choice of the functions is stored, as a flag.
  *
  * @param settings - settings of the server
  * @param report - result of the access check of the saved archive folder, if it ran
@@ -314,6 +316,7 @@ export function setupSteps(settings: Settings, report: AccessReport | null): Set
 		{ key: 'archive', status: hasArchive ? 'done' : 'missing' },
 		{ key: 'roles', status: roles },
 		{ key: 'access', status: access },
+		{ key: 'modules', status: settings.modulesChosen === true ? 'done' : 'missing' },
 		{ key: 'import', status: settings.catalog.copies > 0 ? 'done' : 'missing' },
 		{ key: 'fileSync', status: settings.catalog.files > 0 ? 'done' : 'missing' },
 	]

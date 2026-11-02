@@ -276,7 +276,7 @@ const words = computed(() => {
 .practice-pitch__choices {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--default-grid-baseline);
 	flex-basis: 100%;
 }
 
@@ -325,5 +325,30 @@ const words = computed(() => {
 .practice-pitch__hint {
 	color: var(--color-text-maxcontrast);
 	font-size: var(--font-size-small, 13px);
+}
+
+/* Windows contrast themes: the tones as frames, the sung line in the
+   highlight colour */
+@media (forced-colors: active) {
+	.practice-pitch__tone {
+		fill: Canvas;
+		stroke: CanvasText;
+	}
+
+	.practice-pitch__now {
+		stroke: GrayText;
+	}
+
+	.practice-pitch__sung,
+	.practice-pitch__dot {
+		stroke: Highlight;
+	}
+}
+
+/* A low screen (a phone held sideways): a flatter display */
+@media (max-height: 560px) {
+	.practice-pitch__display {
+		height: 48px;
+	}
 }
 </style>

@@ -45,6 +45,25 @@ The other languages follow the same split with the terms below.
 | Freigabe, freigegeben | release by the rights | sharing in Nextcloud or with choir members (*teilen*, *Mit mir geteilt*) |
 | Schleife | the loop of the playback | the repeats of the score (*Wiederholungen*) |
 | H | the note B (German and Polish note names in the correction form) | B flat, which is *B* |
+| Tonhöhe | the pitch one sings, in the pitch display (*Meine Tonhöhe zeigen*) | moving the playback up or down (*Transponieren*) |
+| Chorportal | the release of a version for the choir and the list of what is released (*Im Chorportal*) | the members' system of the choir outside Cantoria (*Chorsystem*), the page of a choir member in Cantoria (*Mit mir geteilt*) |
+| Chorsystem | the members' system of the choir outside Cantoria, which gets the handover folder | the release for the choir (*Chorportal*) |
+
+The English source follows the same rule for the roles and the new
+functions:
+
+- *catalog librarian* is only the role "Catalog (music librarian)" (German
+  *die Rolle „Bestand“*); *music librarians* are the people who keep the
+  archive, whatever their role (German *Archivverwaltung*). The role
+  "Operations (music librarian)" is named *the role "Operations"* in texts.
+- *singers' portal* is only the release for the choir and its list; the
+  choir's own member app is the *choir system*; the page of a choir member
+  is *Shared with me*.
+- *available without a network* (German *Ohne Netz verfügbar*) is a piece
+  kept in the browser of a device; *keep* is the action, never *save*
+  (which is the button of a form) or *download* (which the rights may
+  forbid).
+- *pitch* is the pitch one sings; moving the playback is *transposing*.
 
 ## Core terms
 

@@ -156,9 +156,6 @@ async function save(): Promise<void> {
 				{{ backups.path }}
 			</template>
 		</p>
-		<NcNoteCard v-if="backups.oldBackups" type="warning">
-			{{ t('cantoria', 'The subfolder "_cantoria-app" of the archive folder still holds backups or annual snapshots of an earlier version, which everyone with access to the archive folder can read. Move them into the backup folder or delete them.') }}
-		</NcNoteCard>
 		<p v-if="archive.id > 0">
 			<strong>{{ t('cantoria', 'Current archive folder:') }}</strong>
 			{{ archive.path }}

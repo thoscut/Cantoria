@@ -40,7 +40,7 @@ const mixerId = useId()
 const transposeId = useId()
 const transposeHintId = useId()
 
-const transposeLabel = computed(() => t('cantoria', 'Pitch: {change}', { change: transposeText(transpose.value) }))
+const transposeLabel = computed(() => t('cantoria', 'Transpose: {change}', { change: transposeText(transpose.value) }))
 
 /**
  * Level of a voice in percent.
@@ -155,7 +155,7 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 .practice-tools {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 16px;
+	gap: calc(2 * var(--default-grid-baseline)) calc(4 * var(--default-grid-baseline));
 	align-items: flex-end;
 	flex-basis: 100%;
 }
@@ -163,20 +163,20 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 .practice-tools__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: calc(2 * var(--default-grid-baseline));
 	align-items: center;
 }
 
 .practice-tools__with-icon {
 	display: inline-flex;
-	gap: 4px;
+	gap: var(--default-grid-baseline);
 	align-items: center;
 }
 
 .practice-tools__mixer {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 16px;
+	gap: calc(2 * var(--default-grid-baseline)) calc(4 * var(--default-grid-baseline));
 	align-items: flex-end;
 	flex-basis: 100%;
 }

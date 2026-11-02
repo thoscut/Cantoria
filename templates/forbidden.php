@@ -7,7 +7,7 @@ declare(strict_types=1);
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// "Access forbidden" for accounts without a role (Nextcloud's error layout):
+// "No access yet" for accounts without a role (Nextcloud's error layout):
 // what is wrong, whom to ask, and the section of the guide. The texts are
 // translated by the controller.
 

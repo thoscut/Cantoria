@@ -343,4 +343,35 @@ final class RightsPolicyTest extends TestCase {
 		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
 		self::assertSame($denial, $this->practicePolicy([], $licenses)->memberScanDenial(self::version($values), self::TODAY));
 	}
+
+	/**
+	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string}>
+	 */
+	public static function deviceCopyCases(): iterable {
+		$confirmed = ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'];
+		$noCopy = 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".';
+		// version values, licenses, expected denial of a copy on the device of the conductor
+		yield 'confirmed public domain' => [$confirmed, [], null];
+		yield 'unconfirmed public domain' => [['rights_status' => 'public_domain'], [], $noCopy];
+		yield 'rights open: unknown counts as protected' => [['rights_status' => 'unknown'], [], $noCopy];
+		yield 'protected, only copies for the folders' => [['rights_status' => 'protected'], [['photocopy']], $noCopy];
+		yield 'protected, download license' => [['rights_status' => 'protected'], [['member_download']], null];
+		yield 'protected, self-printing' => [['rights_status' => 'protected'], [['self_print']], null];
+		yield 'protected, license ended' => [['rights_status' => 'protected'], [['self_print', null, '2026-10-21']], $noCopy];
+		yield 'preservation copy' => [$confirmed + ['preservation_copy' => true], [], 'Internal preservation copy: it is not kept on a device.'];
+	}
+
+	/**
+	 * The concert folder keeps the score and the scan for weeks on the device
+	 * of the conductor: a copy, which needs confirmed public domain or a
+	 * license for download or self-printing (milestone 0.19).
+	 *
+	 * @param array<string, mixed> $values
+	 * @param list<array{0: string, 1?: ?string, 2?: ?string}> $licenseSpecs
+	 */
+	#[DataProvider('deviceCopyCases')]
+	public function testACopyOnTheDeviceOfTheConductorNeedsTheRightsForIt(array $values, array $licenseSpecs, ?string $denial): void {
+		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		self::assertSame($denial, $this->practicePolicy([Roles::CONDUCTOR], $licenses)->deviceCopyDenial(self::version($values), self::UID));
+	}
 }

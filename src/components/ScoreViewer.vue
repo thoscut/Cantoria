@@ -29,6 +29,7 @@ import type { ScoreModel } from '../score/model.ts'
 import type { Timeline } from '../score/timeline.ts'
 import type { VerovioToolkit } from '../score/toolkit.ts'
 import type { Voice } from '../score/voices.ts'
+import type { RecorderState, VoiceOption } from './PlaybackSettings.vue'
 import type { ScoreRequest } from '../store.ts'
 import type { CorrectionResult, Detail, ReviewPoint, VersionReview } from '../types.ts'
 
@@ -41,6 +42,7 @@ import {
 	mdiMagnifyPlusOutline,
 	mdiPause,
 	mdiPlay,
+	mdiRecordCircleOutline,
 	mdiStop,
 	mdiClipboardTextOutline,
 	mdiContentCopy,
@@ -61,16 +63,12 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcModal from '@nextcloud/vue/components/NcModal'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
-import NcRadioGroup from '@nextcloud/vue/components/NcRadioGroup'
-import NcRadioGroupButton from '@nextcloud/vue/components/NcRadioGroupButton'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import GuideLink from './GuideLink.vue'
+import PlaybackSettings from './PlaybackSettings.vue'
 import PracticeLyrics from './PracticeLyrics.vue'
-import PracticeMarks from './PracticeMarks.vue'
 import PracticePitch from './PracticePitch.vue'
-import PracticeRecorder from './PracticeRecorder.vue'
-import PracticeTools from './PracticeTools.vue'
 import LinkDialog from './LinkDialog.vue'
 import ReviewPanel from './ReviewPanel.vue'
 import RightsBadge from './RightsBadge.vue'
@@ -128,13 +126,11 @@ const emit = defineEmits<{
 
 const headingId = useId()
 const summaryId = useId()
-const tempoId = useId()
-const tempoHintId = useId()
 const volumeId = useId()
-const scanSelectId = useId()
 const settingsId = useId()
 const placeId = useId()
 const scoreHintId = useId()
+const reviewPanelId = useId()
 
 const score = computed(() => props.detail.score)
 /** Playback (module "playback"); the server also refuses it when switched off. */
@@ -510,6 +506,16 @@ watch(() => score.value?.fileId, (id, previous) => {
 
 const scans = computed(() => scanFiles(props.detail.files))
 const scanFileId = ref<number | null>(scans.value[0]?.id ?? null)
+/** The scan files as options of the select */
+const scanOptions = computed(() => scans.value.map((file) => ({ id: file.id, label: file.name })))
+const scanChoice = computed({
+	get: () => scanOptions.value.find((option) => option.id === scanFileId.value) ?? null,
+	set: (option: { id: number, label: string } | null) => {
+		if (option) {
+			scanFileId.value = option.id
+		}
+	},
+})
 const scanShown = ref(false)
 const scanPage = ref(scanFileId.value !== null ? storedScanPage(props.detail.copy.id, scanFileId.value) : 1)
 const scanPageInput = ref(String(scanPage.value))
@@ -656,7 +662,7 @@ const rangeHint = computed(() => {
 		parts.push(t('cantoria', 'The pickup is measure 0.'))
 	}
 	if (canPlay.value) {
-		parts.push(t('cantoria', 'Click a note to play from there.'))
+		parts.push(t('cantoria', 'Tap or click a note to play from there.'))
 	}
 	return parts.join(' ')
 })
@@ -716,11 +722,6 @@ function labelOf(voice: Voice): string {
 		: t('cantoria', 'Staff {staff}, voice {number}', { staff, number }))
 }
 
-interface VoiceOption {
-	id: string
-	label: string
-}
-
 const voiceOptions = computed<VoiceOption[]>(() => [
 	{ id: '', label: t('cantoria', 'No focus voice') },
 	...(model.value?.voices ?? []).map((voice) => ({ id: voice.key, label: labelOf(voice) })),
@@ -745,22 +746,24 @@ function applyFocus(): void {
 // ---- playback ---------------------------------------------------------------
 
 const playing = ref(false)
-/** Tempo, volume, the switches and the tools for practising: behind a button, so that the score gets the room */
-const settingsShown = ref(false)
+/**
+ * The voice, the measures, the tempo and the tools for practising
+ * (PlaybackSettings): shown on a large screen, folded on a phone and on a
+ * low screen, so that the score starts right below play and stop.
+ */
+const COMPACT = '(max-width: 600px), (max-height: 500px)'
+const compactQuery = typeof window.matchMedia === 'function' ? window.matchMedia(COMPACT) : null
+const compact = ref(compactQuery?.matches ?? false)
+const settingsShown = ref(typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 1024px) and (min-height: 640px)').matches : true)
 /** The actions for the shown passage (text reference, link, task) */
 const placeShown = ref(false)
-/**
- * On a phone the bars of playback, measures and voice are behind a button,
- * so that the notes start right below play and stop (milestone 0.12).
- */
-const NARROW = '(max-width: 600px)'
-const narrowQuery = typeof window.matchMedia === 'function' ? window.matchMedia(NARROW) : null
-const narrow = ref(narrowQuery?.matches ?? false)
-const controlsShown = ref(false)
-const controlsId = useId()
+/** The bar that stays at the top: following the playback keeps clear of it */
+const barElement = ref<HTMLElement | null>(null)
+/** A recording of oneself runs, or waits unsaved */
+const recorderState = ref<RecorderState>('idle')
 
-function onNarrowChange(event: MediaQueryListEvent): void {
-	narrow.value = event.matches
+function onCompactChange(event: MediaQueryListEvent): void {
+	compact.value = event.matches
 }
 const mode = ref<PlayMode>('all')
 const repeats = ref(true)
@@ -1241,7 +1244,7 @@ function markMeasure(element: SVGGraphicsElement): void {
 function scrollToMeasure(element: Element): void {
 	// The score scrolls in its box on a large screen, with the whole view on a small one
 	if (scoreElement.value) {
-		followMeasure(element, scoreElement.value)
+		followMeasure(element, scoreElement.value, barElement.value)
 	}
 }
 
@@ -1346,7 +1349,7 @@ function onKeydown(event: KeyboardEvent): void {
 	// Page-turn pedals send Page Down and Page Up: one system on or back
 	// (milestone 0.13), also after a click on Play; fields and sliders keep the keys
 	if (plain && (event.key === 'PageDown' || event.key === 'PageUp') && scoreElement.value && !target?.closest(TEXT_INPUT)) {
-		if (turnSystem(scoreElement.value, null, event.key === 'PageDown' ? 1 : -1)) {
+		if (turnSystem(scoreElement.value, barElement.value, event.key === 'PageDown' ? 1 : -1)) {
 			event.preventDefault()
 		}
 		return
@@ -1372,7 +1375,7 @@ function onKeydown(event: KeyboardEvent): void {
 onMounted(() => {
 	load()
 	loadReview()
-	narrowQuery?.addEventListener('change', onNarrowChange)
+	compactQuery?.addEventListener('change', onCompactChange)
 })
 
 // Lay out again when the width changes (window, phone rotation)
@@ -1387,7 +1390,7 @@ watch(scoreElement, (element) => {
 
 onBeforeUnmount(() => {
 	disposed = true
-	narrowQuery?.removeEventListener('change', onNarrowChange)
+	compactQuery?.removeEventListener('change', onCompactChange)
 	resizeObserver?.disconnect()
 	if (resizeTimer !== null) {
 		clearTimeout(resizeTimer)
@@ -1459,7 +1462,9 @@ onBeforeUnmount(() => {
 						<NcButton v-else-if="!notShared"
 							variant="secondary"
 							:href="adminGuideUrl(ADMIN_GUIDE.archive)"
-							target="_blank">
+							target="_blank"
+							rel="noopener noreferrer"
+							:aria-label="t('cantoria', 'Help: access to the archive folder (opens in a new tab)')">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiHelpCircleOutline" />
 							</template>
@@ -1473,86 +1478,134 @@ onBeforeUnmount(() => {
 			</NcEmptyContent>
 
 			<template v-else>
-				<!-- Play and stop stay at the top while the view scrolls
-				     (on a phone the score is part of the scrolling view) -->
-				<div v-if="canPlay"
-					class="score-viewer__buttons score-viewer__playbar"
-					role="group"
-					:aria-label="t('cantoria', 'Playback')">
-					<NcButton variant="primary" @click="togglePlay">
-						<template #icon>
-							<NcIconSvgWrapper :path="playing ? mdiPause : mdiPlay" />
-						</template>
-						{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}
-					</NcButton>
-					<NcButton :disabled="!playing && position === 0" @click="stop">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiStop" />
-						</template>
-						{{ t('cantoria', 'Stop') }}
-					</NcButton>
-				</div>
-				<NcButton v-if="narrow"
-					class="score-viewer__controls-toggle"
-					variant="secondary"
-					:aria-expanded="controlsShown ? 'true' : 'false'"
-					:aria-controls="controlsId"
-					@click="controlsShown = !controlsShown">
-					<template #icon>
-						<NcIconSvgWrapper :path="controlsShown ? mdiChevronUp : mdiTuneVariant" />
-					</template>
-					{{ t('cantoria', 'Measures, voice and size') }}
-				</NcButton>
-				<!-- Three compact bars, so that the score itself starts high up:
-				     playback, then measures and voice, then review and scan -->
-				<div v-show="!narrow || controlsShown" :id="controlsId" class="score-viewer__controls">
-					<section v-if="canPlay"
-						class="score-viewer__bar"
+				<!-- Play, size and the settings stay at the top while the view scrolls
+				     (on a phone the score is part of the scrolling view), with the
+				     lyrics and the pitch display while they are on -->
+				<div ref="barElement" class="score-viewer__playbar">
+					<div v-if="canPlay"
+						class="score-viewer__buttons"
+						role="group"
 						:aria-label="t('cantoria', 'Playback')">
-						<div v-if="canExportAudio" class="score-viewer__buttons">
-							<NcButton ref="practiceButton"
-								aria-haspopup="dialog"
-								@click="openPractice">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiFileMusicOutline" />
-								</template>
-								{{ t('cantoria', 'Practice files …') }}
-							</NcButton>
-						</div>
-						<!-- How the focus voice (chosen in the bar below) sounds -->
-						<NcRadioGroup v-model="mode" :label="t('cantoria', 'Voices during playback')">
-							<NcRadioGroupButton value="all" :label="t('cantoria', 'All equal')" />
-							<NcRadioGroupButton value="focus"
-								:label="t('cantoria', 'Focus voice louder')"
-								:disabled="!focusVoice" />
-							<NcRadioGroupButton value="solo"
-								:label="t('cantoria', 'Focus voice only')"
-								:disabled="!focusVoice" />
-						</NcRadioGroup>
-						<div class="score-viewer__buttons">
-							<NcButton variant="tertiary"
-								:aria-expanded="settingsShown ? 'true' : 'false'"
-								:aria-controls="settingsId"
-								@click="settingsShown = !settingsShown">
-								<template #icon>
-									<NcIconSvgWrapper :path="settingsShown ? mdiChevronUp : mdiTuneVariant" />
-								</template>
-								{{ t('cantoria', 'Tempo, volume and practising') }}
-							</NcButton>
-						</div>
-						<div v-show="settingsShown" :id="settingsId" class="score-viewer__settings">
-							<label class="score-viewer__slider" :for="tempoId">
-								<span>{{ tempoLabel }}</span>
-								<input :id="tempoId"
-									v-model.number="tempoPercent"
-									type="range"
-									min="25"
-									max="200"
-									step="5"
-									:aria-describedby="tempoHintId"
-									:aria-valuetext="t('cantoria', '{percent} % of the tempo', { percent: tempoPercent })">
-								<span :id="tempoHintId" class="score-viewer__hint">{{ tempoHint }}</span>
-							</label>
+						<NcButton variant="primary" @click="togglePlay">
+							<template #icon>
+								<NcIconSvgWrapper :path="playing ? mdiPause : mdiPlay" />
+							</template>
+							{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}
+						</NcButton>
+						<NcButton :disabled="!playing && position === 0" @click="stop">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiStop" />
+							</template>
+							{{ t('cantoria', 'Stop') }}
+						</NcButton>
+					</div>
+					<div class="score-viewer__zoom" role="group" :aria-label="t('cantoria', 'Size of the score')">
+						<NcButton variant="tertiary"
+							:aria-label="t('cantoria', 'Smaller')"
+							:disabled="zoomIndex === 0"
+							@click="zoomBy(-1)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiMagnifyMinusOutline" />
+							</template>
+						</NcButton>
+						<span class="score-viewer__zoom-value">{{ zoomPercent }} %</span>
+						<NcButton variant="tertiary"
+							:aria-label="t('cantoria', 'Larger')"
+							:disabled="zoomIndex === ZOOM_STEPS.length - 1"
+							@click="zoomBy(1)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiMagnifyPlusOutline" />
+							</template>
+						</NcButton>
+					</div>
+					<NcButton variant="tertiary"
+						:aria-expanded="settingsShown ? 'true' : 'false'"
+						:aria-controls="settingsId"
+						@click="settingsShown = !settingsShown">
+						<template #icon>
+							<NcIconSvgWrapper :path="settingsShown ? mdiChevronUp : mdiTuneVariant" />
+						</template>
+						{{ t('cantoria', 'Voice, measures and practising') }}
+					</NcButton>
+					<!-- A running recording stays in view while its tool is folded; Stop ends it -->
+					<span v-if="recorderState === 'recording'" class="score-viewer__recording">
+						<NcIconSvgWrapper :path="mdiRecordCircleOutline" :size="20" aria-hidden="true" />
+						{{ t('cantoria', 'Recording …') }}
+					</span>
+					<PracticeLyrics v-if="canPlay && lyricsVoice"
+						v-model:shown="lyricsShown"
+						v-model:step="lyricsStep"
+						part="text"
+						:syllables="syllables"
+						:position="position"
+						:voice-label="labelOf(lyricsVoice)" />
+					<PracticePitch v-if="canPlay"
+						v-model:shown="pitchShown"
+						v-model:problem="pitchProblem"
+						part="display"
+						:notes="pitchNotes"
+						:position="position"
+						:playing="playing"
+						:voice-label="focusVoice ? labelOf(focusVoice) : null"
+						:fifths="soundFifths"
+						@announce="announce" />
+				</div>
+				<NcNoteCard v-if="!canPlay && playbackOn" type="info" class="score-viewer__no-playback">
+					{{ playReason }}
+				</NcNoteCard>
+
+				<!-- The same settings as in the view of a shared piece (PlaybackSettings);
+				     shown on a large screen, folded on a phone and on a low screen -->
+				<div v-show="settingsShown" :id="settingsId" class="score-viewer__settings">
+					<PlaybackSettings v-model:focus="focusOption"
+						v-model:mode="mode"
+						v-model:range-from="rangeFrom"
+						v-model:range-to="rangeTo"
+						v-model:loop="loop"
+						v-model:tempo="tempoPercent"
+						v-model:count-in="countInChoice"
+						v-model:repeats="repeats"
+						v-model:mix="mix"
+						v-model:transpose="transpose"
+						v-model:metronome="metronome"
+						v-model:lyrics-shown="lyricsShown"
+						v-model:lyrics-step="lyricsStep"
+						v-model:pitch-shown="pitchShown"
+						v-model:pitch-problem="pitchProblem"
+						v-model:recorder="recorderState"
+						:voice-options="voiceOptions"
+						:can-play="canPlay"
+						:range-active="range !== null"
+						:range-error="rangeError"
+						:range-hint="rangeHint"
+						:tempo-label="tempoLabel"
+						:tempo-min="25"
+						:tempo-max="200"
+						:tempo-hint="tempoHint"
+						:mixer-voices="mixerVoices"
+						:playing="playing"
+						:lyrics-voice-label="lyricsVoice ? labelOf(lyricsVoice) : null"
+						:syllables="syllables"
+						:position="position"
+						:pitch-voice-label="focusVoice ? labelOf(focusVoice) : null"
+						:pitch-notes="pitchNotes"
+						:fifths="soundFifths"
+						:marks-key="`copy:${detail.copy.id}`"
+						:shown-from="shownRange.from"
+						:shown-to="shownRange.to"
+						:title="title"
+						:playback-position="playbackPosition"
+						:start-playback="playFrom"
+						:pause-playback="pausePlayback"
+						@apply-range="applyRange"
+						@show-all="showAllMeasures"
+						@tones="giveStartingTones"
+						@apply-mark="applyMark"
+						@announce="announce">
+						<template #playback>
+							<NcCheckboxRadioSwitch v-model="follow" type="switch">
+								{{ t('cantoria', 'Scroll along') }}
+							</NcCheckboxRadioSwitch>
 							<label class="score-viewer__slider" :for="volumeId">
 								<span>{{ t('cantoria', 'Volume: {percent} %', { percent: volumePercent }) }}</span>
 								<input :id="volumeId"
@@ -1563,113 +1616,29 @@ onBeforeUnmount(() => {
 									step="5"
 									:aria-valuetext="t('cantoria', '{percent} % volume', { percent: volumePercent })">
 							</label>
-							<NcRadioGroup v-model="countInChoice" :label="t('cantoria', 'Count-in')">
-								<NcRadioGroupButton value="0" :label="t('cantoria', 'Off')" />
-								<NcRadioGroupButton value="1" :label="t('cantoria', '1 bar')" />
-								<NcRadioGroupButton value="2" :label="t('cantoria', '2 bars')" />
-							</NcRadioGroup>
-							<div class="score-viewer__switches">
-								<NcCheckboxRadioSwitch v-model="repeats" type="switch">
-									{{ t('cantoria', 'Play repeats') }}
-								</NcCheckboxRadioSwitch>
-								<NcCheckboxRadioSwitch v-model="follow" type="switch">
-									{{ t('cantoria', 'Scroll along') }}
-								</NcCheckboxRadioSwitch>
-							</div>
-							<PracticeTools v-model:mix="mix"
-								v-model:transpose="transpose"
-								v-model:metronome="metronome"
-								:voices="mixerVoices"
-								:playing="playing"
-								@tones="giveStartingTones" />
-							<PracticeLyrics v-if="lyricsVoice"
-								v-model:shown="lyricsShown"
-								v-model:step="lyricsStep"
-								part="choices"
-								:syllables="syllables"
-								:position="position"
-								:voice-label="labelOf(lyricsVoice)" />
-							<PracticePitch v-model:shown="pitchShown"
-								v-model:problem="pitchProblem"
-								part="choices"
-								:notes="pitchNotes"
-								:position="position"
-								:playing="playing"
-								:voice-label="focusVoice ? labelOf(focusVoice) : null"
-								:fifths="soundFifths"
-								@announce="announce" />
-							<PracticeMarks :piece="`copy:${detail.copy.id}`"
-								:from="shownRange.from"
-								:to="shownRange.to"
-								@apply="applyMark"
-								@announce="announce" />
-							<PracticeRecorder :title="title"
-								:playing="playing"
-								:position="playbackPosition"
-								:start-playback="playFrom"
-								:pause-playback="pausePlayback"
-								@announce="announce" />
-						</div>
-						<p v-if="!canExportAudio && exportReason" class="score-viewer__hint score-viewer__line">
-							{{ exportReason }}
-						</p>
-					</section>
-					<NcNoteCard v-else-if="playbackOn" type="info" class="score-viewer__no-playback">
-						{{ playReason }}
-					</NcNoteCard>
+						</template>
+					</PlaybackSettings>
+					<div v-if="canPlay && canExportAudio" class="score-viewer__buttons">
+						<NcButton ref="practiceButton"
+							aria-haspopup="dialog"
+							@click="openPractice">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiFileMusicOutline" />
+							</template>
+							{{ t('cantoria', 'Practice files …') }}
+						</NcButton>
+					</div>
+					<p v-else-if="canPlay && exportReason" class="score-viewer__hint">
+						{{ exportReason }}
+					</p>
+				</div>
+				<p v-if="!settingsShown && rangeError" class="score-viewer__error" role="alert">
+					{{ rangeError }}
+				</p>
 
-					<section class="score-viewer__bar" :aria-label="t('cantoria', 'Measures and voice')">
-						<form class="score-viewer__range" @submit.prevent="applyRange">
-							<!-- NcTextField puts a class on its input, not on its box: the width is set here -->
-							<div class="score-viewer__measure-field">
-								<NcTextField v-model="rangeFrom"
-									:label="t('cantoria', 'From measure')"
-									:error="rangeError !== ''" />
-							</div>
-							<div class="score-viewer__measure-field">
-								<NcTextField v-model="rangeTo"
-									:label="t('cantoria', 'To measure')"
-									:error="rangeError !== ''" />
-							</div>
-							<NcButton type="submit">
-								{{ t('cantoria', 'Show') }}
-							</NcButton>
-							<NcButton v-if="range" variant="tertiary" @click="showAllMeasures">
-								{{ t('cantoria', 'All measures') }}
-							</NcButton>
-							<!-- A–B loop: the measures of the two fields again and again -->
-							<NcCheckboxRadioSwitch v-if="canPlay"
-								v-model="loop"
-								class="score-viewer__loop"
-								type="switch">
-								{{ t('cantoria', 'Loop') }}
-							</NcCheckboxRadioSwitch>
-						</form>
-						<NcSelect v-model="focusOption"
-							class="score-viewer__voice"
-							:input-label="t('cantoria', 'Focus voice')"
-							:options="voiceOptions"
-							:clearable="false"
-							:searchable="false" />
-						<div class="score-viewer__zoom" role="group" :aria-label="t('cantoria', 'Size of the score')">
-							<NcButton variant="tertiary"
-								:aria-label="t('cantoria', 'Smaller')"
-								:disabled="zoomIndex === 0"
-								@click="zoomBy(-1)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiMagnifyMinusOutline" />
-								</template>
-							</NcButton>
-							<span class="score-viewer__zoom-value">{{ zoomPercent }} %</span>
-							<NcButton variant="tertiary"
-								:aria-label="t('cantoria', 'Larger')"
-								:disabled="zoomIndex === ZOOM_STEPS.length - 1"
-								@click="zoomBy(1)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiMagnifyPlusOutline" />
-								</template>
-							</NcButton>
-						</div>
+				<!-- The tools of the archive for the shown passage; on a phone with the settings -->
+				<div v-show="!compact || settingsShown" class="score-viewer__tools">
+					<section class="score-viewer__bar" :aria-label="t('cantoria', 'This passage')">
 						<!-- Share and ask: shown on request. Not a menu (NcActions): inside the
 						     modal its Escape would close the whole score view as well -->
 						<NcButton variant="secondary"
@@ -1706,20 +1675,14 @@ onBeforeUnmount(() => {
 								{{ t('cantoria', 'New task for this place') }}
 							</NcButton>
 						</div>
-						<p v-if="rangeError" class="score-viewer__error score-viewer__line" role="alert">
-							{{ rangeError }}
-						</p>
-						<p class="score-viewer__hint score-viewer__line">
-							{{ rangeHint }}
-						</p>
 					</section>
-
 					<section v-if="reviewOn || canCorrect || scans.length > 0"
 						class="score-viewer__bar"
 						:aria-label="t('cantoria', 'Review and scan')">
 						<NcButton v-if="reviewOn"
 							variant="secondary"
-							:aria-pressed="reviewShown ? 'true' : 'false'"
+							:aria-expanded="reviewShown ? 'true' : 'false'"
+							:aria-controls="reviewShown ? reviewPanelId : undefined"
 							@click="toggleReview">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiTextBoxCheckOutline" />
@@ -1744,14 +1707,13 @@ onBeforeUnmount(() => {
 								{{ t('cantoria', 'Show scan beside the score') }}
 							</NcCheckboxRadioSwitch>
 							<!-- file and page only while the scan is shown (a review point sets the page, too) -->
-							<label v-if="scanShown && scans.length > 1" class="score-viewer__scan-choice" :for="scanSelectId">
-								<span>{{ t('cantoria', 'Scan file') }}</span>
-								<select :id="scanSelectId" v-model.number="scanFileId">
-									<option v-for="file in scans" :key="file.id" :value="file.id">
-										{{ file.name }}
-									</option>
-								</select>
-							</label>
+							<NcSelect v-if="scanShown && scans.length > 1"
+								v-model="scanChoice"
+								class="score-viewer__scan-choice"
+								:input-label="t('cantoria', 'Scan file')"
+								:options="scanOptions"
+								:clearable="false"
+								:searchable="false" />
 							<div v-if="scanShown" class="score-viewer__page-field">
 								<NcTextField v-model="scanPageInput"
 									type="number"
@@ -1760,11 +1722,12 @@ onBeforeUnmount(() => {
 							</div>
 							<NcButton variant="tertiary"
 								:href="scanSrc"
-								target="_blank">
+								target="_blank"
+								rel="noopener">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiOpenInNew" />
 								</template>
-								{{ t('cantoria', 'Open scan in a new window') }}
+								{{ t('cantoria', 'Open the scan in a new tab') }}
 							</NcButton>
 						</div>
 						<p v-if="correctionHint" class="score-viewer__hint score-viewer__line" role="status">
@@ -1779,23 +1742,6 @@ onBeforeUnmount(() => {
 				<p v-if="canPlay" :id="scoreHintId" class="hidden-visually">
 					{{ t('cantoria', 'Space plays and pauses. The arrow keys left and right go to the previous or next measure.') }}
 				</p>
-				<PracticeLyrics v-if="canPlay && lyricsVoice"
-					v-model:shown="lyricsShown"
-					v-model:step="lyricsStep"
-					part="text"
-					:syllables="syllables"
-					:position="position"
-					:voice-label="labelOf(lyricsVoice)" />
-				<PracticePitch v-if="canPlay"
-					v-model:shown="pitchShown"
-					v-model:problem="pitchProblem"
-					part="display"
-					:notes="pitchNotes"
-					:position="position"
-					:playing="playing"
-					:voice-label="focusVoice ? labelOf(focusVoice) : null"
-					:fifths="soundFifths"
-					@announce="announce" />
 				<div class="score-viewer__workspace">
 					<!-- Scrollable score; focusable so it can be scrolled with the keyboard.
 					     A click on a note plays from there; the keyboard alternative are the
@@ -1833,6 +1779,7 @@ onBeforeUnmount(() => {
 							:title="t('cantoria', 'Scan {name}, page {page}', { name: scanName, page: scanPage })" />
 					</div>
 					<ReviewPanel v-if="reviewOn && reviewShown"
+						:id="reviewPanelId"
 						class="score-viewer__review-panel"
 						:review="review"
 						:loading="reviewLoading"
@@ -1926,10 +1873,6 @@ onBeforeUnmount(() => {
 	overflow-wrap: anywhere;
 }
 
-.score-viewer__controls-toggle {
-	align-self: flex-start;
-}
-
 .score-viewer__subtitle {
 	display: flex;
 	flex-wrap: wrap;
@@ -1973,17 +1916,23 @@ onBeforeUnmount(() => {
 	white-space: pre-wrap;
 }
 
-.score-viewer__controls {
+.score-viewer__tools {
 	display: flex;
 	flex-direction: column;
 	gap: calc(2 * var(--default-grid-baseline));
 }
 
-/* Play and stop: stay at the top while the view scrolls, so that pausing
-   is always at hand (room on the right for the close button of the modal) */
+/* Play, size and settings: stay at the top while the view scrolls, so that
+   pausing is always at hand (room on the right for the close button of the
+   modal); the lyrics and the pitch display take a line of their own */
 .score-viewer__playbar {
 	position: sticky;
 	z-index: 1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
+	border-bottom: 1px solid var(--color-border);
 	/* up into the padding of the view, so that nothing shows above the bar */
 	top: calc(-3 * var(--default-grid-baseline));
 	margin-block-start: calc(-2 * var(--default-grid-baseline));
@@ -2002,24 +1951,27 @@ onBeforeUnmount(() => {
 }
 
 .score-viewer__buttons,
-.score-viewer__range,
-.score-viewer__settings,
-.score-viewer__switches,
 .score-viewer__zoom {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-end;
+	align-items: center;
 	gap: calc(2 * var(--default-grid-baseline));
 }
 
 .score-viewer__settings {
-	flex-basis: 100%;
-	align-items: flex-start;
-	gap: calc(2 * var(--default-grid-baseline)) calc(4 * var(--default-grid-baseline));
+	display: flex;
+	flex-direction: column;
+	gap: calc(2 * var(--default-grid-baseline));
+	padding-bottom: calc(2 * var(--default-grid-baseline));
+	border-bottom: 1px solid var(--color-border);
 }
 
-.score-viewer__settings .score-viewer__switches {
-	align-self: center;
+.score-viewer__recording {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
+	color: var(--color-error-text, var(--color-error));
+	font-weight: bold;
 }
 
 .score-viewer__line {
@@ -2038,22 +1990,8 @@ onBeforeUnmount(() => {
 	overflow-wrap: anywhere;
 }
 
-.score-viewer__measure-field {
-	width: 8em;
-}
-
-.score-viewer__loop {
-	align-self: center;
-}
-
 .score-viewer__page-field {
 	width: 10em;
-}
-
-/* wide enough for "No focus voice" and "Tenor 1, voice 2"; .nc-select sets
-   min-width: 260px with three classes, one more wins */
-.score-viewer__bar .score-viewer__voice.nc-select {
-	min-width: min(100%, 20em);
 }
 
 .score-viewer__slider {
@@ -2164,14 +2102,7 @@ onBeforeUnmount(() => {
 }
 
 .score-viewer__scan-choice {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-
-.score-viewer__scan-choice select {
-	min-height: var(--default-clickable-area);
-	max-width: 20em;
+	width: min(20em, 100%);
 }
 
 .score-viewer__score:focus-visible {
@@ -2246,6 +2177,86 @@ onBeforeUnmount(() => {
 	rx: 40px;
 }
 
+/* Windows contrast themes: the browser replaces colours of text and
+   backgrounds but leaves fill and stroke of the SVG, so the score takes the
+   system colours itself. The focus voice keeps its bolder note heads. */
+@media (forced-colors: active) {
+	.score-viewer__page :deep(svg.definition-scale),
+	.score-viewer__page :deep(.score-muted .score-shared) {
+		color: CanvasText;
+		fill: CanvasText;
+	}
+
+	.score-viewer__page :deep(g.layer.score-focus) {
+		color: Highlight;
+		fill: Highlight;
+	}
+
+	.score-viewer__page :deep(.score-muted) {
+		color: GrayText;
+		fill: GrayText;
+	}
+
+	.score-viewer__page :deep(g.note.score-playing) {
+		color: LinkText;
+		fill: LinkText;
+	}
+
+	.score-viewer__page :deep(rect.score-measure-marker) {
+		fill: none;
+		stroke: Highlight;
+	}
+}
+
+/* Printing: title, version line and the score, black on white; the focus
+   voice bold instead of coloured; no controls, no scan, no marker */
+@media print {
+	.score-viewer {
+		height: auto;
+		padding: 0;
+		overflow: visible;
+	}
+
+	.score-viewer__state,
+	.score-viewer__playbar,
+	.score-viewer__no-playback,
+	.score-viewer__settings,
+	.score-viewer__tools,
+	.score-viewer__error,
+	.score-viewer__summary,
+	.score-viewer__scan,
+	.score-viewer__review-panel {
+		display: none !important;
+	}
+
+	.score-viewer__workspace,
+	.score-viewer__score {
+		height: auto;
+		overflow: visible;
+	}
+
+	.score-viewer__page {
+		break-inside: avoid;
+	}
+
+	.score-viewer__page :deep(svg.definition-scale),
+	.score-viewer__page :deep(g.layer.score-focus),
+	.score-viewer__page :deep(.score-muted),
+	.score-viewer__page :deep(g.note.score-playing) {
+		color: #000;
+		fill: #000;
+	}
+
+	.score-viewer__page :deep(g.note.score-playing g.notehead) {
+		stroke: none;
+		transform: none;
+	}
+
+	.score-viewer__page :deep(rect.score-measure-marker) {
+		display: none;
+	}
+}
+
 /* Wide and tall enough: score, scan and review fill the rest of the window
    side by side and scroll inside, instead of the whole view scrolling */
 @media (min-width: 1024px) and (min-height: 640px) {
@@ -2266,6 +2277,15 @@ onBeforeUnmount(() => {
 	}
 }
 
+/* A low screen, e.g. a phone held sideways: the bar never takes more
+   than part of the height, so that the score stays in view */
+@media (max-height: 560px) {
+	.score-viewer__playbar {
+		max-height: 45vh;
+		overflow-y: auto;
+	}
+}
+
 /* Touch: targets of at least 44 pixels */
 @media (pointer: coarse) {
 	.score-viewer {
@@ -2283,13 +2303,38 @@ onBeforeUnmount(() => {
 		display: none;
 	}
 
-	.score-viewer__slider,
-	.score-viewer__bar .score-viewer__voice.nc-select {
+	.score-viewer__slider {
 		min-width: 100%;
 	}
+}
+</style>
 
-	.score-viewer__measure-field {
-		width: 7em;
+<style>
+/* Printing the score view: it is a modal outside the page of the app, so
+   only the modal is printed, in the flow of the page instead of fixed */
+@media print {
+	body:has(.score-viewer) > :not(:has(.score-viewer)) {
+		display: none !important;
+	}
+
+	.modal-mask:has(.score-viewer),
+	.modal-mask:has(.score-viewer) .modal-wrapper,
+	.modal-mask:has(.score-viewer) .modal-container,
+	.modal-mask:has(.score-viewer) .modal-container__content {
+		position: static !important;
+		display: block !important;
+		width: auto !important;
+		height: auto !important;
+		max-height: none !important;
+		overflow: visible !important;
+		background: none !important;
+		box-shadow: none !important;
+		transform: none !important;
+	}
+
+	.modal-mask:has(.score-viewer) .modal-container__close,
+	.modal-mask:has(.score-viewer) .modal-header {
+		display: none !important;
 	}
 }
 </style>

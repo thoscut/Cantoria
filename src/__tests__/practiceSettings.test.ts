@@ -5,8 +5,8 @@
 
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { storedMarks, storeMarks } from '../score/marks.ts'
-import { forgetPractising, moveOldMarks, sharedPieceKey, storedPracticeSettings, storePracticeSettings } from '../score/practiceSettings.ts'
+import { storeMarks } from '../score/marks.ts'
+import { forgetPractising, sharedPieceKey, storedPracticeSettings, storePracticeSettings } from '../score/practiceSettings.ts'
 import { readStored, removeStoredStarting, writeStored } from '../storage.ts'
 
 describe('settings for practising a shared piece', () => {
@@ -28,17 +28,9 @@ describe('settings for practising a shared piece', () => {
 		expect(storedPracticeSettings('k1', [25, 200])).toBeNull()
 	})
 
-	it('use the practice key of the server, and move passages remembered under the title once', () => {
+	it('use the practice key of the server', () => {
 		expect(sharedPieceKey('k1', 'Abendlied', 'Rheinberger')).toBe('piece:k1')
 		expect(sharedPieceKey(null, 'Abendlied', 'Rheinberger')).toBe('shared:Abendlied|Rheinberger')
-		storeMarks('shared:Abendlied|Rheinberger', [{ name: 'Fuge', from: '5', to: '12' }])
-		moveOldMarks('k1', 'Abendlied', 'Rheinberger')
-		expect(storedMarks('piece:k1')).toEqual([{ name: 'Fuge', from: '5', to: '12' }])
-		expect(storedMarks('shared:Abendlied|Rheinberger')).toEqual([])
-		// passages already under the key stay
-		storeMarks('shared:Abendlied|Rheinberger', [{ name: 'Alt', from: '1', to: '2' }])
-		moveOldMarks('k1', 'Abendlied', 'Rheinberger')
-		expect(storedMarks('piece:k1')).toEqual([{ name: 'Fuge', from: '5', to: '12' }])
 	})
 
 	it('are forgotten with the passages, and nothing else', () => {
