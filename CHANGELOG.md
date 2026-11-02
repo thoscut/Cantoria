@@ -82,6 +82,11 @@ All notable changes to this app are documented in this file. The format follows
   gets an index on the account (`cantoria_audit_user`) for information on
   a person.
 
+- The German guides show every screenshot in the German interface
+  (`docs/screenshots/de/`); `tools/screenshots` takes a German twin of each
+  picture of the English guides, and a test keeps the German guides free of
+  English pictures.
+
 ### Removed
 
 - Upgrade code for internal builds that were never published: the module

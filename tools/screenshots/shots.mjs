@@ -331,8 +331,8 @@ export const SHOTS = [
 			const row = 'tr[data-cy-files-list-row-name="2-01_Aennchen-von-Tharau_Silcher.mxl"]'
 			await h.page.waitForSelector(row, { visible: true, timeout: 30000 })
 			await h.settle(800)
-			await h.page.click(`${row} .files-list__row-actions button[aria-label="Actions"]`)
-			await h.page.waitForFunction(() => [...document.querySelectorAll('[role=menuitem]')].some((item) => item.innerText.includes('Open in Cantoria')), { timeout: 15000 })
+			await h.page.click(`${row} .files-list__row-actions button[aria-label="${h.session.lang === 'de' ? 'Aktionen' : 'Actions'}"]`)
+			await h.page.waitForFunction((label) => [...document.querySelectorAll('[role=menuitem]')].some((item) => item.innerText.includes(label)), { timeout: 15000 }, h.t('Open in Cantoria'))
 			await h.sleep(600)
 			// Keep the menu open: no mouse move, no blur afterwards
 			h.keepOpen = true
@@ -405,7 +405,7 @@ export const SHOTS = [
 			await h.settle(600)
 			await h.page.evaluate((label) => [...document.querySelectorAll('.modal-container .checkbox-radio-switch')]
 				.find((choice) => choice.innerText.trim() === label)?.querySelector('input')?.click(), h.t('Worn'))
-			await h.fill(h.t('Missing sheets'), '2-2, page 1', '.modal-container')
+			await h.fill(h.t('Missing sheets'), h.session.lang === 'de' ? '2-2, Seite 1' : '2-2, page 1', '.modal-container')
 			await h.settle(400)
 			return dialogClip(h)
 		},
@@ -429,7 +429,8 @@ export const SHOTS = [
 			await h.settle(1000)
 			await h.click('#cantoria-print-mirror button', h.t('Choose folder …'))
 			await pickFolder(h, 'Print station')
-			await h.page.waitForFunction(() => document.querySelector('#cantoria-print-mirror')?.innerText.includes('fits'), { timeout: 30000 })
+			const fits = h.t('The folder {path} fits: outside the archive folder, with write permission.').split('{path}')[1].split(':')[0].trim()
+			await h.page.waitForFunction((fits) => document.querySelector('#cantoria-print-mirror')?.innerText.includes(fits), { timeout: 30000 }, fits)
 			await h.page.evaluate(() => document.querySelector('#cantoria-print-mirror')?.scrollIntoView({ block: 'start' }))
 			await h.settle(800)
 			return h.rect('#cantoria-print-mirror', { pad: 0, fit: true })
@@ -582,6 +583,24 @@ export const SHOTS = [
 ]
 
 /**
+ * Pictures of the English guides that the German guides show in the German
+ * interface: the same recipe as de/<file>. The German guides link only
+ * pictures in de/ (src/__tests__/docs.test.ts).
+ */
+const GERMAN_TWINS = [
+	'copy-overview', 'rights-panel', 'task-question', 'accession-form', 'notifications', 'backup-restore',
+	'import-report', 'file-sync-report', 'settings-roles', 'admin-settings', 'protection-terms', 'merge-proposals',
+	'statistics', 'annual-report', 'calendar-dialog', 'dashboard-widget', 'review-points', 'files-action',
+	'share-dialog', 'shared-with-me', 'public-link', 'public-repertoire', 'folder-book', 'folder-take-back',
+	'print-mirror-preview', 'settings-print-mirror', 'unified-search', 'protection-special-case', 'rights-notice',
+	'shelfmark-gaps', 'annual-snapshots', 'revisions',
+]
+for (const name of GERMAN_TWINS) {
+	const shot = SHOTS.find((candidate) => candidate.name === name)
+	SHOTS.push({ ...shot, name: `de-${name}`, file: `de/${shot.file}`, ...de })
+}
+
+/**
  * Choose a file in Nextcloud's file picker by clicking through the folders.
  *
  * @param {object} h helpers
@@ -595,7 +614,7 @@ async function pickFile(h, path) {
 		await h.page.click(`${row} .row-name`)
 		await h.sleep(1200)
 	}
-	await h.click('.file-picker button', ['Choose', 'Auswählen'])
+	await h.click('.file-picker button', ['Choose', 'Auswählen', 'auswählen'])
 }
 
 /**
@@ -610,5 +629,5 @@ async function pickFolder(h, name) {
 	await h.page.waitForSelector(row, { visible: true, timeout: 20000 })
 	await h.page.click(`${row} .row-name`)
 	await h.sleep(1200)
-	await h.click('.file-picker button', ['Choose', 'Auswählen'])
+	await h.click('.file-picker button', ['Choose', 'Auswählen', 'auswählen'])
 }

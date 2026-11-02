@@ -220,14 +220,34 @@ async function extras({ session, librarian, copy, versionOf, check, log, demoFol
 		if (!detail.work.public_repertoire) {
 			check('repertoire ' + shelfmark, await librarian.api('PATCH', `/api/work/${detail.work.id}`, { fields: { public_repertoire: true, ...urls } }))
 		}
-		// The page names composer and lyricist with their life dates: the
-		// person import leaves the role of a contribution open
+	}
+
+	// The person import leaves the role of a contribution open, but the public
+	// repertoire page names composer and lyricist, and a protection proposal
+	// needs both or traditional parts: take them from the catalog fields
+	const plain = (name) => name.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
+	for (const shelfmark of Object.keys(copy)) {
+		const detail = await entry(shelfmark)
+		const text = (detail.version.arranger_text ?? '').match(/Text: ([^;]*)/)?.[1] ?? null
+		let lyricist = false
 		for (const contribution of detail.contributions ?? []) {
 			const name = contribution.person?.name ?? ''
-			const role = name === detail.work.composer ? 'composer' : (detail.version.arranger_text ?? '').includes(`Text: ${name}`) ? 'lyricist' : null
+			const role = plain(name) === plain(detail.work.composer ?? '') ? 'composer' : text?.includes(name) ? 'lyricist' : null
+			lyricist ||= role === 'lyricist' || contribution.role === 'lyricist'
 			if (contribution.role === 'unspecified' && role) {
 				check('contribution ' + shelfmark, await librarian.api('PATCH', `/api/contributions/${contribution.id}`, { contribution: { role } }))
 			}
+		}
+		// "Volksweise", "Melodie: Wien 1776"; texts without a person, such as "Speyer 1599"
+		const fields = {}
+		if (/^(Volksweise|Melodie:)/.test(detail.work.composer ?? '') && !detail.version.melody_origin) {
+			fields.melody_origin = 'traditional'
+		}
+		if (text !== null && !lyricist && !detail.version.text_origin) {
+			fields.text_origin = 'traditional'
+		}
+		if (Object.keys(fields).length > 0) {
+			check('origin ' + shelfmark, await librarian.api('PATCH', `/api/version/${detail.version.id}`, { fields, reason: 'Traditional part (demo)' }))
 		}
 	}
 

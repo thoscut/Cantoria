@@ -9,7 +9,11 @@ the public repertoire page are taken without signing in.
 - **Window:** fixed at 1600 × 1000 pixels, device scale 1.
 - **Themes:** light, and dark where the file name says so (`*-dark.png`).
 - **Languages:** English; the pictures in `de/` use the German interface in
-  informal address.
+  informal address. Every picture of the English guides has a German twin
+  `de/<file>` for the German guides (`GERMAN_TWINS` in `shots.mjs`). Each
+  language has its own browser, so that date fields follow it too (on Linux
+  through the environment variable `LANG`); pages without signing in get
+  the language as `Accept-Language`.
 - **Stable pictures:** animations and transitions are off, reduced motion
   is requested, the text cursor and toasts are hidden, and the focus ring
   and the mouse pointer are moved out of the way.
@@ -78,8 +82,8 @@ tests.
    `php occ files:scan --path=/demo-librarian/files/Cantoria-Demo`, or
    upload the folder in the Files app.
 5. Roles, archive folder and the modules of the newer pictures (sharing,
-   folder book, mirror folder of the print station, annual snapshots; they
-   are part of no preset or not of Standard):
+   folder book, mirror folder of the print station, annual snapshots,
+   proposals, statistics; they are part of no preset or not of Standard):
 
    ```sh
    php occ cantoria:setup demo-librarian Cantoria-Demo \
@@ -87,7 +91,7 @@ tests.
      -r conductor=demo-conductors -r contributor=demo-tools -r reader=demo-board \
      -r member=demo-members
    php occ cantoria:modules enable member_links member_practice_audio public_links \
-     public_repertoire folder_book print_mirror annual_snapshot
+     public_repertoire folder_book print_mirror annual_snapshot proposals statistics
    ```
 
 6. Import the catalog and link the files:
@@ -103,9 +107,10 @@ tests.
 Everything else is done by `--prepare` through the app's own API, as the
 account that may do each step: it shares the demo folder read-only with the
 conductors and the administrators, imports persons, performances and song
-lists, confirms rights, adds licenses, chooses valid versions, asks
-questions, makes a proposal and an internal link, and plans the concert
-"Adventskonzert 2026". For the newer pictures it releases 1-1 for the
+lists, confirms rights, adds licenses, chooses valid versions, records the
+roles of the persons involved (composer, lyricist) and traditional melodies
+and texts, asks questions, makes a proposal and an internal link, and plans
+the concert "Adventskonzert 2026". For the newer pictures it releases 1-1 for the
 singers' portal and 1-2 for publication, shares both as a whole piece with
 the scan (PDF), with a link for choir members and a public link, puts three
 works on the public repertoire page, creates three folders of the folder

@@ -105,6 +105,9 @@ const STABLE_CSS = `
 .toastify, .toast-undo-container { display: none !important; }
 `
 
+/** Language of each account as last set here (sessions of both browsers share it). */
+const accountLanguages = new Map()
+
 /** A logged-in browser tab of one account (own context, own cookies). */
 class Session {
 	constructor(browser, role) {
@@ -176,8 +179,10 @@ class Session {
 	 * account's own setting (changed like in the personal settings).
 	 */
 	async use({ lang, theme }) {
-		// Without an account the browser's language counts (English)
-		if (lang !== this.lang && this.uid !== null) {
+		// Without an account the browser's language counts
+		if (this.uid === null) {
+			await this.page.setExtraHTTPHeaders({ 'Accept-Language': lang })
+		} else if (lang !== accountLanguages.get(this.uid)) {
 			const locale = lang === 'de' ? 'de_DE' : 'en_GB'
 			for (const [key, value] of [['language', lang], ['locale', locale]]) {
 				const result = await this.request('PUT', `/ocs/v2.php/cloud/users/${encodeURIComponent(this.uid)}`, {
@@ -188,8 +193,9 @@ class Session {
 					throw new Error(`Setting ${key} of ${this.uid} failed: HTTP ${result.status}`)
 				}
 			}
-			this.lang = lang
+			accountLanguages.set(this.uid, lang)
 		}
+		this.lang = lang
 		if (theme !== this.theme) {
 			await this.page.emulateMediaFeatures([
 				{ name: 'prefers-color-scheme', value: theme },
@@ -411,18 +417,31 @@ async function writePng(file, buffer) {
 	return output.length
 }
 
-const browser = await puppeteer.launch({
-	executablePath: await browserPath(),
-	headless: true,
-	args: ['--lang=en-GB', '--hide-scrollbars', '--force-color-profile=srgb', '--font-render-hinting=none', '--no-first-run'],
-	defaultViewport: { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 },
-})
-const sessions = new Map()
-async function session(role) {
-	if (!sessions.has(role)) {
-		sessions.set(role, await new Session(browser, role).open())
+/**
+ * One browser per language: date fields and other controls of the browser
+ * follow its own locale (--lang, on Linux the environment variable LANG).
+ */
+const browsers = new Map()
+async function browserFor(lang) {
+	if (!browsers.has(lang)) {
+		const locale = lang === 'de' ? 'de-DE' : 'en-GB'
+		browsers.set(lang, await puppeteer.launch({
+			executablePath: await browserPath(),
+			headless: true,
+			args: [`--lang=${locale}`, '--hide-scrollbars', '--force-color-profile=srgb', '--font-render-hinting=none', '--no-first-run'],
+			env: { ...process.env, LANG: `${locale.replace('-', '_')}.UTF-8` },
+			defaultViewport: { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 },
+		}))
 	}
-	return sessions.get(role)
+	return browsers.get(lang)
+}
+const sessions = new Map()
+async function session(role, lang = 'en') {
+	const key = `${role} ${lang}`
+	if (!sessions.has(key)) {
+		sessions.set(key, await new Session(await browserFor(lang), role).open())
+	}
+	return sessions.get(key)
 }
 
 let failures = 0
@@ -437,7 +456,7 @@ try {
 		if (only && !only.includes(shot.name) && !only.includes(shot.file)) {
 			continue
 		}
-		const s = await session(shot.account)
+		const s = await session(shot.account, shot.lang)
 		await s.use(shot)
 		const h = helpers(s)
 		try {
@@ -462,6 +481,8 @@ try {
 	for (const s of sessions.values()) {
 		await s.use({ lang: 'en', theme: 'light' }).catch(() => {})
 	}
-	await browser.close()
+	for (const browser of browsers.values()) {
+		await browser.close()
+	}
 }
 process.exit(failures > 0 ? 1 : 0)
