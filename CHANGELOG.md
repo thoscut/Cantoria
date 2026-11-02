@@ -10,6 +10,13 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The German guides show every screenshot in the German interface
+  (`docs/screenshots/de/`); `tools/screenshots` takes a German twin of each
+  picture of the English guides, and a test keeps the German guides free of
+  English pictures.
+
 ## [0.16.1] - 2026-10-29
 
 ### Changed

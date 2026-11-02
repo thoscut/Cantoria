@@ -177,6 +177,12 @@ describe('the guides in English and German', () => {
 		expect(imagesPerSection(doc(german))).toEqual(imagesPerSection(doc(english)))
 	})
 
+	it.each([...PAIRS.map(([, german]) => german), 'docs/de/schnellstart.md'])('%s shows only pictures of the German interface', (german) => {
+		// tools/screenshots takes them as de/<file> (GERMAN_TWINS in shots.mjs)
+		const pictures = [...doc(german).matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)].map((match) => match[1]!)
+		expect(pictures.filter((picture) => !picture.startsWith('../screenshots/de/'))).toEqual([])
+	})
+
 	it.each(PAIRS)('%s and %s link each other at the top', (english, german) => {
 		expect(doc(english)).toContain(`[Deutsch](${german.replace('docs/', '')})`)
 		expect(doc(german)).toContain(`[English](../${english.replace('docs/', '')})`)

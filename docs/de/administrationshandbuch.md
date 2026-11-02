@@ -129,7 +129,7 @@ ist ein Wechsel der Gruppenmitgliedschaft.
 4. Prüfe den Zugriff auf den Archivordner: Auch Konten, die neu eine Rolle
    haben, brauchen ihn ([Abschnitt 3](#prüfen-wer-den-archivordner-öffnen-kann)).
 
-![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/settings-roles.png)
+![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/de/settings-roles.png)
 
 Die Seite **Verwaltungseinstellungen → Cantoria** enthält alle
 Einstellungen der App: Archivordner, Rollen und Gruppen, Zugriff auf den
@@ -281,7 +281,7 @@ Ausnahme: Um Noten zu öffnen, braucht auch sie Zugriff auf den Ordner.
 Zugriff prüfen** sieht sich jedes Mitglied der Rollengruppen und die
 Administration ohne Rolle an:
 
-![Die Zugriffsprüfung: je Rolle und Gruppe, wie viele Konten den Archivordner öffnen können, die Konten, die es nicht können, und was zu tun ist.](../screenshots/admin-settings.png)
+![Die Zugriffsprüfung: je Rolle und Gruppe, wie viele Konten den Archivordner öffnen können, die Konten, die es nicht können, und was zu tun ist.](../screenshots/de/admin-settings.png)
 
 - Für jede Rolle und Gruppe sagt sie in Worten und mit einem Symbol, ob jedes
   geprüfte Mitglied den Ordner öffnen kann, und nennt die Konten, die es
@@ -311,7 +311,7 @@ höchstens 20 MB groß sein.
    → **Werkverzeichnis importieren** → **CSV-Datei wählen …**. Die App macht
    sofort einen **Probelauf**; noch wird nichts gespeichert.
 
-   ![Der Bericht eines wiederholten Probelaufs: „Probelauf – es wurde noch nichts geändert“, 23 Zeilen, keine neuen oder geänderten Exemplare, 7 mit MusicXML, 1 interne Erhaltungskopie, die Verteilung von Rechtestatus, Repertoire und Veröffentlichung und eine Warnung.](../screenshots/import-report.png)
+   ![Der Bericht eines wiederholten Probelaufs: „Probelauf – es wurde noch nichts geändert“, 23 Zeilen, keine neuen oder geänderten Exemplare, 7 mit MusicXML, 1 interne Erhaltungskopie, die Verteilung von Rechtestatus, Repertoire und Veröffentlichung und eine Warnung.](../screenshots/de/import-report.png)
 
    Das Bild zeigt die Werkverzeichnisdatei des Demo-Archivs, ein zweites Mal
    importiert: Alle 23 Zeilen sind unverändert, und die Warnung sagt, dass
@@ -326,7 +326,7 @@ höchstens 20 MB groß sein.
 4. **Dateiabgleich** → **Dateiabgleich starten** verknüpft die Dateien des
    Archivordners mit den Exemplaren.
 
-   ![Der Bericht des Dateiabgleichs: Dateien mit einer Signatur im Namen, mit einem Exemplar verknüpfte Dateien, Dateien nach Art, eine Datei, die sich nicht zuordnen ließ, und ein Exemplar ohne Datei.](../screenshots/file-sync-report.png)
+   ![Der Bericht des Dateiabgleichs: Dateien mit einer Signatur im Namen, mit einem Exemplar verknüpfte Dateien, Dateien nach Art, eine Datei, die sich nicht zuordnen ließ, und ein Exemplar ohne Datei.](../screenshots/de/file-sync-report.png)
 
    Der Bericht listet Dateien, deren Signatur nicht im Werkverzeichnis
    steht, Exemplare ohne Datei und die übersprungenen Ordner. Dateien werden
@@ -373,7 +373,7 @@ teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt:
   ihre Token** darin: Nach einer Wiederherstellung sind sie widerrufen und
   müssen neu geteilt werden.
 
-![Die Bereiche zur Sicherung in der Archivverwaltung: eine vollständige Sicherung jetzt ablegen, die vollständige Sicherung als JSON herunterladen und eine Sicherung in ein leeres Werkverzeichnis wiederherstellen.](../screenshots/backup-restore.png)
+![Die Bereiche zur Sicherung in der Archivverwaltung: eine vollständige Sicherung jetzt ablegen, die vollständige Sicherung als JSON herunterladen und eine Sicherung in ein leeres Werkverzeichnis wiederherstellen.](../screenshots/de/backup-restore.png)
 
 In der **Archivverwaltung** schreibt **Vollständige Sicherung jetzt ablegen**
 dieselben drei Dateien sofort, zum Beispiel vor größeren Änderungen, und
@@ -460,7 +460,7 @@ Die App benachrichtigt die Mitglieder der Gruppen einer Rolle über die
 Benachrichtigungen der Nextcloud. Eine Benachrichtigung wird zurückgezogen,
 wenn die Sache erledigt ist.
 
-![Das Benachrichtigungsmenü der Nextcloud mit Benachrichtigungen von Cantoria, zum Beispiel einem Vorschlag, der im Eingang wartet.](../screenshots/notifications.png)
+![Das Benachrichtigungsmenü der Nextcloud mit Benachrichtigungen von Cantoria, zum Beispiel einem Vorschlag, der im Eingang wartet.](../screenshots/de/notifications.png)
 
 | Benachrichtigung | An | Wann |
 |---|---|---|
@@ -1126,7 +1126,7 @@ den Archivordner
 (Leitlinie 4 der [Roadmap](../../ROADMAP.md)). Es gehört zu keiner
 Voreinstellung; schalte es bewusst ein.
 
-![Der Abschnitt „Druckstation: Spiegelordner“ unter Verwaltungseinstellungen → Cantoria: was der Spiegelordner tut, die Warnung, dass alle, die ihn öffnen können, die Scans drucken können, der aktuelle Zielordner und, nach der Wahl eines Ordners, die Meldung, dass er passt, mit den Schaltflächen zum Abbrechen und Speichern.](../screenshots/settings-print-mirror.png)
+![Der Abschnitt „Druckstation: Spiegelordner“ unter Verwaltungseinstellungen → Cantoria: was der Spiegelordner tut, die Warnung, dass alle, die ihn öffnen können, die Scans drucken können, der aktuelle Zielordner und, nach der Wahl eines Ordners, die Meldung, dass er passt, mit den Schaltflächen zum Abbrechen und Speichern.](../screenshots/de/settings-print-mirror.png)
 
 So richtest du es ein:
 

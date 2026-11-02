@@ -72,8 +72,28 @@ The App Store shows the files marked with a number, in this order
 
 ## German interface (informal)
 
-Used in [`docs/de/schnellstart.md`](../de/schnellstart.md) and
-[`docs/de/benutzerhandbuch.md`](../de/benutzerhandbuch.md).
+The German guides show only these pictures (checked by
+`src/__tests__/docs.test.ts`): [`docs/de/schnellstart.md`](../de/schnellstart.md),
+[`docs/de/benutzerhandbuch.md`](../de/benutzerhandbuch.md) and
+[`docs/de/administrationshandbuch.md`](../de/administrationshandbuch.md).
+They were taken in Nextcloud 33 with app version 0.16.1.
+
+Every picture of the English guides also exists as `de/<file>` in the German
+interface and shows the same as `<file>` above: `de/accession-form.png`,
+`de/admin-settings.png`, `de/annual-report.png`, `de/annual-snapshots.png`,
+`de/backup-restore.png`, `de/calendar-dialog.png`, `de/copy-overview.png`,
+`de/dashboard-widget.png`, `de/file-sync-report.png`, `de/files-action.png`,
+`de/folder-book.png`, `de/folder-take-back.png`, `de/import-report.png`,
+`de/merge-proposals.png`, `de/notifications.png`, `de/print-mirror-preview.png`,
+`de/protection-special-case.png`, `de/protection-terms.png`, `de/public-link.png`,
+`de/public-repertoire.png`, `de/review-points.png`, `de/revisions.png`,
+`de/rights-notice.png`, `de/rights-panel.png`, `de/settings-print-mirror.png`,
+`de/settings-roles.png`, `de/share-dialog.png`, `de/shared-with-me.png`,
+`de/shelfmark-gaps.png`, `de/statistics.png`, `de/task-question.png` and
+`de/unified-search.png`. The texts the demo writes into the catalog (reasons,
+notes, questions) stay English in them.
+
+Pictures only in German:
 
 | File | Shows |
 |---|---|

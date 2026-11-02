@@ -219,11 +219,11 @@ auch Personen aus dem Personenregister. Sie zeigt nur, was deine Rollen sehen
 dürfen: interne Erhaltungskopien nur der Rolle „Bestand“ und der
 Chorleitung, und Konten ohne Rolle im Notenarchiv gar nichts.
 
-![Die Suche von Nextcloud mit dem Begriff „Mond“: unter den Dateien der Bereich „Cantoria“ mit den Exemplaren 1-1 und 3-1 „Der Mond ist aufgegangen“, jedes mit Komposition und Bearbeitung.](../screenshots/unified-search.png)
+![Die Suche von Nextcloud mit dem Begriff „Mond“: unter den Dateien der Bereich „Cantoria“ mit den Exemplaren 1-1 und 3-1 „Der Mond ist aufgegangen“, jedes mit Komposition und Bearbeitung.](../screenshots/de/unified-search.png)
 
 ### Die Angaben zu einem Exemplar
 
-![Die Seitenleiste von Exemplar 1-1 im Reiter „Details“: Titel, Rechtestatus, die Schaltfläche „Noten“, die Zahl der offenen Prüfpunkte, die Reiter Details, Rechte, Fragen, Dateien und Verlauf und die Felder des Werks mit der Schaltfläche „Bearbeiten“.](../screenshots/copy-overview.png)
+![Die Seitenleiste von Exemplar 1-1 im Reiter „Details“: Titel, Rechtestatus, die Schaltfläche „Noten“, die Zahl der offenen Prüfpunkte, die Reiter Details, Rechte, Fragen, Dateien und Verlauf und die Felder des Werks mit der Schaltfläche „Bearbeiten“.](../screenshots/de/copy-overview.png)
 
 Klicke auf eine Zeile, um die Seitenleiste zu öffnen. Ihr Kopf zeigt das
 Rechte-Kennzeichen, den Status, wenn das Exemplar nicht aktiv ist, und
@@ -309,7 +309,7 @@ Chrome und Edge; Firefox druckt ohne).
 
 ### Benachrichtigungen
 
-![Das Benachrichtigungsmenü von Nextcloud mit Benachrichtigungen von Cantoria, zum Beispiel einem Vorschlag, der im Eingang wartet.](../screenshots/notifications.png)
+![Das Benachrichtigungsmenü von Nextcloud mit Benachrichtigungen von Cantoria, zum Beispiel einem Vorschlag, der im Eingang wartet.](../screenshots/de/notifications.png)
 
 Die App benachrichtigt die Personen mit einer Rolle über die
 Benachrichtigungen von Nextcloud, zum Beispiel über eine Rückfrage an deine
@@ -324,7 +324,7 @@ nennt sie alle.
 
 ### Dashboard-Widget
 
-![Das Nextcloud-Dashboard mit dem Widget „Cantoria – fällig“: eine Konzertfrist, die Karten der Startseite mit ihren Zahlen und der Link „Startseite öffnen“.](../screenshots/dashboard-widget.png)
+![Das Nextcloud-Dashboard mit dem Widget „Cantoria – fällig“: eine Konzertfrist, die Karten der Startseite mit ihren Zahlen und der Link „Startseite öffnen“.](../screenshots/de/dashboard-widget.png)
 
 Das Nextcloud-Dashboard kann das Widget **Cantoria – fällig** zeigen:
 dasselbe wie die Startseite (Konzertfristen, die Karten mit ihren Zahlen,
@@ -337,7 +337,7 @@ den Text einer Rückfrage oder den Namen einer Person.
 
 ### Aus der Dateien-App öffnen
 
-![Die App „Dateien“ im Ordner Mappe_2 des Demo-Archivs mit dem geöffneten Aktionsmenü der MusicXML-Datei von Exemplar 2-1; unter den Aktionen „In Cantoria öffnen“.](../screenshots/files-action.png)
+![Die App „Dateien“ im Ordner Mappe_2 des Demo-Archivs mit dem geöffneten Aktionsmenü der MusicXML-Datei von Exemplar 2-1; unter den Aktionen „In Cantoria öffnen“.](../screenshots/de/files-action.png)
 
 Der Archivordner ist ein gewöhnlicher Ordner in Nextcloud. Du findest eine
 Datei also auch in der App **Dateien**. Dateien des Archivordners haben im
@@ -589,7 +589,7 @@ Stimme aus einem mit ihnen geteilten Stück oder Ausschnitt erstellen (siehe
 
 ### Eine Rückfrage stellen oder eine Aufgabe geben
 
-![Der Reiter „Fragen“ von Exemplar 2-1 mit einer offenen Rückfrage an die Chorleitung zu den Takten 5 bis 8 im Tenor II und darunter ein interner Link auf dieselbe Stelle.](../screenshots/task-question.png)
+![Der Reiter „Fragen“ von Exemplar 2-1 mit einer offenen Rückfrage an die Chorleitung zu den Takten 5 bis 8 im Tenor II und darunter ein interner Link auf dieselbe Stelle.](../screenshots/de/task-question.png)
 
 Eine Rückfrage oder Aufgabe gehört immer zu einem Exemplar und kann eine
 Stelle in den Noten nennen: Seite, Takte, Stimme und Strophe.
@@ -719,7 +719,7 @@ sofort für alle.
 > bis 7 von „Der Mond ist aufgegangen“ (1-1) klingen dort als 1–6, 1–5, 7,
 > in einem geteilten Ausschnitt dieser Takte als 1–7.
 
-![Der Dialog „1-1 teilen“ über der Notenansicht: „Wer kann den Link öffnen?“ mit „Chormitglieder“ gewählt, „Was wird geteilt?“ mit „Ganzes Stück“, die Stimme Alt, die Gültigkeit, „Scan (PDF) mitgeben“ angehakt und der Kasten „Das ist beim Öffnen des Links zu sehen“ mit ganzem Stück, hervorgehobener Stimme, Tempo, Gültigkeit, Wiedergabe, Übe-Dateien und Scan (PDF).](../screenshots/share-dialog.png)
+![Der Dialog „1-1 teilen“ über der Notenansicht: „Wer kann den Link öffnen?“ mit „Chormitglieder“ gewählt, „Was wird geteilt?“ mit „Ganzes Stück“, die Stimme Alt, die Gültigkeit, „Scan (PDF) mitgeben“ angehakt und der Kasten „Das ist beim Öffnen des Links zu sehen“ mit ganzem Stück, hervorgehobener Stimme, Tempo, Gültigkeit, Wiedergabe, Übe-Dateien und Scan (PDF).](../screenshots/de/share-dialog.png)
 
 #### Öffentliche Links
 
@@ -748,7 +748,7 @@ verlinkt, falls mitgegeben, den Scan. Läuft der Link ab, wird er widerrufen
 oder ist die Fassung nicht mehr freigegeben, zeigen die Seite und der Scan
 „nicht gefunden“ ohne Grund.
 
-![Die Seite eines öffentlichen Links im öffentlichen Layout von Nextcloud, ohne Anmeldung: Titel und Komposition von „Freude, schöner Götterfunken“, der Hinweis, dass die Wiedergabe von einem einfachen Synthesizer kommt, der Link „Scan (PDF) öffnen“, die Wiedergabe mit Einzähler und Schleife und die Noten des ganzen Stücks.](../screenshots/public-link.png)
+![Die Seite eines öffentlichen Links im öffentlichen Layout von Nextcloud, ohne Anmeldung: Titel und Komposition von „Freude, schöner Götterfunken“, der Hinweis, dass die Wiedergabe von einem einfachen Synthesizer kommt, die Schaltfläche „Scan (PDF) zeigen“, die Wiedergabe mit Einzähler und Schleife und die Noten des ganzen Stücks.](../screenshots/de/public-link.png)
 
 ### Übertragungen prüfen
 
@@ -843,7 +843,7 @@ Exemplar, und der Filter **Offene Prüfpunkte** zeigt die Exemplare, die noch
 eine Entscheidung brauchen. Die zuständigen Rollen werden über neue
 Prüfpunkte benachrichtigt (eine Benachrichtigung je Bericht).
 
-![Die Notenansicht von Exemplar 2-1 mit dem Bereich „Prüfung der Übertragung“: die Liste der offenen Prüfpunkte und, ausgewählt, der Punkt in Takt 7, Tenor II, mit seiner Notiz, den Schaltflächen „Diese Stelle abspielen“ und „In der App korrigieren …“ und den Entscheidungen; links Takt 7 mit hervorgehobenem Tenor II.](../screenshots/review-points.png)
+![Die Notenansicht von Exemplar 2-1 mit dem Bereich „Prüfung der Übertragung“: die Liste der offenen Prüfpunkte und, ausgewählt, der Punkt in Takt 7, Tenor II, mit seiner Notiz, den Schaltflächen „Diese Stelle abspielen“ und „In der App korrigieren …“ und den Entscheidungen; links Takt 7 mit hervorgehobenem Tenor II.](../screenshots/de/review-points.png)
 
 #### Kleine Korrekturen in der App
 
@@ -949,7 +949,7 @@ Gibt es einen neueren Stand als den geltenden, sagt die Liste das.
    als reiner Text ohne Noten. Wähle **Notiz kopieren** und füge sie in eine
    E-Mail oder eine Nachricht ein.
 
-![Der Reiter „Dateien“ von Exemplar 2-2, Abschnitt „Stände dieser Fassung“: Stand 2, eine Korrektur in der App, geltend seit heute, mit Takten, Stimmen und Begründung; Stand 1, der erste erfasste Stand; darunter der Vergleich beider mit einem Unterschied in Takt 3 und die Notiz für Chormitglieder.](../screenshots/revisions.png)
+![Der Reiter „Dateien“ von Exemplar 2-2, Abschnitt „Stände dieser Fassung“: Stand 2, eine Korrektur in der App, geltend seit heute, mit Takten, Stimmen und Begründung; Stand 1, der erste erfasste Stand; darunter der Vergleich beider mit einem Unterschied in Takt 3 und die Notiz für Chormitglieder.](../screenshots/de/revisions.png)
 
 Verglichen werden Noten, Pausen, Notenwerte, Vorzeichen und Text; Layout,
 Dynamik und Bögen nicht. Die Chorleitung und jede andere Archivrolle können
@@ -1061,7 +1061,7 @@ liest nur: **Als gesungen bestätigen** bleibt im Konzert im Archiv.
 
 ### Konzerte im eigenen Kalender
 
-![Der Dialog „In meinen Kalender eintragen“ mit dem Kalender „Persönlich“ des Kontos zur Auswahl und den Hinweisen, dass die Vorbereitungsfristen als ganztägige Einträge dazukommen und ein vorhandener Eintrag aktualisiert und nicht doppelt angelegt wird.](../screenshots/calendar-dialog.png)
+![Der Dialog „In meinen Kalender eintragen“ mit dem Kalender „Choir“ des Kontos zur Auswahl und den Hinweisen, dass die Vorbereitungsfristen als ganztägige Einträge dazukommen und ein vorhandener Eintrag aktualisiert und nicht doppelt angelegt wird.](../screenshots/de/calendar-dialog.png)
 
 In einem Konzert und für alle kommenden Konzerte in der Konzertliste:
 
@@ -1118,7 +1118,7 @@ Betrieb beschrieben.
 
 ### Rechte bestätigen
 
-![Der Reiter „Rechte“ einer Fassung: die Bestätigung mit Status, Datum, Name, Begründung und Beleg, die Freigaben für Chorportal und Druckstation, die für den Chor geltende Fassung und die Lizenzen.](../screenshots/rights-panel.png)
+![Der Reiter „Rechte“ einer Fassung: die Bestätigung mit Status, Datum, Name, Begründung und Beleg, die Freigaben für Chorportal und Druckstation, die für den Chor geltende Fassung und die Lizenzen.](../screenshots/de/rights-panel.png)
 
 Die Rechte gehören zur Fassung, nicht zum Werk. Ein importierter oder
 vorgeschlagener Status bleibt eine Empfehlung, bis die Archivverwaltung ihn
@@ -1203,7 +1203,7 @@ Interne Erhaltungskopien werden nie kopiert. Die Dateien heißen
 `<shelf mark> <title>.pdf`; eine Datei `LIESMICH.txt` im Ordner sagt, wann
 er zuletzt geändert wurde und dass die Noten nur für den Chor sind.
 
-![Die Liste „Druckstation“ mit dem Abschnitt „Spiegelordner für die Druckstation“ und dem Dialog „Vorschau des Abgleichs“: Fünf Dateien würden kopiert, eine würde übersprungen, weil im Zielordner eine Datei dieses Namens liegt, die nicht die App geschrieben hat.](../screenshots/print-mirror-preview.png)
+![Die Liste „Druckstation“ mit dem Abschnitt „Spiegelordner für die Druckstation“ und dem Dialog „Vorschau des Abgleichs“: Fünf Dateien würden kopiert, eine würde übersprungen, weil im Zielordner eine Datei dieses Namens liegt, die nicht die App geschrieben hat.](../screenshots/de/print-mirror-preview.png)
 
 **So startest du den ersten Abgleich** (Rolle „Bestand“):
 
@@ -1283,7 +1283,7 @@ Die Seite lädt nichts von CPDL oder IMSLP; sie verlinkt nur dorthin. Die
 Lebensdaten kommen aus dem Personenregister. Ein Werk verschwindet von der
 Seite, sobald keine Fassung mehr als gemeinfrei bestätigt ist.
 
-![Die öffentliche Repertoireseite im öffentlichen Layout von Nextcloud: drei gemeinfreie Werke, jedes mit Komposition und Text und deren Lebensdaten, der Besetzung und einem Link zur Notenbibliothek CPDL oder IMSLP.](../screenshots/public-repertoire.png)
+![Die öffentliche Repertoireseite im öffentlichen Layout von Nextcloud: drei gemeinfreie Werke, jedes mit Komposition und Text und deren Lebensdaten, der Besetzung und einem Link zur Notenbibliothek CPDL oder IMSLP.](../screenshots/de/public-repertoire.png)
 
 ### Vorschläge im Eingang entscheiden
 
@@ -1337,7 +1337,7 @@ ihn als Prüfpunkte ein, statt ihn als Notendatei zu verknüpfen.
 
 ### Neuzugänge und Etiketten
 
-![Das Formular „Neues Stück erfassen“: Archivmappe und Nummer mit der vorgeschlagenen nächsten freien Nummer, die daraus folgende Signatur, Titel, Komposition, Titelquelle, Zugangsdatum und Herkunft sowie eine Schaltfläche, um eine Datei zu verknüpfen.](../screenshots/accession-form.png)
+![Das Formular „Neues Stück erfassen“: Archivmappe und Nummer mit der vorgeschlagenen nächsten freien Nummer, die daraus folgende Signatur, Titel, Komposition, Titelquelle, Zugangsdatum und Herkunft sowie eine Schaltfläche, um eine Datei zu verknüpfen.](../screenshots/de/accession-form.png)
 
 1. **Neuzugang** → **Neues Stück erfassen**.
 2. Wähle die Archivmappe. Die App schlägt die nächste freie Nummer vor;
@@ -1368,7 +1368,7 @@ Platz, dann **Etiketten drucken**.
 
 ### Personen und Schutzfristen
 
-![Die Liste „Schutzfristen“ des Demo-Archivs: Exemplar 1-7, als gemeinfrei eingetragen, obwohl die dazu erfassten Personen keinen Vorschlag „gemeinfrei“ erlauben, mit Rechtestatus, Vorschlag und Begründung.](../screenshots/protection-terms.png)
+![Die Liste „Schutzfristen“ des Demo-Archivs: Exemplar 1-7, als gemeinfrei eingetragen, obwohl die dazu erfassten Personen keinen Vorschlag „gemeinfrei“ erlauben, mit Rechtestatus, Vorschlag und Begründung.](../screenshots/de/protection-terms.png)
 
 **Personen** ist das Register der Personen aus Komposition, Text,
 Bearbeitung, Übersetzung und Herausgabe mit ihren Lebensdaten, der
@@ -1455,7 +1455,7 @@ Jahren. Der
 Vorschlag bleibt ein Vorschlag: Die Archivverwaltung entscheidet, ob ein
 Sonderfall vorliegt, und bestätigt die Rechte.
 
-![Der Reiter „Rechte“ von Exemplar 1-6 mit dem Abschnitt „Beteiligte Personen und Schutzfrist“: nach den Lebensdaten gemeinfrei, weil der Schutz als wissenschaftliche Ausgabe (§ 70 UrhG), die 1991 erschien, mit Ablauf von 2016 endete.](../screenshots/protection-special-case.png)
+![Der Reiter „Rechte“ von Exemplar 1-6 mit dem Abschnitt „Beteiligte Personen und Schutzfrist“: nach den Lebensdaten gemeinfrei, weil der Schutz als wissenschaftliche Ausgabe (§ 70 UrhG), die 1991 erschien, mit Ablauf von 2016 endete.](../screenshots/de/protection-special-case.png)
 
 ### Rechtevermerke in MusicXML-Dateien
 
@@ -1471,12 +1471,12 @@ Vermerk ist eine Angabe aus der Datei, keine Entscheidung:
   leeres Feld **Lizenz**. Nimm ihn erst an, nachdem du die Rechte selbst
   geprüft hast.
 
-![Der Reiter „Dateien“ von Exemplar 1-1: die MusicXML-Datei mit der Markierung „Nicht geprüft“ und dem aus der Datei übernommenen Rechtevermerk „Melodie und Text gemeinfrei. Satz: CC0 1.0“, mit dem Hinweis, dass er keinen Rechtestatus ändert.](../screenshots/rights-notice.png)
+![Der Reiter „Dateien“ von Exemplar 1-1: die MusicXML-Datei mit der Markierung „Nicht geprüft“ und dem aus der Datei übernommenen Rechtevermerk „Melodie und Text gemeinfrei. Satz: CC0 1.0“, mit dem Hinweis, dass er keinen Rechtestatus ändert.](../screenshots/de/rights-notice.png)
 
 
 ### Werke zusammenführen und Exemplare verschieben
 
-![Die Ansicht „Zusammenführen“ mit den drei doppelt erfassten Werkpaaren des Demo-Archivs: jedes Paar mit seinen Exemplaren, der Wahl des bleibenden Werks und der Schaltfläche zum Zusammenführen.](../screenshots/merge-proposals.png)
+![Die Ansicht „Zusammenführen“ mit den drei doppelt erfassten Werkpaaren des Demo-Archivs: jedes Paar mit seinen Exemplaren, der Wahl des bleibenden Werks und der Schaltfläche zum Zusammenführen.](../screenshots/de/merge-proposals.png)
 
 Führt das Werkverzeichnis dasselbe Werk zweimal, schlägt **Zusammenführen**
 die Werke mit gleichem Titel und gleichem Nachnamen in der Komposition vor:
@@ -1558,7 +1558,7 @@ festgelegt hat.
    geändert haben.
 3. **Drucken** druckt den Vergleich auf A4.
 
-![Die Ansicht „Jahresstände“: was ein neuer Jahresstand wohin schreibt, der Schalter für den automatischen Jahresstand im Januar, zwei Jahresstände von 2026 und ihr Vergleich: eine Fassung mit hinzugekommener Bestätigung und eine neue Lizenz.](../screenshots/annual-snapshots.png)
+![Die Ansicht „Jahresstände“: was ein neuer Jahresstand wohin schreibt, der Schalter für den automatischen Jahresstand im Januar, zwei Jahresstände von 2026 und ihr Vergleich: eine Fassung mit hinzugekommener Bestätigung und eine neue Lizenz.](../screenshots/de/annual-snapshots.png)
 
 ## Für den Betrieb
 
@@ -1602,7 +1602,7 @@ der höchsten vergebenen Nummer, die kein Exemplar hat, z. B.
 Neuzugang, um Exemplare zu finden, die nie erfasst wurden oder verloren
 gegangen sind.
 
-![Die Ansicht „Signaturlücken“ des Demo-Archivs: je Archivmappe die höchste Nummer, die Exemplare und die Nummern ohne Exemplar; in Archivmappe 4 die Signatur 4-4, die nur ein Dateiname verwendet.](../screenshots/shelfmark-gaps.png)
+![Die Ansicht „Signaturlücken“ des Demo-Archivs: je Archivmappe die höchste Nummer, die Exemplare und die Nummern ohne Exemplar; in Archivmappe 4 die Signatur 4-4, die nur ein Dateiname verwendet.](../screenshots/de/shelfmark-gaps.png)
 
 1. Öffne **Signaturlücken** (bei der Inventur unter **Bestandspflege**).
 2. Prüfe jede Lücke am Regal. Ein Hinweis unter den Lücken nennt Nummern,
@@ -1623,7 +1623,7 @@ es; Chorleitung und Vorstand lesen es. Chormitglieder und Werkzeuge sehen es
 nie. Die Administration schaltet es ein (Modul „Mappenbuch“); es gehört zur
 Voreinstellung „Vollständig“.
 
-![Das Mappenbuch mit drei Mappen: Mappe 12 seit dem 14.09.2026 bei einer erfundenen Person, die Mappen 14 und 21 verfügbar, Mappe 21 abgenutzt mit einem fehlenden Blatt und dem Hinweis, dass sie ein im Werkverzeichnis ausgemustertes Exemplar enthält.](../screenshots/folder-book.png)
+![Das Mappenbuch mit drei Mappen: Mappe 12 seit dem 14.09.2026 bei einer erfundenen Person, die Mappen 14 und 21 verfügbar, Mappe 21 abgenutzt mit einem fehlenden Blatt und dem Hinweis, dass sie ein im Werkverzeichnis ausgemustertes Exemplar enthält.](../screenshots/de/folder-book.png)
 
 Das Mappenbuch hält nur fest, wer welche Mappe hat. Anwesenheit und die
 Ausgabe am Eingang an Probenabenden gehören nicht zur App.
@@ -1662,7 +1662,7 @@ Zwei Mappen im Dienst können nicht dieselbe Nummer oder Bezeichnung haben.
 3. **Zurücknehmen**. Zustand und fehlende Blätter gelten nun für die Mappe;
    die Mappe ist wieder verfügbar.
 
-![Der Dialog „Mappe 12 zurücknehmen“: seit wann und bei wem sie ausgegeben war, der Tag der Rückgabe, der gewählte Zustand „abgenutzt“, die fehlenden Blätter und eine Notiz.](../screenshots/folder-take-back.png)
+![Der Dialog „Mappe 12 zurücknehmen“: seit wann und bei wem sie ausgegeben war, der Tag der Rückgabe, der gewählte Zustand „abgenutzt“, die fehlenden Blätter und eine Notiz.](../screenshots/de/folder-take-back.png)
 
 #### Eine Mappe außer Dienst stellen
 
@@ -1725,7 +1725,7 @@ beantwortet die Aufgaben, die an sie gerichtet sind. Sie ändert nichts.
 
 ### Auswertungen und Jahresbericht
 
-![Die Auswertungen des Demo-Archivs: der Zeitraum, Links zu den Abschnitten Bestand, Rechte, Repertoire und Aufführungen, Pflege und Jahresbericht sowie die Tabelle der Kennzahlen mit einem Balken neben jeder Zahl.](../screenshots/statistics.png)
+![Die Auswertungen des Demo-Archivs: der Zeitraum, Links zu den Abschnitten Bestand, Rechte, Repertoire und Aufführungen, Pflege und Jahresbericht sowie die Tabelle der Kennzahlen mit einem Balken neben jeder Zahl.](../screenshots/de/statistics.png)
 
 **Auswertungen** (unter *Archiv*) steht jeder Archivrolle offen. Wähle den
 Zeitraum mit **Ab Jahr** und **Bis Jahr** (Voreinstellung: die letzten zehn
@@ -1753,7 +1753,7 @@ Chormitgliedern und keine Kontonamen; interne Erhaltungskopien werden
 gezählt, aber nie mit Titel oder Signatur aufgeführt. **Drucken** druckt die
 Übersicht, **Auswertungen als CSV** lädt alle Tabellen herunter.
 
-![Der Jahresbericht eines Jahres: das Jahr in Zahlen, die Konzerte mit Datum, Ort, Status und Zahl der Stücke sowie die Neuzugänge.](../screenshots/annual-report.png)
+![Der Jahresbericht eines Jahres: das Jahr in Zahlen, die Konzerte mit Datum, Ort, Status und Zahl der Stücke sowie die Neuzugänge.](../screenshots/de/annual-report.png)
 
 Der **Jahresbericht** am Ende der Seite fasst ein Jahr für Vorstand und
 Mitgliederversammlung zusammen: Konzerte mit Datum und Stücken, Neuzugänge,
@@ -1783,7 +1783,7 @@ Stimme, der Notiz und wie lange jedes gilt, ob es sich abspielen lässt
 (**Abspielen: ja** oder **Abspielen: nein**) und ob der Scan dabei ist
 (**mit Scan (PDF)**).
 
-![Die Seite „Mit mir geteilt“ eines Chormitglieds: das ganze Stück „Der Mond ist aufgegangen“ mit der Notiz der Chorleitung, der Gültigkeit, dem Link „Scan (PDF) öffnen“, der Wiedergabe mit Einzähler und Schleife und den Noten mit hervorgehobenem Alt.](../screenshots/shared-with-me.png)
+![Die Seite „Mit mir geteilt“ eines Chormitglieds: das ganze Stück „Der Mond ist aufgegangen“ mit der Notiz der Chorleitung, der Gültigkeit, der Schaltfläche „Scan (PDF) zeigen“, der Wiedergabe mit Einzähler und Schleife und den Noten mit hervorgehobenem Alt.](../screenshots/de/shared-with-me.png)
 
 1. Wähle ein Stück in der Liste (ein Link, den du bekommen hast, öffnet es
    direkt). Die Noten erscheinen unter der Liste, auf einem breiten
