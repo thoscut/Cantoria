@@ -461,6 +461,19 @@ export interface Credit {
 	name: string
 }
 
+/** A programme under which "Shared with me" lists a link (milestone 0.20, U24). */
+export interface MemberProgramme {
+	/** stands for the programme, without its id */
+	key: string
+	title: string
+	/** date of the concert (YYYY-MM-DD), null without one */
+	date: string | null
+	/** place of the programme on the page: the next concert first, past ones after, undated ones last */
+	order: number
+	/** place of the piece in the programme, from 0 */
+	position: number
+}
+
 /** A link for choir members, as the page "Shared with me" receives it. */
 export interface MemberLink {
 	token: string
@@ -494,6 +507,8 @@ export interface MemberLink {
 	credits: Credit[]
 	/** notices the licenses ask for */
 	notices: string[]
+	/** the programmes the link was shared with as a whole, where the page lists it (milestone 0.20, U24); empty for a link on its own */
+	programmes?: MemberProgramme[]
 }
 
 /** Initial state `member` of the page for choir members. */

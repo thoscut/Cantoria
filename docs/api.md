@@ -227,7 +227,12 @@ than `active` requires `status_reason` in the same request.
 
 ## Archive management (role librarian)
 
-`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report:
+`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report.
+The file may be CSV, an Excel workbook (`.xlsx`) or an OpenDocument
+spreadsheet (`.ods`, milestone 0.20), with the same columns; the extension
+of the file name says which. Of a workbook the first sheet with the column
+`Signatur` is read (a warning names it when there are more), at most 20 MB
+of file and of cell text, as for a CSV file:
 
 ```json
 { "dryRun": true, "source": "…csv", "sha256": "…", "operation": null, "restore": true,
@@ -534,7 +539,8 @@ role; `members` for the choir members and `public` for everyone, see
 { "id": 9, "token": "32 alphanumeric characters", "copy_id": 35, "file_id": 78, "file_etag": "…",
   "measure_from": "62", "measure_to": "66", "voice": "Tenor II", "verse": null, "tempo": 80,
   "note": "…", "task_id": 4, "circle": "internal", "own": true, "created_by_name": "Anna Beispiel",
-  "created": 1761150000, "expires": "2027-04-23", "revoked": null, "hits": 3, "scan_file_id": null }
+  "created": 1761150000, "expires": "2027-04-23", "revoked": null, "hits": 3, "scan_file_id": null,
+  "event_id": null }
 ```
 
 `token` of a link for choir members or a public link is only sent to its
@@ -547,7 +553,10 @@ them.
 
 A link without `measure_from` and `measure_to` points to the whole piece.
 `scan_file_id` (`files[].id` of a PDF scan) is only set for links for choir
-members and public links that offer the scan.
+members and public links that offer the scan. `event_id` (milestone 0.20) is
+only set for links for choir members made or extended with "Share the
+programme with the choir": the programme they were last shared with, for
+the order of "Shared with me"; a request cannot set it (400 `Unknown field`).
 
 Opening a link (`GET /api/links/{token}`) additionally returns `shelfmark`,
 `createdByName` and `changed` (`true` when the MusicXML changed since the link
@@ -2241,9 +2250,23 @@ role (module `member_links`) returns the page "Shared with me" (template
               "voice": "Alto", "verse": null, "tempo": null, "note": "Please practise until Thursday.",
               "expires": "2027-04-23", "canPlay": true, "canExportAudio": false, "reason": null, "scan": true,
               "scanSize": 2400000, "offline": true, "keepUntil": null, "practiceKey": "2922db9b58cb760f1724",
-              "credits": [{ "role": "lyricist", "name": "Matthias Claudius" }], "notices": ["By kind permission of …"] }],
+              "credits": [{ "role": "lyricist", "name": "Matthias Claudius" }], "notices": ["By kind permission of …"],
+              "programmes": [{ "key": "…20 hex…", "title": "Adventskonzert", "date": "2026-12-13", "order": 0, "position": 2 }] }],
   "offline": { "enabled": true, "version": "0.15.0" } }
 ```
+
+`programmes` (milestone 0.20): the programmes the page lists the link under,
+each shared with the choir as a whole ("Share the programme with the
+choir") and holding the piece among its items not struck. `key` names the
+programme on the page (a hash, not its id), `order` its place on the page
+(the next programme first, then the later ones, past programmes from the
+latest, those without a date last) and `position` the place of the piece in
+it. A piece of two shared programmes is listed under both; where a
+programme has a link of its own for a piece, other links to the piece stay
+out of it. Links with an empty list follow below the programmes. Which
+pieces are new since the last visit the browser remembers by itself
+(`localStorage`, hashes of the tokens only); the server knows nothing of
+it.
 
 `offline` (milestone 0.15) of a link: it may be kept on the device, with the
 module `offline` and where choir members may save and print the notes (the
@@ -2481,8 +2504,9 @@ them while `public_repertoire` is active):
 
 The three columns are in `cantoria_works`; links for choir members and
 public links use the column `circle` of `cantoria_links`, the scan of a
-link `cantoria_links.scan_file_id` (nullable, no default); a whole piece
-needs no column.
+link `cantoria_links.scan_file_id` (nullable, no default), the programme
+of a link for choir members `cantoria_links.event_id` (nullable, no default,
+milestone 0.20); a whole piece needs no column.
 ## Folder book (module `folder_book`, milestone 0.7)
 
 Which choir folder is out with whom since when. Read by `librarian`,

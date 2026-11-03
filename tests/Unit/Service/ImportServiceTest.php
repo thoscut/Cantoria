@@ -17,9 +17,14 @@ use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Exception\InvalidInputException;
 use OCA\Cantoria\Service\AuditLog;
+use OCA\Cantoria\Service\BoundedZip;
 use OCA\Cantoria\Service\CatalogCsv;
 use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\ImportService;
+use OCA\Cantoria\Service\OdsReader;
+use OCA\Cantoria\Service\OdsWriter;
+use OCA\Cantoria\Service\XlsxReader;
+use OCA\Cantoria\Tests\Unit\Support\TempFiles;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -29,11 +34,18 @@ use PHPUnit\Framework\TestCase;
 /**
  * Import of the catalog CSV with mappers, database and export replaced by test
  * doubles. The doubles record what the service does, so that each test can
- * check the resulting entities, the transaction and the audit log.
+ * check the resulting entities, the transaction and the audit log. The same
+ * columns come from an Excel workbook or an OpenDocument spreadsheet, read
+ * by the real readers (U32).
  */
 #[CoversClass(ImportService::class)]
 #[UsesClass(CatalogCsv::class)]
+#[UsesClass(XlsxReader::class)]
+#[UsesClass(OdsReader::class)]
+#[UsesClass(OdsWriter::class)]
+#[UsesClass(BoundedZip::class)]
 final class ImportServiceTest extends TestCase {
+	use TempFiles;
 	private const NOW = 1761134400;
 	private const UID = 'anna';
 	private const SNAPSHOT = '_cantoria-app/20261022-120000_catalog_before-import.csv';
@@ -102,7 +114,8 @@ final class ImportServiceTest extends TestCase {
 		$time = $this->createStub(ITimeFactory::class);
 		$time->method('getTime')->willReturn(self::NOW);
 
-		$this->service = new ImportService($db, $works, $versions, $copies, $export, $audit, $time);
+		$this->service = new ImportService($db, $works, $versions, $copies, $export, $audit, $time,
+			new XlsxReader($this->tempManager()), new OdsReader($this->tempManager()));
 	}
 
 	private function insert(Work|WorkVersion|Copy $entity): Work|WorkVersion|Copy {
@@ -455,5 +468,98 @@ final class ImportServiceTest extends TestCase {
 
 		self::assertSame([], $report['warnings']);
 		self::assertSame(1, $report['created']);
+	}
+
+	// ---- Excel workbooks and OpenDocument spreadsheets (U32) ----
+
+	/**
+	 * An .xlsx workbook with inline strings, a sheet per entry of `$sheets`.
+	 *
+	 * @param array<string, list<list<string>>> $sheets name => rows
+	 */
+	private function xlsx(array $sheets): string {
+		$main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+		$rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+		$entries = [];
+		$workbook = '';
+		$rels = '';
+		$n = 0;
+		foreach ($sheets as $name => $rows) {
+			$n++;
+			$workbook .= '<sheet name="' . $name . '" sheetId="' . $n . '" r:id="rId' . $n . '"/>';
+			$rels .= '<Relationship Id="rId' . $n . '" Type="' . $rel . '/worksheet" Target="worksheets/sheet' . $n . '.xml"/>';
+			$xml = '';
+			foreach ($rows as $row) {
+				$xml .= '<row>' . implode('', array_map(fn (string $cell): string => $cell === '' ? '<c/>'
+					: (is_numeric($cell) ? '<c><v>' . $cell . '</v></c>' : '<c t="inlineStr"><is><t>' . htmlspecialchars($cell) . '</t></is></c>'), $row)) . '</row>';
+			}
+			$entries['xl/worksheets/sheet' . $n . '.xml'] = '<worksheet xmlns="' . $main . '"><sheetData>' . $xml . '</sheetData></worksheet>';
+		}
+		$entries['xl/workbook.xml'] = '<workbook xmlns="' . $main . '" xmlns:r="' . $rel . '"><sheets>' . $workbook . '</sheets></workbook>';
+		$entries['xl/_rels/workbook.xml.rels'] = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' . $rels . '</Relationships>';
+		return $this->zip($entries);
+	}
+
+	public function testAWorkbookIsImportedWithTheSameColumns(): void {
+		$workbook = $this->xlsx([
+			'Notizen' => [['Bestand am 1. November']],
+			'Werkverzeichnis' => [['Notenarchiv des Chors'], [], ['Mappe', 'Nr', 'Signatur', 'Titel', 'Rechtestatus'],
+				['5', '1', '5-1', 'Ave verum corpus', 'gemeinfrei'], [], ['5', '2', '5-2', 'Locus iste']],
+		]);
+		$report = $this->service->import($workbook, 'Werkverzeichnis.xlsx', self::UID, false);
+
+		self::assertSame([2, 2], [$report['rows'], $report['created']], 'the rows below the header; the title rows above it are left out');
+		self::assertSame(['Ave verum corpus', 'Locus iste'], array_map(fn (Work $work): ?string => $work->getTitle(), $this->insertedOf(Work::class)));
+		self::assertSame([5, 1], [$this->insertedOf(Copy::class)[0]->getBinder(), $this->insertedOf(Copy::class)[0]->getNumber()], 'numbers as numbers');
+		self::assertSame('public_domain', $this->insertedOf(WorkVersion::class)[0]->getRightsStatus());
+		self::assertContains('Only the sheet "Werkverzeichnis" was read; the other sheets of the file are left out.', self::warnings($report));
+		self::assertSame('Werkverzeichnis.xlsx', $report['source']);
+		self::assertSame(hash('sha256', $workbook), $report['sha256'], 'the checksum of the file as it was chosen');
+	}
+
+	public function testTheOdsTemplateImportsAsItIs(): void {
+		$template = CatalogCsv::template();
+		$ods = (new OdsWriter($this->tempManager()))->write([['name' => 'Werkverzeichnis', 'rows' => [$template['header'], ...$template['rows']]]]);
+		$report = $this->service->import($ods, 'cantoria_import_template.ods', self::UID, true);
+
+		self::assertSame(1, $report['created']);
+		self::assertSame([], $report['warnings'], 'the same columns as the CSV template, one sheet');
+		self::assertSame('Abendlied', $this->insertedOf(Work::class)[0]->getTitle());
+	}
+
+	public function testASpreadsheetWithoutShelfMarkColumnIsRejected(): void {
+		foreach (['list.xlsx' => $this->xlsx(['Tabelle1' => [['Titel'], ['Ave']]]), 'list.ods' => (new OdsWriter($this->tempManager()))
+			->write([['name' => 'Tabelle1', 'rows' => [['Titel'], ['Ave']]]]), 'empty.xlsx' => $this->xlsx([])] as $name => $content) {
+			try {
+				$this->service->import($content, $name, self::UID, false);
+				self::fail($name);
+			} catch (InvalidInputException $e) {
+				self::assertSame('The file has no column "Signatur". Is it the catalog?', $e->getMessage(), $name);
+			}
+		}
+		self::assertSame([], $this->transaction);
+	}
+
+	public function testTheExtensionSaysTheFormat(): void {
+		$cases = [
+			'a workbook under another name' => [$this->xlsx(['Tabelle1' => [['Signatur'], ['5-1']]]), 'catalog.csv',
+				'The file is neither CSV nor .xlsx or .ods. Please save it in one of these formats, for example in Excel with "Save as" → "Excel workbook (.xlsx)".'],
+			'an Excel 97–2003 file' => ["\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1" . str_repeat("\0", 100), 'catalog.xls',
+				'The file is neither CSV nor .xlsx or .ods. Please save it in one of these formats, for example in Excel with "Save as" → "Excel workbook (.xlsx)".'],
+			'CSV under the name of a workbook' => [self::csv(['Signatur'], ['5-1']), 'catalog.xlsx', 'The file is not an Excel workbook (.xlsx).'],
+			'CSV under the name of a spreadsheet' => [self::csv(['Signatur'], ['5-1']), 'catalog.ODS', 'The file is not an OpenDocument spreadsheet (.ods).'],
+			'CSV in another encoding' => ["Signatur;Titel\r\n5-1;\xC4pfel\r\n", 'catalog.csv',
+				'The CSV file is not UTF-8 encoded. In Excel: "Save as" → "CSV UTF-8"; in LibreOffice: "Save as" → "Text CSV" with the character set UTF-8.'],
+		];
+		foreach ($cases as $case => [$content, $name, $message]) {
+			try {
+				$this->service->import($content, $name, self::UID, false);
+				self::fail($case);
+			} catch (InvalidInputException $e) {
+				self::assertSame($message, $e->getMessage(), $case);
+			}
+		}
+		self::assertSame([], $this->transaction, 'nothing is changed');
+		self::assertSame(1, $this->service->import(self::csv(['Signatur'], ['5-1']), 'catalog.txt', self::UID, true)['created'], 'any other name is CSV');
 	}
 }

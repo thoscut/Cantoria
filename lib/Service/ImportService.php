@@ -20,12 +20,16 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 
 /**
- * Imports the catalog from CSV. Each row is a shelf mark; a new row creates
- * one work, one version and one copy.
+ * Imports the catalog from CSV, from an Excel workbook (.xlsx) or from an
+ * OpenDocument spreadsheet (.ods), with the same columns (U32, W B15). Each
+ * row is a shelf mark; a new row creates one work, one version and one copy.
+ * Of a workbook, the first sheet with the column "Signatur" in its first
+ * rows is read; rows above that header are left out.
  *
  * A repeated import matches rows by shelf mark and takes over changed values
- * while the CSV is still the leading source. Nothing is deleted: shelf marks
- * missing from the CSV are only listed in the report.
+ * while the file is still the leading source. Nothing is deleted: shelf marks
+ * missing from the file are only listed in the report (`notInCsv`, named
+ * after the first format).
  *
  * Rules that keep people in charge:
  * - Invalid values are reported and skipped; the stored value stays.
@@ -48,6 +52,12 @@ use OCP\IDBConnection;
  *     warnings: list<Warning>}
  */
 class ImportService {
+	/** Rows of a sheet in which the header with "Signatur" is looked for */
+	public const HEADER_ROWS = 10;
+	/** The first bytes of a ZIP archive (.xlsx, .ods) and of an Excel 97–2003 file (.xls) */
+	private const ZIP_START = "PK\x03\x04";
+	private const OLE_START = "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1";
+
 	public function __construct(
 		private IDBConnection $db,
 		private WorkMapper $works,
@@ -56,14 +66,17 @@ class ImportService {
 		private ExportService $export,
 		private AuditLog $audit,
 		private ITimeFactory $time,
+		private XlsxReader $xlsx,
+		private OdsReader $ods,
 	) {
 	}
 
 	/**
+	 * @param string $source name of the file; its extension says the format (.xlsx, .ods, otherwise CSV)
 	 * @return Report `warnings` holds [message, parameters] pairs
 	 */
 	public function import(string $content, string $source, string $uid, bool $dryRun): array {
-		$csv = CatalogCsv::parse($content);
+		$csv = $this->table($content, $source);
 		// A renamed column is read under its former name too
 		$csv['header'] = array_map(CatalogCsv::currentHeader(...), $csv['header']);
 		$allColumns = CatalogCsv::columns(true);
@@ -80,7 +93,7 @@ class ImportService {
 		}
 		$present = array_flip($csv['header']);
 		if (!isset($present['Signatur'])) {
-			throw new InvalidInputException('The CSV has no column "Signatur". Is it the catalog?');
+			throw new InvalidInputException('The file has no column "Signatur". Is it the catalog?');
 		}
 		$missingColumns = array_values(array_filter(array_keys(CatalogCsv::LEGACY_COLUMNS), fn (string $c): bool => !isset($present[$c])));
 
@@ -89,6 +102,9 @@ class ImportService {
 
 		/** @var list<Warning> $warnings */
 		$warnings = [];
+		if ($csv['sheet'] !== null) {
+			$warnings[] = ['Only the sheet "%s" was read; the other sheets of the file are left out.', [$csv['sheet']]];
+		}
 		if ($unknown !== []) {
 			$warnings[] = ['Unknown columns are ignored: %s', [implode(', ', $unknown)]];
 		}
@@ -315,7 +331,42 @@ class ImportService {
 	}
 
 	/**
-	 * Converts a CSV cell into the stored value of a field.
+	 * The header and the rows of the import file, by the extension of its
+	 * name: an Excel workbook (.xlsx), an OpenDocument spreadsheet (.ods) or
+	 * CSV (UTF-8, semicolons). Of a workbook the first sheet whose first rows
+	 * hold a column "Signatur", from that row on, otherwise the first row of
+	 * the first sheet; `sheet` names the sheet read when the file has more
+	 * than one.
+	 *
+	 * @return array{header: list<string>, rows: list<list<string>>, sheet: ?string}
+	 * @throws InvalidInputException
+	 */
+	private function table(string $content, string $source): array {
+		$sheets = match (strtolower(pathinfo($source, PATHINFO_EXTENSION))) {
+			'xlsx' => $this->xlsx->read($content),
+			'ods' => $this->ods->read($content),
+			default => null,
+		};
+		if ($sheets === null) {
+			if (str_starts_with($content, self::ZIP_START) || str_starts_with($content, self::OLE_START)) {
+				// a workbook under another name, or an Excel 97–2003 file (.xls)
+				throw new InvalidInputException('The file is neither CSV nor .xlsx or .ods. Please save it in one of these formats, for example in Excel with "Save as" → "Excel workbook (.xlsx)".');
+			}
+			return CatalogCsv::parse($content) + ['sheet' => null];
+		}
+		foreach ($sheets as ['name' => $name, 'rows' => $rows]) {
+			foreach (array_slice($rows, 0, self::HEADER_ROWS) as $index => $row) {
+				$header = array_map('trim', $row);
+				if (in_array('Signatur', $header, true)) {
+					return ['header' => $header, 'rows' => array_slice($rows, $index + 1), 'sheet' => count($sheets) > 1 ? $name : null];
+				}
+			}
+		}
+		return ['header' => array_map('trim', $sheets[0]['rows'][0] ?? []), 'rows' => [], 'sheet' => null];
+	}
+
+	/**
+	 * Converts a cell into the stored value of a field.
 	 *
 	 * @param FieldInfo $info
 	 * @return array{0: bool, 1: string|int|bool|null} whether the field accepts the cell, and the value
