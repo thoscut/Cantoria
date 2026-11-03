@@ -1,0 +1,108 @@
+# SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
+# SPDX-License-Identifier: CC0-1.0
+#
+# Appended by tools/release/package.sh to js/third-party-licenses.txt of the
+# release archive (everything below the first empty line). Verovio is a
+# WebAssembly module: the build of the app sees one npm package, but the
+# module carries music fonts and C++ libraries with their own copyright.
+# Checked against Verovio 6.3.0 (cmake/CMakeLists.txt, fonts/, include/ of
+# the tag version-6.3.0); check again when the version of verovio in
+# package.json changes.
+
+Verovio 6.3.0: music fonts and libraries compiled into the module
+
+The scripts of Verovio (verovio-module) contain the following fonts and
+libraries. Their copyright notices and licenses follow.
+
+Music and text fonts, under the SIL Open Font License 1.1
+(full text: LICENSES/OFL-1.1.txt)
+
+- Bravura: Copyright © 2021, Steinberg Media Technologies GmbH
+  (http://www.steinberg.net/), with Reserved Font Name "Bravura".
+- Petaluma: Copyright © 2018, Steinberg Media Technologies GmbH
+  (http://www.steinberg.net/), with Reserved Font Name "Petaluma".
+- Leipzig: Copyright (c) 2014, Etienne Darbellay, Jean-Francois Marti and
+  Laurent Pugin (info@rism.digital), with Reserved Font Name "Leipzig";
+  the font also names Klaus Rettinghaus as an author.
+- Leland: Copyright © 2025, MuseScore BVBA (http://www.musescore.org/),
+  with Reserved Font Name "Leland".
+- Gootville: designed by Grzegorz Pruchniakowski, based on SMuFL and
+  Bravura by Daniel Spreadbury at Steinberg; licensed under the SIL Open
+  Font License.
+- Liberation (text font): originally designed by Steve Matteson. The
+  embedded font names "Digitized data © 2007 Ascender Corporation" and
+  version 1.04; Verovio states the SIL Open Font License for all fonts it
+  includes (fonts/README.md of Verovio).
+
+pugixml 1.16 (MIT)
+
+Copyright (c) 2006-2026 Arseny Kapoulkine
+
+jsonxx (MIT)
+
+Copyright (c) 2010 Hong Jiang
+
+tuning-library (MIT)
+
+Copyright 2019-2020, Paul Walker
+
+miniz-cpp, zip_file.hpp (MIT)
+
+Copyright (c) 2014-2017 Thomas Fussell
+
+The four libraries above are licensed as follows:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+miniz 2.2.0 (inside zip_file.hpp; Unlicense)
+
+Rich Geldreich. This is free and unencumbered software released into the
+public domain (http://unlicense.org/).
+
+midifile (BSD-2-Clause)
+
+Copyright (c) 1999-2018, Craig Stuart Sapp
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   and the following disclaimer in the documentation and/or other materials
+   provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+CRC routines (crc.h, crc.cpp)
+
+Copyright (c) 2000 by Michael Barr.  This software is placed into
+the public domain and may be used for any purpose.  However, this
+notice must not be changed or removed and no warranty is either
+expressed or implied by its publication or distribution.

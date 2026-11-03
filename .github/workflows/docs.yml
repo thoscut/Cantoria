@@ -15,9 +15,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# As in ci.yml: newer pushes to a pull request cancel older runs; on main
+# every commit has a group of its own, so none is left without a result.
 concurrency:
-  group: docs-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: docs-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -28,15 +30,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
-      image: node:24
+      # Pinned by digest, as in ci.yml
+      image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check the documentation
         run: npx vitest run src/__tests__/docs.test.ts src/__tests__/security.test.ts
 
