@@ -214,6 +214,7 @@ export function normalizeMeta(meta: Meta): Meta {
 		roleLabels: meta.roleLabels && !Array.isArray(meta.roleLabels) ? meta.roleLabels : {},
 		fields,
 		licenseUses: meta.licenseUses && !Array.isArray(meta.licenseUses) ? meta.licenseUses : {},
+		freeOnlyWays: Array.isArray(meta.freeOnlyWays) ? meta.freeOnlyWays.filter((way): way is string => typeof way === 'string') : [],
 		personFields: normalizeFieldMap(meta.personFields),
 		contributionRoles: meta.contributionRoles && !Array.isArray(meta.contributionRoles) ? meta.contributionRoles : {},
 		archive: meta.archive ?? { id: 0, path: '', user: '' },

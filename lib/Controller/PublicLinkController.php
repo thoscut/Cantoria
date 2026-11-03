@@ -128,9 +128,9 @@ class PublicLinkController extends Controller {
 		if ($scan === null) {
 			return ModuleMiddleware::notFoundPage();
 		}
-		$response = ScanResponse::inline($scan);
+		$response = ScanResponse::inline($scan['file']);
 		$response->addHeader('X-Robots-Tag', 'noindex, nofollow');
-		$response->addHeader(OfflineController::KEEP_HEADER, $this->shared->publicMayKeep($token) ? '1' : '0');
+		$response->addHeader(OfflineController::KEEP_HEADER, $scan['keep'] ? '1' : '0');
 		return $response;
 	}
 

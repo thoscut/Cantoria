@@ -51,6 +51,17 @@ use OCA\Cantoria\Db\WorkVersion;
  * - How long a link may last follows the licenses that carry it
  *   (releaseEnd): a link ends at the latest on the last day of the license
  *   that releases it (R B20).
+ * - Printing and keeping a piece on a device are copies that stay with a
+ *   person (printDenial, deviceDenial), decided here for every circle:
+ *   choir members, the concert folder and the visitors of a public link
+ *   (R B21, B30, A23). Choir members and the concert folder need confirmed
+ *   public domain or a license for download or self-printing (COPY_USES);
+ *   visitors hold no license, so only confirmed public domain without a
+ *   rights conflict counts for them. A MusicXML file kept on a device is a
+ *   complete digital edition: unless public domain is confirmed, it needs a
+ *   license for digital score files on top (R B26). The page in the
+ *   browser receives the MusicXML of what it shows in order to draw the
+ *   notes; that transfer follows the release of the notes, not this rule.
  *
  * What counts as an internal preservation copy is decided here alone, for
  * every way out (internal API, API for agents, links, scans, print station):
@@ -78,6 +89,30 @@ class RightsPolicy {
 		ExcerptLink::CIRCLE_MEMBERS => ['notes' => ['portal'], 'scan' => ['member_download', 'self_print']],
 		ExcerptLink::CIRCLE_PUBLIC => ['notes' => ['online_publication'], 'scan' => [self::PUBLIC_SCAN_USE]],
 	];
+	/** The circle of the concert folder: the device of the conductor or the catalog librarian, signed in (milestone 0.19) */
+	public const CIRCLE_FOLDER = 'folder';
+	/** License use for passing on MusicXML files: the hand-over folder and every MusicXML kept on a device (R B26) */
+	public const DIGITAL_SCORE_USE = 'digital_scores';
+	/**
+	 * The license uses under which a copy stays with a person, per circle:
+	 * printed or kept on a device (one of them is enough). The visitors of a
+	 * public link hold no license: for them none counts.
+	 */
+	private const COPY_USES = [
+		ExcerptLink::CIRCLE_MEMBERS => self::CARRYING_USES[ExcerptLink::CIRCLE_MEMBERS]['scan'],
+		self::CIRCLE_FOLDER => self::CARRYING_USES[ExcerptLink::CIRCLE_MEMBERS]['scan'],
+		ExcerptLink::CIRCLE_PUBLIC => [],
+	];
+	/**
+	 * Ways out of the archive that only confirmed public domain opens, never
+	 * a license: a public link kept on a device or printed, and the public
+	 * repertoire page. The dialog for confirming the rights reads them from
+	 * the server (MetaService, src/rightsHints.ts).
+	 */
+	public const FREE_ONLY_WAYS = ['public_device', 'public_print', 'public_repertoire'];
+
+	/** @var array<int, list<License>>|null licenses by version while remembering() runs */
+	private ?array $remembered = null;
 
 	public function __construct(
 		private Roles $roles,
@@ -98,6 +133,62 @@ class RightsPolicy {
 		}
 		return $this->persons === null
 			|| $this->persons->protection($version->getId(), (int)substr($day, 0, 4))['status'] !== ProtectionTerm::PROTECTED;
+	}
+
+	/**
+	 * Free of every license in a circle: confirmed public domain, for the
+	 * public also without a rights conflict (freeToPublish).
+	 */
+	private function free(string $circle, WorkVersion $version, string $day): bool {
+		return $circle === ExcerptLink::CIRCLE_PUBLIC
+			? $this->freeToPublish($version, $day)
+			: $version->getRightsStatus() === 'public_domain' && $version->isConfirmed();
+	}
+
+	/**
+	 * Runs a piece of work that asks about many versions, or many times about
+	 * the same one (the page "Shared with me"): meanwhile the licenses of a
+	 * version are read once (A25). Outside it every question reads them
+	 * anew, so that a license saved earlier in the same request counts.
+	 *
+	 * @template T
+	 * @param callable(): T $work
+	 * @return T
+	 */
+	public function remembering(callable $work): mixed {
+		$outer = $this->remembered;
+		$this->remembered ??= [];
+		try {
+			return $work();
+		} finally {
+			$this->remembered = $outer;
+		}
+	}
+
+	/**
+	 * @return list<License>
+	 */
+	private function licensesOf(WorkVersion $version): array {
+		$id = $version->getId();
+		if ($this->remembered === null) {
+			return $this->licenses->findByVersion($id);
+		}
+		return $this->remembered[$id] ??= $this->licenses->findByVersion($id);
+	}
+
+	/**
+	 * Whether one of the licenses covers one of the uses today.
+	 *
+	 * @param list<License> $licenses
+	 * @param list<string> $uses
+	 */
+	private function coversOne(array $licenses, array $uses, string $day): bool {
+		foreach ($uses as $use) {
+			if ($this->rights->hasLicense($licenses, $use, $day)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -192,7 +283,7 @@ class RightsPolicy {
 		if (self::isPreservationCopy($version, $copy)) {
 			return 'Internal preservation copy: it is never shared with choir members.';
 		}
-		if ($this->rights->portalDenial($version, $this->licenses->findByVersion($version->getId()), $day) === null) {
+		if ($this->rights->portalDenial($version, $this->licensesOf($version), $day) === null) {
 			return null;
 		}
 		return $version->getRightsStatus() === 'public_domain'
@@ -211,42 +302,103 @@ class RightsPolicy {
 	 */
 	public function memberScanDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
 		$denial = $this->memberViewDenial($version, $day, $copy);
-		if ($denial !== null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+		if ($denial !== null || $this->free(ExcerptLink::CIRCLE_MEMBERS, $version, $day)) {
 			return $denial;
 		}
-		$licenses = $this->licenses->findByVersion($version->getId());
-		if ($this->rights->hasLicense($licenses, 'member_download', $day) || $this->rights->hasLicense($licenses, 'self_print', $day)) {
+		if ($this->coversOne($this->licensesOf($version), self::COPY_USES[ExcerptLink::CIRCLE_MEMBERS], $day)) {
 			return null;
 		}
 		return 'Choir members can save and print the scan: unless public domain is confirmed, it needs a license for download and printing by choir members. The catalog librarian records it on the tab "Rights".';
 	}
 
 	/**
-	 * Whether the conductor or the catalog librarian may keep the score and
-	 * the scan of a version on their own device (concert folder, milestone
-	 * 0.19): a copy that stays there for weeks is no viewing in the archive
-	 * (§ 53 (4) UrhG). Confirmed public domain, or a license for download
-	 * or self-printing; never an internal preservation copy.
+	 * Whether a piece may be printed in a circle (R B21): printing the notes
+	 * is a copy that stays with a person. The release of the circle, and
+	 * unless the version is free a license for download or self-printing
+	 * (COPY_USES); for the visitors of a public link only confirmed public
+	 * domain without a rights conflict, as they hold no license (R B30). For
+	 * the concert folder the caller checks the account first
+	 * (ConcertFolderService); here only the rights.
 	 *
+	 * @param string $circle ExcerptLink::CIRCLE_MEMBERS, ExcerptLink::CIRCLE_PUBLIC or self::CIRCLE_FOLDER
+	 * @param string $day today (YYYY-MM-DD), for the validity of licenses
 	 * @return string|null null when allowed, otherwise the reason with the next step
 	 */
-	public function deviceCopyDenial(WorkVersion $version, string $uid, ?Copy $copy = null): ?string {
-		$denial = $this->viewDenial($version, $uid, $copy);
-		if ($denial !== null) {
+	public function printDenial(string $circle, WorkVersion $version, string $day, ?Copy $copy = null): ?string {
+		return $this->copyDenial($circle, $version, $day, $copy, false);
+	}
+
+	/**
+	 * Whether a piece may be kept on a device in a circle (milestones 0.15,
+	 * 0.19): the notes as MusicXML and the scan stay there for weeks, which
+	 * is no viewing (§ 53 (4) UrhG). Everything printing needs, and for the
+	 * notes (`$withScore`) a license for digital score files unless the
+	 * version is free: a MusicXML file is a complete digital edition, which a
+	 * license for printing a PDF does not cover (R B26, as in the hand-over
+	 * folder). The one rule for the page, for the answers the service worker
+	 * keeps (header X-Cantoria-Keep) and for the dialogs.
+	 *
+	 * @param string $circle ExcerptLink::CIRCLE_MEMBERS, ExcerptLink::CIRCLE_PUBLIC or self::CIRCLE_FOLDER
+	 * @param bool $withScore whether the piece kept has notes (MusicXML); an item of the concert folder may have only a scan
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function deviceDenial(string $circle, WorkVersion $version, string $day, ?Copy $copy = null, bool $withScore = true): ?string {
+		$denial = $this->copyDenial($circle, $version, $day, $copy, true);
+		if ($denial !== null || !$withScore || $this->free($circle, $version, $day)) {
 			return $denial;
 		}
-		if (self::isPreservationCopy($version, $copy)) {
-			return 'Internal preservation copy: it is not kept on a device.';
-		}
-		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+		if ($this->rights->hasLicense($this->licensesOf($version), self::DIGITAL_SCORE_USE, $day)) {
 			return null;
 		}
-		$day = $this->rights->today($uid);
-		$licenses = $this->licenses->findByVersion($version->getId());
-		if ($this->rights->hasLicense($licenses, 'member_download', $day) || $this->rights->hasLicense($licenses, 'self_print', $day)) {
+		return 'Not available without a network: unless public domain is confirmed, the notes (MusicXML) also need a license for digital score files. The catalog librarian records it on the tab "Rights".';
+	}
+
+	/**
+	 * The last day a piece may stay on a device of a circle (`keepUntil`,
+	 * R B8, B29): the earliest end of the licenses deviceDenial needs, for
+	 * choir members also of the release of the notes. Null when nothing
+	 * ends (a free version, licenses without end). Of several licenses for
+	 * the same use, the one that lasts longest counts.
+	 */
+	public function deviceEnd(string $circle, WorkVersion $version, string $day, bool $withScore = true): ?string {
+		if ($this->free($circle, $version, $day)) {
 			return null;
 		}
-		return 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".';
+		$groups = [];
+		if (isset(self::CARRYING_USES[$circle])) {
+			$groups[] = self::CARRYING_USES[$circle]['notes'];
+		}
+		if ((self::COPY_USES[$circle] ?? []) !== []) {
+			$groups[] = self::COPY_USES[$circle];
+		}
+		if ($withScore) {
+			$groups[] = [self::DIGITAL_SCORE_USE];
+		}
+		return self::earliestEnd($this->licensesOf($version), $groups, $day);
+	}
+
+	/**
+	 * The rule of printDenial and deviceDenial, without the one for the notes.
+	 */
+	private function copyDenial(string $circle, WorkVersion $version, string $day, ?Copy $copy, bool $device): ?string {
+		$denial = match ($circle) {
+			ExcerptLink::CIRCLE_MEMBERS => $this->memberViewDenial($version, $day, $copy),
+			ExcerptLink::CIRCLE_PUBLIC => $this->publicViewDenial($version, $day, $copy),
+			self::CIRCLE_FOLDER => self::isPreservationCopy($version, $copy) ? 'Internal preservation copy: it is not kept on a device.' : null,
+			default => throw new \InvalidArgumentException('Unknown circle ' . $circle),
+		};
+		if ($denial !== null || $this->free($circle, $version, $day)) {
+			return $denial;
+		}
+		if ($this->coversOne($this->licensesOf($version), self::COPY_USES[$circle] ?? [], $day)) {
+			return null;
+		}
+		if ($circle === ExcerptLink::CIRCLE_PUBLIC) {
+			return 'Visitors of a public link hold no license: printing the piece or keeping it on a device needs confirmed public domain without a rights conflict.';
+		}
+		return $device
+			? 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".'
+			: 'Printing is a copy: unless public domain is confirmed, it needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".';
 	}
 
 	/**
@@ -261,7 +413,7 @@ class RightsPolicy {
 	public function memberPlayDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
 		$denial = $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy);
 		if ($denial !== null || $version->getRightsStatus() !== 'public_domain' || $version->isConfirmed()
-			|| $this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'practice_audio', $day)) {
+			|| $this->rights->hasLicense($this->licensesOf($version), 'practice_audio', $day)) {
 			return $denial;
 		}
 		return 'Public domain is not confirmed yet: playback for choir members needs a confirmed rights status or a license for practice audio.';
@@ -276,7 +428,8 @@ class RightsPolicy {
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function memberPracticeAudioDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
-		return $this->memberPlayDenial($version, $day, $copy) ?? $this->practiceAudioRightsDenial($version, $day);
+		// memberPlayDenial already needs confirmed public domain or a license for practice audio
+		return $this->memberPlayDenial($version, $day, $copy);
 	}
 
 	/**
@@ -293,11 +446,11 @@ class RightsPolicy {
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function handoverAudioDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
-		$denial = $this->memberPlayDenial($version, $day, $copy) ?? $this->practiceAudioRightsDenial($version, $day);
+		$denial = $this->memberPlayDenial($version, $day, $copy);
 		if ($denial !== null) {
 			return $denial;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'recording_sharing', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), 'recording_sharing', $day)) {
 			return null;
 		}
 		return 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").';
@@ -314,10 +467,10 @@ class RightsPolicy {
 	 */
 	public function handoverScoreDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
 		$denial = $this->memberViewDenial($version, $day, $copy);
-		if ($denial !== null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+		if ($denial !== null || $this->free(ExcerptLink::CIRCLE_MEMBERS, $version, $day)) {
 			return $denial;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'digital_scores', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), self::DIGITAL_SCORE_USE, $day)) {
 			return null;
 		}
 		return 'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").';
@@ -341,7 +494,7 @@ class RightsPolicy {
 		if ($this->freeToPublish($version, $day)) {
 			return null;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'online_publication', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), 'online_publication', $day)) {
 			return null;
 		}
 		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
@@ -368,7 +521,7 @@ class RightsPolicy {
 		if ($denial !== null || $this->freeToPublish($version, $day)) {
 			return $denial;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), self::PUBLIC_SCAN_USE, $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), self::PUBLIC_SCAN_USE, $day)) {
 			return null;
 		}
 		return 'Everyone can save the scan of a public link: it needs confirmed public domain or a license for the download of the scan on public links. The catalog librarian records it on the tab "Rights".';
@@ -384,12 +537,22 @@ class RightsPolicy {
 	 */
 	public function releaseEnd(WorkVersion $version, string $circle, bool $scan, string $day): ?string {
 		$uses = self::CARRYING_USES[$circle] ?? null;
-		if ($uses === null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+		if ($uses === null || $this->free($circle, $version, $day)) {
 			return null;
 		}
-		$licenses = $this->licenses->findByVersion($version->getId());
+		return self::earliestEnd($this->licensesOf($version), $scan ? [$uses['notes'], $uses['scan']] : [$uses['notes']], $day);
+	}
+
+	/**
+	 * The earliest of the last days of groups of uses (lastDay); null when
+	 * none of them ends.
+	 *
+	 * @param list<License> $licenses
+	 * @param list<list<string>> $groups
+	 */
+	private static function earliestEnd(array $licenses, array $groups, string $day): ?string {
 		$end = null;
-		foreach ($scan ? [$uses['notes'], $uses['scan']] : [$uses['notes']] as $group) {
+		foreach ($groups as $group) {
 			$groupEnd = self::lastDay($licenses, $group, $day);
 			if ($groupEnd !== null && ($end === null || $groupEnd < $end)) {
 				$end = $groupEnd;
@@ -407,10 +570,10 @@ class RightsPolicy {
 	 */
 	public function licensedQuantity(WorkVersion $version, string $circle, string $day): ?int {
 		$uses = self::CARRYING_USES[$circle] ?? null;
-		if ($uses === null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+		if ($uses === null || $this->free($circle, $version, $day)) {
 			return null;
 		}
-		$licenses = $this->licenses->findByVersion($version->getId());
+		$licenses = $this->licensesOf($version);
 		$least = null;
 		foreach ([$uses['notes'], $uses['scan']] as $group) {
 			$sum = 0;
@@ -472,7 +635,7 @@ class RightsPolicy {
 		if ($denial !== null || $this->freeToPublish($version, $day)) {
 			return $denial;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'online_audio', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), 'online_audio', $day)) {
 			return null;
 		}
 		return $version->getRightsStatus() === 'public_domain' && !$version->isConfirmed()
@@ -491,7 +654,7 @@ class RightsPolicy {
 		if ($version->getRightsStatus() === 'public_domain') {
 			return null;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'practice_audio', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), 'practice_audio', $day)) {
 			return null;
 		}
 		return $version->getRightsStatus() === 'protected'
@@ -509,7 +672,7 @@ class RightsPolicy {
 			// Protected or open: playback was allowed by a license for practice audio.
 			return null;
 		}
-		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'practice_audio', $day)) {
+		if ($this->rights->hasLicense($this->licensesOf($version), 'practice_audio', $day)) {
 			return null;
 		}
 		return 'Public domain is not confirmed yet: practice audio files need a confirmed rights status or a license for practice audio.';

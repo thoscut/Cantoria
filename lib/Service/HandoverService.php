@@ -355,6 +355,17 @@ class HandoverService extends PrintMirrorService {
 	}
 
 	/**
+	 * The rights reasons of the hand-over besides the preservation copy: no
+	 * license for download, for practice audio and recordings, or for
+	 * digital score files. A file the app wrote before such a license ended
+	 * is removed from the folder (A22).
+	 */
+	#[\Override]
+	protected function isRightsReason(string $reason): bool {
+		return parent::isRightsReason($reason) || in_array($reason, [self::NO_DOWNLOAD, self::NO_PRACTICE_AUDIO, self::NO_DIGITAL_SCORES], true);
+	}
+
+	/**
 	 * Whether a file of the role "musicxml" is a MusicXML score that the
 	 * viewer would read (ScoreService::isScore).
 	 */

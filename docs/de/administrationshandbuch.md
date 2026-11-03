@@ -885,8 +885,9 @@ Benachrichtigungen sind eingeklappt.
 
 Die Chormitglieder sehen nur Fassungen, die für das Chorportal freigegeben
 sind; auf einem Gerät behalten lässt sich ein Stück nur mit bestätigter
-Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck, und die
-Rolle „Chormitglieder“ braucht eine Gruppe (die Einrichtung prüft das).
+Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck zusammen
+mit einer für digitale Notendateien (seine Noten bleiben dort als
+MusicXML), und die Rolle „Chormitglieder“ braucht eine Gruppe (die Einrichtung prüft das).
 Öffentliche Seiten gehen nur mit bestätigter Gemeinfreiheit oder einer Lizenz
 für die Online-Veröffentlichung, und den Scan eines öffentlichen Links kann
 jede Person mit dem Link herunterladen; trage vorher Impressum und Datenschutzerklärung
@@ -1180,9 +1181,23 @@ offline`):
   der Browser wie bisher. Ohne Netz wird nichts auf den Server geschrieben:
   Übe-Dateien brauchen es, weil der Server die Rechte prüft und jede Datei
   protokolliert.
-- **Rechte.** Nur wo Chormitglieder die Noten speichern und drucken dürfen
-  (dieselbe Regel wie für den Scan und den Übergabeordner): Eine Lizenz für
-  das Chorportal allein deckt das Ansehen, keine Kopie auf dem Gerät.
+- **Rechte.** Eine Regel für jeden Weg (RightsPolicy: „Mit mir geteilt“,
+  die Konzertmappe, öffentliche Links, der Dialog für Links und der Header
+  `X-Cantoria-Keep` jeder Antwort, die der Service Worker behält). Ohne
+  bestätigte Gemeinfreiheit braucht ein Stück eine Lizenz für Download oder
+  Selbstausdruck, wie für den Scan und das Drucken, und für seine Noten
+  eine Lizenz „Weitergabe digitaler Notendateien (MusicXML) an
+  Chormitglieder (Übergabeordner, auf Geräten behaltene Stücke)“: Das Gerät
+  behält die Noten als MusicXML-Datei, also als vollständige digitale
+  Ausgabe, aus der sich neue Drucke und Stimmen machen lassen, wie im
+  Übergabeordner. Eine Lizenz für das Chorportal allein deckt das Ansehen,
+  keine Kopie auf dem Gerät. Das Gerät entfernt ein Stück am letzten Tag
+  dieser Lizenzen, auch ohne Netz. Ansehen und Abspielen im Browser
+  betrifft das nicht: Die Seite bekommt die MusicXML dessen, was sie zeigt,
+  um die Noten zu zeichnen, unter der Freigabe der Noten (Chorportal,
+  Online-Veröffentlichung). Sag das einem Verlag so; „nur als Notenbild“
+  wäre zu wenig. Diese Lesart ist vorsichtig und sollte vor 1.0 anwaltlich
+  bestätigt werden (R B26).
 - **Ablauf und Widerruf.** Bei jedem Start mit Netz gleicht die Seite die
   Stücke auf dem Gerät mit dem Server ab; abgelaufene, widerrufene und
   nicht mehr erlaubte werden entfernt. Nach 30 Tagen ohne Abgleich sind die
@@ -1217,7 +1232,10 @@ offline`):
   gespeichert; jeder Besuch mit Netz ist der Abgleich, und ein widerrufener
   oder abgelaufener Link wird beim nächsten vom Gerät entfernt. Eine Lizenz
   reicht hier nie: Sie deckt das öffentliche Zeigen, keine Kopie auf dem
-  Gerät jedes Besuchers.
+  Gerät jedes Besuchers. Dasselbe gilt für das Drucken der Noten eines
+  öffentlichen Links. Ein Rechtekonflikt (bestätigt gemeinfrei, nach den
+  jetzt erfassten Personen aber geschützt) schließt beides, wie er Scan und
+  Wiedergabe schließt, bis die Archivverwaltung die Rechte geprüft hat.
 - **Ausschalten.** Der nächste Besuch mit Netz entfernt den Service Worker
   und alles, was er gespeichert hat. Nach einem Update der App erneuert
   sich der Worker und verwirft die alten Skripte.
@@ -1234,8 +1252,10 @@ Probe und Konzert. Mit dem Modul **Üben ohne Netz** lässt sich ein ganzes
 Programm für Probe und Konzert ohne Netz auf dem Gerät speichern, aber nur
 die Stücke, deren Rechte eine Kopie erlauben: bestätigte Gemeinfreiheit
 oder eine Lizenz für Download oder Selbstausdruck (§ 53 Abs. 4 UrhG; eine
-Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen). Sie
-nutzt denselben Service Worker mit einem eigenen Speicher, denselben
+Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen) und
+für die Noten eine Lizenz für digitale Notendateien, dieselbe Regel wie für
+Chormitglieder. Ein Stück verschwindet am letzten Tag dieser Lizenzen vom
+Gerät. Sie nutzt denselben Service Worker mit einem eigenen Speicher, denselben
 Abgleich bei jedem Start mit Netz und dieselbe Sperre nach 30 Tagen. Die
 Mappe liest nur. Ein anderes Konto im selben Browser, ein Besuch ohne die
 Rolle oder das Abmelden (wie bei Chormitgliedern, oben) entfernt, was auf
@@ -1345,10 +1365,14 @@ PDF-Scans ihrer aktiven Exemplare, nie interne Erhaltungskopien, benannt
 `<shelf mark> <title>.pdf`, und eine `LIESMICH.txt`. Jedes Schreiben und
 jedes Entfernen steht im Protokoll. Sie ersetzt oder entfernt nur Dateien,
 die sie selbst geschrieben hat und die seitdem niemand geändert hat (sie
-merkt sich ihre Prüfsummen); jede andere Datei im Ordner bleibt. Schlägt der
-tägliche Abgleich fehl (Ordner weg, kein Schreibrecht), bekommen die Rolle
-„Bestand“ und die Administration die Benachrichtigung „Abgleich der
-Druckstation fehlgeschlagen“.
+merkt sich ihre Prüfsummen); jede andere Datei im Ordner bleibt. Eine
+Datei, die sie geschrieben hat, entfernt sie, wenn ihre Fassung die Liste
+verlässt, und auch, wenn die Rechte sie nicht mehr erlauben, während die
+Fassung bleibt (ein Exemplar, das als interne Erhaltungskopie markiert
+ist); eine Datei, die gerade nicht lesbar ist, bleibt bis zum nächsten
+Abgleich. Schlägt der tägliche Abgleich fehl (Ordner weg, kein
+Schreibrecht), bekommen die Rolle „Bestand“ und die Administration die
+Benachrichtigung „Abgleich der Druckstation fehlgeschlagen“.
 
 Risiken:
 
@@ -1401,7 +1425,7 @@ internen Erhaltungskopien:
   (dieselbe Regel wie beim Herunterladen im Portal);
 - die MusicXML-Dateien bei bestätigter Gemeinfreiheit oder mit einer Lizenz
   „Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder
-  (Übergabeordner)“: Eine MusicXML-Datei ist eine vollständige digitale
+  (Übergabeordner, auf Geräten behaltene Stücke)“: Eine MusicXML-Datei ist eine vollständige digitale
   Ausgabe, aus der sich neue Drucke und Stimmen machen lassen; eine Lizenz
   zum Ausdrucken deckt sie nicht. Die App legt sie geprüft und bereinigt
   ab wie die Noten eines Links (ohne Encoder, Notizen, Kommentare),
@@ -1428,7 +1452,15 @@ entfernt die App nur Dateien, die sie selbst geschrieben hat und die seitdem
 niemand geändert hat; jedes Schreiben und Entfernen steht im Protokoll;
 schlägt der tägliche Abgleich fehl, bekommen die Rolle „Bestand“ und die
 Administration die Benachrichtigung „Übergabe an das Chorsystem
-fehlgeschlagen“.
+fehlgeschlagen“. Der Abgleich entfernt eine Datei, die er geschrieben hat,
+wenn ihre Fassung die Liste verlässt, und auch, wenn eine Lizenz, die sie
+brauchte, abgelaufen ist, während die Fassung auf der Liste bleibt
+(Download oder Selbstausdruck für einen Scan, digitale Notendateien für
+MusicXML, Weitergabe von Aufnahmen für eine Aufnahme); die Vorschau nennt
+diese Entfernungen. Eine Datei, die gerade nicht lesbar ist oder deren
+Name nicht erlaubt ist, bleibt bis zum nächsten Abgleich. MusicXML-Dateien,
+die eine ältere Version der App geschrieben hat, werden erst bereinigt,
+wenn sich ihre Quelle ändert.
 
 Risiken:
 
@@ -1453,8 +1485,9 @@ nächsten Abgleich. Das braucht kein Modul außer der Übergabe, hat aber
 keine Werkzeuge zum Üben: Dafür speichern Chormitglieder Stücke mit dem
 Modul **Üben ohne Netz** (siehe
 [Mit Chormitgliedern und der Öffentlichkeit teilen](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)).
-Der Ordner enthält nur, was Chormitglieder ohnehin speichern und drucken
-dürfen.
+Der Ordner enthält nur, was die Rechte Chormitgliedern zu behalten
+erlauben: Ab dem ersten Abgleich nach dem Ende einer Lizenz ist die Datei
+weg.
 
 Wie sich Archiv und Chorsystem die Arbeit teilen und was das Archiv nie
 verlässt, steht in [Cantoria neben einem Chorsystem](neben-einem-chorsystem.md).

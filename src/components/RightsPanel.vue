@@ -42,7 +42,7 @@ import { displayValue, formatDate, isEmpty, toIsoDate, translateLabel } from '..
 import { licenseUseLabel } from '../labels.ts'
 import { navigate } from '../navigation.ts'
 import { confirmConsequences } from '../rightsHints.ts'
-import { canSeeProposals, choiceLabel, entries, fieldInfo, fieldLabel, isConductor, isLibrarian, isModuleActive } from '../store.ts'
+import { canSeeProposals, choiceLabel, entries, fieldInfo, fieldLabel, isConductor, isFreeOnly, isLibrarian, isModuleActive } from '../store.ts'
 
 const props = defineProps<{
 	detail: Detail
@@ -245,7 +245,7 @@ const dialogSubmit = computed(() => {
 })
 
 /** What the confirmation makes possible, for the chosen status. */
-const consequences = computed(() => confirmConsequences(draft.value.status, isPreservationCopy.value, isModuleActive))
+const consequences = computed(() => confirmConsequences(draft.value.status, isPreservationCopy.value, isModuleActive, isFreeOnly))
 
 /** The protection proposal does not say "public domain", but public domain is about to be confirmed. */
 const againstProposal = computed(() => dialog.value === 'confirm' && draft.value.status === 'public_domain'

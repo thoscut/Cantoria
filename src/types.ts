@@ -61,6 +61,11 @@ export interface Meta {
 	fields: Record<Level, FieldMap>
 	/** license use key => English label */
 	licenseUses: Record<string, string>
+	/**
+	 * Ways out that only confirmed public domain opens, never a license
+	 * (RightsPolicy::FREE_ONLY_WAYS), e.g. `public_device`
+	 */
+	freeOnlyWays: string[]
 	/** field directory of a person (same format as fields) */
 	personFields: FieldMap
 	/** contribution role key => English label */
@@ -547,6 +552,8 @@ export interface FolderItem {
 	offline: boolean
 	/** translated reason why it may not be kept */
 	offlineReason: string | null
+	/** last day the licenses allow the copy on the device; null: no end (R B29) */
+	keepUntil?: string | null
 	/** the rights allow printing the notes; false: the print view says so instead */
 	print?: boolean
 	practiceKey: string | null

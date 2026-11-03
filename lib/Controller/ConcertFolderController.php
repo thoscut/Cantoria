@@ -107,7 +107,7 @@ class ConcertFolderController extends Controller {
 			return new JSONResponse(['error' => $this->l->t('Not logged in.')], Http::STATUS_UNAUTHORIZED);
 		}
 		try {
-			$xml = $this->folder->score($id, $this->userId);
+			['xml' => $xml, 'keep' => $keep] = $this->folder->score($id, $this->userId);
 		} catch (UserFacingException $e) {
 			return $this->errorResponse($e);
 		}
@@ -116,7 +116,7 @@ class ConcertFolderController extends Controller {
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
 		$response->cacheFor(0, false, false);
 		// the service worker keeps it on the device only while the server says so (S N5)
-		$response->addHeader(OfflineController::KEEP_HEADER, $this->folder->mayKeep($id, $this->userId) ? '1' : '0');
+		$response->addHeader(OfflineController::KEEP_HEADER, $keep ? '1' : '0');
 		return $response;
 	}
 
@@ -131,11 +131,12 @@ class ConcertFolderController extends Controller {
 			return new JSONResponse(['error' => $this->l->t('Not logged in.')], Http::STATUS_UNAUTHORIZED);
 		}
 		try {
-			$response = ScanResponse::inline($this->folder->scan($id, $this->userId));
+			['file' => $scan, 'keep' => $keep] = $this->folder->scan($id, $this->userId);
+			$response = ScanResponse::inline($scan);
 		} catch (UserFacingException $e) {
 			return $this->errorResponse($e);
 		}
-		$response->addHeader(OfflineController::KEEP_HEADER, $this->folder->mayKeep($id, $this->userId) ? '1' : '0');
+		$response->addHeader(OfflineController::KEEP_HEADER, $keep ? '1' : '0');
 		return $response;
 	}
 

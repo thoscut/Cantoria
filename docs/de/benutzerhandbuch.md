@@ -660,11 +660,14 @@ Hat die Administration es eingeschaltet, lässt sich ein ganzes Stück oder ein
 Ausschnitt über die Archivrollen hinaus teilen: mit den **Chormitgliedern**
 (sie melden sich an und sehen es unter „Mit mir geteilt“) oder mit
 **allen** über einen öffentlichen Link ohne Anmeldung. Beide bekommen nur,
-was du teilst, das ganze Stück oder die gewählten Takte als Notenbild, nicht
-die Notendatei des Archivs; der Server prüft bei jedem Aufruf die Rechte. Auf
-Wunsch gibt der Link auch den **Scan (PDF)** des Exemplars mit. Was im
-Browser ankommt, lässt sich dort speichern; sag einem Verlag daher nicht
-„kein Download“ zu.
+was du teilst, das ganze Stück oder die gewählten Takte: als Noten, die der
+Browser aus einer MusicXML-Datei zeichnet. Der Server schneidet sie auf die
+Takte zu und entfernt interne Notizen; die Datei kommt dabei im Browser an,
+nie die Notendatei des Archivs selbst. Der Server prüft bei jedem Aufruf die
+Rechte. Auf Wunsch gibt der Link auch den **Scan (PDF)** des Exemplars mit.
+Was im Browser ankommt, lässt sich dort speichern; sag einem Verlag daher
+nicht „kein Download“ oder „nur als Notenbild“ zu, sondern dass die Noten
+als MusicXML im Browser ankommen.
 
 #### So teilst du ein ganzes Stück mit dem Chor
 
@@ -714,13 +717,18 @@ braucht der Scan in einem Link für Chormitglieder deshalb eine Lizenz mit
 der Nutzung „Download, Ausdruck und Kopien auf Geräten durch Chormitglieder
 (Scan in Links, Konzertmappe, Übergabeordner)“ (oder „Selbstausdruck durch
 Chormitglieder“). Fehlt sie, bietet der Dialog die Noten an und sagt, warum
-der Scan fehlt. Dieselbe Nutzung erlaubt der Chorleitung, ein Stück in der
-Konzertmappe auf einem Gerät zu behalten, und legt den Scan in den
-Übergabeordner für ein Chorsystem. MusicXML-Dateien und Aufnahmen im
-Übergabeordner brauchen eigene Nutzungen: „Weitergabe digitaler
-Notendateien (MusicXML) an Chormitglieder (Übergabeordner)“ und „Weitergabe
-von Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind
-einverstanden; Übergabeordner)“.
+der Scan fehlt. Dieselbe Nutzung erlaubt Chormitgliedern, die Noten zu
+drucken, und legt den Scan in den Übergabeordner für ein Chorsystem.
+MusicXML-Dateien und Aufnahmen im Übergabeordner brauchen eigene Nutzungen:
+„Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder
+(Übergabeordner, auf Geräten behaltene Stücke)“ und „Weitergabe von
+Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind einverstanden;
+Übergabeordner)“. Ein Stück, das ohne Netz auf einem Gerät bleibt (bei
+Chormitgliedern oder in der Konzertmappe), behält seine Noten als
+MusicXML-Datei, also als vollständige digitale Ausgabe: Ohne bestätigte
+Gemeinfreiheit braucht es die Lizenz für Download oder Selbstausdruck
+**und** die für digitale Notendateien. Ansehen und Abspielen im Browser
+brauchen keine von beiden.
 
 Zum Abspielen für Chormitglieder braucht eine Fassung bestätigte
 Gemeinfreiheit oder eine Lizenz für Übe-Audio; ein unbestätigter Status
@@ -783,8 +791,12 @@ in seiner Reihenfolge.
 #### Öffentliche Links
 
 Ein öffentlicher Link zeigt ein ganzes Stück oder einen Ausschnitt allen, die
-den Link haben, und spielt es ab, ohne Anmeldung: als Notenbild, nicht die
-Notendatei des Archivs, ohne Namen und ohne Notiz. Wähle im selben Dialog **Öffentlich (ohne Anmeldung)**.
+den Link haben, und spielt es ab, ohne Anmeldung: als Noten, die der
+Browser aus einer bereinigten MusicXML-Datei zeichnet (die Datei kommt im
+Browser an), nicht die Notendatei des Archivs, ohne Namen und ohne Notiz.
+Besucher haben keine Lizenz: Die Noten drucken und die Seite auf einem
+Gerät behalten können sie nur bei bestätigter Gemeinfreiheit ohne
+Rechtekonflikt, gleich welche Lizenzen die Fassung hat. Wähle im selben Dialog **Öffentlich (ohne Anmeldung)**.
 Das geht nur, wenn
 
 - die Fassung **zur Veröffentlichung freigegeben** ist: Die Rolle „Bestand“
@@ -1166,7 +1178,10 @@ Konzertmappe nichts auf dem Gerät.
 
 Ohne Netz verfügbar wird ein Stück nur, wo die Rechte eine Kopie auf dem
 Gerät erlauben: bestätigte Gemeinfreiheit oder eine Lizenz für Download
-oder Selbstausdruck. Sonst nennt die Mappe beim Stück den Grund. Eine
+oder Selbstausdruck, für die Noten (eine MusicXML-Datei auf dem Gerät)
+dazu eine Lizenz für digitale Notendateien. Sonst nennt die Mappe beim
+Stück den Grund. Ein behaltenes Stück verschwindet am letzten Tag dieser
+Lizenzen vom Gerät, wie bei „Mit mir geteilt“. Eine
 interne Erhaltungskopie öffnet die Konzertmappe nicht: Sie ist eine Kopie
 für das Archiv, kein Material für Probe und Konzert; nimm ein anderes
 Exemplar der Fassung ins Programm. Die Konzertmappe liest nur: **Als

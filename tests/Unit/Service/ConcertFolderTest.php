@@ -29,6 +29,7 @@ use OCA\Cantoria\Service\MusicXmlExcerpt;
 use OCA\Cantoria\Service\PageKeys;
 use OCA\Cantoria\Service\ProgrammeCopies;
 use OCA\Cantoria\Service\RightsPolicy;
+use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\ScanService;
 use OCA\Cantoria\Service\ScoreService;
@@ -61,6 +62,9 @@ final class ConcertFolderTest extends TestCase {
 	 * @param array<int, string> $deviceDenials version id => why it may not be kept on a device
 	 * @param list<string> $off modules switched off
 	 */
+	/** @var list<array{0: string, 1: int, 2: string, 3: bool}> what RightsPolicy::deviceDenial was asked: circle, version, day, with the notes */
+	private array $deviceQuestions = [];
+
 	private function folder(array $viewDenials = [], bool $conductor = true, array $deviceDenials = [], array $off = []): ConcertFolderService {
 		$roles = $this->createStub(Roles::class);
 		$roles->method('hasAnyRole')->willReturn($conductor);
@@ -108,13 +112,21 @@ final class ConcertFolderTest extends TestCase {
 			: [self::file(1, $copyId, 'musicxml', 'a.musicxml'), self::file(3, $copyId, 'score_pdf', 'z.pdf'), self::file(4, $copyId, 'score_pdf', 'a.pdf')]);
 		$policy = $this->createStub(RightsPolicy::class);
 		$policy->method('viewDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $viewDenials[$version->getId()] ?? null);
-		$policy->method('deviceCopyDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $deviceDenials[$version->getId()] ?? null);
+		$policy->method('deviceDenial')->willReturnCallback(function (string $circle, WorkVersion $version, string $day, ?Copy $copy, bool $withScore)
+			use ($deviceDenials): ?string {
+			$this->deviceQuestions[] = [$circle, $version->getId(), $day, $withScore];
+			return $deviceDenials[$version->getId()] ?? null;
+		});
+		$policy->method('printDenial')->willReturnCallback(fn (string $circle, WorkVersion $version): ?string => $deviceDenials[$version->getId()] ?? null);
+		$policy->method('deviceEnd')->willReturnCallback(fn (string $circle, WorkVersion $version): ?string => $version->getId() === 31 ? '2027-01-31' : null);
 		$policy->method('playDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $viewDenials[$version->getId()] ?? ($version->getId() === 31 ? 'Rights not clarified.' : null));
 		$scores = $this->createStub(ScoreService::class);
 		$scores->method('content')->willReturn(['content' => self::SCORE, 'mime' => 'application/vnd.recordare.musicxml+xml', 'name' => 'a.musicxml', 'type' => 'musicxml']);
 		$scores->method('scoreText')->willReturn(['xml' => self::SCORE, 'entry' => null]);
+		$rights = $this->createStub(RightsService::class);
+		$rights->method('today')->willReturn('2026-11-03');
 		return new ConcertFolderService($roles, $eventMapper, $itemMapper, $versions, $works, $files, $policy, $scores,
-			$this->createStub(ScanService::class), $this->modulesWithout($off), new ProgrammeCopies($copies, $files), new PageKeys(new FakeCrypto()));
+			$this->createStub(ScanService::class), $this->modulesWithout($off), new ProgrammeCopies($copies, $files), new PageKeys(new FakeCrypto()), $rights);
 	}
 
 	private static function event(int $id, string $status, string $date, string $title): Event {
@@ -194,11 +206,26 @@ final class ConcertFolderTest extends TestCase {
 		$item = $folder->concerts('carla')[0]['items'][0];
 		self::assertSame([true, false, $reason], [$item['score'], $item['offline'], $item['offlineReason']], 'viewing as in the score view, but no copy');
 		self::assertFalse($item['print'], 'no print view either: printing is a copy (B21)');
-		self::assertFalse($folder->mayKeep(10, 'carla'), 'the worker keeps nothing of it (X-Cantoria-Keep)');
-		self::assertTrue($this->folder()->mayKeep(10, 'carla'));
+		self::assertNull($item['keepUntil']);
+		self::assertFalse($folder->score(10, 'carla')['keep'], 'the worker keeps nothing of it (X-Cantoria-Keep)');
+		self::assertTrue($this->folder()->score(10, 'carla')['keep']);
 		self::assertTrue($this->folder()->concerts('carla')[0]['items'][0]['print']);
-		self::assertFalse($this->folder()->mayKeep(12, 'carla'), 'struck: nothing to keep');
-		self::assertFalse($this->folder([], false)->mayKeep(10, 'carla'), 'no role for the folder');
+		$this->expectException(NotFoundException::class);
+		$this->folder()->score(12, 'carla');
+	}
+
+	/**
+	 * The folder asks the one rule of RightsPolicy (A23): the circle of the
+	 * folder, the notes only where the item has them (R B26), and the device
+	 * learns the end of the licenses for the copy (R B29).
+	 */
+	public function testTheFolderAsksTheOneRuleAndTellsTheDeviceTheEndOfTheLicense(): void {
+		$this->deviceQuestions = [];
+		[$withNotes, $scanOnly] = $this->folder()->concerts('carla')[0]['items'];
+		self::assertSame([true, '2027-01-31'], [$withNotes['offline'], $withNotes['keepUntil']], 'until the licenses for the copy end');
+		self::assertSame([true, null], [$scanOnly['offline'], $scanOnly['keepUntil']]);
+		self::assertContains([RightsPolicy::CIRCLE_FOLDER, 31, '2026-11-03', true], $this->deviceQuestions);
+		self::assertContains([RightsPolicy::CIRCLE_FOLDER, 32, '2026-11-03', false], $this->deviceQuestions, 'a scan alone needs no license for digital score files');
 	}
 
 	public function testWithoutTheModuleOfflineNothingIsKeptOnADevice(): void {
@@ -207,7 +234,7 @@ final class ConcertFolderTest extends TestCase {
 		$item = $folder->concerts('carla')[0]['items'][0];
 		self::assertSame([true, false, null], [$item['score'], $item['offline'], $item['offlineReason']], 'no reason per piece: the page offers nothing');
 		self::assertTrue($item['print'], 'printing does not hang on the module');
-		self::assertFalse($folder->mayKeep(10, 'carla'), 'the worker keeps nothing without the module');
+		self::assertFalse($folder->score(10, 'carla')['keep'], 'the worker keeps nothing without the module');
 		self::assertTrue($this->folder()->offlineOn());
 	}
 
@@ -218,7 +245,7 @@ final class ConcertFolderTest extends TestCase {
 	}
 
 	public function testTheScoreIsTheWholePieceAfterTheSameChecks(): void {
-		self::assertStringContainsString('<score-partwise', $this->folder()->score(10, 'carla'));
+		self::assertStringContainsString('<score-partwise', $this->folder()->score(10, 'carla')['xml']);
 		$cases = [
 			'struck' => fn () => $this->folder()->score(12, 'carla'),
 			'unknown' => fn () => $this->folder()->score(99, 'carla'),

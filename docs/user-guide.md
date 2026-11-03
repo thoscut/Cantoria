@@ -616,10 +616,13 @@ Where the administration has switched them on, a whole piece or an excerpt
 can be shared beyond the archive roles: with the **choir members** (they
 sign in and see it under "Shared with me") or with **everyone** through a
 public link without signing in. Both get only what you share, the whole
-piece or the chosen measures as notation, not the score file of the
-archive; the server checks the rights on every call. Optionally the link
-also offers the **scan (PDF)** of the copy. What arrives in a browser can be
-saved there, so do not promise a publisher "no download".
+piece or the chosen measures: as notes that the browser draws from a
+MusicXML file, which the server cuts to the measures and cleans of
+internal notes. That file arrives in the browser, never the score file of
+the archive itself; the server checks the rights on every call. Optionally
+the link also offers the **scan (PDF)** of the copy. What arrives in a
+browser can be saved there, so do not promise a publisher "no download" or
+"only as an image": tell them that the notes reach the browser as MusicXML.
 
 #### How to share a whole piece with the choir
 
@@ -665,12 +668,16 @@ in a link for choir members therefore needs a license with the use
 "Download, printing and copies on devices by choir members (scan in links,
 concert folder, hand-over folder)" (or "Self-printing by singers"); without
 it the dialog offers the notes and says why the scan is missing. The same
-use lets the conductor keep a piece in the concert folder on a device and
-puts the scan into the hand-over folder for a choir system. MusicXML files
-and recordings in the hand-over folder need uses of their own: "Passing on
-digital score files (MusicXML) to choir members (hand-over folder)" and
+use lets choir members print the notes and puts the scan into the
+hand-over folder for a choir system. MusicXML files and recordings in the
+hand-over folder need uses of their own: "Passing on digital score files
+(MusicXML) to choir members (hand-over folder, pieces kept on devices)" and
 "Passing on recordings to choir members (performers and producer agree;
-hand-over folder)".
+hand-over folder)". A piece kept on a device without a network (by choir
+members or in the concert folder) keeps its notes as a MusicXML file, a
+complete digital edition: unless public domain is confirmed, it needs the
+license for download or self-printing **and** the one for digital score
+files. Viewing and playing in the browser need neither.
 
 Playback for choir members needs confirmed public domain or a license for
 practice audio; an unconfirmed status "public domain" plays only inside the
@@ -729,8 +736,12 @@ programme, in its order.
 #### Public links
 
 A public link shows and plays a whole piece or an excerpt to anyone who has
-the link, without signing in: as notation, not the score file of the
-archive, without names and without a note. Choose **Public (without signing in)** in the same dialog.
+the link, without signing in: as notes that the browser draws from a
+cleaned MusicXML file (which arrives in the browser), not the score file of
+the archive, without names and without a note. Visitors hold no license:
+printing the notes and keeping the page on a device are open only for
+confirmed public domain without a rights conflict, whatever licenses the
+version has. Choose **Public (without signing in)** in the same dialog.
 It is only possible when
 
 - the version is **released for publication**: the catalog librarian sets
@@ -1091,7 +1102,10 @@ the concert folder keeps nothing on the device.
 
 A piece becomes available without a network only where the rights allow a
 copy on the device: confirmed public domain, or a license for download or
-self-printing. Otherwise the folder says why at the piece. The concert
+self-printing, and for the notes (a MusicXML file on the device) also a
+license for digital score files. Otherwise the folder says why at the
+piece. A kept piece leaves the device on the last day of these licenses,
+as on "Shared with me". The concert
 folder does not open an internal preservation copy: it is a copy for the
 archive, not material for the rehearsal and the concert; add another copy
 of the version to the programme. The concert folder only reads: **Confirm
