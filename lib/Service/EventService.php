@@ -338,7 +338,7 @@ class EventService {
 					$total += $duration;
 				}
 			}
-			$items[] = $item->jsonSerialize() + [
+			$entry = $item->jsonSerialize() + [
 				'shelfmark' => $copy?->getShelfmark(),
 				'title' => $work?->getTitle() ?? $item->getTitleText(),
 				'composer' => $work?->getComposer() ?? $item->getComposerText(),
@@ -350,11 +350,12 @@ class EventService {
 				'revision_sung' => $revisions[$item->getId()]['sung'] ?? false,
 			];
 			if (!$mayViewPreservation && $version !== null && RightsPolicy::isPreservationCopy($version, $copy)) {
-				$items[array_key_last($items)] = [
+				$entry = [
 					'copy_id' => null, 'version_id' => null, 'shelfmark' => null, 'arranger_text' => null, 'publisher' => null,
 					'warnings' => [ProgrammeShareService::NOT_AVAILABLE], 'revision' => null, 'revision_valid_since' => null, 'revision_sung' => false,
-				] + $items[array_key_last($items)];
+				] + $entry;
 			}
+			$items[] = $entry;
 		}
 		return ['event' => $event, 'items' => $items, 'totalDuration' => $total, 'missingDurations' => $missingDurations];
 	}

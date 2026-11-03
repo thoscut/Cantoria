@@ -67,6 +67,9 @@ class OfflineController extends Controller {
 		parent::__construct(Application::APP_ID, $request);
 	}
 
+	/**
+	 * @psalm-suppress PossiblyUnusedMethod a route; the class is also used for its header KEEP_HEADER
+	 */
 	#[PublicPage]
 	#[NoAdminRequired]
 	#[NoCSRFRequired]

@@ -155,6 +155,7 @@ class PrivacyService {
 	 * without a name when something changed.
 	 *
 	 * @return int the number of entries changed
+	 * @psalm-suppress PossiblyUnusedReturnValue the daily job needs no count: the change itself is recorded in the audit log
 	 */
 	public function applyRetention(): int {
 		$years = $this->appConfig->getValueInt(Application::APP_ID, self::RETENTION_KEY, self::RETENTION_YEARS);
