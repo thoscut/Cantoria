@@ -585,6 +585,7 @@ export const singular = {
 	'Rights not clarified: no playback until the rights status is known.': 'Rechte nicht geklärt: kein Abspielen, bis der Rechtestatus feststeht.',
 	'Practice audio files are made by the catalog librarian or the conductor.': 'Übe-Dateien erstellen nur die Rollen „Bestand“ und „Chorleitung“.',
 	'Public domain is not confirmed yet: practice audio files need a confirmed rights status or a license for practice audio.': 'Die Gemeinfreiheit ist noch nicht bestätigt: Übe-Dateien brauchen einen bestätigten Rechtestatus oder eine Lizenz für Übe-Audio.',
+	'Public domain is not confirmed yet: playback for choir members needs a confirmed rights status or a license for practice audio.': 'Die Gemeinfreiheit ist noch nicht bestätigt: Zum Abspielen für Chormitglieder braucht es einen bestätigten Rechtestatus oder eine Lizenz für Übe-Audio.',
 
 	// ---- server: practice audio requests ----
 	'The copy does not belong to this version.': 'Das Exemplar gehört nicht zu dieser Fassung.',
@@ -2647,6 +2648,15 @@ export const singular = {
 	'practice files': 'Übe-Dateien',
 	'sharing with choir members': 'Teilen mit Chormitgliedern',
 	'public links (after the release for publication)': 'öffentliche Links (nach der Freigabe zur Veröffentlichung)',
+	'printing from the concert folder': 'Drucken aus der Konzertmappe',
+	'the concert folder on the device without a network': 'die Konzertmappe auf dem Gerät ohne Netz',
+	'sharing a programme with the choir': 'Teilen eines Programms mit dem Chor',
+	'playback and the scan for choir members': 'Abspielen und Scan für Chormitglieder',
+	'pieces on the devices of choir members without a network': 'Stücke auf den Geräten der Chormitglieder ohne Netz',
+	'hand-over folder for the choir system': 'Übergabeordner für das Chorsystem',
+	'playback and the scan of public links': 'Abspielen und Scan öffentlicher Links',
+	'public links on a device without a network': 'öffentliche Links auf einem Gerät ohne Netz',
+	'public repertoire page': 'öffentliche Repertoireseite',
 	'After the confirmation this becomes possible: {uses}.': 'Nach der Bestätigung wird möglich: {uses}.',
 	'A protected version needs a valid license for each of these uses: {uses}.': 'Eine geschützte Fassung braucht für jede dieser Nutzungen eine gültige Lizenz: {uses}.',
 	'Choose valid versions': 'Geltende Fassungen festlegen',
@@ -2788,6 +2798,7 @@ export const singular = {
 	'Scans or transcriptions of a version that is not confirmed public domain, without a license for digitisation.': 'Scans oder Übertragungen einer Fassung ohne bestätigte Gemeinfreiheit und ohne Lizenz für die Digitalisierung.',
 	'Choir members can save and print the scan: unless public domain is confirmed, it needs a license for download and printing by choir members. The catalog librarian records it on the tab "Rights".': 'Chormitglieder können den Scan speichern und ausdrucken: Ohne bestätigte Gemeinfreiheit braucht er eine Lizenz für Download und Ausdruck durch Chormitglieder. Die Archivverwaltung trägt sie im Reiter „Rechte“ ein.',
 	'Playback on a public link needs public domain or a license for online playback (audio). The catalog librarian records it on the tab "Rights".': 'Abspielen auf einem öffentlichen Link braucht Gemeinfreiheit oder eine Lizenz für die Online-Wiedergabe (Audio). Die Archivverwaltung trägt sie im Reiter „Rechte“ ein.',
+	'Public domain is not confirmed yet: a public link plays only after the confirmation or with a license for online playback (audio), both on the tab "Rights".': 'Die Gemeinfreiheit ist noch nicht bestätigt: Ein öffentlicher Link spielt erst nach der Bestätigung oder mit einer Lizenz für die Online-Wiedergabe (Audio), beides im Reiter „Rechte“.',
 	// ---- 0.11: Komposition und Text, Konflikt, Namensnennung ----
 	'Notice on shared pages': 'Vermerk auf geteilten Seiten',
 	'Shown with excerpts for choir members and the public, for example: By kind permission of …': 'Erscheint bei Auszügen für Chormitglieder und die Öffentlichkeit, zum Beispiel: Mit freundlicher Genehmigung von …',

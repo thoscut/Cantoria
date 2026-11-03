@@ -24,19 +24,22 @@ use OCA\Cantoria\Db\WorkVersion;
  *   that check transcriptions: catalog librarian and conductor. They are
  *   never played.
  * - Playback is offered for public domain versions and for versions with a
- *   valid license covering practice audio.
+ *   valid license covering practice audio. Outside the archive (choir
+ *   members, the public, the hand-over folder) only confirmed public domain
+ *   counts (R B15).
  * - Practice audio files (WAV or MIDI made from the score view) are copies
  *   that leave the app. Only the catalog librarian and the conductor make
  *   them, and only for confirmed public domain versions or versions with a
  *   valid license covering practice audio; never for preservation copies.
  * - Links for choir members (milestone 0.7) need the release for the
  *   digital provision to members, i.e. the singers' portal (confirmed public
- *   domain or a license for the portal). Playback and practice audio follow
- *   the same rules as above; choir members make practice audio of a shared
- *   excerpt themselves.
+ *   domain or a license for the portal). Playback and practice audio need
+ *   confirmed public domain or a license for practice audio; choir members
+ *   make practice audio of a shared excerpt themselves.
  * - Public links need the release for publication (publication status
  *   "free", set by the catalog librarian) and confirmed public domain or a
- *   license for online publication; playback as above. The scan of a public
+ *   license for online publication; playback confirmed public domain or a
+ *   license for online playback (`online_audio`). The scan of a public
  *   link can be saved and printed by everyone: it needs confirmed public
  *   domain or a license for the download of the scan on public links
  *   (`online_download`); a license for online publication covers showing
@@ -248,12 +251,20 @@ class RightsPolicy {
 
 	/**
 	 * Playback of a link for choir members: the release for members and the
-	 * rights for playback (see playDenial).
+	 * rights for playback (see playDenial), where public domain counts only
+	 * when it is confirmed (R B15): a license for the singers' portal
+	 * releases the notes of an unconfirmed version, not a sound version of
+	 * them.
 	 *
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function memberPlayDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
-		return $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy);
+		$denial = $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy);
+		if ($denial !== null || $version->getRightsStatus() !== 'public_domain' || $version->isConfirmed()
+			|| $this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'practice_audio', $day)) {
+			return $denial;
+		}
+		return 'Public domain is not confirmed yet: playback for choir members needs a confirmed rights status or a license for practice audio.';
 	}
 
 	/**
@@ -282,8 +293,7 @@ class RightsPolicy {
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function handoverAudioDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
-		$denial = $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy)
-			?? $this->practiceAudioRightsDenial($version, $day);
+		$denial = $this->memberPlayDenial($version, $day, $copy) ?? $this->practiceAudioRightsDenial($version, $day);
 		if ($denial !== null) {
 			return $denial;
 		}
@@ -448,22 +458,26 @@ class RightsPolicy {
 	}
 
 	/**
-	 * Playback on the page of a public link: a public domain version plays,
-	 * a protected one only with a license for online playback; a license for
-	 * practice audio covers the use inside the choir, not making a sound
-	 * version available to everyone (§ 19a UrhG).
+	 * Playback on the page of a public link: a version confirmed as public
+	 * domain (without a rights conflict, as for publishing) plays, any other
+	 * only with a license for online playback; a license for practice audio
+	 * covers the use inside the choir, not making a sound version available
+	 * to everyone (§ 19a UrhG). An unconfirmed "public domain" that a
+	 * license for online publication shows does not play (R B15).
 	 *
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function publicPlayDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
 		$denial = $this->publicViewDenial($version, $day, $copy);
-		if ($denial !== null || $version->getRightsStatus() === 'public_domain') {
+		if ($denial !== null || $this->freeToPublish($version, $day)) {
 			return $denial;
 		}
 		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'online_audio', $day)) {
 			return null;
 		}
-		return 'Playback on a public link needs public domain or a license for online playback (audio). The catalog librarian records it on the tab "Rights".';
+		return $version->getRightsStatus() === 'public_domain' && !$version->isConfirmed()
+			? 'Public domain is not confirmed yet: a public link plays only after the confirmation or with a license for online playback (audio), both on the tab "Rights".'
+			: 'Playback on a public link needs public domain or a license for online playback (audio). The catalog librarian records it on the tab "Rights".';
 	}
 
 	/**

@@ -61,7 +61,7 @@ below explain the reasons.
 | Practice audio of choir members stays within the link and is recorded with the role only, without account or name | `SharingTest::testChoirMembersMakePracticeAudioOfTheirExcerptOnly`, `testTheAuditLogNamesOnlyTheRoleOfAChoirMember` |
 | The repertoire page lists only public-domain works and links only to `cpdl.org` and `imslp.org` over https | `SharingTest::testTheRepertoirePageShowsChosenPublicDomainWorksOnly`, `testLinksToCpdlAndImslpMustBeHttpsToTheirSite` |
 | The API for agents needs its module, a role and a limit on every route, and decides nothing | CS `testEveryApiV1RouteNeedsTheInterfaceItsModuleARoleAndALimit`, `testNoApiV1RouteDecidesOrCorrects`, `testASwitchedOffApiV1RouteAnswers404WithOcsMeta`; agent run in `tools/ci/integration-demo.sh` |
-| The scan in links for choir members needs a license for copies unless public domain is confirmed; public playback of protected versions a license for online playback | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testPublicLinks`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
+| The scan in links for choir members needs a license for copies unless public domain is confirmed; playback outside the archive needs confirmed public domain or a license (online playback for public links, practice audio for choir members) | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testLinksForChoirMembers`, `testPublicLinks`, `testARightsConflictClosesPublicLinksWithoutALicense`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
 | Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages, the API for agents, the CSV export and the task lists, for every role; programmes follow below | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies`, `testTheExportHoldsTheCopiesOfTheListAndNoAccounts`, `testTaskListsHoldTheSameCopies`, `testATaskAboutAPreservationCopyStaysWithTheRolesThatMayViewIt` |
 | Exports in the archive folder (`_cantoria-app`) hold no accounts and no internal preservation copies; the complete state before an import goes into the backup folder | `PreservationCopyParityTest::testTheExportFolderHoldsNoPreservationCopiesAndNoAccounts` |
 | In a programme (concert detail, API for agents, options for sharing it) an internal preservation copy shows shelf mark, ids and warnings only to the roles that may view it | `PreservationCopyParityTest::testProgrammesShowPreservationCopiesOnlyToTheRolesThatMayViewThem`; `ProgrammeShareTest::testAPreservationCopyShowsNeitherShelfMarkNorCopyToOtherRoles`; `LinkRolesTest::testTheOptionsHideAPreservationCopyFromTheOperationsRole` |
@@ -221,11 +221,14 @@ made and on every call the server checks:
   "Download of the scan on public links" (`online_download`, milestone
   0.18): a license for online publication covers showing the notes, not
   handing out the sheet;
-- on public links, playback of a protected version needs a license for
-  online playback (audio); a license for practice audio covers the choir;
-- playback and practice audio as in the archive (public domain or a license
-  for practice audio; practice audio files additionally a confirmed status
-  or that license). Every practice file of a choir member is recorded in the
+- on public links, playback needs confirmed public domain (without a
+  rights conflict) or a license for online playback (audio); a license for
+  practice audio covers the choir;
+- for choir members, playback needs confirmed public domain or a license
+  for practice audio, and so do practice audio files (R B15, milestone
+  0.18: an unconfirmed status "public domain" plays only inside the
+  archive, also when a license for the singers' portal or for online
+  publication shows the notes). Every practice file of a choir member is recorded in the
   audit log with the role `member` only (no account, no name; since 0.11,
   older entries were anonymised on the update), measures, voice, mode and
   format; for an excerpt the measures of the link, whatever the request

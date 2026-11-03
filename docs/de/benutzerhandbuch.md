@@ -722,11 +722,11 @@ Notendateien (MusicXML) an Chormitglieder (Übergabeordner)“ und „Weitergabe
 von Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind
 einverstanden; Übergabeordner)“.
 
-Für das Abspielen gelten dieselben Regeln wie im Archiv (gemeinfrei oder
-eine Lizenz für Übe-Audio). Übe-Dateien für Chormitglieder brauchen
-zusätzlich das Modul „Übe-Audio für Chormitglieder“ und einen bestätigten
-Status oder eine Lizenz für Übe-Audio; sie gehen für das ganze Stück wie für
-einen Ausschnitt.
+Zum Abspielen für Chormitglieder braucht eine Fassung bestätigte
+Gemeinfreiheit oder eine Lizenz für Übe-Audio; ein unbestätigter Status
+„gemeinfrei“ spielt nur im Archiv. Übe-Dateien für Chormitglieder brauchen
+zusätzlich das Modul „Übe-Audio für Chormitglieder“; sie gehen für das ganze
+Stück wie für einen Ausschnitt.
 
 **Links** in der Navigation zeigt jeden aktiven Link mit seinem Kreis
 (**Intern**, **Für Chormitglieder**, **Öffentlich**), mit dem, was er teilt
@@ -796,7 +796,9 @@ Das geht nur, wenn
 Eine geschützte Fassung lässt sich auf einem öffentlichen Link nur mit einer
 Lizenz für die Nutzung „Online-Wiedergabe (Audio auf öffentlichen Links)“
 abspielen: Eine Lizenz für Übe-Audio deckt die Nutzung im Chor, nicht eine
-Klangfassung für alle. Gemeinfreie Fassungen spielen wie im Archiv.
+Klangfassung für alle. Eine bestätigt gemeinfreie Fassung spielt; ein
+unbestätigter Status „gemeinfrei“ spielt nicht, auch wenn eine Lizenz für
+die Online-Veröffentlichung die Noten zeigt.
 
 Unter denselben Bedingungen und, wenn die Gemeinfreiheit nicht bestätigt
 ist, mit einer gültigen Lizenz für die Nutzung „Download des Scans auf
@@ -1222,10 +1224,15 @@ bestätigt:
    Beteiligten sind vor mehr als 70 Jahren gestorben“ und „Lebensdaten aus
    dem Personenregister“. Beides ist Pflicht.
 4. Vor dem Bestätigen sagt der Dialog, was danach möglich wird, je nach
-   eingeschalteten Modulen: Chorportal und Druckstation, Übe-Dateien, Teilen
-   mit Chormitgliedern und, sobald die Fassung zur Veröffentlichung
-   freigegeben ist, öffentliche Links. Bei *geschützt* sagt er, dass
-   Freigaben dann eine gültige Lizenz brauchen.
+   eingeschalteten Modulen: Chorportal und Druckstation, Übe-Dateien, Drucken
+   aus der Konzertmappe und die Konzertmappe auf dem Gerät, Teilen mit
+   Chormitgliedern (auch eines ganzen Programms), Abspielen und Scan für sie,
+   Stücke auf ihren Geräten ohne Netz, der Übergabeordner für das Chorsystem
+   und, sobald die Fassung zur Veröffentlichung freigegeben ist, öffentliche
+   Links mit Abspielen und Scan, auf einem Gerät ohne Netz, und die
+   öffentliche Repertoireseite. Bei *geschützt* sagt er, dass diese
+   Nutzungen dann eine gültige Lizenz brauchen; ein öffentlicher Link auf
+   einem Gerät und die Repertoireseite bleiben zu.
 5. **Bestätigen**. Name und Datum werden festgehalten.
 
 Änderst du den Rechtestatus später, entfällt die Bestätigung. **Im Zweifel:

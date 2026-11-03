@@ -179,7 +179,8 @@ consent as a scan (use "Digitisation").
   members. Pass on the license's duties to delete to the members.
 - **Internal playback.** For the archive roles an imported, not yet
   confirmed status "public domain" is enough for playback. That is
-  defensible internally; only what is confirmed is shared.
+  defensible internally; only what is confirmed is shared, and only that
+  plays for choir members and on public links.
 - **IMSLP and CPDL.** The public repertoire page links only to the page of
   the work. Not every edition offered there is free in Germany, for example
   arrangements or editions that are free only in Canada or the USA. For

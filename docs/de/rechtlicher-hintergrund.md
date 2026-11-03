@@ -192,7 +192,8 @@ braucht dieselbe Einwilligung wie ein Scan (Nutzung „Digitalisierung“).
   weiter.
 - **Interne Wiedergabe.** Für die Rollen des Archivs genügt zum Abspielen
   ein importierter, noch nicht bestätigter Status „gemeinfrei“. Das ist
-  intern vertretbar; geteilt wird nur, was bestätigt ist.
+  intern vertretbar; geteilt wird nur, was bestätigt ist, und nur das spielt
+  für Chormitglieder und auf öffentlichen Links.
 - **IMSLP und CPDL.** Die öffentliche Repertoireseite verlinkt nur auf die
   Seite des Werks. Nicht jede Ausgabe, die dort angeboten wird, ist in
   Deutschland frei, etwa Bearbeitungen oder Ausgaben, die nur in Kanada oder

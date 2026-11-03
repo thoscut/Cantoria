@@ -672,10 +672,10 @@ digital score files (MusicXML) to choir members (hand-over folder)" and
 "Passing on recordings to choir members (performers and producer agree;
 hand-over folder)".
 
-Playback follows the same rules as in the archive (public domain, or a
-license for practice audio). Practice files for choir members additionally
-need the module "Practice audio for choir members" and a confirmed status
-or a license for practice audio; they work for the whole piece as for an
+Playback for choir members needs confirmed public domain or a license for
+practice audio; an unconfirmed status "public domain" plays only inside the
+archive. Practice files for choir members additionally need the module
+"Practice audio for choir members"; they work for the whole piece as for an
 excerpt.
 
 **Links** in the navigation lists every active link with its circle
@@ -740,8 +740,10 @@ It is only possible when
 
 A protected version plays on a public link only with a license with the use
 "Online playback (audio on public links)": a license for practice audio
-covers the use inside the choir, not a sound version for everyone. Public
-domain versions play as in the archive.
+covers the use inside the choir, not a sound version for everyone. A
+version confirmed as public domain plays; an unconfirmed status "public
+domain" does not, even where a license for online publication shows the
+notes.
 
 The scan (PDF) can be included under the same conditions and, unless
 public domain is confirmed, a valid license with the use "Download of the
@@ -1142,9 +1144,14 @@ stays a suggestion until a music librarian confirms it:
    persons". Both are required.
 4. Before you confirm, the dialog says what becomes possible afterwards,
    depending on the modules that are switched on: the singers' portal and
-   the print station, practice files, sharing with choir members and, once
-   the version is released for publication, public links. For *protected*
-   it says that releases then need a valid license.
+   the print station, practice files, printing from the concert folder and
+   keeping it on the device, sharing with choir members (also a whole
+   programme), playback and the scan for them, pieces on their devices
+   without a network, the hand-over folder for the choir system and, once
+   the version is released for publication, public links with playback and
+   the scan, kept on a device without a network, and the public repertoire
+   page. For *protected* it says that these uses then need a valid license;
+   a public link on a device and the repertoire page stay closed.
 5. **Confirm**. Name and date are recorded.
 
 Changing the rights status later removes the confirmation. **When in doubt:
