@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/app.svg">
-    <img src="img/app-dark.svg" alt="Cantoria app icon: a folder with an eighth note" width="96" height="96">
+    <img src="img/app-dark.svg" alt="Cantoria app icon: a C with an eighth note" width="96" height="96">
   </picture>
 </p>
 
@@ -10,7 +10,7 @@
 <p align="center"><em>Cantoria – the sheet music archive for choirs</em></p>
 
 <p align="center">
-  <strong>The sheet music archive of your choir in Nextcloud: catalog, rights per version, scores with voice focus and concerts in one place.</strong>
+  <strong>The archive and the rights of the sheet music your choir already has, in Nextcloud and alongside your choir system: catalog, rights per version, scores and concerts in one place.</strong>
 </p>
 
 <p align="center">
@@ -28,13 +28,21 @@
   <img src="docs/screenshots/catalog.png" width="1600" height="1000" alt="The catalog of the invented demo choir: a list of copies with shelf mark, title, composer, rights status and repertoire; on the left the navigation with search, filters and the views of the app.">
 </picture>
 
-Cantoria keeps the catalog of a choir's sheet music archive: works,
-versions (settings, arrangements, editions), copies with their shelf marks,
-and the scans, MusicXML and MuseScore files that already live in your
-Nextcloud. It is made for the people who look after the music: the music
-librarians, the conductor, the board and the auditors. If you switch it on,
-choir members get excerpts to view, play and practise; the catalog itself is
-never shown to them.
+Cantoria keeps the catalog and the rights of the sheet music a choir
+already has: bought and borrowed editions, public domain works, paper
+folders and preservation copies, with works, versions (settings,
+arrangements, editions), copies with their shelf marks, and the scans,
+MusicXML and MuseScore files that already live in your Nextcloud. It is made
+for the people who look after the music: the music librarians, the
+conductor, the board and the auditors. If you switch it on, choir members get
+pieces and excerpts to view, play and practise; the catalog itself is never
+shown to them.
+
+Cantoria does not replace the choir system your members use for dates,
+news and attendance. It is the archive behind it: it hands over what is
+released for the singers in a folder and compares the choir system's export
+with that list. [Cantoria alongside a choir system](docs/alongside-a-choir-system.md)
+explains who keeps what.
 
 The screenshots show the invented demo archive from [tools/demo](tools/demo/README.md).
 
@@ -53,8 +61,8 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
       <p>The rights belong to the version. An imported assessment stays a recommendation until a music librarian confirms public domain or protection with reason and evidence. Licenses list each use separately, and the singers' portal, the print station and publication are released separately. Internal preservation copies are never shared or played. Only the conductor chooses the version valid for the choir.</p>
     </td>
     <td width="33%" valign="top">
-      <a href="docs/screenshots/score-excerpt.png"><img src="docs/screenshots/score-excerpt.png" width="280" alt="The score viewer with bars 1 to 8 of a setting for men's choir: the switch Loop, the focus voice Tenor II in colour, and buttons to copy a text reference, share the excerpt or add a task."></a>
-      <h3>Score viewer with voice focus and playback</h3>
+      <a href="docs/screenshots/score-excerpt.png"><img src="docs/screenshots/score-excerpt.png" width="280" alt="The score viewer with bars 1 to 8 of a setting for men's choir: the switch Loop, the highlighted voice Tenor II in colour, and buttons to copy a text reference, share the excerpt or add a task."></a>
+      <h3>Score viewer with the highlighted voice and playback</h3>
       <p>MusicXML is rendered in the browser and cut to a range of printed bar numbers. The chosen voice is highlighted, also when it shares a staff, and can be played louder or alone. Repeats and endings are played in order; a count-in of one or two bars, a loop over the shown bars and a click on any note to start there help when practising. Space plays and pauses, the arrow keys go from bar to bar, the current bar is announced to screen readers, and a text description of the excerpt is available. Playback is offered for public domain and licensed versions only.</p>
     </td>
   </tr>
@@ -62,7 +70,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/practice-audio-dialog.png"><img src="docs/screenshots/practice-audio-dialog.png" width="280" alt="The practice files dialog: one file or a ZIP archive with every voice, the voice, how the other voices sound, WAV or MIDI, mono or stereo, the file name and the expected size."></a>
       <h3>Practice audio</h3>
-      <p>Music librarians and the conductor make practice files per voice from the bars, tempo and repeats chosen in the score viewer: WAV that sounds like the playback, or MIDI with one track per voice; one file or a ZIP archive with every voice plus a tutti. The server allows each export only for confirmed public domain versions or a license for practice audio, never for preservation copies, and records it. The files are uploaded to the practice system by hand; the app gives nothing to singers.</p>
+      <p>Music librarians and the conductor make practice files per voice from the bars, tempo and repeats chosen in the score viewer: WAV that sounds like the playback, or MIDI with one track per voice; one file or a ZIP archive with every voice plus a tutti. The server allows each export only for confirmed public domain versions or a license for practice audio, never for preservation copies, and records it. The files go to the choir system by hand or through the hand-over folder; choir members with a shared link make a practice file of their voice themselves, where the rights allow it.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/task-question.png"><img src="docs/screenshots/task-question.png" width="280" alt="A question about bars 5 to 8 of Tenor II, addressed to the conductor, and an internal link to the same place."></a>
@@ -114,7 +122,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/shared-with-me.png"><img src="docs/screenshots/shared-with-me.png" width="280" alt="The page Shared with me of a choir member: a whole piece with the note of the conductor, the link to the scan, the playback controls with count-in and loop, and the score with the alto highlighted."></a>
       <h3>Sharing with choir members and the public</h3>
-      <p>If the administration switches it on, the conductor or the music librarians share an excerpt from the score viewer: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars, adds the scan only where the rights allow it and checks the rights on every call; what arrives in a browser can be saved there. These modules are off until switched on.</p>
+      <p>If the administration switches it on, the conductor or the music librarians share a whole piece, an excerpt or a whole concert programme: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars and checks the release and the rights on every call. Choir members get the scan only with confirmed public domain or a license for download or self-printing; a scan added to a public link can be downloaded by everyone who has the link, and what arrives in a browser can be saved there. These modules are off until switched on. The [guide for choir members](docs/for-choir-members.md) is a page to pass on.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/revisions.png"><img src="docs/screenshots/revisions.png" width="280" alt="The revisions of a version: revision 2, a correction in the app, current since today, revision 1 as first recorded, and their comparison with one changed note and a note for choir members."></a>
@@ -129,9 +137,9 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
   </tr>
   <tr>
     <td width="33%" valign="top">
-      <a href="docs/screenshots/admin-settings.png"><img src="docs/screenshots/admin-settings.png" width="280" alt="The access check under Administration, Music archive: per role and group how many accounts can open the archive folder, who cannot, and how to give access."></a>
+      <a href="docs/screenshots/admin-settings.png"><img src="docs/screenshots/admin-settings.png" width="280" alt="The access check under Administration, Cantoria: per role and group how many accounts can open the archive folder, who cannot, and how to give access."></a>
       <h3>Easy to set up</h3>
-      <p>Administration → Cantoria guides through six steps (archive folder, roles and groups, access, the functions for the choir, import, file sync) and shows what is done and what needs attention. It checks who of the role groups cannot open the archive folder and says what to do. Admins can give the page to a group, such as the music librarians. In the app, a "?" next to the terms explains them, empty views name the next step, and accounts without a role learn whom to ask.</p>
+      <p>Administration → Cantoria guides through six steps (archive folder, the functions for the choir, the roles they need, access, import, file sync) and shows what is done and what needs attention. It checks who of the role groups cannot open the archive folder and says what to do. Admins can give the page to a group, such as the music librarians. In the app, a "?" next to the terms explains them, empty views name the next step, and accounts without a role learn whom to ask.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/files-action.png"><img src="docs/screenshots/files-action.png" width="280" alt="The Files app with the actions menu of a MusicXML file and the action Open in Cantoria."></a>
@@ -219,10 +227,11 @@ figures to expect.
 
 1. Create Nextcloud groups for the offices, e.g. "Music librarians",
    "Conductor", "Board".
-2. As an admin, open **Administration → Cantoria** and assign the
-   groups to the roles: Catalog (music librarian), Operations (music
+2. As an admin, open **Administration → Cantoria**, choose under
+   **What should Cantoria do for your choir?** what you use it for, and
+   assign the groups to the roles: Catalog (music librarian), Operations (music
    librarian), Conductor, Proposals (tools), Read only (board, auditors) and,
-   if you share excerpts with them, Choir members. The list "Setting up" at
+   if you share pieces and excerpts with them, Choir members. The list "Setting up" at
    the top of the page shows what is done and what is still to do.
    Other accounts do not see the app; admins without a role may read it and
    change the settings. Admins can give this page to a group (e.g. the
@@ -232,7 +241,8 @@ figures to expect.
    on the same page shows who cannot open it. File names start with the
    shelf mark, e.g. `5-01_Title_Composer.pdf`.
 4. A music librarian imports the existing catalog from CSV (always a dry run
-   first) and runs the file sync.
+   first; **Archive management** offers a template with the columns) and
+   runs the file sync. Without a catalog, start with the first new accession.
 
 The [administration guide](docs/admin-guide.md) explains each step; self-hosted
 instances can also use `occ cantoria:setup`.
@@ -249,8 +259,10 @@ instances can also use `occ cantoria:setup`.
 - **Server-side checks.** Every request checks the caller's role. The only
   pages without login are a public link and the public repertoire page, and
   only while their modules are switched on (they start off); they are
-  limited per address, protected against guessing and show only what the
-  rights allow, never a file of the archive.
+  limited per address, protected against guessing and check the release and
+  the rights on every call. A public link sends the score cut to its bars
+  and, if the link offers it, the scan from the archive folder, which
+  everyone with the link can download.
 - **Little data about singers.** The audit log records which account holder
   changed what; the register of persons holds composers, arrangers, lyricists
   and publishers for the rights assessment. Choir members appear only as
@@ -265,8 +277,8 @@ Please report vulnerabilities privately, as described in
 ## Accessibility
 
 The interface targets WCAG 2.2 AA. Information is never shown by colour
-alone: the rights badge always has text and a symbol, and the focus voice in
-the score has bolder note heads and stems. The app is built for keyboard and
+alone: the rights badge always has text and a symbol, and the highlighted
+voice in the score has bolder note heads and stems. The app is built for keyboard and
 screen reader use, and the notation has alternatives: a text reference, a text
 description of the excerpt, announced bar numbers and playback.
 
@@ -303,6 +315,12 @@ or add a language.
   ([Administrationshandbuch](docs/de/administrationshandbuch.md), German)
 - [Schnellstart](docs/de/schnellstart.md): German quick start for the archive
   management and the conductor
+- [Cantoria alongside a choir system](docs/alongside-a-choir-system.md): who
+  keeps what, the hand-over folder and the comparison with the choir system's
+  export ([Neben einem Chorsystem](docs/de/neben-einem-chorsystem.md), German)
+- [For choir members](docs/for-choir-members.md): one page to pass on to the
+  singers ([Für Chormitglieder](docs/de/fuer-chormitglieder.md), German)
+- [Accessibility statement](docs/accessibility.md)
 - [API](docs/api.md): the internal JSON API of the user interface
 - [API for agents](docs/api-v1.md): the stable OCS API v1 with its
   description [openapi.json](openapi.json), and the
