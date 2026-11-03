@@ -815,7 +815,8 @@ switches below can be changed at any time; the notifications are folded.
 
 Choir members see only versions released for the singers' portal; a piece
 can be kept on a device only with confirmed public domain or a license for
-download or self-printing, and the role "Choir members" needs a group (the
+download or self-printing together with one for digital score files (its
+notes stay there as MusicXML), and the role "Choir members" needs a group (the
 setup checks it). Public pages need confirmed public domain or a license for
 online publication, and everyone with a public link can download the scan it
 offers; enter the imprint and the privacy policy under
@@ -1083,9 +1084,22 @@ enable offline`):
   for practising are remembered in the browser as before. Nothing is
   written to the server without a network: practice files need it, as the
   server checks the rights and records each file.
-- **Rights.** Only where choir members may save and print the notes (the
-  same rule as for the scan and the hand-over folder): a license for the
-  singers' portal alone covers viewing, not a copy on the device.
+- **Rights.** One rule for every way (RightsPolicy: "Shared with me", the
+  concert folder, public links, the dialog for links and the header
+  `X-Cantoria-Keep` of every answer the service worker keeps). Unless
+  public domain is confirmed, a piece needs a license for download or
+  self-printing, as for the scan and for printing, and for its notes a
+  license "Passing on digital score files (MusicXML) to choir members
+  (hand-over folder, pieces kept on devices)": the device keeps the notes
+  as a MusicXML file, a complete digital edition from which new prints and
+  parts can be made, as in the hand-over folder. A license for the
+  singers' portal alone covers viewing, not a copy on the device. The
+  device drops a piece on the last day of these licenses, also without a
+  network. Viewing and playing in the browser are not affected: the page
+  receives the MusicXML of what it shows to draw the notes, under the
+  release of the notes (singers' portal, online publication). Tell a
+  publisher so; "only as an image" would say too little. This reading is
+  cautious and should be confirmed by a lawyer before 1.0 (R B26).
 - **Expiry and revocation.** At every start with a network the page checks
   the kept pieces with the server; expired, revoked and no longer allowed
   ones are removed. Without a check for 30 days the kept pieces are locked,
@@ -1118,7 +1132,11 @@ enable offline`):
   have no account, so their pieces are kept per browser; each visit with a
   network is the check, and a revoked or expired link is removed from the
   device at the next one. A license is never enough here: it covers the
-  public showing, not a copy on every visitor's device.
+  public showing, not a copy on every visitor's device. The same holds for
+  printing the notes of a public link. A rights conflict (confirmed public
+  domain, but protected by the persons recorded now) closes both, as it
+  closes the scan and playback, until the catalog librarian has checked
+  the rights.
 - **Switching it off.** The next visit with a network removes the service
   worker and everything it kept. After an update of the app the worker
   renews itself and drops the old scripts.
@@ -1135,7 +1153,9 @@ concert. With the module **Practising without a network** a whole
 programme can be kept on the device for the rehearsal and the concert, but
 only the pieces whose rights allow a copy: confirmed public domain, or a
 license for download or self-printing (§ 53 (4) UrhG; a copy that stays on
-the tablet for weeks is more than viewing). It uses the same service
+the tablet for weeks is more than viewing), and for the notes a license for
+digital score files, the same rule as for choir members. A piece leaves
+the device on the last day of these licenses. It uses the same service
 worker, with a cache of its own, the same check at every start with a
 network and the same lock after 30 days. The folder only reads. Another
 account in the same browser, a visit without the role or signing out (as
@@ -1238,7 +1258,10 @@ active copies, never internal preservation copies, named
 `<shelf mark> <title>.pdf`, and a `LIESMICH.txt`. Every write and every
 removal is in the audit log. It replaces or removes only files it wrote
 itself and that nobody changed since (it keeps their checksums); every other
-file in the folder stays. If the daily sync fails (folder gone, no write
+file in the folder stays. A file it wrote is removed when its version
+leaves the list and also when the rights no longer allow it while the
+version stays (a copy marked as an internal preservation copy); a file
+that cannot be read at the moment stays until the next sync. If the daily sync fails (folder gone, no write
 permission), the catalog role and the administrators get a notification
 "Print station sync failed".
 
@@ -1287,7 +1310,8 @@ preservation copies:
 - the scans (PDF), if choir members may save and print them (the same
   rule as the download button of the portal);
 - the MusicXML files, with confirmed public domain or a license "Passing on
-  digital score files (MusicXML) to choir members (hand-over folder)": a
+  digital score files (MusicXML) to choir members (hand-over folder, pieces
+  kept on devices)": a
   MusicXML file is a complete digital edition from which new prints and
   parts can be made, which a license for printing does not cover. The app
   writes them checked and cleaned like the score of a link (no encoder,
@@ -1313,7 +1337,14 @@ Files are named `<shelf mark> <title>.pdf` or `.musicxml`, recordings
 replaces or removes only files it wrote itself and that nobody changed
 since; every write and removal is in the audit log; if the daily sync
 fails, the catalog role and the administrators get the notification
-"Hand-over to the choir system failed".
+"Hand-over to the choir system failed". The sync removes a file it wrote
+when its version leaves the list and also when a license it needed has
+ended while the version stays on the list (download or self-printing for a
+scan, digital score files for MusicXML, passing on recordings for a
+recording); the preview lists these removals. A file that cannot be read
+at the moment, or whose name is not allowed, stays until the next sync.
+MusicXML files written by an older version of the app are cleaned only
+when their source changes.
 
 Risks:
 
@@ -1335,7 +1366,8 @@ disappears there with the next sync. This needs no module beyond the
 hand-over, but has none of the tools for practising: for those, keep
 pieces with the module **Practising without a network** (see
 [Sharing with choir members and the public](#14-sharing-with-choir-members-and-the-public)).
-The folder holds only what choir members may save and print anyway.
+The folder holds only what the rights allow choir members to keep: from
+the first sync after a license ends, the file is gone.
 
 How the archive and a choir system share the work, and what never leaves
 the archive, is in [Cantoria alongside a choir system](alongside-a-choir-system.md).

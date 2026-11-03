@@ -112,13 +112,17 @@ the archive roles"), while `member_links` is active; otherwise 403.
   "archive": { "id": 123, "path": "/Notenarchiv", "user": "admin" },
   "archiveAccessible": true,
   "modules": { "rights": true, "concerts": true, "statistics": false, "agent_api": false, "...": "..." },
+  "freeOnlyWays": ["public_device", "public_print", "public_repertoire"],
   "personalView": { "navigation": ["statistics"], "cards": ["proposals"] },
   "siteName": "Liederkranz Musterstadt"
 }
 ```
 
 `modules` tells which modules are active (see "Modules and the personal
-view" at the end); `personalView` what the account has hidden; `siteName`
+view" at the end); `freeOnlyWays` the ways out that only confirmed public
+domain opens, never a license (`RightsPolicy::FREE_ONLY_WAYS`: a public
+link on a device and printed, the public repertoire page), for the dialog
+that confirms the rights; `personalView` what the account has hidden; `siteName`
 is the name of the Nextcloud (Theming) for the header of printouts.
 `canChangeSettings` is true for admins and for members of the groups the
 administration has given the settings page (see "Settings"); it gives no
@@ -2174,9 +2178,10 @@ today were bought for (a hint, nothing is blocked), else `null`.
 public link plays a protected version only with a license with the use
 `online_audio`; `practice_audio` covers the choir only. `offline`
 (milestone 0.19): whether the recipients can keep the piece on their
-device; `null` while the module `offline` is off, for `members` the release
-for downloading or self-printing (`RightsPolicy::deviceCopyDenial`), for
-`public` confirmed public domain.
+device (`RightsPolicy::deviceDenial`, the rule of the pages); `null` while
+the module `offline` is off: for `members` a license for downloading or
+self-printing and, for the notes, `digital_scores`, for `public` confirmed
+public domain without a rights conflict.
 
 ### Sharing a programme and extending links
 
@@ -2269,12 +2274,15 @@ pieces are new since the last visit the browser remembers by itself
 it.
 
 `offline` (milestone 0.15) of a link: it may be kept on the device, with the
-module `offline` and where choir members may save and print the notes (the
-rule of `scan`, `RightsPolicy::memberScanDenial`). `scanSize` (milestone
+module `offline` and where the rights allow a copy on the device
+(`RightsPolicy::deviceDenial`, one rule for members, the concert folder and
+public links): confirmed public domain, or a license `member_download` or
+`self_print` and, for the notes kept as MusicXML, `digital_scores`. `print`
+follows `RightsPolicy::printDenial` (the same without `digital_scores`). `scanSize` (milestone
 0.19): the size of the scan in bytes as the file sync last saw it, for the
 switch "With the scan (PDF, 2.4 MB)"; `null` without a scan or when unknown.
-`keepUntil` (milestone 0.18): the last day the license for download and
-printing allows a copy on the device, `null` without an end; the page keeps
+`keepUntil` (milestone 0.18): the last day the licenses for the copy allow
+it on the device (`RightsPolicy::deviceEnd`), `null` without an end; the page keeps
 the piece on the device only until then or the end of the link, whichever
 comes first. A public link offers its scan (`scan`) only with confirmed
 public domain or a license with the use `online_download`.
@@ -2399,6 +2407,7 @@ page (`worker-src 'self'`, `frame-src blob:`). Initial state `folder`:
                  "items": [{ "id": 31, "position": 1, "title": "Abendlied", "composer": "J. Rheinberger", "shelfmark": "1-03",
                              "participation": null, "note": null, "encore": false, "duration": 180, "score": true, "scan": true,
                              "scanSize": 2400000, "canPlay": true, "reason": null, "offline": true, "offlineReason": null,
+                             "keepUntil": "2027-03-31", "print": true,
                              "practiceKey": "2922db9b58cb760f1724" }] }],
   "version": "0.15.0", "offline": true }
 ```
@@ -2412,9 +2421,13 @@ in the folder (milestone 0.19: `reason` says so, and the score and scan
 routes answer 403). `scanSize` as on the member page. `canPlay` and
 `reason` (translated) as in the score view. `offline`: the item may be kept
 on the device: the module `offline` is on, and the rights allow a copy on
-the device (`RightsPolicy::deviceCopyDenial`: confirmed public domain or a
-license `member_download` or `self_print`); otherwise `offlineReason`
-(translated), which is `null` while the module is off. `offline` of the
+the device (`RightsPolicy::deviceDenial`, the rule of the member page:
+confirmed public domain or a license `member_download` or `self_print`, and
+`digital_scores` where the item has notes); otherwise `offlineReason`
+(translated), which is `null` while the module is off. `keepUntil`
+(milestone 0.18): the last day these licenses allow the copy, `null`
+without an end; the device drops the piece then. `print`:
+`RightsPolicy::printDenial`. `offline` of the
 page: the module `offline` is on; without it the page keeps nothing on the
 device.
 
