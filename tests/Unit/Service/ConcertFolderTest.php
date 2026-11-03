@@ -26,12 +26,13 @@ use OCA\Cantoria\Exception\NotFoundException;
 use OCA\Cantoria\Service\ConcertFolderService;
 use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\MusicXmlExcerpt;
+use OCA\Cantoria\Service\PageKeys;
 use OCA\Cantoria\Service\ProgrammeCopies;
 use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\ScanService;
 use OCA\Cantoria\Service\ScoreService;
-use OCA\Cantoria\Service\SharedLinkService;
+use OCA\Cantoria\Tests\Unit\Support\FakeCrypto;
 use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -48,7 +49,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Modules::class)]
 #[UsesClass(ProgrammeCopies::class)]
 #[UsesClass(MusicXmlExcerpt::class)]
-#[UsesClass(SharedLinkService::class)]
+#[UsesClass(PageKeys::class)]
 final class ConcertFolderTest extends TestCase {
 	use ModuleSwitches;
 
@@ -113,7 +114,7 @@ final class ConcertFolderTest extends TestCase {
 		$scores->method('content')->willReturn(['content' => self::SCORE, 'mime' => 'application/vnd.recordare.musicxml+xml', 'name' => 'a.musicxml', 'type' => 'musicxml']);
 		$scores->method('scoreText')->willReturn(['xml' => self::SCORE, 'entry' => null]);
 		return new ConcertFolderService($roles, $eventMapper, $itemMapper, $versions, $works, $files, $policy, $scores,
-			$this->createStub(ScanService::class), $this->modulesWithout($off), new ProgrammeCopies($copies, $files));
+			$this->createStub(ScanService::class), $this->modulesWithout($off), new ProgrammeCopies($copies, $files), new PageKeys(new FakeCrypto()));
 	}
 
 	private static function event(int $id, string $status, string $date, string $title): Event {
@@ -172,7 +173,7 @@ final class ConcertFolderTest extends TestCase {
 		self::assertSame([10, 11, 14], array_column($concerts[0]['items'], 'id'), 'struck items are left out');
 		[$score, $scanOnly, $none] = $concerts[0]['items'];
 		self::assertSame(['Werk 131', true, true, true, null], [$score['title'], $score['score'], $score['scan'], $score['offline'], $score['offlineReason']]);
-		self::assertSame(SharedLinkService::practiceKey(self::version(31)), $score['practiceKey'], 'the same key as the shared pages');
+		self::assertSame((new PageKeys(new FakeCrypto()))->practice(self::version(31)), $score['practiceKey'], 'the same key as the shared pages');
 		self::assertFalse($score['canPlay'], 'playback as in the score view');
 		self::assertSame('Rights not clarified.', $score['reason']);
 		self::assertSame([false, true, true], [$scanOnly['score'], $scanOnly['scan'], $scanOnly['offline']], 'a scan alone can be kept');

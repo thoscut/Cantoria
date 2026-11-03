@@ -128,6 +128,70 @@ final class PrivacyTest extends TestCase {
 		self::assertGreaterThan(15, $checked);
 	}
 
+	/**
+	 * The fields of the audit log whose values hold an account or a name
+	 * are exactly the columns of ACCOUNT_FIELDS (R B27).
+	 */
+	public function testTheValuesOfTheAuditLogCoverEveryFieldWithAnAccount(): void {
+		$columns = array_values(array_unique(array_merge(...array_values(PrivacyService::ACCOUNT_FIELDS))));
+		$values = [...PrivacyService::AUDIT_ACCOUNT_VALUES, ...PrivacyService::AUDIT_NAME_VALUES];
+		sort($columns);
+		sort($values);
+		self::assertSame($columns, $values);
+		self::assertSame([], array_intersect(PrivacyService::AUDIT_ACCOUNT_VALUES, PrivacyService::AUDIT_NAME_VALUES));
+	}
+
+	private static function entry(int $id, ?string $uid, string $field, ?string $old, ?string $new): AuditEntry {
+		$entry = new AuditEntry();
+		$entry->setId($id);
+		$entry->setUserId($uid);
+		$entry->setUserName($uid === null ? null : ucfirst($uid) . ' Example');
+		$entry->setField($field);
+		$entry->setOldValue($old);
+		$entry->setNewValue($new);
+		return $entry;
+	}
+
+	/**
+	 * A confirmation records who confirmed as its new value: the report
+	 * finds it also when someone else made the entry or the entry has lost
+	 * its account, by account or by name, whatever the case (R B27).
+	 */
+	public function testTheReportFindsAccountsAndNamesInTheValues(): void {
+		$entries = $this->createStub(AuditEntryMapper::class);
+		$entries->method('findByActor')->willReturn([self::entry(5, 'kim', 'rights_status', 'open', 'protected')]);
+		$entries->method('findWithValues')->willReturn([self::entry(2, null, 'confirmed_by', null, 'kim'),
+			self::entry(3, 'robin', 'confirmed_by_name', 'KIM EXAMPLE', null), self::entry(4, 'robin', 'confirmed_by', null, 'robin')]);
+		$service = $this->service([], $this->createStub(FolderBookService::class), $entries);
+		self::assertSame([2, 5], array_column($service->report('Kim')['auditEntries'], 'id'));
+		self::assertSame([3, 5], array_column($service->report('kim example')['auditEntries'], 'id'));
+	}
+
+	public function testErasureRemovesTheAccountAndItsNamesFromTheValues(): void {
+		$entries = $this->createMock(AuditEntryMapper::class);
+		$entries->method('findByActor')->willReturn([self::entry(1, 'kim', 'rights_status', 'open', 'protected')]);
+		$entries->method('findWithValues')->with([...PrivacyService::AUDIT_ACCOUNT_VALUES, ...PrivacyService::AUDIT_NAME_VALUES])
+			->willReturn([self::entry(2, null, 'confirmed_by', 'kim', 'robin'), self::entry(3, 'robin', 'confirmed_by_name', null, 'Kim Example'),
+				self::entry(4, 'robin', 'confirmed_by', null, 'robin')]);
+		$replaced = [];
+		$entries->method('replaceValues')->willReturnCallback(function (int $id, ?string $old, ?string $new) use (&$replaced): void {
+			$replaced[] = [$id, $old, $new];
+		});
+		$entries->method('removeAccount')->willReturn(1);
+		$entries->method('replaceName')->willReturn(0);
+		$result = $this->service([], $this->createStub(FolderBookService::class), $entries)->erase('kim');
+		self::assertSame([[2, '(anonymised)', 'robin'], [3, null, '(anonymised)']], $replaced, 'by account and by the name of its entries');
+		self::assertSame(3, $result['auditEntries']);
+	}
+
+	public function testADeletedAccountLeavesTheValuesButNotTheName(): void {
+		$entries = $this->createMock(AuditEntryMapper::class);
+		$entries->expects(self::once())->method('findWithValues')->with(PrivacyService::AUDIT_ACCOUNT_VALUES)
+			->willReturn([self::entry(2, 'robin', 'checked_by', 'robin', 'KIM')]);
+		$entries->expects(self::once())->method('replaceValues')->with(2, 'robin', '(anonymised)');
+		$this->service([], $this->createStub(FolderBookService::class), $entries)->forgetAccount('kim', 'Kim Example');
+	}
+
 	public function testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName(): void {
 		$loans = [self::loan(1, 'kim', 'Kim Example', '2026-03-01'), self::loan(2, null, 'Kim Example', null), self::loan(3, null, 'Robin', null)];
 		$folderBook = $this->createMock(FolderBookService::class);
@@ -164,7 +228,8 @@ final class PrivacyTest extends TestCase {
 	public function testTheAuditLogLosesAccountsAfterTheRetentionPeriod(): void {
 		$entries = $this->createMock(AuditEntryMapper::class);
 		// Ten years before now
-		$entries->expects(self::once())->method('pseudonymizeBefore')->with((new \DateTime('@1793000000'))->modify('-10 years')->getTimestamp())->willReturn(3);
+		$entries->expects(self::once())->method('pseudonymizeBefore')->with((new \DateTime('@1793000000'))->modify('-10 years')->getTimestamp(),
+			[...PrivacyService::AUDIT_ACCOUNT_VALUES, ...PrivacyService::AUDIT_NAME_VALUES], '(anonymised)')->willReturn(3);
 		self::assertSame(3, $this->service([], $this->createStub(FolderBookService::class), $entries)->applyRetention());
 		self::assertSame([['pseudonymised', null]], $this->recorded, 'recorded without a name');
 

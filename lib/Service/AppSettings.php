@@ -137,7 +137,7 @@ class AppSettings {
 		$folder = $id > 0 ? $home->getFirstNodeById($id) : null;
 		if ($folder instanceof Folder && !$this->insideArchive($home, $folder)) {
 			if (!$this->privateFolder($folder, $info['user'])) {
-				throw new InvalidInputException('The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.',
+				throw new InvalidInputException('The backup folder %1$s or something in it is shared, or it does not belong to %2$s: others could read the backups. Stop sharing all of it, or delete it; the app then creates a new one.',
 					[$home->getRelativePath($folder->getPath()) ?? $folder->getName(), $info['user']]);
 			}
 			return $folder;
@@ -176,21 +176,44 @@ class AppSettings {
 	/**
 	 * Whether only the account can open a folder: it is the account's own
 	 * (not a folder another account shared with it, not on external
-	 * storage), and neither it nor a folder above it is shared with others
-	 * or by link. Fails closed.
+	 * storage), neither it nor a folder above it is shared with others or by
+	 * link, nothing inside it is shared (a single weekly backup, the folder
+	 * of the annual snapshots or a snapshot in it, S N16), and the folder of
+	 * the annual snapshots is the account's own, too, not a folder shared
+	 * with it and moved in under that name. Fails closed.
 	 */
 	public function privateFolder(Folder $folder, string $account): bool {
 		try {
-			if ($folder->getOwner()?->getUID() !== $account || $folder->isShared() || $folder->isMounted()) {
+			if (!self::ownFolder($folder, $account)) {
 				return false;
 			}
 			$access = $this->shareManager->getAccessList($folder);
+			// getAccessList looks upwards; the shares below the folder, of every depth
+			foreach ($this->shareManager->getSharesInFolder($account, $folder, true, false) as $shares) {
+				if ($shares !== []) {
+					return false;
+				}
+			}
+			if ($folder->nodeExists(AnnualSnapshotService::FOLDER)) {
+				$snapshots = $folder->get(AnnualSnapshotService::FOLDER);
+				if ($snapshots instanceof Folder && !self::ownFolder($snapshots, $account)) {
+					return false;
+				}
+			}
 		} catch (\Throwable) {
 			return false;
 		}
 		$users = array_diff(array_map('strval', $access['users'] ?? []), [$account]);
 		return $users === [] && ($access['public'] ?? false) !== true && ($access['remote'] ?? false) === false
 			&& ($access['mail'] ?? []) === [];
+	}
+
+	/**
+	 * Whether a folder is the account's own: not shared with it by another
+	 * account, not on external storage.
+	 */
+	private static function ownFolder(Folder $folder, string $account): bool {
+		return $folder->getOwner()?->getUID() === $account && !$folder->isShared() && !$folder->isMounted();
 	}
 
 	/**

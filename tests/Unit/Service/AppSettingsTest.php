@@ -19,6 +19,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
 use OCP\Share\IManager as IShareManager;
+use OCP\Share\IShare;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -38,8 +39,9 @@ final class AppSettingsTest extends TestCase {
 	/**
 	 * @param array<string, Folder> $existing folders in the home of the account by name
 	 * @param array<int, array{users?: list<string>, public?: bool, remote?: bool}> $access access list per folder id
+	 * @param array<int, array<int, list<IShare>>> $inside shares below a folder per folder id (file id => shares)
 	 */
-	private function settings(array $existing, array $access = [], int $storedId = 0): AppSettings {
+	private function settings(array $existing, array $access = [], int $storedId = 0, array $inside = []): AppSettings {
 		$this->config = [AppSettings::BACKUP_FOLDER_KEY => $storedId];
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueInt')->willReturnCallback(fn (string $app, string $key, int $default = 0): int => match ($key) {
@@ -77,10 +79,15 @@ final class AppSettingsTest extends TestCase {
 		$factory->method('get')->willReturn($l);
 		$shares = $this->createStub(IShareManager::class);
 		$shares->method('getAccessList')->willReturnCallback(fn (Folder $folder): array => $access[$folder->getId()] ?? ['users' => ['lena'], 'public' => false, 'remote' => false]);
+		$shares->method('getSharesInFolder')->willReturnCallback(fn (string $user, Folder $folder, bool $reshares, bool $shallow): array
+			=> $user === 'lena' && $reshares && !$shallow ? ($inside[$folder->getId()] ?? []) : []);
 		return new AppSettings($appConfig, $root, $factory, $this->createStub(IUserManager::class), $shares);
 	}
 
-	private function folder(int $id, string $path, string $owner, bool $incomingShare = false): Folder {
+	/**
+	 * @param array<string, Folder> $children sub folders by name
+	 */
+	private function folder(int $id, string $path, string $owner, bool $incomingShare = false, array $children = [], bool $mounted = false): Folder {
 		$user = $this->createStub(IUser::class);
 		$user->method('getUID')->willReturn($owner);
 		$folder = $this->createStub(Folder::class);
@@ -89,7 +96,9 @@ final class AppSettingsTest extends TestCase {
 		$folder->method('getName')->willReturn(basename($path));
 		$folder->method('getOwner')->willReturn($user);
 		$folder->method('isShared')->willReturn($incomingShare);
-		$folder->method('isMounted')->willReturn(false);
+		$folder->method('isMounted')->willReturn($mounted);
+		$folder->method('nodeExists')->willReturnCallback(fn (string $name): bool => isset($children[$name]));
+		$folder->method('get')->willReturnCallback(fn (string $name): Folder => $children[$name]);
 		return $folder;
 	}
 
@@ -125,5 +134,47 @@ final class AppSettingsTest extends TestCase {
 		$settings = $this->settings(['Music archive backups' => $stored], [20 => ['users' => ['lena', 'kim']]], 20);
 		$this->expectException(InvalidInputException::class);
 		$settings->backupFolder();
+	}
+
+	/**
+	 * A share of a single backup or of the folder of the annual snapshots
+	 * makes the folder no longer private: the stored folder stops the
+	 * backup, a folder of the same name is not taken over (S N16).
+	 */
+	public function testASharedFileInsideTheFolderStopsTheBackup(): void {
+		$stored = $this->folder(20, '/lena/files/Music archive backups', 'lena');
+		$inside = [20 => [41 => [$this->createStub(IShare::class)]]];
+		$settings = $this->settings(['Music archive backups' => $stored], [], 20, $inside);
+		try {
+			$settings->backupFolder();
+			self::fail('a shared backup inside the folder was not noticed');
+		} catch (InvalidInputException $e) {
+			self::assertStringContainsString('something in it is shared', $e->getMessage());
+		}
+
+		$this->settings(['Music archive backups' => $this->folder(21, '/lena/files/Music archive backups', 'lena')], [], 0,
+			[21 => [42 => [$this->createStub(IShare::class)]]])->backupFolder();
+		self::assertSame(['Music archive backups (2)'], $this->created, 'not taken over by its name');
+
+		$this->created = [];
+		self::assertSame(22, $this->settings(['Music archive backups' => $this->folder(22, '/lena/files/Music archive backups', 'lena')], [], 0,
+			[22 => [43 => []]])->backupFolder()->getId(), 'no share below it: private');
+	}
+
+	/**
+	 * A folder another account shared, moved into the backup folder under the
+	 * name of the annual snapshots, would receive them: the backup stops.
+	 */
+	public function testAForeignFolderOfTheAnnualSnapshotsStopsTheBackup(): void {
+		$snapshots = $this->folder(30, '/lena/files/Music archive backups/annual-snapshots', 'mallory', true, [], true);
+		$stored = $this->folder(20, '/lena/files/Music archive backups', 'lena', false, ['annual-snapshots' => $snapshots]);
+		$this->expectException(InvalidInputException::class);
+		$this->settings(['Music archive backups' => $stored], [], 20)->backupFolder();
+	}
+
+	public function testTheOwnFolderOfTheAnnualSnapshotsIsPrivate(): void {
+		$snapshots = $this->folder(30, '/lena/files/Music archive backups/annual-snapshots', 'lena');
+		$stored = $this->folder(20, '/lena/files/Music archive backups', 'lena', false, ['annual-snapshots' => $snapshots]);
+		self::assertSame(20, $this->settings(['Music archive backups' => $stored], [], 20)->backupFolder()->getId());
 	}
 }

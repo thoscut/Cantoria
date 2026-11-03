@@ -1407,8 +1407,12 @@ section **Rights**, module "Protection terms"). Choose "Traditional" only
 with evidence and note the source under **Notes**. Most choral settings of
 folk songs are arrangements with a protection of their own: with a
 traditional melody, the suggestion needs someone with the role
-**Arranger** unless the kind of version is **Original** (an unarranged
-setting); otherwise it says "unknown". A version without persons whose
+**Arranger** unless the kind of version is **Original**; otherwise it says
+"unknown". The same holds for every version of the kind **Arrangement** or
+**Adaptation**, also of a composed melody, such as a chorale setting after
+Bach. Choose **Original** only when no one has arranged the work: for the
+composition as it was written, or the melody without a setting of its own,
+not for the original edition of a choral setting. A version without persons whose
 melody and text are both traditional and whose kind is **Original** is
 suggested as public domain.
 

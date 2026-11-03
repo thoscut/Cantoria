@@ -33,7 +33,8 @@ use OCP\IDBConnection;
  * All archive roles may read them. They contain figures, works and persons of
  * the register (composers), but no personal data of choir members and no
  * account names. Internal preservation copies are counted, but never listed
- * by title or shelf mark.
+ * by title or shelf mark: versions marked as one and copies of the kind
+ * "Preservation copy", the rule of RightsPolicy::isPreservationCopy (S N17).
  *
  * The data is read with a fixed number of queries (about fifteen),
  * independent of the size of the archive (no query per copy or work): only
@@ -45,10 +46,10 @@ use OCP\IDBConnection;
  * zone of the user; dates (concerts, licenses) are calendar days.
  *
  * @psalm-import-type Proposal from ProtectionTerm as ProtectionProposal
- * @psalm-type CopyRow = array{id: int, versionId: int, binder: int, number: int, shelfmark: string, status: string, created: int}
+ * @psalm-type CopyRow = array{id: int, versionId: int, binder: int, number: int, shelfmark: string, status: string, created: int, kind?: ?string}
  * @psalm-type CreatedRow = array{copyId: int, time: int, reason: ?string}
  * @psalm-type TaskRow = array{addressee: string, status: string, category: ?string, created: int}
- * @psalm-type CopyRef = array{id: int, shelfmark: string, status: string}
+ * @psalm-type CopyRef = array{id: int, shelfmark: string, status: string, kind?: ?string}
  * @psalm-type BinderRow = array{binder: int, active: int, retired: int, missing: int, lent: int, other: int, total: int}
  * @psalm-type AdditionRow = array{year: int, accession: int, import: int, other: int, total: int}
  * @psalm-type StockFigures = array{copies: int, status: array<string, int>, binders: list<BinderRow>, active: int, activeWithFile: int,
@@ -311,7 +312,7 @@ class StatisticsService {
 			$perBinder[$copy['binder']] ??= array_fill_keys([...self::COPY_STATUSES, 'other'], 0);
 			$perBinder[$copy['binder']][$key]++;
 			$version = $versions[$copy['versionId']] ?? null;
-			if ($version?->getPreservationCopy() === true) {
+			if (self::copyIsPreservation($version, $copy)) {
 				$preservationCopies++;
 			}
 			if ($key !== 'active') {
@@ -333,7 +334,9 @@ class StatisticsService {
 				'missing' => $counts['missing'] ?? 0, 'lent' => $counts['lent'] ?? 0, 'other' => $counts['other'] ?? 0,
 				'total' => array_sum($counts)];
 		}
-		$preservationVersions = count(array_filter($versions, fn (WorkVersion $v): bool => $v->getPreservationCopy() === true));
+		$byVersion = self::copiesByVersion($copies);
+		$preservationVersions = count(array_filter($versions,
+			fn (WorkVersion $v): bool => self::versionIsPreservation($v, $byVersion[$v->getId()] ?? [])));
 		return ['copies' => count($copies), 'status' => $status, 'binders' => $binders, 'active' => $active,
 			'activeWithFile' => $withFile, 'activeWithMusicxml' => $withMusicxml, 'preservationVersions' => $preservationVersions,
 			'preservationCopies' => $preservationCopies];
@@ -421,7 +424,7 @@ class StatisticsService {
 				continue;
 			}
 			$version = $versions[$copy['versionId']] ?? null;
-			if ($version !== null && $version->getPreservationCopy() === true) {
+			if ($version !== null && self::copyIsPreservation($version, $copy)) {
 				$omitted++;
 				continue;
 			}
@@ -614,7 +617,7 @@ class StatisticsService {
 				if (!$isStart && !$isEnd) {
 					continue;
 				}
-				if ($version === null || $version->getPreservationCopy() === true) {
+				if ($version === null || self::versionIsPreservation($version, $copiesByVersion[$versionId] ?? [])) {
 					$omitted++;
 					continue;
 				}
@@ -896,7 +899,7 @@ class StatisticsService {
 		$result = [];
 		foreach ($copies as $copy) {
 			$version = $versions[$copy['versionId']] ?? null;
-			if ($copy['status'] !== 'active' || $version === null || $version->getPreservationCopy() === true) {
+			if ($copy['status'] !== 'active' || $version === null || self::copyIsPreservation($version, $copy)) {
 				continue;
 			}
 			$workId = CatalogService::listedWork($works[$version->getWorkId()] ?? null, $works)?->getId() ?? $version->getWorkId();
@@ -969,13 +972,15 @@ class StatisticsService {
 			}
 			$years[$year]['versions']++;
 			$total++;
-			if ($version->getPreservationCopy() === true) {
+			if (self::versionIsPreservation($version, $copies)) {
 				$omitted++;
 				continue;
 			}
 			$work = CatalogService::listedWork($works[$version->getWorkId()] ?? null, $works);
 			$rows[] = ['versionId' => $versionId, 'title' => $work?->getTitle(), 'composer' => $work?->getComposer(), 'until' => $until,
-				'rightsStatus' => $version->getRightsStatus(), 'confirmed' => $version->isConfirmed(), 'copies' => $copies];
+				'rightsStatus' => $version->getRightsStatus(), 'confirmed' => $version->isConfirmed(),
+				'copies' => array_map(fn (array $copy): array => ['id' => $copy['id'], 'shelfmark' => $copy['shelfmark'], 'status' => $copy['status']],
+					$copies)];
 			$keys[] = [$until, $copies[0]['shelfmark']];
 		}
 		return ['years' => array_values($years), 'total' => $total, 'rows' => array_slice(Sort::byKeys($rows, $keys), 0, $limit),
@@ -989,9 +994,40 @@ class StatisticsService {
 	public static function copiesByVersion(array $copies): array {
 		$result = [];
 		foreach ($copies as $copy) {
-			$result[$copy['versionId']][] = ['id' => $copy['id'], 'shelfmark' => $copy['shelfmark'], 'status' => $copy['status']];
+			$result[$copy['versionId']][] = ['id' => $copy['id'], 'shelfmark' => $copy['shelfmark'], 'status' => $copy['status'],
+				'kind' => $copy['kind'] ?? null];
 		}
 		return $result;
+	}
+
+	/**
+	 * Whether a copy is an internal preservation copy: its version is marked
+	 * as one, or the copy is of the kind "Preservation copy" (the rule of
+	 * RightsPolicy::isPreservationCopy on the rows of the statistics).
+	 *
+	 * @param CopyRow|CopyRef $copy
+	 */
+	private static function copyIsPreservation(?WorkVersion $version, array $copy): bool {
+		return $version?->getPreservationCopy() === true || ($copy['kind'] ?? null) === RightsPolicy::PRESERVATION_COPY_KIND;
+	}
+
+	/**
+	 * Whether anything of a version is an internal preservation copy (the rule
+	 * of RightsPolicy::versionHasPreservationCopy), for figures that belong to
+	 * the version as a whole (licenses, end of protection).
+	 *
+	 * @param list<CopyRef> $copies the copies of the version
+	 */
+	private static function versionIsPreservation(WorkVersion $version, array $copies): bool {
+		if ($version->getPreservationCopy() === true) {
+			return true;
+		}
+		foreach ($copies as $copy) {
+			if (self::copyIsPreservation($version, $copy)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// ---- queries ---------------------------------------------------------------
@@ -1067,7 +1103,7 @@ class StatisticsService {
 	 */
 	private function copyRows(): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'version_id', 'binder', 'number', 'shelfmark', 'status', 'created')
+		$qb->select('id', 'version_id', 'binder', 'number', 'shelfmark', 'status', 'created', 'kind')
 			->from('cantoria_copies')
 			->orderBy('binder')
 			->addOrderBy('number');
@@ -1076,7 +1112,7 @@ class StatisticsService {
 		foreach ($result->fetchAllAssociative() as $row) {
 			$rows[] = ['id' => Row::int($row['id']), 'versionId' => Row::int($row['version_id']), 'binder' => Row::int($row['binder']),
 				'number' => Row::int($row['number']), 'shelfmark' => Row::string($row['shelfmark']), 'status' => Row::string($row['status']),
-				'created' => Row::int($row['created'])];
+				'created' => Row::int($row['created']), 'kind' => Row::stringOrNull($row['kind'])];
 		}
 		$result->closeCursor();
 		return $rows;

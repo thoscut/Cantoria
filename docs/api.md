@@ -960,10 +960,10 @@ would say `free` becomes `unknown` with reason `composer_missing` or
 `lyricist_missing` when no person has the role `composer` or `lyricist` and
 the part is not marked `traditional` (or `none`). A version without persons
 whose parts are both marked and that has no special case gets `free` with
-reason `traditional`. A proposal that would say `free` for a version with a
-traditional melody becomes `unknown` with reason `arranger_missing` when no
-person has the role `arranger` and the kind of the version is not
-`original`. Confirming public domain against a proposal that is
+reason `traditional`. A proposal that would say `free` becomes `unknown`
+with reason `arranger_missing` when no person has the role `arranger` and
+the kind of the version is `arrangement` or `adaptation`, or the melody is
+traditional and the kind is not `original`. Confirming public domain against a proposal that is
 not `free` stays possible; the UI asks to tick that the proposal was
 checked.
 
@@ -2280,8 +2280,9 @@ comes first. A public link offers its scan (`scan`) only with confirmed
 public domain or a license with the use `online_download`.
 `practiceKey`: the key
 under which the browser remembers the passages and settings for practising
-of the version, the same for every link to it, a hash without catalog ids;
-the public page has it, too. `offline` of the page: the module is on, and
+of the version, the same for every link to it, an HMAC with the secret of
+the instance, so that it reveals no catalog id (the `key` of a programme
+likewise); the public page has it, too. `offline` of the page: the module is on, and
 the version of the app names the cache of the scripts. The page answers with
 the header `X-Cantoria-Page: member` (a page the service worker may keep)
 and allows `worker-src 'self'` and frames from `blob:` only: a scan is shown

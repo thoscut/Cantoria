@@ -15,6 +15,7 @@ use OCA\Cantoria\Db\License;
 use OCA\Cantoria\Db\Work;
 use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Exception\InvalidInputException;
+use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\StatisticsService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -59,9 +60,9 @@ final class StatisticsServiceTest extends TestCase {
 	/**
 	 * @return CopyRow
 	 */
-	private static function copy(int $id, int $versionId, int $binder, string $status = 'active', int $created = 0): array {
+	private static function copy(int $id, int $versionId, int $binder, string $status = 'active', int $created = 0, ?string $kind = null): array {
 		return ['id' => $id, 'versionId' => $versionId, 'binder' => $binder, 'number' => $id, 'shelfmark' => $binder . '-' . $id,
-			'status' => $status, 'created' => $created];
+			'status' => $status, 'created' => $created, 'kind' => $kind];
 	}
 
 	private static function time(string $date): int {
@@ -337,6 +338,47 @@ final class StatisticsServiceTest extends TestCase {
 		self::assertSame(1, $result['omitted']);
 		self::assertSame([[1, '2027-12-31', ['1-1']]],
 			array_map(fn (array $r): array => [$r['versionId'], $r['until'], array_column($r['copies'], 'shelfmark')], $result['rows']));
+	}
+
+	/**
+	 * A copy of the kind "Preservation copy" in a version without the flag
+	 * is counted, but never listed, like a version marked as one: the rule
+	 * of RightsPolicy::isPreservationCopy (S N17).
+	 */
+	public function testCopiesOfTheKindPreservationCopyAreCountedButNotListed(): void {
+		$works = [1 => self::work(1, ['title' => 'A']), 2 => self::work(2, ['title' => 'Secret'])];
+		$versions = [1 => self::version(1, 1, ['rightsStatus' => 'protected']), 2 => self::version(2, 2, ['rightsStatus' => 'protected'])];
+		$kind = RightsPolicy::PRESERVATION_COPY_KIND;
+		$copies = [self::copy(1, 1, 1), self::copy(2, 2, 1, 'active', 0, $kind), self::copy(3, 1, 1, 'active', 0, $kind)];
+		$byVersion = StatisticsService::copiesByVersion($copies);
+
+		$stock = StatisticsService::stock($copies, $versions, []);
+		self::assertSame(2, $stock['preservationCopies']);
+		self::assertSame(2, $stock['preservationVersions']);
+
+		$created = [['copyId' => 1, 'time' => self::time('2025-03-01'), 'reason' => 'accession'],
+			['copyId' => 2, 'time' => self::time('2025-04-01'), 'reason' => 'accession']];
+		$accessions = StatisticsService::accessions($copies, $created, $versions, $works, 2025, new \DateTimeZone('UTC'));
+		self::assertSame(['1-1'], array_column($accessions['rows'], 'shelfmark'));
+		self::assertSame(1, $accessions['omitted']);
+
+		// Copy 3 of work A is a preservation copy, copy 1 is sung from
+		self::assertSame([1 => [['id' => 1, 'shelfmark' => '1-1']]], StatisticsService::singableCopies($copies, $versions, $works));
+
+		$license = License::fromParams(['validFrom' => '2025-02-01', 'validUntil' => null, 'uses' => 'binder', 'holder' => 'Verlag', 'created' => 0]);
+		$license->setId(7);
+		$licenses = StatisticsService::licenseReport([2 => [$license]], $versions, $works, $byVersion, 2025, '2026-10-22', new \DateTimeZone('UTC'));
+		self::assertSame([], $licenses['started']);
+		self::assertSame(1, $licenses['omitted']);
+
+		$ending = StatisticsService::protectionEnding([2 => self::proposal('protected', '2027-12-31')], $versions, $works, $byVersion, 2026, 2030, 50);
+		self::assertSame(1, $ending['total']);
+		self::assertSame([], $ending['rows']);
+		self::assertSame(1, $ending['omitted']);
+		// The rows name the copies without their kind
+		$listed = StatisticsService::protectionEnding([1 => self::proposal('protected', '2027-12-31')],
+			[1 => self::version(1, 1, ['rightsStatus' => 'protected'])], $works, [1 => [$byVersion[1][0]]], 2026, 2030, 50);
+		self::assertSame([['id' => 1, 'shelfmark' => '1-1', 'status' => 'active']], $listed['rows'][0]['copies']);
 	}
 
 	public function testOpenRightsQuestions(): void {

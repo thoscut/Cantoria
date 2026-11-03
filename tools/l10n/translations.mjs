@@ -2730,9 +2730,9 @@ export const singular = {
 	'The scan of this link is not available at the moment.': 'Der Scan dieses Links ist gerade nicht verfügbar.',
 	// ---- 0.10: backups outside the archive folder, delegated settings ----
 	'Music archive backups': 'Notenarchiv-Sicherungen',
-	'The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.': [
-		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teile ihn nicht mehr oder verschiebe ihn; dann legt die App einen neuen an.',
-		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teilen Sie ihn nicht mehr oder verschieben Sie ihn; dann legt die App einen neuen an.',
+	'The backup folder %1$s or something in it is shared, or it does not belong to %2$s: others could read the backups. Stop sharing all of it, or delete it; the app then creates a new one.': [
+		'Der Sicherungsordner %1$s oder etwas darin ist geteilt, oder er gehört nicht %2$s: Andere könnten mitlesen. Teile nichts davon mehr oder lösche ihn; dann legt die App einen neuen an.',
+		'Der Sicherungsordner %1$s oder etwas darin ist geteilt, oder er gehört nicht %2$s: Andere könnten mitlesen. Teilen Sie nichts davon mehr oder löschen Sie ihn; dann legt die App einen neuen an.',
 	],
 	'The folder in Nextcloud that holds the score files (for example one subfolder per binder). The app only reads files. Exports of the catalog are stored in its subfolder "_cantoria-app".': 'Der Ordner in der Nextcloud mit den Notendateien (zum Beispiel ein Unterordner je Archivmappe). Die App liest Dateien nur. Exporte des Werkverzeichnisses legt sie im Unterordner „_cantoria-app“ ab.',
 	'Backups and annual snapshots name choir members and accounts. They lie outside the archive folder, in a folder of the account that set it, which the role groups do not see unless it is shared with them.': 'Sicherungen und Jahresstände nennen Chormitglieder und Konten. Sie liegen außerhalb des Archivordners in einem Ordner des Kontos, das ihn festgelegt hat. Die Rollengruppen sehen ihn nicht, solange er nicht mit ihnen geteilt wird.',
@@ -2757,6 +2757,7 @@ export const singular = {
 		'Nur die Administration kann einer Gruppe eine Rolle geben, die du als Gruppenadministration verwaltest.',
 		'Nur die Administration kann einer Gruppe eine Rolle geben, die Sie als Gruppenadministration verwalten.',
 	],
+	'Only an administrator can give a role to a group that does not exist yet.': 'Nur die Administration kann einer Gruppe eine Rolle geben, die es noch nicht gibt.',
 	'Only an administrator can give a role to a group you belong to.': [
 		'Nur die Administration kann einer Gruppe, zu der du gehörst, eine Rolle geben.',
 		'Nur die Administration kann einer Gruppe, zu der Sie gehören, eine Rolle geben.',
@@ -2817,16 +2818,20 @@ export const singular = {
 	],
 	'Melody': 'Melodie',
 	'Text': 'Text',
-	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
-		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
-		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+	'Choose "Traditional" only with evidence, e.g. a folk song collection with its year, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
+		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung mit ihrem Jahr, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung mit ihrem Jahr, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+	],
+	'Choose "Original" only when no one has arranged the work: the composition as written, or a melody without a setting of its own. For an arrangement the protection proposal needs the arranger.': [
+		'Wähle „Original“ nur ohne jede Bearbeitung: die Komposition, wie sie geschrieben ist, oder eine Melodie ohne eigenen Satz. Für eine Bearbeitung braucht der Vorschlag zur Schutzfrist ihre Person.',
+		'Wählen Sie „Original“ nur ohne jede Bearbeitung: die Komposition, wie sie geschrieben ist, oder eine Melodie ohne eigenen Satz. Für eine Bearbeitung braucht der Vorschlag zur Schutzfrist ihre Person.',
 	],
 	'Choose "Traditional" only with evidence and note it under "Notes", or "Without text" for a version without words. Otherwise the protection proposal needs a lyricist.': [
 		'Wähle „Traditionell“ nur mit Beleg und notiere ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 		'Wählen Sie „Traditionell“ nur mit Beleg und notieren Sie ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 	],
 	'Traditional (no known composer)': 'Traditionell (ohne bekannte Komposition)',
-	'Traditional (public domain)': 'Traditionell (gemeinfrei)',
+	'Traditional (no known author)': 'Traditionell (ohne bekannte Urheberschaft)',
 	'Without text': 'Ohne Text',
 	'Public domain in doubt': 'Gemeinfreiheit fraglich',
 	'To the catalog librarian, daily: a version confirmed as public domain no longer is by the protection proposal, after a person or life dates were changed.': 'An die Archivverwaltung, täglich: Eine als gemeinfrei bestätigte Fassung ist es nach dem Vorschlag zur Schutzfrist nicht mehr, nachdem eine Person oder Lebensdaten geändert wurden.',
@@ -2838,9 +2843,9 @@ export const singular = {
 		'Für diese Fassung ist kein Text erfasst. Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markiere den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 		'Für diese Fassung ist kein Text erfasst. Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markieren Sie den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 	],
-	'The melody is traditional, but no arranger is recorded. Add the arranger on the tab "Rights", or choose "Original" as the kind of version; until then unknown means protected.': [
-		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänze sie im Reiter „Rechte“ oder wähle als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
-		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänzen Sie sie im Reiter „Rechte“ oder wählen Sie als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
+	'No arranger is recorded, although the version is arranged or its melody is traditional. Add the arranger on the tab "Rights"; until then unknown means protected. "Original" means: not arranged.': [
+		'Die Bearbeitung fehlt, obwohl die Fassung bearbeitet ist oder ihre Melodie traditionell. Ergänze sie im Reiter „Rechte“; bis dahin heißt unbekannt geschützt. „Original“ heißt: unbearbeitet.',
+		'Die Bearbeitung fehlt, obwohl die Fassung bearbeitet ist oder ihre Melodie traditionell. Ergänzen Sie sie im Reiter „Rechte“; bis dahin heißt unbekannt geschützt. „Original“ heißt: unbearbeitet.',
 	],
 	'Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.': [
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfe, dass keine Bearbeitung oder Übersetzung fehlt.',

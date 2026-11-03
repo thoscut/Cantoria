@@ -74,12 +74,20 @@ vertraglich binden. Darum bewertet die App die **Fassung**, nicht das Werk.
 
 ### Volkslieder und traditionelle Melodien
 
-Eine Melodie ohne bekannte Urheberschaft ist nicht schon deshalb frei. Das
-Recht an einem anonymen Werk erlischt 70 Jahre nach seiner Veröffentlichung,
-oder nach seiner Schaffung, wenn es nicht veröffentlicht wurde (§ 66 Abs. 1
-UrhG). Eine traditionelle Melodie ist also frei, wenn ihre Entstehung oder
-erste Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist,
-zum Beispiel durch eine alte Volksliedsammlung. Viele „Volksweisen“ in
+Eine Melodie oder ein Text ohne bekannte Urheberschaft ist nicht schon
+deshalb frei. Das Recht an einem anonymen Werk erlischt 70 Jahre nach seiner
+Veröffentlichung (§ 66 Abs. 1 Satz 1 UrhG), oder 70 Jahre nach seiner
+Schaffung, wenn es nicht innerhalb dieser 70 Jahre veröffentlicht wurde
+(Satz 2). Wird die Urheberschaft innerhalb der Frist offenbart, etwa weil
+die Person sich zu erkennen gibt oder ihr Name bekannt wird, gilt wieder die
+Regel 70 Jahre nach dem Tod (§ 66 Abs. 2 in Verbindung mit § 64 UrhG). Eine
+traditionelle Melodie ist also frei, wenn ihre Entstehung oder erste
+Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist, zum
+Beispiel durch eine alte Volksliedsammlung. Die App fragt dafür kein Jahr
+ab: Notiere die Sammlung mit ihrem Jahr unter „Notizen“; die Person, die
+den Rechtestatus bestätigt, prüft den Beleg (Leitlinie 1). Dasselbe gilt
+für einen Text, der als „Traditionell (ohne bekannte Urheberschaft)“
+markiert ist. Viele „Volksweisen“ in
 Sammlungen des 20. Jahrhunderts sind in Wahrheit Kompositionen mit
 bekanntem oder ermittelbarem Urheber. Eine **unwesentliche
 Bearbeitung** eines nicht geschützten Werks der Musik ist keine eigene
@@ -89,8 +97,19 @@ Bearbeitung mit eigenem Schutz. Markiert Melodie oder Text nur mit Beleg als
 „traditionell“, zum Beispiel aus einer Volksliedsammlung, und erfasst die
 Bearbeitung trotzdem. Die App schlägt eine traditionelle Melodie nur dann
 als gemeinfrei vor, wenn die Bearbeitung erfasst ist oder die Art der
-Fassung „Original“ lautet (ein unbearbeiteter Satz); sonst lautet der
-Vorschlag „unbekannt“.
+Fassung „Original“ lautet; sonst lautet der Vorschlag „unbekannt“.
+„Original“ heißt dabei: Niemand hat das Werk bearbeitet, es ist die
+Komposition, wie sie geschrieben wurde, oder die Melodie ohne eigenen Satz.
+Die Originalausgabe eines Chorsatzes ist kein „Original“ in diesem Sinn,
+sondern eine „Bearbeitung“.
+
+Dasselbe gilt für jede Bearbeitung, nicht nur von Volksliedern: Ein
+Choralsatz oder ein Arrangement eines klassischen Werks ist nach § 3 UrhG
+eine Bearbeitung mit eigenem Schutz, auch wenn die Komposition längst
+gemeinfrei ist. Ist die Art der Fassung „Bearbeitung“ oder „Einrichtung“
+und keine Person mit der Rolle „Bearbeitung“ erfasst, lautet ein Vorschlag
+„gemeinfrei“ stattdessen „unbekannt“. Das ist vor allem nach einem Import
+wichtig, wenn die Tabelle nur eine Spalte für die Komposition hatte.
 
 ## Fotokopien von Noten
 
@@ -241,11 +260,25 @@ Interne Erhaltungskopien kommen nie auf ein Gerät.
   IndexedDB, damit Stücke eines anderen Kontos oder von vor dem Abmelden
   entfernt werden (eine Sicherheitsmaßnahme;
   [SECURITY.md](../../SECURITY.md), englisch).
+  Drei Speicherungen geschehen ohne Zutun der Person: Den Hash des Kontos
+  schreibt jede Seite der App bei jedem Aufruf, auch im Archiv und ohne das
+  Modul „Üben ohne Netz“; „Mit mir geteilt“ merkt sich bei jedem Aufruf die
+  Kennungen der gesehenen Links und die Zeit, je Konto als Hash, für die
+  Markierung „Neu“ (`localStorage`); und mit dem Modul „Üben ohne Netz“
+  meldet jede Seite beim Öffnen einen Service Worker im Browser an (auf
+  einem öffentlichen Link, sobald das Stück behalten werden darf), der
+  Inhalte erst ablegt, wenn jemand etwas gespeichert hat.
   Speichern auf einem Gerät braucht eine Einwilligung, außer es ist
   unbedingt erforderlich für einen Dienst, den die Person ausdrücklich
-  gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG). Ein Stück auf Tippen zu behalten,
-  ist das klar; Übe-Einstellungen für den nächsten Besuch zu merken, ist ein
-  Grenzfall. Nichts davon erreicht den Server oder Dritte; „Alles auf
+  gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG; die Vorschrift gilt unabhängig
+  davon, ob Daten personenbezogen sind). Ein Stück auf Tippen zu behalten
+  und der Hash des Kontos als Schutz dieser Stücke sind das in der Regel.
+  Übe-Einstellungen für den nächsten Besuch, die Neu-Markierung, der Hash
+  auf Seiten ohne gespeicherte Stücke und der Service Worker vor dem ersten
+  Speichern sind Komfort oder Vorbereitung und nach strenger Lesart der
+  Aufsichtsbehörden einwilligungsbedürftig, also ein Grenzfall. Das
+  praktische Risiko ist gering, weil nichts das Gerät verlässt; die
+  Textbausteine nennen die Ausnahme darum nur mit Vorbehalt. Nichts davon erreicht den Server oder Dritte; „Alles auf
   diesem Gerät löschen“ entfernt es (auf einem öffentlichen Link: „Ohne Netz
   verfügbar“ ausschalten und die Websitedaten im Browser löschen), und das
   Abmelden bei Nextcloud meist auch. Nennt es in den Datenschutzhinweisen,
@@ -294,7 +327,11 @@ der Mitglieder in den [Datenschutz-Vorlagen](datenschutz-vorlagen.md).
   (Rechtsansprüche). Danach genügt die Rolle: Nach zehn Jahren (Voreinstellung)
   entfernt die App Konto und Namen aus den Protokolleinträgen und behält die
   Rolle (Einstellung `audit_retention_years`, Administrationshandbuch,
-  Abschnitt 10).
+  Abschnitt 10). Das gilt auch für die Werte der Einträge, in denen ein
+  Konto oder ein Name steht, etwa wer einen Rechtestatus bestätigt, eine
+  Person geprüft oder eine Fassung als gültig gesetzt hat; die Auskunft
+  findet ein Konto auch dort, und Löschen auf Antrag sowie ein gelöschtes
+  Konto entfernen es dort ebenso.
 - **Übe-Dateien von Chormitgliedern** werden nur mit der Rolle und dem Tag
   protokolliert, ohne Konto, Namen und Uhrzeit. In einer kleinen
   Stimmgruppe kann ein solcher Eintrag mit anderem Wissen trotzdem auf eine

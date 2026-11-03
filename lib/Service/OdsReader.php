@@ -309,6 +309,8 @@ class OdsReader {
 		if ($data === '' || stripos($data, '<!DOCTYPE') !== false) {
 			self::damaged();
 		}
+		// The DOM lies outside the memory limit of PHP: count the elements first (S N18)
+		XlsxReader::limitElements($data, self::tooLarge());
 		$document = new \DOMDocument();
 		$previous = libxml_use_internal_errors(true);
 		try {

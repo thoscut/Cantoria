@@ -19,7 +19,9 @@ use OCP\IDBConnection;
  * retention period of the folder book (FolderBookService) replaces the
  * personal data of a folder loan in that loan's own entries; a deleted
  * account and an erasure on request (PrivacyService) remove the account or
- * the name of who made an entry.
+ * the name of who made an entry, and from the old and new values of the
+ * fields that hold an account or a name (a confirmation records who
+ * confirmed as its new value, R B27).
  *
  * @template-extends QBMapper<AuditEntry>
  */
@@ -112,6 +114,40 @@ class AuditEntryMapper extends QBMapper {
 	}
 
 	/**
+	 * Entries of one of the fields that have an old or a new value, for the
+	 * fields whose values hold an account or a name (PrivacyService). The
+	 * values are compared in PHP, so that neither the database nor its
+	 * collation decides about upper and lower case.
+	 *
+	 * @param list<string> $fields
+	 * @return list<AuditEntry> oldest first
+	 */
+	public function findWithValues(array $fields): array {
+		if ($fields === []) {
+			return [];
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->in('field', $qb->createNamedParameter($fields, IQueryBuilder::PARAM_STR_ARRAY)))
+			->andWhere($qb->expr()->orX($qb->expr()->isNotNull('old_value'), $qb->expr()->isNotNull('new_value')))
+			->orderBy('id');
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * Sets the old and the new value of one entry (erasure of an account or
+	 * a name from the values, PrivacyService).
+	 */
+	public function replaceValues(int $id, ?string $oldValue, ?string $newValue): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('old_value', $qb->createNamedParameter($oldValue, $oldValue === null ? IQueryBuilder::PARAM_NULL : IQueryBuilder::PARAM_STR))
+			->set('new_value', $qb->createNamedParameter($newValue, $newValue === null ? IQueryBuilder::PARAM_NULL : IQueryBuilder::PARAM_STR))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT)));
+		$qb->executeStatement();
+	}
+
+	/**
 	 * Removes the account from the entries it made; the display name
 	 * becomes the given one, or stays when null.
 	 *
@@ -129,20 +165,62 @@ class AuditEntryMapper extends QBMapper {
 	}
 
 	/**
-	 * Removes account and display name from the entries made before a time;
-	 * the roles stay, so that it is still known which function made a
-	 * change (retention period of the audit log, PrivacyService).
+	 * Removes account and display name from the entries made before a time,
+	 * and replaces the old and new values of the fields that hold an
+	 * account or a name ($valueFields, e.g. who confirmed a rights status)
+	 * with a placeholder; the roles stay, so that it is still known which
+	 * function made a change (retention period of the audit log,
+	 * PrivacyService). Values that were empty stay empty. Plain updates
+	 * with the query builder, the same on MySQL/MariaDB, PostgreSQL and
+	 * SQLite; a second run changes nothing.
 	 *
+	 * @param list<string> $valueFields
 	 * @return int the number of entries changed
 	 */
-	public function pseudonymizeBefore(int $time): int {
+	public function pseudonymizeBefore(int $time, array $valueFields = [], string $placeholder = ''): int {
+		$count = $this->db->getQueryBuilder();
+		$count->select($count->func()->count('id'))->from($this->getTableName())
+			->where($count->expr()->lt('time', $count->createNamedParameter($time, IQueryBuilder::PARAM_INT)));
+		$pending = [$count->expr()->isNotNull('user_id'), $count->expr()->isNotNull('user_name')];
+		if ($valueFields !== []) {
+			$values = [];
+			foreach (['old_value', 'new_value'] as $column) {
+				$values[] = $count->expr()->andX($count->expr()->isNotNull($column),
+					$count->expr()->neq($column, $count->createNamedParameter($placeholder)));
+			}
+			$pending[] = $count->expr()->andX(
+				$count->expr()->in('field', $count->createNamedParameter($valueFields, IQueryBuilder::PARAM_STR_ARRAY)),
+				$count->expr()->orX(...$values));
+		}
+		$count->andWhere($count->expr()->orX(...$pending));
+		$result = $count->executeQuery();
+		$changed = Row::int($result->fetchOne());
+		$result->closeCursor();
+		if ($changed === 0) {
+			return 0;
+		}
+
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set('user_id', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
 			->set('user_name', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
 			->where($qb->expr()->lt('time', $qb->createNamedParameter($time, IQueryBuilder::PARAM_INT)))
 			->andWhere($qb->expr()->orX($qb->expr()->isNotNull('user_id'), $qb->expr()->isNotNull('user_name')));
-		return $qb->executeStatement();
+		$qb->executeStatement();
+		if ($valueFields === []) {
+			return $changed;
+		}
+		foreach (['old_value', 'new_value'] as $column) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->update($this->getTableName())
+				->set($column, $qb->createNamedParameter($placeholder))
+				->where($qb->expr()->lt('time', $qb->createNamedParameter($time, IQueryBuilder::PARAM_INT)))
+				->andWhere($qb->expr()->in('field', $qb->createNamedParameter($valueFields, IQueryBuilder::PARAM_STR_ARRAY)))
+				->andWhere($qb->expr()->isNotNull($column))
+				->andWhere($qb->expr()->neq($column, $qb->createNamedParameter($placeholder)));
+			$qb->executeStatement();
+		}
+		return $changed;
 	}
 
 	/**

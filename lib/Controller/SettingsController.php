@@ -106,8 +106,13 @@ class SettingsController extends Controller {
 				if (!$admin) {
 					// Given the settings page, a group may arrange the roles of
 					// others, but not give a role to itself, nor to a group
-					// whose members it manages as group admin (it could join it).
+					// whose members it manages as group admin (it could join it),
+					// nor to a group that does not exist yet: whoever creates it
+					// later could fill it (S N21).
 					foreach (array_diff($wanted[$role], $this->roles->groups($role)) as $group) {
+						if ($this->groupManager->get($group) === null) {
+							throw new AccessDeniedException('Only an administrator can give a role to a group that does not exist yet.');
+						}
 						if ($this->groupManager->isInGroup($uid, $group)) {
 							throw new AccessDeniedException('Only an administrator can give a role to a group you belong to.');
 						}
@@ -157,8 +162,8 @@ class SettingsController extends Controller {
 			return true;
 		}
 		if ($group === null) {
-			// A group that does not exist (yet) cannot be managed by anyone.
-			return false;
+			// A group that does not exist (yet): whoever creates it could manage it
+			return true;
 		}
 		try {
 			return $this->subAdmin->isSubAdminOfGroup($user, $group);

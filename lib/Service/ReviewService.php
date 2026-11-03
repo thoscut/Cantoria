@@ -583,7 +583,9 @@ class ReviewService {
 					return ChecksumService::hash($node);
 				}
 			} catch (\Throwable $e) {
-				$this->logger->info('Cantoria: checksum of file ' . $file->getId() . ' as ' . $account . ' failed: ' . $e->getMessage());
+				// The log names no account (S N20)
+				$this->logger->info('Cantoria: checksum of file ' . $file->getId() . ' failed as the account '
+					. ($account === $archiveUser ? 'of the archive folder' : 'that hands in the report') . ': ' . $e->getMessage());
 			}
 		}
 		return null;

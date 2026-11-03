@@ -188,6 +188,29 @@ final class XlsxReaderTest extends TestCase {
 		(new XlsxReader($this->tempManager()))->read($this->zip($entries));
 	}
 
+	/**
+	 * Many empty elements: small packed, within the size of a part, but the
+	 * DOM of libxml would take hundreds of megabytes outside the memory
+	 * limit of PHP. Refused before the DOM is built (S N18).
+	 */
+	public function testRefusesAPartWithTooManyElements(): void {
+		$entries = self::workbook();
+		$entries['xl/worksheets/sheet2.xml'] = '<worksheet xmlns="' . self::MAIN . '"><sheetData><row>'
+			. str_repeat('<x/>', XlsxReader::MAX_ELEMENTS) . '</row></sheetData></worksheet>';
+		self::assertLessThan(XlsxReader::MAX_PART_BYTES, strlen($entries['xl/worksheets/sheet2.xml']));
+		$this->expectException(InvalidInputException::class);
+		$this->expectExceptionMessage('The Excel workbook is too large to import.');
+		(new XlsxReader($this->tempManager()))->read($this->zip($entries));
+	}
+
+	public function testCountsElementsUpToTheLimit(): void {
+		$tooLarge = new InvalidInputException('too large');
+		XlsxReader::limitElements('<a><b/><b/></a>', $tooLarge, 3);
+		XlsxReader::limitElements('<a><b/>', $tooLarge, 3);
+		$this->expectExceptionObject($tooLarge);
+		XlsxReader::limitElements('<a><b/><b/><b/></a>', $tooLarge, 3);
+	}
+
 	public function testRefusesACellBeyondTheLastColumn(): void {
 		$entries = self::workbook();
 		$entries['xl/worksheets/sheet2.xml'] = '<worksheet xmlns="' . self::MAIN . '"><sheetData>'

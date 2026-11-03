@@ -192,6 +192,20 @@ final class OdsReaderTest extends TestCase {
 	}
 
 	/**
+	 * Many empty elements in one cell: within the size of a part and of the
+	 * text, but the DOM of libxml would take hundreds of megabytes outside
+	 * the memory limit of PHP. Refused before the DOM is built (S N18).
+	 */
+	public function testRefusesAPartWithTooManyElements(): void {
+		$content = self::content(['S' => '<table:table-row><table:table-cell><text:p>' . str_repeat('<text:span/>', XlsxReader::MAX_ELEMENTS)
+			. '</text:p></table:table-cell></table:table-row>']);
+		self::assertLessThan(XlsxReader::MAX_PART_BYTES, strlen($content));
+		$this->expectException(InvalidInputException::class);
+		$this->expectExceptionMessage('The OpenDocument spreadsheet is too large to import.');
+		$this->read($this->zip(['mimetype' => OdsReader::MIMETYPE, 'content.xml' => $content]));
+	}
+
+	/**
 	 * A few bytes that would stand for more cells or text than allowed:
 	 * refused before anything is filled in.
 	 *

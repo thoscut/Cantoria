@@ -63,6 +63,7 @@ class ConcertFolderService {
 		private ScanService $scans,
 		private Modules $modules,
 		private ProgrammeCopies $programmeCopies,
+		private PageKeys $keys,
 	) {
 	}
 
@@ -219,7 +220,7 @@ class ConcertFolderService {
 			'offlineReason' => $offline ? $keepDenial : null,
 			// printing the notes is a copy, too (B21): the same rights as a copy on the device
 			'print' => $version !== null && ($score || $scan) && $keepDenial === null,
-			'practiceKey' => $version === null ? null : SharedLinkService::practiceKey($version),
+			'practiceKey' => $version === null ? null : $this->keys->practice($version),
 		];
 	}
 

@@ -40,6 +40,15 @@ class XlsxReader {
 	public const MAX_CELLS = 1000000;
 	/** Text of all cells together (bytes): as much as a CSV file for an import may hold */
 	public const MAX_TEXT_BYTES = UserFiles::MAX_IMPORT_BYTES;
+	/**
+	 * Elements of one XML part. libxml keeps a DOM outside the memory limit
+	 * of PHP, about 130 bytes per element; 16 MiB of empty elements would
+	 * take more than 500 MB. The elements are therefore counted with
+	 * XMLReader, in constant memory, before the part becomes a DOM (S N18).
+	 * A sheet needs two or three elements per cell with content, so this
+	 * leaves room for several hundred thousand cells.
+	 */
+	public const MAX_ELEMENTS = 1000000;
 
 	private int $cells = 0;
 	private int $bytes = 0;
@@ -200,12 +209,39 @@ class XlsxReader {
 		throw new InvalidInputException('The Excel workbook is damaged.');
 	}
 
+	/**
+	 * Throws $tooLarge when an XML part has more than $limit elements,
+	 * counted with XMLReader (streaming, constant memory) before the part
+	 * is loaded as a DOM (MAX_ELEMENTS). A part that is not well-formed is
+	 * left to the DOM, which refuses it as damaged.
+	 */
+	public static function limitElements(string $data, InvalidInputException $tooLarge, int $limit = self::MAX_ELEMENTS): void {
+		$reader = new \XMLReader();
+		$previous = libxml_use_internal_errors(true);
+		try {
+			if (!$reader->XML($data, null, LIBXML_NONET)) {
+				return;
+			}
+			$elements = 0;
+			while ($reader->read()) {
+				if ($reader->nodeType === \XMLReader::ELEMENT && ++$elements > $limit) {
+					throw $tooLarge;
+				}
+			}
+		} finally {
+			$reader->close();
+			libxml_clear_errors();
+			libxml_use_internal_errors($previous);
+		}
+	}
+
 	private static function xpath(string $data): \DOMXPath {
 		// Spreadsheets never need a document type declaration; refusing it
 		// rules out entity expansion and external entities (XXE) altogether.
 		if ($data === '' || stripos($data, '<!DOCTYPE') !== false) {
 			self::damaged();
 		}
+		self::limitElements($data, self::tooLarge());
 		$document = new \DOMDocument();
 		$previous = libxml_use_internal_errors(true);
 		try {

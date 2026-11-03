@@ -1505,8 +1505,12 @@ Volkslied oder eine Melodie ohne bekannte Urheberschaft stellst du
 „Traditionell“ nur mit Beleg und notiere die Quelle unter **Notizen**. Die
 meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz:
 Bei traditioneller Melodie braucht der Vorschlag eine Person mit der Rolle
-**Bearbeitung**, außer die Art der Fassung ist **Original** (ein
-unbearbeiteter Satz); sonst lautet er „unbekannt“. Eine Fassung ohne
+**Bearbeitung**, außer die Art der Fassung ist **Original**; sonst lautet er
+„unbekannt“. Dasselbe gilt für jede Fassung der Art **Bearbeitung** oder
+**Einrichtung**, auch einer komponierten Melodie, etwa eines Choralsatzes
+nach Bach. Wähle **Original** nur, wenn niemand das Werk bearbeitet hat:
+für die Komposition, wie sie geschrieben wurde, oder die Melodie ohne
+eigenen Satz, nicht für die Originalausgabe eines Chorsatzes. Eine Fassung ohne
 Personen, deren Melodie und Text beide traditionell sind und deren Art
 **Original** ist, wird als gemeinfrei vorgeschlagen.
 

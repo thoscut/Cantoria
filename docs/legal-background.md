@@ -72,12 +72,18 @@ work.
 
 ### Folk songs and traditional melodies
 
-A melody without a known author is not free for that reason alone. The
-right in an anonymous work ends 70 years after its publication, or after
-its creation if it was not published (§ 66 (1) UrhG). A traditional melody
-is therefore free when its creation or first publication lies more than 70
-years back and that is documented, for example by an old folk song
-collection. Many "folk tunes" in collections of the 20th century are in
+A melody or a text without a known author is not free for that reason
+alone. The right in an anonymous work ends 70 years after its publication
+(§ 66 (1) sentence 1 UrhG), or 70 years after its creation if it was not
+published within these 70 years (sentence 2). If the author becomes known
+within the term, for example because they make themselves known or their
+name comes to light, the rule of 70 years after death applies again
+(§ 66 (2) with § 64 UrhG). A traditional melody is therefore free when its
+creation or first publication lies more than 70 years back and that is
+documented, for example by an old folk song collection. The app does not
+ask for a year: note the collection with its year under "Notes"; the
+person who confirms the rights status checks the evidence (guideline 1).
+The same holds for a text marked "Traditional (no known author)". Many "folk tunes" in collections of the 20th century are in
 truth compositions whose author is known or can be found. An
 **insignificant arrangement**
 of a musical work that is not protected is no arrangement of its own (§ 3
@@ -86,8 +92,19 @@ worked-out choral setting usually is an arrangement with protection of its
 own. Mark melody or text as "traditional" only with evidence, for example a
 folk song collection, and still record the arranger. The app suggests a
 traditional melody as public domain only when the arranger is recorded or
-the kind of version is "Original" (an unarranged setting); otherwise the
-suggestion is "unknown".
+the kind of version is "Original"; otherwise the suggestion is "unknown".
+"Original" means that no one has arranged the work: the composition as it
+was written, or the melody without a setting of its own. The original
+edition of a choral setting is no "Original" in this sense but an
+"Arrangement".
+
+The same holds for every arrangement, not only of folk songs: a chorale
+setting or an arrangement of a classical work is an arrangement with a
+protection of its own under § 3 UrhG, even when the composition has long
+been in the public domain. When the kind of version is "Arrangement" or
+"Adaptation" and no person with the role "Arranger" is recorded, a
+suggestion of public domain becomes "unknown". This matters most after an
+import from a spreadsheet with only one column for the composer.
 
 ## Photocopies of sheet music
 
@@ -225,10 +242,25 @@ device.
   a shared device it remembers a hash of the signed-in account in
   IndexedDB, so that pieces of another account, or kept before signing out,
   are removed (a security measure; [SECURITY.md](../SECURITY.md)).
+  Three kinds of storage happen without any action of the person: every
+  page of the app writes the hash of the account on every call, also in
+  the archive and without the module "Practising without a network";
+  "Shared with me" remembers on every call the marks of the links seen and
+  the time, per account as a hash, for the mark "New" (`localStorage`);
+  and with the module "Practising without a network" every page registers
+  a service worker in the browser on opening (on a public link once the
+  piece may be kept), which keeps content only once someone has saved
+  something.
   Storing on a device needs consent unless it is strictly necessary for a
-  service the person explicitly asked for (§ 25 (2) no. 2 TDDDG). Keeping a
-  piece on a tap clearly is; remembering practice settings for the next
-  visit is a borderline case. Nothing of it reaches the server or third
+  service the person explicitly asked for (§ 25 (2) no. 2 TDDDG; this
+  applies whether or not the data are personal). Keeping a piece on a tap,
+  and the hash of the account that protects such pieces, usually are.
+  Practice settings for the next visit, the "New" marks, the hash on pages
+  without kept pieces and the service worker before the first save are
+  convenience or preparation and, on the strict reading of the supervisory
+  authorities, need consent: a borderline case. The practical risk is low,
+  since nothing leaves the device; the text blocks therefore name the
+  exception only with a reservation. Nothing of it reaches the server or third
   parties; "Delete everything on this device" removes it (on a public link:
   switching off "Available without a network" and clearing the site data in
   the browser), and signing out of Nextcloud usually does, too. Name it in
@@ -273,7 +305,11 @@ members are in the [privacy templates](privacy-templates.md).
   name that long rests on Art. 17 (3) e GDPR (legal claims). After that the
   role is enough: by default after ten years the app removes account and
   name from audit entries and keeps the role (setting
-  `audit_retention_years`, administration guide, section 10).
+  `audit_retention_years`, administration guide, section 10). This includes
+  the values of entries that hold an account or a name, such as who
+  confirmed a rights status, checked a person or set the valid version; the
+  access report finds an account there, too, and an erasure on request or a
+  deleted account removes it there as well.
 - **Practice files of choir members** are recorded with the role and the
   day only, without account, name or time of day. In a small voice group
   such an entry may still point to one person together with other

@@ -464,25 +464,30 @@ class EventService {
 			$header = [...$header, $l->t('Revision'), $l->t('Revision valid since')];
 		}
 		$rows[] = $header;
+		$mayViewPreservation = $this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
 		foreach ($lines as ['item' => $item, 'copy' => $copy, 'version' => $version, 'work' => $work]) {
 			if ($item->getStruck() === true) {
 				continue;
 			}
+			// An internal preservation copy shows its title and composer, as in
+			// detail(): shelf mark, arranger, publisher, work number and
+			// revision stay empty, the rights status says "Not available." (S N17)
+			$hidden = !$mayViewPreservation && $version !== null && RightsPolicy::isPreservationCopy($version, $copy);
 			$names = $version === null ? [] : $this->namesByRole($version->getId());
 			$duration = $item->getDuration();
 			$status = $version?->getRightsStatus();
 			$row = [
-				(string)$item->getPosition(), $copy?->getShelfmark() ?? '', $work?->getTitle() ?? $item->getTitleText() ?? '',
+				(string)$item->getPosition(), $hidden ? '' : ($copy?->getShelfmark() ?? ''), $work?->getTitle() ?? $item->getTitleText() ?? '',
 				$names['composer'] ?? $work?->getComposer() ?? $item->getComposerText() ?? '',
 				$names['lyricist'] ?? '',
-				$names['arranger'] ?? $version?->getArrangerText() ?? '',
-				$version?->getPublisher() ?? '', $version?->getSocietyWorkNo() ?? '',
-				$status === null ? '' : ($statuses[$status] ?? $status),
+				$hidden ? '' : ($names['arranger'] ?? $version?->getArrangerText() ?? ''),
+				$hidden ? '' : ($version?->getPublisher() ?? ''), $hidden ? '' : ($version?->getSocietyWorkNo() ?? ''),
+				$hidden ? $l->t('Not available.') : ($status === null ? '' : ($statuses[$status] ?? $status)),
 				$duration === null ? '' : sprintf('%d:%02d', intdiv($duration, 60), $duration % 60),
 				$item->getEncore() === true ? $l->t('Encore') : '',
 			];
 			if ($withRevisions) {
-				$revision = $revisions[$item->getId()] ?? null;
+				$revision = $hidden ? null : ($revisions[$item->getId()] ?? null);
 				$row[] = $revision === null ? '' : (string)$revision['number'];
 				$row[] = $revision['valid_since'] ?? '';
 			}
