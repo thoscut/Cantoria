@@ -2730,9 +2730,9 @@ export const singular = {
 	'The scan of this link is not available at the moment.': 'Der Scan dieses Links ist gerade nicht verfügbar.',
 	// ---- 0.10: backups outside the archive folder, delegated settings ----
 	'Music archive backups': 'Notenarchiv-Sicherungen',
-	'The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.': [
-		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teile ihn nicht mehr oder verschiebe ihn; dann legt die App einen neuen an.',
-		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teilen Sie ihn nicht mehr oder verschieben Sie ihn; dann legt die App einen neuen an.',
+	'The backup folder %1$s or something in it is shared, or it does not belong to %2$s: others could read the backups. Stop sharing all of it, or delete it; the app then creates a new one.': [
+		'Der Sicherungsordner %1$s oder etwas darin ist geteilt, oder er gehört nicht %2$s: Andere könnten mitlesen. Teile nichts davon mehr oder lösche ihn; dann legt die App einen neuen an.',
+		'Der Sicherungsordner %1$s oder etwas darin ist geteilt, oder er gehört nicht %2$s: Andere könnten mitlesen. Teilen Sie nichts davon mehr oder löschen Sie ihn; dann legt die App einen neuen an.',
 	],
 	'The folder in Nextcloud that holds the score files (for example one subfolder per binder). The app only reads files. Exports of the catalog are stored in its subfolder "_cantoria-app".': 'Der Ordner in der Nextcloud mit den Notendateien (zum Beispiel ein Unterordner je Archivmappe). Die App liest Dateien nur. Exporte des Werkverzeichnisses legt sie im Unterordner „_cantoria-app“ ab.',
 	'Backups and annual snapshots name choir members and accounts. They lie outside the archive folder, in a folder of the account that set it, which the role groups do not see unless it is shared with them.': 'Sicherungen und Jahresstände nennen Chormitglieder und Konten. Sie liegen außerhalb des Archivordners in einem Ordner des Kontos, das ihn festgelegt hat. Die Rollengruppen sehen ihn nicht, solange er nicht mit ihnen geteilt wird.',

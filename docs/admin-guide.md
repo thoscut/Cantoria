@@ -414,9 +414,11 @@ therefore writes, every week, into the **backup folder**: a folder
 of the account that set the archive folder, **outside the archive folder**.
 The role groups do not see it unless that account shares it with them; the
 settings page shows its path. The app writes into it only while it is
-private to that account: if the folder is shared, or belongs to another
-account after a move, the backup stops with a message that names the
-folder. Stop sharing it, or move it away so that the app creates a new one.
+private to that account: if the folder, a file or a folder in it (such as
+a single backup or `annual-snapshots`) is shared, or the folder belongs to
+another account after a move, the backup stops with a message that names
+the folder. Stop sharing all of it, or delete the folder so that the app
+creates a new one; a moved folder is found again by its id.
 A folder of that name that is shared or lies inside the archive folder is
 not reused; the app creates "Music archive backups (2)" next to it. The
 app writes:

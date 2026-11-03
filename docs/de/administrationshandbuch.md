@@ -442,10 +442,13 @@ einen Ordner „Notenarchiv-Sicherungen“ in den Dateien des Kontos, das den
 Archivordner festgelegt hat, **außerhalb des Archivordners**. Die
 Rollengruppen sehen ihn nicht, solange dieses Konto ihn nicht mit ihnen
 teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt nur
-hinein, solange er diesem Konto allein gehört: Ist der Ordner geteilt oder
-gehört er nach einem Verschieben einem anderen Konto, bricht die Sicherung
-mit einer Meldung ab, die den Ordner nennt. Teile ihn nicht mehr, oder
-verschiebe ihn, damit die App einen neuen anlegt. Einen Ordner dieses
+hinein, solange er diesem Konto allein gehört: Ist der Ordner, eine Datei
+oder ein Ordner darin (etwa eine einzelne Sicherung oder
+`annual-snapshots`) geteilt, oder gehört der Ordner nach einem Verschieben
+einem anderen Konto, bricht die Sicherung mit einer Meldung ab, die den
+Ordner nennt. Teile nichts davon mehr, oder lösche den Ordner, damit die App
+einen neuen anlegt; einen verschobenen Ordner findet sie über seine
+Kennung wieder. Einen Ordner dieses
 Namens, der geteilt ist oder im Archivordner liegt, nimmt die App nicht; sie
 legt daneben „Notenarchiv-Sicherungen (2)“ an. Die App schreibt:
 
