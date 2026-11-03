@@ -11,16 +11,20 @@
  * On a phone (upright or sideways) the scan is a view of its own on the
  * whole screen, not a small frame below the notes that hangs on the
  * browser's PDF viewer inside the page (U3, D8); "Back to the notes"
- * closes it, as does Escape.
+ * closes it, as do Escape and the back gesture of the phone: the view adds
+ * an entry to the history (U39). Closed by the person, the focus goes back
+ * to "Show the scan (PDF)" (D28).
  */
+import type { FocusTarget } from '../focus.ts'
 import type { CollectionName } from '../offline/rules.ts'
 
 import { mdiArrowLeft } from '@mdi/js'
-import { onBeforeUnmount, ref, useId, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcModal from '@nextcloud/vue/components/NcModal'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import { focusAfterUpdate } from '../focus.ts'
 import { t } from '../l10n.ts'
 import { scanInMemory } from '../offline/device.ts'
 import { SMALL_SCREEN } from '../score/screen.ts'
@@ -39,12 +43,45 @@ const address = ref<string | null>(null)
 const asView = ref(window.matchMedia?.(SMALL_SCREEN).matches ?? false)
 const loading = ref(false)
 const error = ref('')
+const openButton = ref<FocusTarget>(null)
+/** The view on a phone added an entry to the history, which the back gesture takes */
+let inHistory = false
 
+/** Free the memory of the shown scan. */
 function close(): void {
 	if (address.value !== null) {
 		URL.revokeObjectURL(address.value)
 	}
 	address.value = null
+}
+
+/** Whether the entry of the history is the one the view added. */
+function viewEntry(): boolean {
+	return (window.history.state as { cantoriaScan?: unknown } | null)?.cantoriaScan === props.pieceKey
+}
+
+/** Closed by the person: the focus back on the button that opened it. */
+function closed(): void {
+	inHistory = false
+	close()
+	focusAfterUpdate(openButton)
+}
+
+/** "Back to the notes", "Close the scan", Escape: the entry of the view goes, too. */
+function shut(): void {
+	if (inHistory && viewEntry()) {
+		// the back gesture's way: popstate closes the view
+		window.history.back()
+		return
+	}
+	closed()
+}
+
+/** The back gesture (or Back of the browser) while the view is open. */
+function onPopState(): void {
+	if (inHistory && !viewEntry()) {
+		closed()
+	}
 }
 
 async function open(): Promise<void> {
@@ -54,6 +91,11 @@ async function open(): Promise<void> {
 		close()
 		asView.value = window.matchMedia?.(SMALL_SCREEN).matches ?? false
 		address.value = await scanInMemory(props.collection, props.pieceKey)
+		if (asView.value && !inHistory) {
+			// the same address: the page keeps its piece, only the view closes on Back
+			window.history.pushState({ ...(window.history.state ?? {}), cantoriaScan: props.pieceKey }, '', window.location.href)
+			inHistory = true
+		}
 	} catch (reason) {
 		error.value = reason instanceof Error && reason.message !== ''
 			? reason.message
@@ -64,13 +106,18 @@ async function open(): Promise<void> {
 }
 
 watch(() => [props.collection, props.pieceKey], close)
-onBeforeUnmount(close)
+onMounted(() => window.addEventListener('popstate', onPopState))
+onBeforeUnmount(() => {
+	window.removeEventListener('popstate', onPopState)
+	close()
+})
 </script>
 
 <template>
 	<div class="scan-frame">
 		<div class="scan-frame__buttons">
 			<NcButton v-if="address === null"
+				ref="openButton"
 				variant="secondary"
 				:aria-controls="frameId"
 				:disabled="loading"
@@ -78,7 +125,7 @@ onBeforeUnmount(close)
 				{{ loading ? t('cantoria', 'Loading the scan …') : t('cantoria', 'Show the scan (PDF)') }}
 			</NcButton>
 			<template v-else-if="!asView">
-				<NcButton variant="secondary" :aria-controls="frameId" @click="close">
+				<NcButton variant="secondary" :aria-controls="frameId" @click="shut">
 					{{ t('cantoria', 'Close the scan') }}
 				</NcButton>
 				<a :href="address"
@@ -98,10 +145,10 @@ onBeforeUnmount(close)
 		<NcModal v-if="address !== null && asView"
 			size="full"
 			:label-id="viewHeadingId"
-			@close="close">
+			@close="shut">
 			<div class="scan-frame__view">
 				<div class="scan-frame__view-bar">
-					<NcButton variant="secondary" @click="close">
+					<NcButton variant="secondary" @click="shut">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiArrowLeft" />
 						</template>

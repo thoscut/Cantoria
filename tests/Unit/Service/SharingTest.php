@@ -568,8 +568,9 @@ final class SharingTest extends TestCase {
 	 * @param list<ExcerptLink> $links
 	 * @param array<string, ?string> $denials
 	 * @param array<int, array{0: Event, 1: list<EventItem>}> $programmes event id => event and its items
+	 * @param list<string> $off modules switched off
 	 */
-	private function shared(array $links, array $denials = [], bool $member = true, array $versionValues = [], array $programmes = []): SharedLinkService {
+	private function shared(array $links, array $denials = [], bool $member = true, array $versionValues = [], array $programmes = [], array $off = []): SharedLinkService {
 		$mapper = $this->createStub(ExcerptLinkMapper::class);
 		$mapper->method('findByToken')->willReturnCallback(function (string $token) use ($links): ExcerptLink {
 			foreach ($links as $link) {
@@ -662,7 +663,7 @@ final class SharingTest extends TestCase {
 		$licenseMapper = $this->createStub(LicenseMapper::class);
 		$licenseMapper->method('findByVersion')->willReturn($licenses);
 		return new SharedLinkService($mapper, $copies, $versions, $works, $files, $scores, $this->policy($denials), $this->rights(), $roles,
-			$this->modulesWithout(), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
+			$this->modulesWithout($off), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
 			$contributions, $persons, $licenseMapper, $events, $items, new PageKeys(new FakeCrypto()));
 	}
 
@@ -795,6 +796,19 @@ final class SharingTest extends TestCase {
 		self::assertFalse($free->publicMayKeep(str_repeat('z', 32)), 'unknown');
 	}
 
+	/**
+	 * A piece that may not be kept is not a module switched off (A24): the
+	 * page of a public link removes only itself from the device then, not
+	 * every public piece kept there for a concert.
+	 */
+	public function testAPublicLinkTellsAPieceThatMayNotBeKeptFromTheModuleSwitchedOff(): void {
+		$protected = $this->shared([$this->link('public')])->publicExcerpt(self::TOKEN);
+		self::assertSame([false, true], [$protected['offline'] ?? null, $protected['offlineModule'] ?? null], 'this piece may not be kept, the module is on');
+		$off = $this->shared([$this->link('public')], [], true, ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'], [], [Modules::OFFLINE])
+			->publicExcerpt(self::TOKEN);
+		self::assertSame([false, false], [$off['offline'] ?? null, $off['offlineModule'] ?? null], 'the module is off: nothing may stay');
+	}
+
 	public function testOthersAndWithdrawnLinksGetNothing(): void {
 		try {
 			$this->shared([$this->link('members')], [], false)->forMember('reader');
@@ -880,7 +894,7 @@ final class SharingTest extends TestCase {
 		$excerpt = $this->shared([$this->link('public')])->publicExcerpt(self::TOKEN);
 		self::assertNotNull($excerpt);
 		self::assertSame(['title', 'composer', 'measureFrom', 'measureTo', 'voice', 'verse', 'tempo', 'canPlay', 'scan', 'scanSize', 'practiceKey', 'expires', 'offline',
-			'print', 'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
+			'offlineModule', 'print', 'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
 		self::assertSame([false, false], [$excerpt['offline'], $excerpt['print']], 'no copy, also on paper, without confirmed public domain (B21)');
 		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $excerpt['served'], 'when the page was made, for the check on the device');
 		self::assertSame(['By kind permission of Carus'], $excerpt['notices']);

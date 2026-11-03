@@ -8,13 +8,13 @@
  * A shared device (S N6): what a page removes at its start in this
  * browser, before it shows anything (src/offline/device.ts, claimDevice),
  * with the Cache Storage of the browser and the remembered account
- * (src/offline/marker.ts) stood in for; and the button at the top of the
- * pages that keep pieces (src/sharing/RemoveFromDevice.vue).
+ * (src/offline/marker.ts) stood in for; and "Delete everything on this
+ * device" of the pages that keep pieces (src/sharing/RemoveFromDevice.vue).
  */
 import type { Catalog } from '../offline/rules.ts'
 
 import { generateUrl } from '@nextcloud/router'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COLLECTIONS } from '../offline/rules.ts'
 import { storeMarks, storedMarks } from '../score/marks.ts'
@@ -227,11 +227,46 @@ describe('a page at its start on a shared device (S N6)', () => {
 })
 
 describe('RemoveFromDevice', () => {
-	it('says how many pieces are kept and asks to remove them', async () => {
-		const wrapper = mount(RemoveFromDevice, { props: { count: 3 } })
+	const consequence = 'In this browser, this deletes the pieces, the passages and the settings.'
+
+	afterEach(() => {
+		document.body.innerHTML = ''
+	})
+
+	it('has one name, says how many pieces are kept, and asks right below with what goes besides (U43, D36)', async () => {
+		const remove = vi.fn(async () => {})
+		const wrapper = mount(RemoveFromDevice, { props: { count: 3, consequence, remove }, attachTo: document.body })
 		expect(wrapper.text()).toContain('3 pieces are available without a network.')
+		expect(wrapper.find('button').text()).toBe('Delete everything on this device')
 		await wrapper.find('button').trigger('click')
-		expect(wrapper.emitted('remove')).toHaveLength(1)
-		expect(wrapper.find('button').text()).toBe('Remove from this device')
+		expect(wrapper.text()).toContain(consequence)
+		expect(remove).not.toHaveBeenCalled()
+		wrapper.unmount()
+	})
+
+	it('never loses the focus: on the confirmation, back on the button after "Cancel" (D28)', async () => {
+		const wrapper = mount(RemoveFromDevice, { props: { consequence, remove: vi.fn(async () => {}) }, attachTo: document.body })
+		await wrapper.find('button').trigger('click')
+		await flushPromises()
+		const confirm = wrapper.findAll('button').find((button) => button.text() === 'Delete kept pieces, passages and settings')
+		expect(document.activeElement).toBe(confirm?.element)
+		expect(confirm?.attributes('aria-describedby')).toBe(wrapper.find('.remove-from-device__confirm p').attributes('id'))
+		await wrapper.findAll('button').find((button) => button.text() === 'Cancel')!.trigger('click')
+		await flushPromises()
+		expect(document.activeElement?.textContent?.trim()).toBe('Delete everything on this device')
+		wrapper.unmount()
+	})
+
+	it('deletes after the confirmation and lets the page move the focus', async () => {
+		const remove = vi.fn(async () => {})
+		const wrapper = mount(RemoveFromDevice, { props: { count: 2, consequence, remove }, attachTo: document.body })
+		await wrapper.find('button').trigger('click')
+		await flushPromises()
+		await wrapper.findAll('button').find((button) => button.text() === 'Delete kept pieces, passages and settings')!.trigger('click')
+		await flushPromises()
+		expect(remove).toHaveBeenCalledTimes(1)
+		expect(wrapper.emitted('removed')).toHaveLength(1)
+		expect(wrapper.find('.remove-from-device__confirm').exists()).toBe(false)
+		wrapper.unmount()
 	})
 })

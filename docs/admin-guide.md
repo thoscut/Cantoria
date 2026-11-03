@@ -1104,8 +1104,8 @@ enable offline`):
   keeps its scripts again, so that it opens without a network also after an
   update of the app.
 - **Shared devices.** Choir members delete everything with **Delete
-  everything on this device** at the end of the page, or **Remove from
-  this device** at its top while pieces are kept. Signing out of Nextcloud
+  everything on this device** at the end of the page, or with the same
+  button at its top while pieces are kept. Signing out of Nextcloud
   usually deletes the pieces too: Nextcloud asks Firefox, Safari and Edge
   to delete the storage of the server at once (header `Clear-Site-Data`,
   only where Nextcloud sees HTTPS; behind a proxy set `overwriteprotocol`).

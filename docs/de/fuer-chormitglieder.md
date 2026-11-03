@@ -28,7 +28,7 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
 2. Unter **Meine Stimme** wählst du deine Stimme und **Stimme betont** (sie
    ist lauter) oder **Nur diese Stimme**.
 3. Unter **Takte und Tempo** gibst du **Von Takt** und **Bis Takt** ein,
-   tippst auf **Anzeigen** und schaltest **Schleife** ein: Die Stelle läuft
+   tippst auf **Takte zeigen** und schaltest **Schleife** ein: Die Stelle läuft
    immer wieder. Mit dem Tempo spielst du langsamer.
 4. **Abspielen** startet; ein Tipp auf eine Note startet dort.
 5. Unter **Mehr zum Üben** findest du Anfangstöne, Metronom, Text, deine
@@ -47,9 +47,9 @@ deinem Handy nicht geht, sag der Chorleitung Bescheid.
   getrennt.
 - Öffne die Seite mindestens alle 30 Tage einmal mit Netz, sonst sind die
   Stücke gesperrt.
-- Auf einem geteilten Gerät: oben **Von diesem Gerät entfernen** oder unten
-  **Alles auf diesem Gerät löschen**, bevor du das Gerät weitergibst. Das
-  Abmelden bei Nextcloud löscht Stücke, Stellen und Einstellungen meist
+- Auf einem geteilten Gerät: **Alles auf diesem Gerät löschen**, oben oder
+  unten auf der Seite, bevor du das Gerät weitergibst. Das löscht auch
+  deine gemerkten Übe-Stellen und Übe-Einstellungen. Das Abmelden bei Nextcloud löscht Stücke, Stellen und Einstellungen meist
   auch, in manchen Browsern (Chrome, Android) erst beim nächsten Öffnen von
   Cantoria auf dem Gerät. Schließt du nur den Browser, bleibst du
   angemeldet, und alles bleibt für die Person, die das Gerät als Nächste

@@ -14,6 +14,11 @@
  * still hides the rest and keeps the screen on. Both end when the person
  * leaves the stage view: with its button, with Escape (also without the
  * whole screen), or with the browser's own way out of the whole screen.
+ * When the browser ends the whole screen while a dialog or an open list is
+ * there (its Escape), only the whole screen ends: the stage view, the
+ * dialog and the focus stay, and the next Escape belongs to the dialog
+ * (D33). The whole screen is asked for first, while the browser still
+ * counts the tap (Safari), then the screen is kept on (U26).
  */
 import type { Ref } from 'vue'
 
@@ -26,6 +31,9 @@ interface WakeLock {
 
 /** Where Escape belongs to something else: a dialog, an open list, a field */
 const OWN_ESCAPE = '[role="dialog"], [role="alertdialog"], .modal-mask, [aria-expanded="true"], [role="listbox"], input, textarea, select, [contenteditable="true"]'
+
+/** A dialog, an open select or an open menu in the page: the Escape that ended the whole screen was meant for it */
+const OPEN_OVERLAY = '.modal-mask, [role="dialog"][aria-modal="true"], [role="alertdialog"], .vs--open, .v-popper__popper--shown'
 
 export interface Stage {
 	/** the stage view is on */
@@ -70,15 +78,18 @@ export function useStage(onLeave?: () => void): Stage {
 			return
 		}
 		on.value = true
-		await holdScreen()
-		// the whole page, so that dialogs and lists at the end of the page stay visible
+		// the whole page, so that dialogs and lists at the end of the page stay
+		// visible; first, while the browser still counts the tap
 		const page = document.documentElement
-		if (on.value && document.fullscreenEnabled && document.fullscreenElement === null && typeof page.requestFullscreen === 'function') {
+		if (document.fullscreenEnabled && document.fullscreenElement === null && typeof page.requestFullscreen === 'function') {
 			try {
 				await page.requestFullscreen({ navigationUI: 'hide' })
 			} catch {
 				// the page without the list is the stage view then
 			}
+		}
+		if (on.value) {
+			await holdScreen()
 		}
 	}
 
@@ -95,8 +106,9 @@ export function useStage(onLeave?: () => void): Stage {
 	}
 
 	function onFullscreenChange(): void {
-		// Escape or the browser's own button ended the whole screen
-		if (on.value && document.fullscreenElement === null) {
+		// Escape or the browser's own button ended the whole screen; with a
+		// dialog or an open list it was its Escape: only the whole screen ends
+		if (on.value && document.fullscreenElement === null && document.querySelector(OPEN_OVERLAY) === null) {
 			leave()
 		}
 	}

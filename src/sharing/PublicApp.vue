@@ -66,9 +66,17 @@ const token = /\/p\/([A-Za-z0-9]{32})\/?$/.exec(window.location.pathname)?.[1] ?
 
 // ---- kept on this device (milestone 0.15) ----------------------------------
 
-/** This piece may be kept: module on, rights, and the browser can (device.offlineOn) */
-const device = useKeptPieces('public', { enabled: excerpt?.offline === true && token !== '', version })
-const { offlineOn, catalog } = device
+/**
+ * The module apart from this piece (A24): a page whose piece may not be
+ * kept removes only this piece from the device, and only a module switched
+ * off removes every public piece kept there (setUpWorker). A page kept from
+ * before the server said so came from a piece that could be kept.
+ */
+const moduleOn = (excerpt?.offlineModule ?? excerpt?.offline) === true
+const device = useKeptPieces('public', { enabled: moduleOn && token !== '', version })
+/** This piece may be kept: module on, rights, and the browser can */
+const offlineOn = device.offlineOn && excerpt?.offline === true
+const { catalog } = device
 /** The page came from the device: no network */
 const fromDevice = ref(false)
 const keeping = ref(false)
@@ -130,12 +138,13 @@ onMounted(async () => {
 	if (!offlineSupported() || token === '') {
 		return
 	}
-	// registers the worker, or removes this piece when it may no longer be kept
+	// registers the worker, or removes every public piece when the module is off
 	await device.start()
 	if (offlineOn) {
 		// with a network also the scripts again, after an update of the app (A17)
 		fromDevice.value = await device.checkPublic(piece, excerpt?.served ?? '')
-	} else {
+	} else if (moduleOn) {
+		// only this piece, which may not (or no longer) be kept
 		await forgetPieces('public', [token])
 	}
 })

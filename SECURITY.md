@@ -397,8 +397,8 @@ public links stop working at once.
     open without signing in). Pieces of public links belong to the browser,
     not to an account, and stay.
   - "Delete everything on this device" at the end of "Shared with me" and
-    of the concert folder, and "Remove from this device" at their top
-    while pieces are kept, delete at once what the page kept and the
+    of the concert folder, and the same button at their top while pieces
+    are kept, delete at once what the page kept and the
     passages and settings ("Shared with me": everything of the app).
 
 ### Interface for agents

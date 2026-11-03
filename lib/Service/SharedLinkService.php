@@ -77,7 +77,7 @@ use OCP\Files\File;
  *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, print: bool, practiceKey: string, credits: list<Credit>, notices: list<string>,
  *     programmes: list<MemberProgramme>}
  * @psalm-type PublicExcerpt = array{title: string, composer: string, measureFrom: ?string, measureTo: ?string, voice: ?string,
- *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, print: bool, served: string, xml: string,
+ *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, offlineModule: bool, print: bool, served: string, xml: string,
  *     credits: list<Credit>, notices: list<string>}
  */
 class SharedLinkService {
@@ -392,6 +392,9 @@ class SharedLinkService {
 			// Kept on a device (milestone 0.15): only confirmed public domain, as visitors have no license
 			'expires' => $link->getExpires(),
 			'offline' => $this->modules->isEnabled(Modules::OFFLINE) && self::publicDomainConfirmed($version),
+			// the module apart from this piece (A24): a piece that may not be kept removes only itself
+			// from the device, only a module switched off removes every public piece kept there
+			'offlineModule' => $this->modules->isEnabled(Modules::OFFLINE),
 			// printing is a copy (B21): only confirmed public domain, as for keeping it
 			'print' => self::publicDomainConfirmed($version),
 			'served' => gmdate('Y-m-d\TH:i:s\Z'),

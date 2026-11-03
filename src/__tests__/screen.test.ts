@@ -14,7 +14,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { defineComponent, h, nextTick, ref } from 'vue'
 import { LARGE_SCREEN, SMALL_SCREEN } from '../score/screen.ts'
-import { useStickyHeader } from '../stickyHeader.ts'
+import { STICKY_OFFSET, useStickyHeader } from '../stickyHeader.ts'
 
 const SOURCES = import.meta.glob(['../components/ScoreViewer.vue', '../sharing/ExcerptViewer.vue', '../components/PracticeLyrics.vue', '../components/PracticePitch.vue'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
@@ -58,6 +58,23 @@ describe('useStickyHeader', () => {
 		expect(container.style.scrollPaddingTop).toBe('8px')
 		wrapper.unmount()
 		expect(container.style.scrollPaddingTop).toBe('')
+	})
+
+	it('keeps the room only within the part where the bar sticks, not for the whole page (D34)', async () => {
+		const wrapper = mount(defineComponent({
+			setup() {
+				const bar = ref<HTMLElement | null>(null)
+				useStickyHeader(bar, '.app-content', { within: true })
+				return () => h('div', { class: 'app-content' }, [h('h2', 'List'), h('div', { class: 'excerpt-viewer' }, [h('div', { ref: bar })])])
+			},
+		}), { attachTo: document.body })
+		await nextTick()
+		const page = wrapper.find('.app-content').element as HTMLElement
+		const view = wrapper.find('.excerpt-viewer').element as HTMLElement
+		expect(page.style.scrollPaddingTop).toBe('')
+		expect(view.style.getPropertyValue(STICKY_OFFSET)).toBe('8px')
+		wrapper.unmount()
+		expect(view.style.getPropertyValue(STICKY_OFFSET)).toBe('')
 	})
 
 	it('finds the scrolling content of the app pages by default', async () => {

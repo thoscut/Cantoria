@@ -14,7 +14,11 @@
  *   of the app (the manifest of the theming app, which Cantoria cannot set
  *   per page; U25), and for the conductor that is the archive, which does
  *   not open without a network. So the folder stays in Safari, from a
- *   bookmark.
+ *   bookmark, and Safari may delete what a page keeps after some days
+ *   without a visit: the hint asks to open the folder once with a network
+ *   the day before the concert, which also checks the pieces (U38). The
+ *   guides say the same.
+ * The hint stands once per page, not at every programme (U38).
  */
 import { t } from '../l10n.ts'
 
@@ -31,7 +35,7 @@ export function homeScreenHint(page: KeepingPage): string {
 	case 'public':
 		return t('cantoria', 'On an iPhone or iPad: first add this page to the home screen, open it from there and then make the piece available. Safari and the home screen keep them apart.')
 	case 'folder':
-		return t('cantoria', 'On an iPhone or iPad: keep the pieces in Safari and open the concert folder there from a bookmark. From the home screen, Cantoria opens the archive, which needs a network.')
+		return t('cantoria', 'On an iPhone or iPad: keep the pieces in Safari and open the concert folder there from a bookmark, not from the home screen. Open it once with a network the day before the concert.')
 	default:
 		return t('cantoria', 'On an iPhone or iPad: first add this page to the home screen, open it from there, sign in and then make the pieces available. Safari and the home screen keep them apart.')
 	}

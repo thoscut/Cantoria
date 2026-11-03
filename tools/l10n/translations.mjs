@@ -3221,7 +3221,7 @@ export const singular = {
 		'Übe-Stellen und Übe-Einstellungen merkt sich nur dieser Browser. Auf einem geteilten Gerät löschen Sie sie, wenn Sie fertig sind.',
 	],
 	'Delete everything on this device': 'Alles auf diesem Gerät löschen',
-	'Delete kept pieces, passages and settings': 'Gespeicherte Stücke, Übe-Stellen und Einstellungen löschen',
+	'Delete kept pieces, passages and settings': 'Stücke auf dem Gerät, Übe-Stellen und Einstellungen löschen',
 	'Remove from this device': 'Von diesem Gerät entfernen',
 	'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.': 'Abmelden bei Nextcloud löscht das meist auch, in manchen Browsern erst beim nächsten Öffnen von Cantoria auf diesem Gerät.',
 	'The app is not built.': 'Die App ist nicht gebaut.',
@@ -3304,6 +3304,12 @@ export const singular = {
 	'Available without a network': 'Ohne Netz verfügbar',
 	'Stage view': 'Bühnenansicht',
 	'Leave the stage view': 'Bühnenansicht verlassen',
+	// ---- milestone 0.19, second round: one name for deleting, distinct names ----
+	'In this browser, this deletes the pieces of the concert folder available without a network, the remembered passages and the settings for practising.': 'In diesem Browser löscht das die ohne Netz verfügbaren Stücke der Konzertmappe, die gemerkten Übe-Stellen und die Übe-Einstellungen.',
+	'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages, the settings for practising and the marks "New".': 'In diesem Browser löscht das die ohne Netz verfügbaren Stücke aller Seiten von Cantoria, die gemerkten Übe-Stellen, die Übe-Einstellungen und die Markierungen „Neu“.',
+	'Show measures': 'Takte zeigen',
+	'Show more for practising': 'Mehr zum Üben anzeigen',
+	'Hide more for practising': 'Mehr zum Üben ausblenden',
 	'{title}, piece {position} of {count}': '{title}, Stück {position} von {count}',
 	'Not available without a network:': 'Nicht ohne Netz verfügbar:',
 	'{title}: {reason}': '{title}: {reason}',
@@ -3318,9 +3324,9 @@ export const singular = {
 		'Auf iPhone oder iPad: Lege diese Seite zuerst auf den Home-Bildschirm, öffne sie von dort und mach dann das Stück verfügbar. Safari und der Home-Bildschirm halten sie getrennt.',
 		'Auf iPhone oder iPad: Legen Sie diese Seite zuerst auf den Home-Bildschirm, öffnen Sie sie von dort und machen Sie dann das Stück verfügbar. Safari und der Home-Bildschirm halten sie getrennt.',
 	],
-	'On an iPhone or iPad: keep the pieces in Safari and open the concert folder there from a bookmark. From the home screen, Cantoria opens the archive, which needs a network.': [
-		'Auf iPhone oder iPad: Mach die Stücke in Safari verfügbar und öffne die Konzertmappe dort über ein Lesezeichen. Vom Home-Bildschirm aus öffnet sich das Archiv, und das braucht Netz.',
-		'Auf iPhone oder iPad: Machen Sie die Stücke in Safari verfügbar und öffnen Sie die Konzertmappe dort über ein Lesezeichen. Vom Home-Bildschirm aus öffnet sich das Archiv, und das braucht Netz.',
+	'On an iPhone or iPad: keep the pieces in Safari and open the concert folder there from a bookmark, not from the home screen. Open it once with a network the day before the concert.': [
+		'Auf iPhone oder iPad: Mach die Stücke in Safari verfügbar und öffne die Konzertmappe dort per Lesezeichen, nicht vom Home-Bildschirm. Öffne sie am Tag vor dem Konzert einmal mit Netz.',
+		'Auf iPhone oder iPad: Machen Sie die Stücke in Safari verfügbar und öffnen Sie die Konzertmappe dort per Lesezeichen, nicht vom Home-Bildschirm. Öffnen Sie sie am Tag vor dem Konzert einmal mit Netz.',
 	],
 	'Next': 'Nächstes',
 	'End of the programme "{title}".': 'Ende des Programms „{title}“.',
@@ -3689,6 +3695,7 @@ export const plural = {
 		'%n Unterschiede zwischen Stand {older} und Stand {newer}.',
 	],
 	'%n shared link|%n shared links': ['%n geteilter Link', '%n geteilte Links'],
+	'%n piece or excerpt|%n pieces and excerpts': ['%n Stück oder Ausschnitt', '%n Stücke und Ausschnitte'],
 	'%n semitone higher|%n semitones higher': ['%n Halbton höher', '%n Halbtöne höher'],
 	'%n semitone lower|%n semitones lower': ['%n Halbton tiefer', '%n Halbtöne tiefer'],
 	'Locked: not checked with the server for more than %n day. Please open this page once with a network.|Locked: not checked with the server for more than %n days. Please open this page once with a network.': {

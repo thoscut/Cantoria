@@ -145,10 +145,12 @@ const errorText = ref('')
 const model = shallowRef<ScoreModel | null>(null)
 const pages = shallowRef<string[]>([])
 const scoreElement = ref<HTMLElement | null>(null)
+const rootElement = ref<HTMLElement | null>(null)
 const pagesElement = ref<HTMLElement | null>(null)
 const barElement = ref<HTMLElement | null>(null)
-// the focus stays below the bar (WCAG 2.4.11): the page, or the box of a public link
-useStickyHeader(barElement, `${APP_CONTENT}, #cantoria-public`)
+// the focus stays below the bar (WCAG 2.4.11): the page, or the box of a public link;
+// the bar sticks only within the view, so the room is kept only there (D34)
+useStickyHeader(barElement, `${APP_CONTENT}, #cantoria-public`, { within: true })
 
 let toolkit: VerovioToolkit | null = null
 let player: ScorePlayerType | null = null
@@ -184,6 +186,8 @@ async function load(): Promise<void> {
 		layout()
 		updateTimeline()
 		if (props.focusOnReady) {
+			// once the pages are in the page: in the stage view the notes come up to the bar
+			await nextTick()
 			focusScore()
 		}
 	} catch (error) {
@@ -1056,22 +1060,46 @@ function onKeydown(event: KeyboardEvent): void {
 	}
 }
 
-/** Put the focus into the notes: the pedal turns them from now on. */
+/**
+ * Put the focus into the notes: the pedal turns them from now on. In the
+ * stage view the notes come up to the bar first, so that the page starts
+ * with them (D27).
+ */
 function focusScore(): void {
-	scoreElement.value?.focus()
+	const score = scoreElement.value
+	if (!score) {
+		return
+	}
+	if (props.stage) {
+		rootElement.value?.scrollIntoView?.({ block: 'start' })
+	}
+	score.focus({ preventScroll: props.stage })
 }
 
 /**
  * Turn the notes by one system, as the pedal does.
  *
  * @param direction - 1 on, -1 back
- * @return false at the end (or the start) of the notes
+ * @return 'turned'; 'end' at the end (or the start) of the notes, or when
+ *   they cannot be shown; 'busy' while the score is still being engraved,
+ *   so that a press then is no press at the end of the piece (U37)
  */
-function turn(direction: 1 | -1): boolean {
-	return scoreElement.value !== null && turnSystem(scoreElement.value, barElement.value, direction)
+function turn(direction: 1 | -1): 'turned' | 'end' | 'busy' {
+	if (status.value === 'loading') {
+		return 'busy'
+	}
+	if (scoreElement.value === null) {
+		return 'end'
+	}
+	return turnSystem(scoreElement.value, barElement.value, direction) ? 'turned' : 'end'
 }
 
-defineExpose({ focusScore, turn })
+/** The score is still being engraved: no notes to turn yet. */
+function busy(): boolean {
+	return status.value === 'loading'
+}
+
+defineExpose({ focusScore, turn, busy })
 
 // ---- lifecycle --------------------------------------------------------------
 
@@ -1104,10 +1132,12 @@ onBeforeUnmount(() => {
 <template>
 	<!-- Key handling for the whole view: Space plays/pauses (see onKeydown) -->
 	<!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -->
-	<div class="excerpt-viewer"
+	<div ref="rootElement"
+		class="excerpt-viewer"
 		:class="{ 'excerpt-viewer--stage': stage, 'excerpt-viewer--no-print': !printable }"
 		@keydown="onKeydown">
-		<p class="excerpt-viewer__reference">
+		<!-- In the stage view the page starts with the bar and the notes (D27): the reference stays for screen readers -->
+		<p class="excerpt-viewer__reference" :class="{ 'hidden-visually': stage }">
 			<span class="excerpt-viewer__label">{{ t('cantoria', 'Text reference') }}:</span>
 			{{ reference }}
 		</p>
@@ -1142,13 +1172,13 @@ onBeforeUnmount(() => {
 						<template #icon>
 							<NcIconSvgWrapper :path="playing ? mdiPause : mdiPlay" />
 						</template>
-						{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}
+						<span class="excerpt-viewer__button-label">{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}</span>
 					</NcButton>
 					<NcButton :disabled="!playing && position === 0" @click="stop">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiStop" />
 						</template>
-						{{ t('cantoria', 'Stop') }}
+						<span class="excerpt-viewer__button-label">{{ t('cantoria', 'Stop') }}</span>
 					</NcButton>
 				</div>
 				<div class="excerpt-viewer__buttons" role="group" :aria-label="t('cantoria', 'Size of the score')">
@@ -1260,7 +1290,7 @@ onBeforeUnmount(() => {
 				{{ rangeError }}
 			</p>
 
-			<p :id="summaryId" class="excerpt-viewer__summary">
+			<p :id="summaryId" class="excerpt-viewer__summary" :class="{ 'hidden-visually': stage }">
 				{{ summary }}
 				<template v-if="canPlay">
 					· {{ t('cantoria', 'Tap or click a note to play from there.') }}
@@ -1358,6 +1388,17 @@ onBeforeUnmount(() => {
 
 .excerpt-viewer p {
 	margin: 0;
+}
+
+/* A focused element of the view, or one scrolled to, stays below the bar
+   that sticks within the view (src/stickyHeader.ts, D34) */
+.excerpt-viewer :deep(*) {
+	scroll-margin-top: var(--cantoria-sticky-offset, 0px);
+}
+
+.excerpt-viewer__bar,
+.excerpt-viewer__bar :deep(*) {
+	scroll-margin-top: 0;
 }
 
 .excerpt-viewer__reference {
@@ -1607,6 +1648,32 @@ onBeforeUnmount(() => {
 /* The stage view: larger targets at the music stand */
 .excerpt-viewer.excerpt-viewer--stage {
 	--default-clickable-area: 48px;
+}
+
+/* The stage view: the settings are folded, their button needs no word on
+   the screen (it stays for screen readers) */
+.excerpt-viewer--stage .excerpt-viewer__settings-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* The stage view on a phone: one line of buttons named by their icons, so
+   that the notes start high up (D27) */
+@media (max-width: 600px), (max-height: 560px) {
+	.excerpt-viewer--stage .excerpt-viewer__button-label,
+	.excerpt-viewer--stage .excerpt-viewer__zoom-value {
+		position: absolute;
+		width: 1px;
+		min-width: 0;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
 }
 
 /* The narrowest phones: the bar in two lines, "Settings" named by its icon
