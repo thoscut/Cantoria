@@ -360,7 +360,7 @@ the same in every language of the interface.
 |---|---|---|
 | Mappe | Number of the binder; taken from the shelf mark if empty | `1` |
 | Nr | Number in the binder; taken from the shelf mark if empty | `1` |
-| Signatur | Shelf mark of the copy, **required**; a repeated import matches copies by it | `1-01` |
+| Signatur | Shelf mark of the copy, **required**; a repeated import matches copies by it | `1-1` |
 | Titel | Title of the work | `Abendlied` |
 | Komponist | Composer | `Josef Rheinberger` |
 | Bearbeiter/Text | Arranger and lyricist of the version | `Text: Lukas 24,29` |

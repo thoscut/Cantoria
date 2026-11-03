@@ -390,7 +390,7 @@ Format stammt, und in jeder Sprache der Oberfläche gleich.
 |---|---|---|
 | Mappe | Nummer der Mappe; aus der Signatur, wenn leer | `1` |
 | Nr | Nummer in der Mappe; aus der Signatur, wenn leer | `1` |
-| Signatur | Signatur des Exemplars, **Pflicht**; ein wiederholter Import ordnet Exemplare danach zu | `1-01` |
+| Signatur | Signatur des Exemplars, **Pflicht**; ein wiederholter Import ordnet Exemplare danach zu | `1-1` |
 | Titel | Titel des Werks | `Abendlied` |
 | Komponist | Komposition | `Josef Rheinberger` |
 | Bearbeiter/Text | Bearbeitung und Text der Fassung | `Text: Lukas 24,29` |

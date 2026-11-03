@@ -72,7 +72,7 @@ final class CatalogCsv {
 	public const TEMPLATE_EXAMPLE = [
 		'Mappe' => '1',
 		'Nr' => '1',
-		'Signatur' => '1-01',
+		'Signatur' => '1-1',
 		'Titel' => 'Abendlied',
 		'Komponist' => 'Josef Rheinberger',
 		'Bearbeiter/Text' => 'Text: Lukas 24,29',

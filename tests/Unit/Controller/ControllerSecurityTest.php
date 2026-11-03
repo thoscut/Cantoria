@@ -1406,15 +1406,16 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertSame([FolderBookService::OBJECT_TYPES, []], $excluded, 'contributors do not see the names of the folder book');
 	}
 	public function testTheImportTemplateIsForTheCatalogRole(): void {
-		$export = $this->createStub(ExportService::class);
-		$export->method('importTemplate')->willReturnCallback(fn (string $format): string => 'template.' . $format);
-		foreach (['librarian' => Http::STATUS_OK, 'reader' => Http::STATUS_FORBIDDEN, 'member' => Http::STATUS_FORBIDDEN, 'nobody' => Http::STATUS_FORBIDDEN] as $uid => $status) {
+		foreach (['operations', 'conductor', 'contributor', 'reader', 'member', 'nobody'] as $uid) {
+			// The template is never built for them
+			$export = $this->createMock(ExportService::class);
+			$export->expects(self::never())->method('importTemplate');
 			$controller = new ApiController($this->createStub(IRequest::class), $uid, $this->rolesByName(), $this->createStub(MetaService::class),
 				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $export,
 				$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
 				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
 				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
-			self::assertSame($status, $controller->importTemplate('ods')->getStatus(), $uid);
+			self::assertSame(Http::STATUS_FORBIDDEN, $controller->importTemplate('ods')->getStatus(), $uid);
 		}
 	}
 
