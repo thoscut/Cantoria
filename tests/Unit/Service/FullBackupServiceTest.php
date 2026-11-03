@@ -37,9 +37,9 @@ final class FullBackupServiceTest extends TestCase {
 			'appVersion' => '0.1.11',
 			'created' => '2026-10-22T12:00:00+00:00',
 			'tables' => [
-				'cantoria_works' => [['id' => 1, 'title' => 'Ave verum corpus', 'merged_into' => null]],
-				'cantoria_versions' => [['id' => 2, 'work_id' => 1, 'preservation_copy' => false, 'duration' => 180]],
-				'cantoria_audit' => [],
+				'works' => [['id' => 1, 'title' => 'Ave verum corpus', 'merged_into' => null]],
+				'versions' => [['id' => 2, 'work_id' => 1, 'preservation_copy' => false, 'duration' => 180]],
+				'audit' => [],
 			],
 		], JSON_THROW_ON_ERROR);
 	}
@@ -57,8 +57,40 @@ final class FullBackupServiceTest extends TestCase {
 	}
 
 	public function testUnknownTablesAreDropped(): void {
-		$content = self::backup(['tables' => ['oc_users' => [['uid' => 'admin']], 'cantoria_works' => []]]);
+		$content = self::backup(['tables' => ['oc_users' => [['uid' => 'admin']], 'works' => [], 'cantoria_versions' => []]]);
 		self::assertSame(['cantoria_works' => []], FullBackupService::parse($content)['tables']);
+	}
+
+	public function testABackupOfFormatVersionOneIsStillRead(): void {
+		$content = self::backup(['formatVersion' => 1, 'tables' => ['cantoria_works' => [['id' => 1, 'title' => 'Ave']], 'cantoria_mirror_files' => []]]);
+		self::assertSame(['cantoria_works' => [['id' => 1, 'title' => 'Ave']], 'cantoria_mirror_files' => []],
+			FullBackupService::parse($content)['tables']);
+	}
+
+	public function testEveryTableHasALogicalNameWithoutThePrefix(): void {
+		self::assertSame(FullBackupService::TABLES, array_values(array_intersect(FullBackupService::TABLES, FullBackupService::TABLE_NAMES)));
+		self::assertCount(count(FullBackupService::TABLES), FullBackupService::TABLE_NAMES);
+		foreach (FullBackupService::TABLE_NAMES as $name => $table) {
+			self::assertSame('cantoria_' . $name, $table);
+			self::assertSame($name, FullBackupService::logicalName($table));
+		}
+		self::assertContains('cantoria_mirror_files', FullBackupService::TABLES);
+	}
+
+	/**
+	 * @return iterable<string, array{0: string}>
+	 */
+	public static function noKnownTable(): iterable {
+		yield 'no tables' => [self::backup(['tables' => new \stdClass()])];
+		yield 'tables of another app' => [self::backup(['tables' => ['oc_users' => [['uid' => 'admin']]]])];
+		yield 'names of version 1 in version 2' => [self::backup(['tables' => ['cantoria_works' => [['id' => 1]]]])];
+	}
+
+	#[DataProvider('noKnownTable')]
+	public function testRefusesABackupWithoutAKnownTable(string $content): void {
+		$this->expectException(InvalidInputException::class);
+		$this->expectExceptionMessage('The file contains no table of the music archive.');
+		FullBackupService::parse($content);
 	}
 
 	public function testMissingDescriptionsAreReplaced(): void {
@@ -66,10 +98,6 @@ final class FullBackupServiceTest extends TestCase {
 		unset($data['created'], $data['appVersion']);
 		$backup = FullBackupService::parse(json_encode($data, JSON_THROW_ON_ERROR));
 		self::assertSame(['?', '?'], [$backup['created'], $backup['appVersion']]);
-	}
-
-	public function testEmptyTablesObjectIsAccepted(): void {
-		self::assertSame([], FullBackupService::parse(self::backup(['tables' => new \stdClass()]))['tables']);
 	}
 
 	/**
@@ -85,11 +113,11 @@ final class FullBackupServiceTest extends TestCase {
 		yield 'version as text' => [self::backup(['formatVersion' => '1'])];
 		yield 'tables missing' => [json_encode(['format' => FullBackupService::FORMAT, 'formatVersion' => 1], JSON_THROW_ON_ERROR)];
 		yield 'tables as list' => [self::backup(['tables' => [[]]])];
-		yield 'rows as object' => [self::backup(['tables' => ['cantoria_works' => ['a' => ['id' => 1]]]])];
-		yield 'row as list' => [self::backup(['tables' => ['cantoria_works' => [[1, 'Ave']]]])];
-		yield 'row as scalar' => [self::backup(['tables' => ['cantoria_works' => ['Ave']]])];
-		yield 'empty row' => [self::backup(['tables' => ['cantoria_works' => [new \stdClass()]]])];
-		yield 'nested value' => [self::backup(['tables' => ['cantoria_works' => [['id' => 1, 'title' => ['de' => 'Ave']]]]])];
+		yield 'rows as object' => [self::backup(['tables' => ['works' => ['a' => ['id' => 1]]]])];
+		yield 'row as list' => [self::backup(['tables' => ['works' => [[1, 'Ave']]]])];
+		yield 'row as scalar' => [self::backup(['tables' => ['works' => ['Ave']]])];
+		yield 'empty row' => [self::backup(['tables' => ['works' => [new \stdClass()]]])];
+		yield 'nested value' => [self::backup(['tables' => ['works' => [['id' => 1, 'title' => ['de' => 'Ave']]]]])];
 	}
 
 	#[DataProvider('notABackup')]
@@ -109,7 +137,7 @@ final class FullBackupServiceTest extends TestCase {
 		$deep = str_repeat('[', 100) . str_repeat(']', 100);
 		$this->expectException(InvalidInputException::class);
 		$this->expectExceptionMessage('The file is not a backup of the music archive.');
-		FullBackupService::parse(self::backup(['tables' => ['cantoria_works' => [['id' => 1, 'title' => 'x']]], 'extra' => json_decode($deep)]));
+		FullBackupService::parse(self::backup(['tables' => ['works' => [['id' => 1, 'title' => 'x']]], 'extra' => json_decode($deep)]));
 	}
 
 	/**
@@ -171,7 +199,8 @@ final class FullBackupServiceTest extends TestCase {
 		// Revisions point to files; programme items to the revision sung (milestone 0.8)
 		self::assertLessThan($position['cantoria_states'], $position['cantoria_files']);
 		self::assertLessThan($position['cantoria_event_items'], $position['cantoria_states']);
-		self::assertNotContains('cantoria_mirror_files', $tables, 'the manifest of the print station belongs to this instance');
+		// The manifest of the print station and the hand-over points to copies and files (A3).
+		self::assertLessThan($position['cantoria_mirror_files'], $position['cantoria_files']);
 		self::assertSame(array_values(array_unique($tables)), $tables);
 	}
 }

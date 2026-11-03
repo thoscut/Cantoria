@@ -72,7 +72,8 @@ class ArchiveAccess {
 			return $this->rootFolder->getUserFolder($uid)->getFirstNodeById($folderId) instanceof Folder;
 		} catch (\Exception $e) {
 			// No such account, storage not available, …: the account cannot open it now.
-			$this->logger->info('Cantoria: access to the archive folder could not be checked for ' . $uid . ': ' . $e->getMessage());
+			// Without the account: the log needs no names of people (guideline 15).
+			$this->logger->info('Cantoria: access to the archive folder could not be checked for an account: ' . $e->getMessage());
 			return false;
 		}
 	}

@@ -169,18 +169,18 @@ try {
 
 	// A value that does not fit its column is refused and nothing is written.
 	$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-	$data['tables']['cantoria_works'][0]['title'] = str_repeat('x', 501);
+	$data['tables']['works'][0]['title'] = str_repeat('x', 501);
 	$error = IntegrationTest::throws(fn () => $backup->restore(json_encode($data, JSON_THROW_ON_ERROR), $uid));
 	$check('a value longer than its column is refused', $error !== null && str_contains($error, 'invalid value in cantoria_works'), (string)$error);
 	$check('a refused restore writes nothing', $rowCount('cantoria_works') === 0 && $rowCount('cantoria_audit') === 0);
 	$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-	$data['tables']['cantoria_versions'][0]['preservation_copy'] = 'yes please';
+	$data['tables']['versions'][0]['preservation_copy'] = 'yes please';
 	$error = IntegrationTest::throws(fn () => $backup->restore(json_encode($data, JSON_THROW_ON_ERROR), $uid));
 	$check('a boolean column refuses text', $error !== null && str_contains($error, 'preservation_copy'), (string)$error);
 
 	// Column names from the file are never used unchecked: unknown ones are left out.
 	$crafted = ['format' => FullBackupService::FORMAT, 'formatVersion' => FullBackupService::FORMAT_VERSION, 'tables' => [
-		'cantoria_works' => [['id' => 1, 'title' => 'Crafted', 'title"; DROP TABLE oc_users; --' => 'x', 'created' => '0', 'modified' => 0]],
+		'works' => [['id' => 1, 'title' => 'Crafted', 'title"; DROP TABLE oc_users; --' => 'x', 'created' => '0', 'modified' => 0]],
 	]];
 	$restored = $backup->restore(json_encode($crafted, JSON_THROW_ON_ERROR), $uid);
 	$check('unknown columns are left out', ($restored['cantoria_works'] ?? 0) === 1 && $rowCount('cantoria_works') === 1);

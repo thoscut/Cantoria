@@ -35,17 +35,27 @@ use OCP\Security\ISecureRandom;
  * versions, licenses, proposals, tasks, links, events, persons, merges, the
  * folder book and the audit log.
  *
- * Instance-specific settings (role groups, archive folder, the target folder
- * of the print station and its manifest) are not part of the backup. Nextcloud file ids are only valid within one instance: after a
- * restore on another instance, the file sync matches the files again by
- * their path.
+ * Instance-specific settings (role groups, archive folder, the target
+ * folders of the print station and of the hand-over) are not part of the
+ * backup. The manifest of those folders (which files the app wrote there)
+ * is, so that after a restore on the same instance the app knows its own
+ * files again. Nextcloud file ids are only valid within one instance: after
+ * a restore on another instance, the file sync matches the files again by
+ * their path, and the folders treat their files as written by someone else
+ * until they are chosen again.
+ *
+ * Format version 2 names the tables by their logical names (TABLE_NAMES,
+ * e.g. `works`), without the prefix of the database tables, so that a
+ * renamed table does not change the format. Version 1 used the names of the
+ * database tables (`cantoria_works`); such backups are still read. A file
+ * without any known table is refused.
  *
  * @psalm-type BackupRow = array<string, string|int|float|bool|null>
  * @psalm-type Backup = array{formatVersion: int, created: string, appVersion: string, tables: array<string, list<BackupRow>>}
  */
 class FullBackupService {
 	public const FORMAT = 'cantoria-backup';
-	public const FORMAT_VERSION = 1;
+	public const FORMAT_VERSION = 2;
 
 	/** Largest backup file accepted for a restore in the web interface (bytes) */
 	public const MAX_BYTES = 64 * 1024 * 1024;
@@ -61,7 +71,17 @@ class FullBackupService {
 		'cantoria_works', 'cantoria_versions', 'cantoria_copies', 'cantoria_files', 'cantoria_states', 'cantoria_licenses',
 		'cantoria_proposals', 'cantoria_tasks', 'cantoria_links', 'cantoria_events', 'cantoria_event_items',
 		'cantoria_persons', 'cantoria_contributions', 'cantoria_merges', 'cantoria_review_reports', 'cantoria_review_points',
-		'cantoria_folders', 'cantoria_folder_loans', 'cantoria_audit',
+		'cantoria_folders', 'cantoria_folder_loans', 'cantoria_mirror_files', 'cantoria_audit',
+	];
+
+	/** Name of each table in the backup file (format version 2) => table in the database */
+	public const TABLE_NAMES = [
+		'works' => 'cantoria_works', 'versions' => 'cantoria_versions', 'copies' => 'cantoria_copies', 'files' => 'cantoria_files',
+		'states' => 'cantoria_states', 'licenses' => 'cantoria_licenses', 'proposals' => 'cantoria_proposals', 'tasks' => 'cantoria_tasks',
+		'links' => 'cantoria_links', 'events' => 'cantoria_events', 'event_items' => 'cantoria_event_items', 'persons' => 'cantoria_persons',
+		'contributions' => 'cantoria_contributions', 'merges' => 'cantoria_merges', 'review_reports' => 'cantoria_review_reports',
+		'review_points' => 'cantoria_review_points', 'folders' => 'cantoria_folders', 'folder_loans' => 'cantoria_folder_loans',
+		'mirror_files' => 'cantoria_mirror_files', 'audit' => 'cantoria_audit',
 	];
 
 	public function __construct(
@@ -119,7 +139,7 @@ class FullBackupService {
 		fwrite($stream, substr($head, 0, -1) . ",\n\"tables\": {");
 		$tables = $snapshot ? array_values(array_intersect($this->existingTables(), self::SNAPSHOT_TABLES)) : $this->existingTables();
 		foreach ($tables as $t => $table) {
-			fwrite($stream, ($t === 0 ? '' : ',') . "\n" . json_encode($table, $flags) . ': [');
+			fwrite($stream, ($t === 0 ? '' : ',') . "\n" . json_encode(self::logicalName($table), $flags) . ': [');
 			$qb = $this->db->getQueryBuilder();
 			$qb->select('*')->from($table)->orderBy('id');
 			$result = $qb->executeQuery();
@@ -323,9 +343,20 @@ class FullBackupService {
 	}
 
 	/**
+	 * The name of a database table in the backup file (TABLE_NAMES).
+	 */
+	public static function logicalName(string $table): string {
+		$name = array_search($table, self::TABLE_NAMES, true);
+		return $name === false ? $table : $name;
+	}
+
+	/**
 	 * Checks that a file is a backup in a format this version can restore and
-	 * returns its content. Unknown tables are dropped; every row must be an
-	 * object of plain values.
+	 * returns its content, with the tables by their names in the database.
+	 * Tables are named as in format version 2 (TABLE_NAMES) or, in backups
+	 * of version 1, by the names of the database tables. Unknown tables are
+	 * dropped, but a file without any known table is refused; every row
+	 * must be an object of plain values.
 	 *
 	 * @return Backup
 	 * @throws InvalidInputException
@@ -350,9 +381,14 @@ class FullBackupService {
 		}
 		$parsed = [];
 		foreach (self::TABLES as $table) {
-			if (array_key_exists($table, $tables)) {
-				$parsed[$table] = self::rows($tables[$table]);
+			$name = self::logicalName($table);
+			$key = $formatVersion >= 2 ? $name : $table;
+			if (array_key_exists($key, $tables)) {
+				$parsed[$table] = self::rows($tables[$key]);
 			}
+		}
+		if ($parsed === []) {
+			throw new InvalidInputException('The file contains no table of the music archive. Is it a backup of Cantoria?');
 		}
 		return [
 			'formatVersion' => $formatVersion,

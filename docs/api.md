@@ -275,15 +275,19 @@ Performance imports (`.xlsx`) are refused with 400
 cells, and with `The Excel workbook is damaged.` when a part contains a
 document type declaration.
 
-**Complete backup.** `GET /api/backup/full` (any role, plain download without
-CSRF token) returns all app tables as JSON
-(`{ "format": "cantoria-backup", "formatVersion": 1, "appVersion", "created", "tables": { "cantoria_works": [ … ] } }`).
-`POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or admin) restores
-such a file into an empty catalog and returns
+**Complete backup.** `GET /api/backup/full` (the roles that read the folder
+book and admins, plain download without CSRF token; every download is
+recorded in the audit log as `download_backup`) returns all app tables as
+JSON, named by their logical names without the prefix of the database
+(`{ "format": "cantoria-backup", "formatVersion": 2, "appVersion", "created", "tables": { "works": [ … ], "mirror_files": [ … ] } }`).
+Backups of format version 1 (tables named `cantoria_works` and so on) are
+still read. `POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or
+admin) restores such a file into an empty catalog and returns
 `{ "restored": { "cantoria_works": 120, … } }`. Errors (400):
 `A backup can only be restored into an empty catalog.`, `The file is not a
-backup of the music archive.`, `The backup was made with a newer version of
-the app. Please update the app first.` and
+backup of the music archive.`, `The file contains no table of the music
+archive. Is it a backup of Cantoria?`, `The backup was made with a newer
+version of the app. Please update the app first.` and
 `The backup contains an invalid value in %1$s, row %2$s, column %3$s.`
 (table, row number from 1, column). Only columns that exist in the installed
 schema are written; others are left out.

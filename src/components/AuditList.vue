@@ -62,6 +62,8 @@ function objectLabel(type: string): string {
 		return t('cantoria', 'Print station')
 	case 'choir_handover':
 		return t('cantoria', 'Hand-over to the choir system')
+	case 'export':
+		return t('cantoria', 'Export')
 	default:
 		return type
 	}
@@ -102,6 +104,10 @@ function actionLabel(action: string): string {
 		return t('cantoria', 'Name removed')
 	case 'erased':
 		return t('cantoria', 'Personal data erased on request')
+	case 'download_backup':
+		return t('cantoria', 'Complete backup downloaded')
+	case 'pseudonymised':
+		return t('cantoria', 'Accounts removed after the retention period')
 	case 'mirror_copied':
 		return t('cantoria', 'Copied')
 	case 'mirror_replaced':
