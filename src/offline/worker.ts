@@ -16,7 +16,9 @@
  * kept, but only while the server's answer says it may stay (header
  * X-Cantoria-Keep, S N5); an answer without it removes the piece from the
  * device. An expired, revoked or locked piece is never answered from the
- * device. It never caches requests that change something, the APIs of
+ * device. The page of a list ("Shared with me", the concert folder) is
+ * answered from the device only when the network fails, not when it is
+ * slow (S N19). It never caches requests that change something, the APIs of
  * Nextcloud, or the pages of the archive. The pieces of an account kept
  * before someone signed out, or before another account used the app in
  * this browser, it removes before it answers anything of them (S N6,
@@ -31,6 +33,7 @@
 import type { Collection, CollectionName } from './rules.ts'
 
 import { rememberedAccount } from './marker.ts'
+import { networkFirst as networkOrKept } from './network.ts'
 import { CACHE_PREFIX, COLLECTIONS, mayStay, pageCollection, parseCatalog, pieceAddresses, requestKind, SHELL_PREFIX, staleCatalog, usable } from './rules.ts'
 
 declare const self: ServiceWorkerGlobalScope
@@ -42,8 +45,6 @@ const VERSION = '__CANTORIA_VERSION__'
 /** Replaced by the server with the path of the app's files, e.g. /apps/cantoria/ */
 const APP_PATH = '__CANTORIA_APP_PATH__' as string
 const SHELL_CACHE = SHELL_PREFIX + VERSION
-/** How long to wait for the network before answering from the device */
-const TIMEOUT_MS = 4000
 
 self.addEventListener('install', (event) => {
 	event.waitUntil((async () => {
@@ -155,7 +156,9 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 	}
 	const cacheKey = url.origin + url.pathname
 	if (kind === 'page' && name !== 'public') {
-		// The page of the list ("Shared with me", the concert folder): it shows itself what is locked
+		// The page of the list ("Shared with me", the concert folder): it shows itself what is locked.
+		// From the device only without a network, never because the network is slow: the kept page
+		// carries its account, which may not be the one signed in now (S N19).
 		return networkFirst(event, await data.match(cacheKey), async (response) => {
 			if (response.ok && response.headers.get('X-Cantoria-Page') === collection.header) {
 				await data.put(cacheKey, response)
@@ -164,7 +167,7 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 				await removeCollection(collection)
 			}
 			// a redirect to the login keeps everything for the next start with a network
-		})
+		}, null)
 	}
 	// a score or scan, or the page of a public link (which is the piece)
 	if (catalog?.pieces[key] === undefined) {
@@ -200,27 +203,17 @@ async function isForKeptPage(event: FetchEvent, scope: URL, kept: CollectionName
 }
 
 /**
- * The network's answer; the kept one when the network fails or takes
- * longer than TIMEOUT_MS. The network's answer refreshes what is kept, also
- * when it comes late.
+ * The network's answer; the kept one when the network fails or, unless
+ * timeoutMs is null, takes longer than that (network.ts).
  *
  * @param event - the fetch event, kept alive until the cache is written
  * @param kept - the kept answer, undefined when there is none or it may not be shown
  * @param store - writes the network's answer (a copy) to the device
+ * @param timeoutMs - how long to wait for the network; null: until it answers or fails
  */
-function networkFirst(event: FetchEvent, kept: Response | undefined, store: (response: Response) => Promise<void> | void): Promise<Response> {
-	const network = fetch(event.request).then((response) => {
-		event.waitUntil(Promise.resolve(store(response.clone())).catch(() => undefined))
-		return response
-	})
-	if (!kept) {
-		return network
-	}
-	const late = new Promise<Response>((resolve) => {
-		setTimeout(() => resolve(kept), TIMEOUT_MS)
-	})
-	event.waitUntil(network.then(() => undefined, () => undefined))
-	return Promise.race([network.catch(() => kept), late])
+function networkFirst(event: FetchEvent, kept: Response | undefined, store: (response: Response) => Promise<void> | void,
+	timeoutMs?: number | null): Promise<Response> {
+	return networkOrKept(() => fetch(event.request), (promise) => event.waitUntil(promise), kept, store, timeoutMs)
 }
 
 /**
