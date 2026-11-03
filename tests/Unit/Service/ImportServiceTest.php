@@ -314,6 +314,21 @@ final class ImportServiceTest extends TestCase {
 		self::assertContains('Shelf mark 5-1: "In singers\' portal since" is already set and is not overwritten by the import.', $warnings);
 	}
 
+	/**
+	 * The column of the singers' portal is "Im Chorportal seit" in every
+	 * export; files with the former name "Auf Singste seit" are still read.
+	 */
+	public function testTheFormerNameOfThePortalColumnIsStillRead(): void {
+		self::assertArrayHasKey('Im Chorportal seit', CatalogCsv::LEGACY_COLUMNS);
+		self::assertArrayNotHasKey('Auf Singste seit', CatalogCsv::columns(true));
+		foreach (['Auf Singste seit', 'Im Chorportal seit'] as $header) {
+			[, $version] = $this->givenEntry('5-1', [], ['portal_since' => null]);
+			$report = $this->service->import(self::csv(['Signatur', $header], ['5-1', '2026-01-01']), 'catalog.csv', self::UID, false);
+			self::assertSame('2026-01-01', $version->getPortalSince(), $header);
+			self::assertNotContains('Unknown columns are ignored: ' . $header, self::warnings($report), $header);
+		}
+	}
+
 	public function testEmptyDecisionFieldsAreFilled(): void {
 		[, $version] = $this->givenEntry('5-1', [], ['rights_confirmed' => null]);
 		$report = $this->service->import(self::csv(['Signatur', 'Rechte bestätigt'], ['5-1', '2025-03-01 Notenwart']), 'catalog.csv', self::UID, false);

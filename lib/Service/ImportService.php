@@ -64,6 +64,8 @@ class ImportService {
 	 */
 	public function import(string $content, string $source, string $uid, bool $dryRun): array {
 		$csv = CatalogCsv::parse($content);
+		// A renamed column is read under its former name too
+		$csv['header'] = array_map(CatalogCsv::currentHeader(...), $csv['header']);
 		$allColumns = CatalogCsv::columns(true);
 
 		/** @var array<int, array{0: string, 1: string}> $mapping column index => [level, field] */
