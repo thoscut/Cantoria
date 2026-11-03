@@ -349,8 +349,8 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	public static function handoverCases(): iterable {
 		$confirmed = ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'];
-		$noScores = 'A MusicXML file is a complete digital edition: unless public domain is confirmed, passing it on to choir members needs a license for digital score files. The catalog librarian records it on the tab "Rights".';
-		$noRecording = 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings. The catalog librarian records it on the tab "Rights".';
+		$noScores = 'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").';
+		$noRecording = 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").';
 		// version values, licenses, expected denial for MusicXML, for a recording
 		yield 'confirmed public domain: MusicXML yes, a recording needs its own license' => [$confirmed, [], null, $noRecording];
 		yield 'confirmed public domain with a license for recordings' => [$confirmed, [['recording_sharing']], null, null];

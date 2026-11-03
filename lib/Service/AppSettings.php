@@ -137,7 +137,7 @@ class AppSettings {
 		$folder = $id > 0 ? $home->getFirstNodeById($id) : null;
 		if ($folder instanceof Folder && !$this->insideArchive($home, $folder)) {
 			if (!$this->privateFolder($folder, $info['user'])) {
-				throw new InvalidInputException('The backup folder %1$s is shared or no longer belongs to the account %2$s, so others could read the backups. Remove the shares of the folder, or move it away so that the app creates a new one.',
+				throw new InvalidInputException('The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.',
 					[$home->getRelativePath($folder->getPath()) ?? $folder->getName(), $info['user']]);
 			}
 			return $folder;

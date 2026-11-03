@@ -2720,9 +2720,9 @@ export const singular = {
 	'The scan of this link is not available at the moment.': 'Der Scan dieses Links ist gerade nicht verfügbar.',
 	// ---- 0.10: backups outside the archive folder, delegated settings ----
 	'Music archive backups': 'Notenarchiv-Sicherungen',
-	'The backup folder %1$s is shared or no longer belongs to the account %2$s, so others could read the backups. Remove the shares of the folder, or move it away so that the app creates a new one.': [
-		'Der Sicherungsordner %1$s ist freigegeben oder gehört nicht mehr dem Konto %2$s, sodass andere die Sicherungen lesen könnten. Entferne die Freigaben des Ordners oder verschiebe ihn, damit die App einen neuen anlegt.',
-		'Der Sicherungsordner %1$s ist freigegeben oder gehört nicht mehr dem Konto %2$s, sodass andere die Sicherungen lesen könnten. Entfernen Sie die Freigaben des Ordners oder verschieben Sie ihn, damit die App einen neuen anlegt.',
+	'The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.': [
+		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teile ihn nicht mehr oder verschiebe ihn; dann legt die App einen neuen an.',
+		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teilen Sie ihn nicht mehr oder verschieben Sie ihn; dann legt die App einen neuen an.',
 	],
 	'The folder in Nextcloud that holds the score files (for example one subfolder per binder). The app only reads files. Exports of the catalog are stored in its subfolder "_cantoria-app".': 'Der Ordner in der Nextcloud mit den Notendateien (zum Beispiel ein Unterordner je Archivmappe). Die App liest Dateien nur. Exporte des Werkverzeichnisses legt sie im Unterordner „_cantoria-app“ ab.',
 	'Backups and annual snapshots name choir members and accounts. They lie outside the archive folder, in a folder of the account that set it, which the role groups do not see unless it is shared with them.': 'Sicherungen und Jahresstände nennen Chormitglieder und Konten. Sie liegen außerhalb des Archivordners in einem Ordner des Kontos, das ihn festgelegt hat. Die Rollengruppen sehen ihn nicht, solange er nicht mit ihnen geteilt wird.',
@@ -2815,6 +2815,7 @@ export const singular = {
 		'Wählen Sie „Traditionell“ nur mit Beleg und notieren Sie ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 	],
 	'Traditional (no known composer)': 'Traditionell (ohne bekannte Komposition)',
+	'Traditional (public domain)': 'Traditionell (gemeinfrei)',
 	'Without text': 'Ohne Text',
 	'Public domain in doubt': 'Gemeinfreiheit fraglich',
 	'To the catalog librarian, daily: a version confirmed as public domain no longer is by the protection proposal, after a person or life dates were changed.': 'An die Archivverwaltung, täglich: Eine als gemeinfrei bestätigte Fassung ist es nach dem Vorschlag zur Schutzfrist nicht mehr, nachdem eine Person oder Lebensdaten geändert wurden.',
@@ -2826,9 +2827,9 @@ export const singular = {
 		'Für diese Fassung ist kein Text erfasst. Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markiere den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 		'Für diese Fassung ist kein Text erfasst. Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markieren Sie den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 	],
-	'The melody is marked as traditional, but no arranger is recorded. Most choral settings of folk songs are arrangements with a protection of their own: add the arranger under "Persons involved and protection" (tab Rights), or set the kind of version to "Original" if the setting is unarranged; until then unknown means protected.': [
-		'Die Melodie ist als traditionell markiert, aber keine Bearbeitung ist erfasst. Die meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz: Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder setze die Art der Fassung auf „Original“, wenn der Satz unbearbeitet ist; bis dahin heißt unbekannt geschützt.',
-		'Die Melodie ist als traditionell markiert, aber keine Bearbeitung ist erfasst. Die meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz: Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder setzen Sie die Art der Fassung auf „Original“, wenn der Satz unbearbeitet ist; bis dahin heißt unbekannt geschützt.',
+	'The melody is traditional, but no arranger is recorded. Add the arranger on the tab "Rights", or choose "Original" as the kind of version; until then unknown means protected.': [
+		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänze sie im Reiter „Rechte“ oder wähle als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
+		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänzen Sie sie im Reiter „Rechte“ oder wählen Sie als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
 	],
 	'Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.': [
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfe, dass keine Bearbeitung oder Übersetzung fehlt.',
@@ -3017,12 +3018,13 @@ export const singular = {
 	'Choir members could save and print this file in the choir system: it needs confirmed public domain or a license for download and printing by choir members.': 'Chormitglieder könnten diese Datei im Chorsystem speichern und drucken: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz zum Herunterladen und Drucken durch Chormitglieder.',
 	'Recording: it needs confirmed public domain or a license for practice audio, and in every case a license for passing on recordings (performers and producer agree).': 'Aufnahme: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz für Übe-Audio und in jedem Fall eine Lizenz zur Weitergabe von Aufnahmen (Mitwirkende und Hersteller sind einverstanden).',
 	'MusicXML file: it needs confirmed public domain or a license for passing on digital score files.': 'MusicXML-Datei: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz zur Weitergabe digitaler Notendateien.',
+	'The file is not accessible.': 'Die Datei ist nicht zugänglich.',
 	'The file is not a MusicXML score. Check the file in the archive folder.': [
 		'Die Datei ist keine MusicXML-Partitur. Prüfe die Datei im Archivordner.',
 		'Die Datei ist keine MusicXML-Partitur. Prüfen Sie die Datei im Archivordner.',
 	],
-	'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings. The catalog librarian records it on the tab "Rights".': 'Eine Aufnahme hat eigene Rechte (Mitwirkende, Hersteller): Für die Weitergabe an Chormitglieder braucht es eine Lizenz zur Weitergabe von Aufnahmen. Die Archivverwaltung erfasst sie im Reiter „Rechte“.',
-	'A MusicXML file is a complete digital edition: unless public domain is confirmed, passing it on to choir members needs a license for digital score files. The catalog librarian records it on the tab "Rights".': 'Eine MusicXML-Datei ist eine vollständige digitale Ausgabe: Ohne bestätigte Gemeinfreiheit braucht die Weitergabe an Chormitglieder eine Lizenz für digitale Notendateien. Die Archivverwaltung erfasst sie im Reiter „Rechte“.',
+	'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").': 'Eine Aufnahme hat eigene Rechte (Mitwirkende, Hersteller): Die Weitergabe an Chormitglieder braucht eine Lizenz zur Weitergabe von Aufnahmen (Reiter „Rechte“).',
+	'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").': 'Aus einer MusicXML-Datei lassen sich neue Noten und Stimmen machen: Ohne bestätigte Gemeinfreiheit braucht die Weitergabe an Chormitglieder eine Lizenz für digitale Notendateien (Reiter „Rechte“).',
 	'The sync of the hand-over folder for the choir system failed: %s': 'Der Abgleich des Übergabeordners für das Chorsystem ist fehlgeschlagen: %s',
 	'Hand-over to the choir system: folder of the music archive': 'Übergabe an das Chorsystem: Ordner des Notenarchivs',
 	'Liste.csv names the version, the revision and the license notice of every file; show the notice with the file in the choir system.': [
@@ -3332,6 +3334,7 @@ export const singular = {
 	'Extend': 'Verlängern',
 	'The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.': 'Der Link behält seine Adresse: Wer ihn hat, kann ihn weiter nutzen, und was die Chormitglieder auf ihren Geräten gespeichert haben, bleibt.',
 	'This piece cannot be shared.': 'Dieses Stück lässt sich nicht teilen.',
+	'No copy of this piece is in the catalog.': 'Von diesem Stück ist kein Exemplar im Werkverzeichnis.',
 	'Already shared until {date}: the link is extended and keeps its address.': 'Schon geteilt bis {date}: Der Link wird verlängert und behält seine Adresse.',
 	'A new link for the choir members.': 'Ein neuer Link für die Chormitglieder.',
 	'Share "{title}" with the choir': '„{title}“ mit dem Chor teilen',

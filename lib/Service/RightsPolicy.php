@@ -252,7 +252,7 @@ class RightsPolicy {
 		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'recording_sharing', $day)) {
 			return null;
 		}
-		return 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings. The catalog librarian records it on the tab "Rights".';
+		return 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").';
 	}
 
 	/**
@@ -272,7 +272,7 @@ class RightsPolicy {
 		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'digital_scores', $day)) {
 			return null;
 		}
-		return 'A MusicXML file is a complete digital edition: unless public domain is confirmed, passing it on to choir members needs a license for digital score files. The catalog librarian records it on the tab "Rights".';
+		return 'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").';
 	}
 
 	/**
