@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Builds the release archive for the Nextcloud app store:
-#   tools/release/package.sh [--sign KEY CERT OCC]
+#   tools/release/package.sh [--unreleased]
 #
 # The archive contains only what the app needs at runtime (appinfo, lib,
 # templates, img, js, css, l10n, LICENSE, README, CHANGELOG) and, as in
@@ -15,38 +15,81 @@
 # GitHub templates (.github/), internal documents and dependencies for
 # development stay out.
 #
+# Only files that git tracks go into the archive: they are taken from the
+# commit (git archive HEAD), never from the working tree, and only js/ and
+# css/ come from the build. A file that is not committed is therefore never
+# packaged, and a build with uncommitted changes to tracked files stops.
+#
 # The archive is reproducible: the same commit gives the same bytes (files
 # sorted, times of the last commit, no owner names, gzip without a time).
-# A final version (no "-dev.N") needs a clean working tree, the tag
-# v<version> on HEAD and its entry in CHANGELOG.md. The license texts of
-# bundled third-party code that the repository does not need itself (GPL,
-# LGPL, OFL) are downloaded with a fixed checksum into LICENSES/ of the
-# archive; js/third-party-licenses.txt lists every bundled package.
+# npm installs the dependencies without their install scripts
+# (--ignore-scripts): no code of a dependency runs before the build.
 #
-# With --sign (KEY = private key of the app store certificate request, CERT =
-# the certificate issued by Nextcloud, OCC = path to `occ` of any Nextcloud
-# instance), the staged app is code signed first (`occ integrity:sign-app`
-# writes appinfo/signature.json into the archive), and the SHA-512 signature
-# of the archive for the app store upload form is printed.
+# Checks before the build: info.xml and package.json name the same
+# version; info.xml has a <bugs> URL and matches the app store schema
+# (check-appinfo.sh); every migration in lib/Migration is listed with its
+# checksum in ReleasedMigrationsTest::RELEASED, so that it is frozen once an
+# instance has run it. A final version (no "-dev.N") also needs a clean
+# working tree (untracked files included), the tag v<version> on HEAD, its
+# entry in CHANGELOG.md, Node.js of .nvmrc, xmllint and reuse.
+#
+# --unreleased (CI of every push and pull request): builds the archive of
+# the current commit for the integration tests without the checks that only
+# make sense for a version that is handed out (tag, CHANGELOG, migrations in
+# RELEASED, clean tree).
+#
+# After packaging, `reuse lint` checks the unpacked archive (every file with
+# its copyright and license), when reuse is installed.
+#
+# The archive is not signed here: the maintainer signs the archive that the
+# CI built and published as a draft release, with tools/release/sign.sh
+# (docs/release.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
+# shellcheck source=tools/release/archive.sh
+. tools/release/archive.sh
 
 APP_ID=cantoria
 VERSION=$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' appinfo/info.xml)
-SIGN=0
-if [ "${1:-}" = "--sign" ]; then
-	SIGN=1
-	KEY="${2:?path to the private key}"
-	CERT="${3:?path to the certificate}"
-	OCC="${4:?path to occ of a Nextcloud instance}"
+UNRELEASED=0
+case "${1:-}" in
+	'') ;;
+	--unreleased) UNRELEASED=1 ;;
+	*)
+		echo "usage: tools/release/package.sh [--unreleased]" >&2
+		echo "(signing moved to tools/release/sign.sh, see docs/release.md)" >&2
+		exit 2
+		;;
+esac
+FINAL=0
+if [[ "$VERSION" != *-* ]] && [ "$UNRELEASED" = 0 ]; then
+	FINAL=1
 fi
 
-# appinfo/info.xml and package.json must name the same version.
+# A check that a final version must pass and other builds only report
+require() {
+	if [ "$FINAL" = 1 ]; then
+		echo "$1" >&2
+		exit 1
+	fi
+	echo "warning: $1" >&2
+}
+
+# The archive is the build of one commit: the files come from HEAD and the
+# build runs in the working tree, so both must be the same.
+if ! git diff --quiet HEAD --; then
+	git status --porcelain --untracked-files=no >&2
+	echo "tracked files have uncommitted changes; commit them first (the archive is built from HEAD)" >&2
+	exit 1
+fi
+
+# appinfo/info.xml, package.json and package-lock.json name the same version.
 PACKAGE_VERSION=$(sed -n 's/^  "version": "\(.*\)",$/\1/p' package.json)
-if [ -z "$VERSION" ] || [ "$VERSION" != "$PACKAGE_VERSION" ]; then
-	echo "version mismatch: appinfo/info.xml has '$VERSION', package.json has '$PACKAGE_VERSION'" >&2
+LOCK_VERSION=$(sed -n '3s/^  "version": "\(.*\)",$/\1/p' package-lock.json)
+if [ -z "$VERSION" ] || [ "$VERSION" != "$PACKAGE_VERSION" ] || [ "$VERSION" != "$LOCK_VERSION" ]; then
+	echo "version mismatch: appinfo/info.xml has '$VERSION', package.json '$PACKAGE_VERSION', package-lock.json '$LOCK_VERSION'" >&2
 	exit 1
 fi
 
@@ -56,21 +99,47 @@ if ! grep -q '<bugs>' appinfo/info.xml; then
 	exit 1
 fi
 
-# It also refuses an info.xml that does not match its schema (e.g. elements
-# in the wrong order). Needs xmllint and network access.
+# It also refuses an info.xml that does not match its schema.
 if command -v xmllint >/dev/null; then
-	XSD=$(mktemp)
-	curl -fsSL -o "$XSD" https://apps.nextcloud.com/schema/apps/info.xsd
-	xmllint --noout --schema "$XSD" appinfo/info.xml || { rm -f "$XSD"; exit 1; }
-	rm -f "$XSD"
+	tools/release/check-appinfo.sh
 else
-	echo "warning: xmllint not found, appinfo/info.xml was not checked against the app store schema" >&2
+	require "xmllint not found, appinfo/info.xml was not checked against the app store schema"
+fi
+
+# The node version of .nvmrc (and of the CI image): another version may
+# build other bytes.
+NODE_WANTED=$(tr -d ' \n' < .nvmrc)
+NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
+if [ "$NODE_MAJOR" != "$NODE_WANTED" ]; then
+	require "Node.js $NODE_MAJOR is running, .nvmrc names $NODE_WANTED; the archive may differ from the CI build"
+fi
+
+if [ "$UNRELEASED" = 0 ]; then
+	# Every migration is frozen in ReleasedMigrationsTest::RELEASED with its
+	# checksum before a build of it reaches an instance: a migration that an
+	# instance ran is never run there again, so a later change would reach
+	# new installations only.
+	RELEASED_TEST=tests/Unit/Migration/ReleasedMigrationsTest.php
+	for migration in lib/Migration/Version*.php; do
+		[ -e "$migration" ] || continue
+		file=$(basename "$migration")
+		listed=$(sed -n "s/^[[:space:]]*'$file' => '\([0-9a-f]\{64\}\)',.*/\1/p" "$RELEASED_TEST")
+		if [ -z "$listed" ]; then
+			echo "$file is not listed in RELEASED of $RELEASED_TEST; add it with its checksum ($(sha256sum "$migration" | cut -d' ' -f1)) before this version reaches an instance" >&2
+			exit 1
+		fi
+		if [ "$listed" != "$(sha256sum "$migration" | cut -d' ' -f1)" ]; then
+			echo "$file differs from its checksum in $RELEASED_TEST: a released migration must not change" >&2
+			exit 1
+		fi
+	done
 fi
 
 # A final version is built from its tag only, with its CHANGELOG entry.
-if [[ "$VERSION" != *-* ]]; then
-	if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-		echo "the working tree has changes; a release is built from a clean checkout" >&2
+if [ "$FINAL" = 1 ]; then
+	if [ -n "$(git status --porcelain)" ]; then
+		git status --porcelain >&2
+		echo "the working tree has changes or untracked files; a release is built from a clean checkout" >&2
 		exit 1
 	fi
 	if [ "$(git tag --points-at HEAD | grep -Fx "v$VERSION" || true)" = "" ]; then
@@ -83,6 +152,9 @@ if [[ "$VERSION" != *-* ]]; then
 	fi
 fi
 
+# The archive holds the committed state of these paths (git archive HEAD).
+PACKAGED=(appinfo lib templates img l10n LICENSE LICENSES REUSE.toml README.md CHANGELOG.md openapi.json)
+
 # Times in the archive: those of the last commit (reproducible builds)
 SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 export SOURCE_DATE_EPOCH
@@ -91,13 +163,21 @@ OUT="$ROOT/build/release"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
-npm ci --no-audit --no-fund >/dev/null
+npm ci --ignore-scripts --no-audit --no-fund >/dev/null
 rm -rf js css
 npm run build >/dev/null
+# The translations of the archive are the committed ones; they must be
+# what the sources generate (as checked in the CI job "node").
 npm run l10n >/dev/null
+if [ -n "$(git status --porcelain -- l10n)" ]; then
+	git status --porcelain -- l10n >&2
+	echo "l10n/ is not up to date: run 'npm run l10n' and commit the result" >&2
+	exit 1
+fi
 
 mkdir -p "$STAGE/$APP_ID" "$OUT"
-cp -r appinfo lib templates img js css l10n LICENSE LICENSES REUSE.toml README.md CHANGELOG.md openapi.json "$STAGE/$APP_ID/"
+git archive --format=tar HEAD -- "${PACKAGED[@]}" | tar -x -C "$STAGE/$APP_ID"
+cp -r js css "$STAGE/$APP_ID/"
 # Source maps are not needed at runtime; the license files of bundled
 # third-party code (*.license) stay.
 find "$STAGE/$APP_ID/js" -name '*.map' -delete
@@ -117,6 +197,12 @@ if [ ! -s "$STAGE/$APP_ID/js/third-party-licenses.txt" ]; then
 	echo "js/third-party-licenses.txt is missing; the build writes it (vite.config.ts)" >&2
 	exit 1
 fi
+# The fonts and C++ libraries inside the Verovio module, which the build
+# sees as one npm package (everything below the header of the file)
+{
+	printf '\n%s\n\n' "$(printf -- '-%.0s' $(seq 72))"
+	sed '1,/^$/d' tools/release/verovio-notices.txt
+} >> "$STAGE/$APP_ID/js/third-party-licenses.txt"
 
 # Refuse to package anything internal or development-only.
 for forbidden in _intern node_modules tests src tools vendor-bin docs .github; do
@@ -126,25 +212,18 @@ for forbidden in _intern node_modules tests src tools vendor-bin docs .github; d
 	fi
 done
 
-if [ "$SIGN" = 1 ]; then
-	php "$OCC" integrity:sign-app --privateKey="$KEY" --certificate="$CERT" --path="$STAGE/$APP_ID"
+# Every file of the archive with its copyright and license (REUSE)
+if command -v reuse >/dev/null; then
+	reuse --root "$STAGE/$APP_ID" lint --quiet || {
+		reuse --root "$STAGE/$APP_ID" lint >&2 || true
+		echo "reuse lint fails for the content of the archive" >&2
+		exit 1
+	}
+else
+	require "reuse not found, the content of the archive was not checked with reuse lint"
 fi
 
 ARCHIVE="$OUT/$APP_ID-$VERSION.tar.gz"
-tar -C "$STAGE" --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --mode='u+rwX,go+rX,go-w' \
-	--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf - "$APP_ID" | gzip -n -9 > "$ARCHIVE"
+pack_archive "$STAGE" "$APP_ID" "$SOURCE_DATE_EPOCH" "$ARCHIVE"
 echo "archive: $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
 sha256sum "$ARCHIVE"
-
-if [ "$SIGN" = 1 ]; then
-	SIGNATURE="$STAGE/archive.sig"
-	openssl dgst -sha512 -sign "$KEY" -out "$SIGNATURE" "$ARCHIVE"
-	# The app store checks the signature with the public key of the certificate
-	openssl x509 -in "$CERT" -pubkey -noout > "$STAGE/cert.pub"
-	openssl dgst -sha512 -verify "$STAGE/cert.pub" -signature "$SIGNATURE" "$ARCHIVE" >/dev/null || {
-		echo "the signature does not match the certificate: wrong key or certificate?" >&2
-		exit 1
-	}
-	echo "signature (paste into the app store upload form):"
-	openssl base64 -in "$SIGNATURE"
-fi
