@@ -380,7 +380,7 @@ function alsoOnText(module: ModuleInfo): string {
 			<details class="module-settings__fold">
 				<summary>
 					{{ t('cantoria', 'Presets') }}
-					<span class="module-settings__muted">{{ t('cantoria', '(set the same switches as the choice above, without the sharing)') }}</span>
+					<span class="module-settings__muted">{{ t('cantoria', '(older combinations; they do not switch on the sharing with choir members and the public)') }}</span>
 				</summary>
 				<ul class="module-settings__presets">
 					<li v-for="preset in settings.presets" :key="preset.key">

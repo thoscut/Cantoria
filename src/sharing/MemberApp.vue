@@ -581,7 +581,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiArrowUp" />
 								</template>
-								{{ t('cantoria', 'Other pieces ({count})', { count: links.length - 1 }) }}
+								{{ t('cantoria', 'All pieces ({count})', { count: links.length }) }}
 							</NcButton>
 							<Attribution :credits="selected.credits ?? []" :notices="selected.notices ?? []" />
 							<NcNoteCard v-if="selected.note" type="info" class="member-app__note">

@@ -247,14 +247,14 @@ onMounted(load)
 				:label="t('cantoria', 'Valid until (at most six months)')" />
 			<NcTextArea v-model="note"
 				:label="t('cantoria', 'Note (optional)')"
-				:helper-text="t('cantoria', 'The choir members see this note with each piece, also with links that exist already. Empty: they keep their note.')"
+				:helper-text="t('cantoria', 'The choir members see this note with each piece, also with links that exist already. If the field stays empty, the links keep their note.')"
 				resize="vertical"
 				rows="3" />
 			<NcCheckboxRadioSwitch v-if="scansOffered" v-model="withScans" type="switch">
 				{{ t('cantoria', 'Include the scans (PDF) where the rights allow it, also with links that exist already') }}
 			</NcCheckboxRadioSwitch>
 			<p v-if="offlineKnown" class="action-dialog__hint">
-				{{ t('cantoria', 'Where it says "Available without a network", the singers can practise the piece on the train, too.') }}
+				{{ t('cantoria', 'Where it says "Available without a network", the singers can practise the piece without a network, too (new: not yet tested on every phone and browser).') }}
 			</p>
 		</template>
 		<div v-else-if="result" class="programme-share__result" role="status">

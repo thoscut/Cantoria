@@ -70,6 +70,26 @@ describe('German translations', () => {
 		expect(wrong).toEqual([])
 	})
 
+	// A piece is kept on a device, never saved there: saving is the button of
+	// a form (glossary.md, U47). The guides follow the same rule (docs.test.ts).
+	it('keep pieces on a device instead of saving them', () => {
+		const saved = /\b([Gg]e)?[Ss]peicher(e|n|t|te|ten|st)\b/
+		const wrong = [...Object.entries(german.singular), ...Object.entries(german.plural)]
+			.filter(([source, value]) => /\bke(ep|eps|pt)\b/i.test(source) && /device|browser|piece/i.test(source) && !/\bsav/i.test(source)
+				&& texts(value).some((text) => saved.test(text)))
+			.map(([source]) => source)
+		expect(wrong).toEqual([])
+	})
+
+	it('address the reader with Sie in the Sie version', () => {
+		// a single text serves du and Sie; it must not say du (U47)
+		const du = /\b(du|dich|dir|dein(e[mnrs]?)?)\b|\b(Teile|Wähle|Öffne|Nimm|Speichere|Behalte|Prüfe|Lies)\b(?! (dich|Sie))/
+		const wrong = Object.entries(german.singular)
+			.filter(([, value]) => typeof value === 'string' && du.test(value))
+			.map(([source]) => source)
+		expect(wrong).toEqual([])
+	})
+
 	// Plain language (guideline 11): a text over 200 characters is hard to
 	// take in at once; it belongs into the guide behind a link. The texts
 	// that are that long today may stay or get shorter, no new ones come.

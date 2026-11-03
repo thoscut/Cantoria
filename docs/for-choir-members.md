@@ -19,7 +19,10 @@ with the choir. You only need a browser, no app. The details are in the
    the order of the programme. **New** marks what was added since your last
    visit in this browser. Choose one; the notes appear below (on a phone) or
    beside the list (on a large screen).
-3. **Other pieces** below the title takes you back to the list.
+3. **All pieces** below the title takes you back to the list.
+4. **Stage view** shows only the notes, on the whole screen where the
+   browser can, for the rehearsal; **Leave the stage view** or Escape ends
+   it.
 
 ## Practising your voice
 
@@ -79,6 +82,10 @@ your phone, please tell the conductor.
 | "Show my pitch" or "Record myself" does not work | Allow the browser to use the microphone for this page. |
 
 ## Text for the conductor to send
+
+After **Share with the choir …** the app writes a message of its own with
+the last day and the links, which you can change before copying it. This
+text is longer:
 
 > Hello everyone, the pieces for the next concert are in Cantoria under
 > "Shared with me": [link]. Sign in with your choir account, choose your

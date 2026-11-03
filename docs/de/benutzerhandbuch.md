@@ -731,13 +731,21 @@ Stück wie für einen Ausschnitt.
 **Links** in der Navigation zeigt jeden aktiven Link mit seinem Kreis
 (**Intern**, **Für Chormitglieder**, **Öffentlich**), mit dem, was er teilt
 (**Ganzes Stück** oder die Takte, dazu **mit Scan (PDF)**), seiner
-Gültigkeit und der Zahl der Aufrufe; **Link widerrufen** sperrt einen Link
-sofort für alle. **Link verlängern** gibt ihm einen neuen letzten Tag
-(höchstens sechs Monate ab heute). Der Link behält seine Adresse: Wer ihn
-per Nachricht bekommen hat, kann ihn weiter nutzen, und was Chormitglieder
-ohne Netz verfügbar gemacht haben, bleibt auf ihren Geräten. Verlängern
-können die Person, die den Link erstellt hat, und die Rolle „Bestand“; ein
-widerrufener Link lässt sich nicht verlängern.
+Gültigkeit und der Zahl der Aufrufe; *„Endet in … Tagen“* warnt in der
+letzten Woche. **Link widerrufen** sperrt einen Link sofort für alle.
+**Verlängern** gibt ihm einen neuen letzten Tag; der Dialog nennt den
+spätesten Tag und den Grund: höchstens sechs Monate ab heute, höchstens ein
+Jahr nach dem Anlegen des Links und nie über das Ende der Lizenz hinaus, die
+das Stück freigibt. Der Link behält seine Adresse: Wer ihn per Nachricht
+bekommen hat, kann ihn weiter nutzen, und was Chormitglieder ohne Netz
+verfügbar gemacht haben, bleibt auf ihren Geräten. Links, die in den
+letzten 30 Tagen abgelaufen sind, bleiben unter **In den letzten 30 Tagen
+abgelaufen** in der Liste, mit *„Abgelaufen am …“*; Verlängern öffnet einen
+solchen Link wieder. Ein Link für Chormitglieder behält dabei seine Adresse,
+ein öffentlicher Link bekommt eine neue, die du noch einmal weitergibst.
+Verlängern können die Person, die den Link erstellt hat, und die Rolle
+„Bestand“; ein widerrufener Link und einer, der vor mehr als einem Jahr
+angelegt wurde, lassen sich nicht verlängern.
 
 #### So teilst du ein ganzes Programm mit dem Chor
 
@@ -747,22 +755,36 @@ Stück einzeln zu teilen:
 1. Öffne das Konzert oder die Notenliste unter **Konzerte**.
 2. Wähle **Mit dem Chor teilen …**.
 3. Der Dialog prüft die Rechte jedes Stücks und sagt bei jedem, was
-   passiert: *Ein neuer Link für die Chormitglieder*, *Schon geteilt bis …:
-   Der Link wird verlängert und behält seine Adresse* oder warum es nicht
-   geht. Stücke, die sich teilen lassen, sind angehakt; nimm weg, was der
-   Chor noch nicht braucht.
+   passiert: *„Ein neuer Link für die Chormitglieder.“*, *„Schon geteilt bis
+   …: Der Link wird bis … verlängert und behält seine Adresse.“*, *„Schon
+   geteilt bis …; das bleibt so.“* (der Link gilt länger als der gewählte
+   Tag) oder warum es nicht geht. Auch ein Link, der vor Kurzem abgelaufen
+   ist, wird verlängert. Es zählt nur ein Link für das ganze Stück: Ein Link
+   mit Stimme, Strophen oder Tempo bleibt, wie er ist, und das Stück bekommt
+   einen neuen Link. Stücke, die sich teilen lassen, sind angehakt; nimm
+   weg, was der Chor noch nicht braucht.
 4. **Gültig bis** steht auf zwei Wochen nach dem Konzert (höchstens sechs
-   Monate). Eine **Notiz** sehen die Chormitglieder bei jedem neuen Link.
+   Monate). Endet eine Lizenz früher oder wurde ein Link vor fast einem Jahr
+   angelegt, sagt das Stück, bis wann es höchstens geteilt ist. Die
+   **Notiz** sehen die Chormitglieder bei jedem Stück, auch bei schon
+   bestehenden Links; bleibt das Feld leer, behalten die Links ihre Notiz.
    Wo die Rechte es erlauben, gibt **Die Scans (PDF) mitgeben, wo die Rechte
-   es erlauben** auch die Scans mit.
+   es erlauben, auch bei schon bestehenden Links** auch die Scans mit.
 5. Wähle **… Stücke teilen**. Am Ende steht, wie viele Links neu sind, wie
-   viele verlängert wurden und welche Stücke aus welchem Grund nicht geteilt
-   sind.
+   viele verlängert wurden und wie viele schon länger geteilt sind; unter
+   *„Für kürzere Zeit geteilt:“* stehen die Stücke, die früher enden, mit
+   dem Grund, und welche Stücke aus welchem Grund nicht geteilt sind.
+6. Darunter steht die **Nachricht an den Chor**: Titel und letzter Tag, die
+   Adresse von **Mit mir geteilt**, die Anmeldung mit dem Konto eurer
+   Nextcloud und die Anleitung für Chormitglieder, ein Satz zur „Schleife“,
+   wo ein Stück spielt, und was die Chormitglieder mit den Noten dürfen.
+   Ändere den Text nach Belieben, etwa die Anrede, und wähle **Nachricht an
+   den Chor kopieren**.
 
 Jedes Stück wird geteilt, als hättest du es einzeln geteilt: als ganzes
 Stück, mit denselben Rechten und demselben Eintrag im Änderungsprotokoll.
 Steht bei einem Stück *Ohne Netz verfügbar.*, können die Chormitglieder es
-auf ihrem Gerät behalten und auch im Zug üben. Unter **Mit mir geteilt**
+auf ihrem Gerät behalten und auch ohne Netz üben. Unter **Mit mir geteilt**
 finden die Chormitglieder die Stücke unter Titel und Datum des Programms,
 in seiner Reihenfolge.
 
@@ -1125,10 +1147,12 @@ Hochformat, klappt die Programmliste weg, sobald ein Stück offen ist;
 Für die Probe und die Bühne:
 
 - **Bühnenansicht** zeigt nur das Stück, wo der Browser es kann auf dem
-  ganzen Bildschirm, und hält den Bildschirm wach. Ein zweiter Druck auf
-  **Bühnenansicht** oder die Escape-Taste beendet sie.
-- **Nächstes** steht in der Leiste, die oben bleibt, und am Ende der Noten,
-  **Vorheriges: …** und **Nächstes: …** unter dem Titel.
+  ganzen Bildschirm, und hält den Bildschirm wach. **Bühnenansicht
+  verlassen** in der Leiste oben, ein zweiter Druck auf **Bühnenansicht**
+  oder die Escape-Taste beendet sie.
+- **Nächstes** steht in der Leiste, die oben bleibt (ein Screenreader nennt
+  das nächste Stück); **Vorheriges: …** steht unter dem Titel. Ein
+  Programmpunkt ohne Noten hat stattdessen am Ende **Nächstes: …**.
 - Ein Fußpedal zum Blättern (Bild ab, Bild auf) blättert System für System.
   Nach dem letzten System sagt Bild ab das nächste Stück an und setzt den
   Fokus auf **Nächstes: …**; ein weiterer Druck öffnet es.
@@ -1904,7 +1928,7 @@ markiert; **Alles auf diesem Gerät löschen** vergisst auch das.
    direkt). Die Noten erscheinen unter der Liste, auf einem breiten
    Bildschirm daneben, bei einem ganzen Stück alle seine Seiten. Darüber
    stehen die Notiz der Chorleitung, die Gültigkeit und was erlaubt ist
-   (**Abspielen: ja**, **Übe-Dateien: ja**, **mit Scan (PDF)**). **Andere
+   (**Abspielen: ja**, **Übe-Dateien: ja**, **mit Scan (PDF)**). **Alle
    Stücke (…)** unter dem Titel führt auf dem Handy zurück zur Liste.
 2. **Abspielen**, **Pause** und **Stopp**, **Kleiner** und **Größer** (die
    Größe; dein Browser merkt sie sich für das nächste Stück) und **Stimme,

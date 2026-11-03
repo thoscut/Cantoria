@@ -63,19 +63,20 @@ What the app does:
 - **Without a network**, some states (kept, locked, checked) are shown as
   text and announced, but they have not yet been tried with screen readers
   on phones.
-- The **stage view** of the concert folder fills the screen. While it does,
-  dialogs, selection lists and pop-ups of the page (for example "Discard
-  recording?" or the choice of the highlighted voice) open behind it and
-  cannot be reached with the keyboard; leave the stage view first. On an
-  iPhone the browser does not offer a full screen for the page, so the stage
-  view stays an enlarged view inside the browser.
-- The **scan** opens in a frame. On phones and tablets the frame is small,
-  and zooming and scrolling inside it depend on the browser; open the scan in
-  a tab of its own instead. Not yet checked on real devices.
+- The **stage view** (in the concert folder and under "Shared with me")
+  fills the screen; dialogs and selection lists of the page open on top of
+  it and keep the focus. On an iPhone the browser does not offer a full
+  screen for the page, so the stage view stays an enlarged view inside the
+  browser.
+- The **scan** opens in a view of its own on a phone. On a tablet and on a
+  larger screen it opens in a frame, where zooming and scrolling depend on
+  the browser; open the scan in a tab of its own instead. How the browsers
+  on Android show a PDF in a frame has not yet been checked on real
+  devices.
 - In the **Windows contrast mode** the browser removes shadows and replaces
-  background colours. The selected copy in the card list on a phone is then
-  hard to tell from the others, and components of Nextcloud inside the app
-  take the system colours in their own way.
+  background colours. The app marks the selected row and card with a frame
+  in the system colour; components of Nextcloud inside the app (buttons,
+  switches, dialogs) take the system colours in their own way.
 - **Page numbers** in printouts depend on the browser (for example Chrome
   and Edge; Firefox prints without them).
 - **Parts of Nextcloud** (navigation, file picker, dialogs, the calendar and

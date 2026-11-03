@@ -29,7 +29,7 @@ const USES: { active: (isActive: (module: string) => boolean) => boolean, label:
 	{ active: (on) => on('member_links') && on('concerts'), label: () => t('cantoria', 'sharing a programme with the choir') },
 	{ active: (on) => on('member_links'), label: () => t('cantoria', 'playback and the scan for choir members') },
 	{ active: (on) => on('member_links') && on('offline'), label: () => t('cantoria', 'pieces on the devices of choir members without a network') },
-	{ active: (on) => on('choir_handover'), label: () => t('cantoria', 'hand-over folder for the choir system') },
+	{ active: (on) => on('choir_handover'), label: () => t('cantoria', 'hand-over folder for the choir system (recordings only with a license for passing them on)') },
 	{ active: (on) => on('public_links'), label: () => t('cantoria', 'public links (after the release for publication)') },
 	{ active: (on) => on('public_links'), label: () => t('cantoria', 'playback and the scan of public links') },
 	{ active: (on) => on('public_links') && on('offline'), label: () => t('cantoria', 'public links on a device without a network'), free: true },

@@ -132,7 +132,7 @@ describe('consequences of confirming the rights', () => {
 	it('names every way out, also the newer ones (R B14)', () => {
 		const [sentence] = confirmConsequences('public_domain', false, all)
 		for (const way of ['concert folder', 'on the device without a network', 'sharing a programme with the choir', 'playback and the scan for choir members',
-			'devices of choir members', 'hand-over folder for the choir system', 'playback and the scan of public links', 'public links on a device',
+			'devices of choir members', 'hand-over folder for the choir system (recordings only with a license for passing them on)', 'playback and the scan of public links', 'public links on a device',
 			'public repertoire page']) {
 			expect(sentence).toContain(way)
 		}

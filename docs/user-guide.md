@@ -681,12 +681,18 @@ excerpt.
 **Links** in the navigation lists every active link with its circle
 (**Internal**, **For choir members**, **Public**), what it shares
 (**Whole piece** or the measures, and **with scan (PDF)**), validity and
-number of calls; **Revoke link** stops a link at once for everyone.
-**Extend link** gives it a new last day (at most six months from today).
-The link keeps its address: whoever got it by message can go on using it,
-and what choir members made available without a network stays on their
-devices. The creator of the link and the catalog librarian can extend it; a
-revoked link cannot be extended.
+number of calls; *"Ends in … days"* warns in the last week. **Revoke link**
+stops a link at once for everyone. **Extend** gives it a new last day; the
+dialog names the latest day and why: at most six months from today, at most
+a year after the link was made, and never past the end of the license that
+releases the piece. The link keeps its address: whoever got it by message
+can go on using it, and what choir members made available without a network
+stays on their devices. Links that ended in the last 30 days stay in the
+list under **Ended in the last 30 days**, with *"Ended on …"*; extending one
+opens it again. A link for choir members keeps its address, a public link
+gets a new one that you pass on again. The creator of the link and the
+catalog librarian can extend it; a revoked link, or one made more than a
+year ago, cannot be extended.
 
 #### Sharing a whole programme with the choir
 
@@ -696,20 +702,35 @@ sharing each piece on its own:
 1. Open the concert or song list under **Concerts**.
 2. Choose **Share with the choir …**.
 3. The dialog checks the rights of each piece and says for each what
-   happens: *A new link for the choir members*, *Already shared until …:
-   the link is extended and keeps its address*, or why not. The pieces that
-   can be shared are ticked; untick what the choir does not need yet.
+   happens: *"A new link for the choir members."*, *"Already shared until …:
+   the link is extended to … and keeps its address."*, *"Already shared
+   until …; it stays so."* (the link lasts longer than the day you chose), or
+   why not. A link that ended not long ago is extended, too. Only a link for
+   the whole piece counts: a link with a voice, verses or a tempo stays as
+   it is, and the piece gets a new link. The pieces that can be shared are
+   ticked; untick what the choir does not need yet.
 4. **Valid until** is set to two weeks after the concert (at most six
-   months). The choir members see a **Note** with each new link. Where the
-   rights allow it, **Include the scans (PDF) where the rights allow it**
-   adds the scans.
+   months). Where a license ends earlier, or a link was made almost a year
+   ago, the piece says until when it is shared at most. The choir members
+   see the **Note** with each piece, also with links that exist already; if
+   the field stays empty, the links keep their note. Where the rights allow
+   it, **Include the scans (PDF) where the rights allow it, also with links
+   that exist already** adds the scans.
 5. Choose **Share … pieces**. At the end the dialog says how many links are
-   new, how many were extended, and which pieces were not shared and why.
+   new, how many were extended and how many were already shared for longer,
+   lists under *"Shared for a shorter time:"* the pieces that end earlier
+   and why, and which pieces were not shared and why.
+6. Below that stands the **Message to the choir**: the title and the last
+   day, the address of **Shared with me**, the sign-in with the account of
+   your Nextcloud and the guide for choir members, a sentence on "Loop"
+   where a piece plays, and what the choir members may do with the scores.
+   Change the text as you like, for example the greeting, and choose **Copy
+   message to the choir**.
 
 Each piece is shared as if you shared it on its own: as the whole piece,
 with the same rights and the same entry in the audit log. Where a piece
 says *Available without a network.*, the choir members can keep it on
-their device and practise it on the train, too. Under **Shared with me**
+their device and practise it without a network, too. Under **Shared with me**
 the choir members find the pieces under the title and date of the
 programme, in its order.
 
@@ -1051,10 +1072,11 @@ an iPad upright, the programme list folds away once a piece is open;
 For the rehearsal and the stage:
 
 - **Stage view** shows only the piece, on the whole screen where the
-  browser can, and keeps the screen on. Press **Stage view** again or
-  Escape to leave it.
-- **Next** is in the bar that stays at the top and at the end of the notes;
-  **Previous: …** and **Next: …** are below the title.
+  browser can, and keeps the screen on. **Leave the stage view** in the bar
+  at the top, **Stage view** again or Escape leaves it.
+- **Next** is in the bar that stays at the top (a screen reader names the
+  next piece); **Previous: …** is below the title. A programme item without
+  notes has **Next: …** at its end instead.
 - A page-turn pedal (Page Down, Page Up) turns system by system. After the
   last system Page Down announces the next piece and puts the focus on
   **Next: …**; one more press opens it.
@@ -1784,7 +1806,7 @@ device** forgets it, too.
    notes appear below the list, on a wide screen beside it, for a whole
    piece all pages of it. Above them are the note of the conductor, the
    validity and what is allowed (**Playback: yes**, **Practice files:
-   yes**, **with scan (PDF)**). **Other pieces (…)** below the title takes
+   yes**, **with scan (PDF)**). **All pieces (…)** below the title takes
    you back to the list on a phone.
 2. **Play**, **Pause** and **Stop**, **Smaller** and **Larger** (the size;
    your browser remembers it for the next piece) and **Voice, measures and
