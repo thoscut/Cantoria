@@ -696,31 +696,50 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertStringContainsString("connect-src 'self'", $off->getContentSecurityPolicy()->buildPolicy());
 		self::assertStringNotContainsString('http', $off->getContentSecurityPolicy()->buildPolicy(), 'no other server');
 
+		// With the module on, the built worker; without a build of js/ (the CI job of the unit
+		// tests) there is none. What goes into the script is checked below without a build.
 		$built = __DIR__ . '/../../../js/cantoria-offline-worker.js';
 		foreach (['both on' => [], 'only the shared pages' => [Modules::CONCERT_FOLDER]] as $case => $without) {
 			$on = $controller($without)->worker();
 			if (is_file($built)) {
 				self::assertSame(Http::STATUS_OK, $on->getStatus(), $case);
-				self::assertStringContainsString('"0.15.0"', $on->render(), $case . ': the version names the cache of the scripts');
-				self::assertStringNotContainsString('__CANTORIA_VERSION__', $on->render(), $case);
-				self::assertStringContainsString('"/custom_apps/cantoria/"', $on->render(), $case . ': where its scripts are');
-				self::assertStringNotContainsString('__CANTORIA_APP_PATH__', $on->render(), $case);
+				self::assertSame(OfflineController::fillWorker((string)file_get_contents($built), '0.15.0', '/custom_apps/cantoria/'), $on->render(), $case);
+				self::assertStringNotContainsString('__CANTORIA_', $on->render(), $case);
 			} else {
 				self::assertSame(Http::STATUS_NOT_FOUND, $on->getStatus(), $case . ': without a build there is no worker');
 			}
 		}
+	}
 
-		// a path that is not a plain path of this server never goes into the script
-		if (is_file($built)) {
-			foreach (['"+alert(1)+"', 'https://elsewhere.example/cantoria/', ''] as $odd) {
-				$oddUrls = $this->createStub(IURLGenerator::class);
-				$oddUrls->method('linkTo')->willReturn($odd);
-				$script = (new OfflineController($this->createStub(IRequest::class), $this->modulesWithout([]), $apps, $this->l10n(), $oddUrls))
-					->worker()->render();
-				self::assertStringNotContainsString('alert', $script, $odd);
-				self::assertStringNotContainsString('elsewhere', $script, $odd);
-				self::assertStringNotContainsString('__CANTORIA_APP_PATH__', $script, $odd);
-			}
+	/**
+	 * The version and the path of the app go into the worker, a path that is not a plain path
+	 * of this server never does (T24): checked on a fixed text with both placeholders, so it
+	 * runs without a build of js/.
+	 */
+	public function testTheOfflineWorkerGetsOnlyAPlainPathOfThisServer(): void {
+		$built = "const VERSION = '__CANTORIA_VERSION__'\nconst APP_PATH = '__CANTORIA_APP_PATH__' as string\n"
+			. "importScripts(APP_PATH + 'js/a.js') // __CANTORIA_APP_PATH__ __CANTORIA_VERSION__\n";
+
+		$script = OfflineController::fillWorker($built, '0.15.0', '/custom_apps/cantoria/');
+		self::assertStringContainsString("const VERSION = '0.15.0'", $script, 'the version names the cache of the scripts');
+		self::assertStringContainsString("const APP_PATH = '/custom_apps/cantoria/'", $script, 'where its scripts are');
+		self::assertStringContainsString('// /custom_apps/cantoria/ 0.15.0', $script, 'every placeholder');
+		self::assertStringNotContainsString('__CANTORIA_', $script);
+		self::assertStringContainsString("const APP_PATH = '/apps/cantoria/'", OfflineController::fillWorker($built, '0.15.0', '/apps/cantoria/'));
+		self::assertStringContainsString("const VERSION = '0.17.0-dev.2'", OfflineController::fillWorker($built, '0.17.0-dev.2', '/apps/cantoria/'));
+
+		foreach (["'+alert(1)+'", '"+alert(1)+"', 'https://elsewhere.example/cantoria/', '//elsewhere.example/cantoria/', "/apps/cantoria/\n", "/apps/cantoria/'\n", '/apps/<script>/', ''] as $odd) {
+			$script = OfflineController::fillWorker($built, '0.15.0', $odd);
+			self::assertStringContainsString("const APP_PATH = ''", $script, var_export($odd, true));
+			self::assertStringNotContainsString('alert', $script, $odd);
+			self::assertStringNotContainsString('elsewhere', $script, $odd);
+			self::assertStringNotContainsString('<script>', $script, $odd);
+			self::assertStringNotContainsString('__CANTORIA_', $script, $odd);
+		}
+		foreach (["0.15.0'+alert(1)+'", "0.15.0\n", ''] as $odd) {
+			$script = OfflineController::fillWorker($built, $odd, '/apps/cantoria/');
+			self::assertStringContainsString("const VERSION = ''", $script, var_export($odd, true));
+			self::assertStringNotContainsString('alert', $script, $odd);
 		}
 	}
 
