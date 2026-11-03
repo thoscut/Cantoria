@@ -54,6 +54,7 @@ use OCA\Cantoria\Settings\Admin;
 use OCA\Settings\Service\AuthorizedGroupService;
 use OCP\AppFramework\Http;
 use OCP\Constants;
+use OCP\Group\ISubAdmin;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
@@ -211,7 +212,8 @@ try {
 	$l = Server::get(IFactory::class)->get(Application::APP_ID, 'en');
 	$controller = fn (string $accountUid): SettingsController => new SettingsController(Server::get(IRequest::class), $accountUid,
 		$roles, $settings, Server::get(ArchiveAccess::class), Server::get(Modules::class), Server::get(RepertoireService::class),
-		Server::get(FullBackupService::class), Server::get(AuditLog::class), $groups, $l, Server::get(LoggerInterface::class));
+		Server::get(FullBackupService::class), Server::get(AuditLog::class), $groups, $l, Server::get(LoggerInterface::class),
+		Server::get(ISubAdmin::class), Server::get(IUserManager::class));
 	$refused = $controller($sharedUid)->access();
 	$check('an account without the settings page is refused', $refused->getStatus() === Http::STATUS_FORBIDDEN);
 	if ($delegation !== null) {

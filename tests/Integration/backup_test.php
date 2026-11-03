@@ -32,6 +32,8 @@ require __DIR__ . '/harness.php';
 
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\Event;
+use OCA\Cantoria\Db\MirrorFile;
+use OCA\Cantoria\Db\MirrorFileMapper;
 use OCA\Cantoria\Exception\UserFacingException;
 use OCA\Cantoria\Service\EventService;
 use OCA\Cantoria\Service\FolderBookService;
@@ -120,6 +122,16 @@ try {
 			Server::get(StateService::class)->recordSync([], time(), $uid);
 		}
 		$check('a revision of a version exists', $dump($db, 'cantoria_states') !== []);
+		// A file of the print station's mirror folder (part of the backup since format 2);
+		// recorded directly, as the mirror needs a target folder with files
+		$mirrorFile = new MirrorFile();
+		$mirrorFile->setMirror('print');
+		$mirrorFile->setName('backup-test.pdf');
+		$mirrorFile->setFileId(1);
+		$mirrorFile->setSha256(hash('sha256', 'backup test'));
+		$mirrorFile->setCopyId($first->getId());
+		$mirrorFile->setWritten(time());
+		Server::get(MirrorFileMapper::class)->insert($mirrorFile);
 	}
 
 	$before = [];
