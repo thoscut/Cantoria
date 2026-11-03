@@ -1485,9 +1485,13 @@ lautet der Vorschlag „unbekannt“ und nennt die fehlende Rolle. Für ein
 Volkslied oder eine Melodie ohne bekannte Urheberschaft stellst du
 **Melodie** auf **Traditionell** und **Text** auf **Traditionell** oder
 **Ohne Text** (im Abschnitt **Rechte**, Modul „Schutzfristen“). Wähle
-„Traditionell“ nur mit Beleg und notiere die Quelle unter **Notizen**. Eine
-Fassung ohne Personen, deren Melodie und Text beide traditionell sind, wird
-als gemeinfrei vorgeschlagen.
+„Traditionell“ nur mit Beleg und notiere die Quelle unter **Notizen**. Die
+meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz:
+Bei traditioneller Melodie braucht der Vorschlag eine Person mit der Rolle
+**Bearbeitung**, außer die Art der Fassung ist **Original** (ein
+unbearbeiteter Satz); sonst lautet er „unbekannt“. Eine Fassung ohne
+Personen, deren Melodie und Text beide traditionell sind und deren Art
+**Original** ist, wird als gemeinfrei vorgeschlagen.
 
 **Bestätigen** als gemeinfrei gegen einen Vorschlag, der nicht „gemeinfrei“
 lautet, bleibt möglich: Der Dialog zeigt die Begründung und bittet dich

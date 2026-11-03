@@ -939,7 +939,10 @@ would say `free` becomes `unknown` with reason `composer_missing` or
 `lyricist_missing` when no person has the role `composer` or `lyricist` and
 the part is not marked `traditional` (or `none`). A version without persons
 whose parts are both marked and that has no special case gets `free` with
-reason `traditional`. Confirming public domain against a proposal that is
+reason `traditional`. A proposal that would say `free` for a version with a
+traditional melody becomes `unknown` with reason `arranger_missing` when no
+person has the role `arranger` and the kind of the version is not
+`original`. Confirming public domain against a proposal that is
 not `free` stays possible; the UI asks to tick that the proposal was
 checked.
 

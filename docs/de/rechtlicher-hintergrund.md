@@ -74,13 +74,23 @@ vertraglich binden. Darum bewertet die App die **Fassung**, nicht das Werk.
 
 ### Volkslieder und traditionelle Melodien
 
-Eine Melodie ohne bekannte Urheberschaft ist frei. Eine **unwesentliche
+Eine Melodie ohne bekannte Urheberschaft ist nicht schon deshalb frei. Das
+Recht an einem anonymen Werk erlischt 70 Jahre nach seiner Veröffentlichung,
+oder nach seiner Schaffung, wenn es nicht veröffentlicht wurde (§ 66 Abs. 1
+UrhG). Eine traditionelle Melodie ist also frei, wenn ihre Entstehung oder
+erste Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist,
+zum Beispiel durch eine alte Volksliedsammlung. Viele „Volksweisen“ in
+Sammlungen des 20. Jahrhunderts sind in Wahrheit Kompositionen mit
+bekanntem oder ermittelbarem Urheber. Eine **unwesentliche
 Bearbeitung** eines nicht geschützten Werks der Musik ist keine eigene
 Bearbeitung (§ 3 Satz 2 UrhG), etwa das bloße Aussetzen einer Melodie mit
 einfachen Akkorden. Ein ausgearbeiteter Chorsatz ist dagegen meist eine
 Bearbeitung mit eigenem Schutz. Markiert Melodie oder Text nur mit Beleg als
 „traditionell“, zum Beispiel aus einer Volksliedsammlung, und erfasst die
-Bearbeitung trotzdem.
+Bearbeitung trotzdem. Die App schlägt eine traditionelle Melodie nur dann
+als gemeinfrei vor, wenn die Bearbeitung erfasst ist oder die Art der
+Fassung „Original“ lautet (ein unbearbeiteter Satz); sonst lautet der
+Vorschlag „unbekannt“.
 
 ## Fotokopien von Noten
 

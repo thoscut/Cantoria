@@ -72,12 +72,22 @@ work.
 
 ### Folk songs and traditional melodies
 
-A melody without a known author is free. An **insignificant arrangement**
+A melody without a known author is not free for that reason alone. The
+right in an anonymous work ends 70 years after its publication, or after
+its creation if it was not published (§ 66 (1) UrhG). A traditional melody
+is therefore free when its creation or first publication lies more than 70
+years back and that is documented, for example by an old folk song
+collection. Many "folk tunes" in collections of the 20th century are in
+truth compositions whose author is known or can be found. An
+**insignificant arrangement**
 of a musical work that is not protected is no arrangement of its own (§ 3
 sentence 2 UrhG), such as merely setting a melody with simple chords. A
 worked-out choral setting usually is an arrangement with protection of its
 own. Mark melody or text as "traditional" only with evidence, for example a
-folk song collection, and still record the arranger.
+folk song collection, and still record the arranger. The app suggests a
+traditional melody as public domain only when the arranger is recorded or
+the kind of version is "Original" (an unarranged setting); otherwise the
+suggestion is "unknown".
 
 ## Photocopies of sheet music
 

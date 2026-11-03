@@ -1390,8 +1390,13 @@ is missing, the suggestion says "unknown" and names the missing role. For a
 folk song or a melody without known author, set **Melody** to
 **Traditional**, and **Text** to **Traditional** or **Without text** (in the
 section **Rights**, module "Protection terms"). Choose "Traditional" only
-with evidence and note the source under **Notes**. A version without persons
-whose melody and text are both traditional is suggested as public domain.
+with evidence and note the source under **Notes**. Most choral settings of
+folk songs are arrangements with a protection of their own: with a
+traditional melody, the suggestion needs someone with the role
+**Arranger** unless the kind of version is **Original** (an unarranged
+setting); otherwise it says "unknown". A version without persons whose
+melody and text are both traditional and whose kind is **Original** is
+suggested as public domain.
 
 **Confirm** public domain against a suggestion that does not say public
 domain is still possible: the dialog shows the reason and asks you to tick

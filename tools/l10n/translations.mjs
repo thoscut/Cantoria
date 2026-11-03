@@ -2806,15 +2806,15 @@ export const singular = {
 	],
 	'Melody': 'Melodie',
 	'Text': 'Text',
-	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts.': [
-		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter.',
-		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter.',
+	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
+		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
 	],
 	'Choose "Traditional" only with evidence and note it under "Notes", or "Without text" for a version without words. Otherwise the protection proposal needs a lyricist.': [
 		'Wähle „Traditionell“ nur mit Beleg und notiere ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 		'Wählen Sie „Traditionell“ nur mit Beleg und notieren Sie ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 	],
-	'Traditional (public domain)': 'Traditionell (gemeinfrei)',
+	'Traditional (no known composer)': 'Traditionell (ohne bekannte Komposition)',
 	'Without text': 'Ohne Text',
 	'Public domain in doubt': 'Gemeinfreiheit fraglich',
 	'To the catalog librarian, daily: a version confirmed as public domain no longer is by the protection proposal, after a person or life dates were changed.': 'An die Archivverwaltung, täglich: Eine als gemeinfrei bestätigte Fassung ist es nach dem Vorschlag zur Schutzfrist nicht mehr, nachdem eine Person oder Lebensdaten geändert wurden.',
@@ -2825,6 +2825,10 @@ export const singular = {
 	'No lyricist is recorded for this version. Add the lyricist under "Persons involved and protection" (tab Rights), or mark the text as traditional or the version as without text; until then unknown means protected.': [
 		'Für diese Fassung ist kein Text erfasst. Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markiere den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 		'Für diese Fassung ist kein Text erfasst. Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markieren Sie den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
+	],
+	'The melody is marked as traditional, but no arranger is recorded. Most choral settings of folk songs are arrangements with a protection of their own: add the arranger under "Persons involved and protection" (tab Rights), or set the kind of version to "Original" if the setting is unarranged; until then unknown means protected.': [
+		'Die Melodie ist als traditionell markiert, aber keine Bearbeitung ist erfasst. Die meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz: Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder setze die Art der Fassung auf „Original“, wenn der Satz unbearbeitet ist; bis dahin heißt unbekannt geschützt.',
+		'Die Melodie ist als traditionell markiert, aber keine Bearbeitung ist erfasst. Die meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz: Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder setzen Sie die Art der Fassung auf „Original“, wenn der Satz unbearbeitet ist; bis dahin heißt unbekannt geschützt.',
 	],
 	'Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.': [
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfe, dass keine Bearbeitung oder Übersetzung fehlt.',
