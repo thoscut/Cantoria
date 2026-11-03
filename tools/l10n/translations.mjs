@@ -1665,6 +1665,7 @@ export const singular = {
 	'Due date': 'Fällig am',
 	'A backup can only be restored into an empty catalog.': 'Eine Sicherung lässt sich nur in einen leeren Bestand zurückspielen.',
 	'The file is not a backup of the music archive.': 'Die Datei ist keine Sicherung des Notenarchivs.',
+	'The file contains no table of the music archive. Is it a backup of Cantoria?': 'Die Datei enthält keine Tabelle des Notenarchivs. Ist es eine Sicherung von Cantoria?',
 	'The backup was made with a newer version of the app. Please update the app first.': [
 		'Die Sicherung stammt aus einer neueren Version der App. Bitte aktualisiere zuerst die App.',
 		'Die Sicherung stammt aus einer neueren Version der App. Bitte aktualisieren Sie zuerst die App.',
@@ -2719,6 +2720,10 @@ export const singular = {
 	'The scan of this link is not available at the moment.': 'Der Scan dieses Links ist gerade nicht verfügbar.',
 	// ---- 0.10: backups outside the archive folder, delegated settings ----
 	'Music archive backups': 'Notenarchiv-Sicherungen',
+	'The backup folder %1$s is shared or no longer belongs to the account %2$s, so others could read the backups. Remove the shares of the folder, or move it away so that the app creates a new one.': [
+		'Der Sicherungsordner %1$s ist freigegeben oder gehört nicht mehr dem Konto %2$s, sodass andere die Sicherungen lesen könnten. Entferne die Freigaben des Ordners oder verschiebe ihn, damit die App einen neuen anlegt.',
+		'Der Sicherungsordner %1$s ist freigegeben oder gehört nicht mehr dem Konto %2$s, sodass andere die Sicherungen lesen könnten. Entfernen Sie die Freigaben des Ordners oder verschieben Sie ihn, damit die App einen neuen anlegt.',
+	],
 	'The folder in Nextcloud that holds the score files (for example one subfolder per binder). The app only reads files. Exports of the catalog are stored in its subfolder "_cantoria-app".': 'Der Ordner in der Nextcloud mit den Notendateien (zum Beispiel ein Unterordner je Archivmappe). Die App liest Dateien nur. Exporte des Werkverzeichnisses legt sie im Unterordner „_cantoria-app“ ab.',
 	'Backups and annual snapshots name choir members and accounts. They lie outside the archive folder, in a folder of the account that set it, which the role groups do not see unless it is shared with them.': 'Sicherungen und Jahresstände nennen Chormitglieder und Konten. Sie liegen außerhalb des Archivordners in einem Ordner des Kontos, das ihn festgelegt hat. Die Rollengruppen sehen ihn nicht, solange er nicht mit ihnen geteilt wird.',
 	'Backup folder:': 'Sicherungsordner:',
@@ -2822,6 +2827,8 @@ export const singular = {
 	// ---- 0.11: Datenschutz ----
 	'Name removed': 'Name entfernt',
 	'Personal data erased on request': 'Personenbezogene Daten auf Antrag gelöscht',
+	'Complete backup downloaded': 'Vollsicherung heruntergeladen',
+	'Accounts removed after the retention period': 'Konten nach Ablauf der Aufbewahrungsfrist entfernt',
 	'A choir member': 'Ein Chormitglied',
 	'Holder removed on {date}': 'Person wird am {date} entfernt',
 	'Before these pages go online: enter the addresses of the imprint and the privacy policy under Administration → Theming. The public pages show them; the privacy policy must name the server logs with IP addresses.': [
