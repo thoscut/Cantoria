@@ -91,6 +91,8 @@ import { measureStarts, nextPass, noteStarts } from '../score/timeline.ts'
 import { createToolkit } from '../score/toolkit.ts'
 import { voiceLabel } from '../score/voices.ts'
 import { nextZoom, storedZoom, storeZoom, ZOOM_DEFAULT, ZOOM_STEPS } from '../score/zoom.ts'
+import { LARGE_SCREEN, SMALL_SCREEN } from '../score/screen.ts'
+import { useStickyHeader } from '../stickyHeader.ts'
 import { copyText } from '../clipboard.ts'
 import { focusAfterDialog } from '../focus.ts'
 import { referenceWords } from '../labels.ts'
@@ -751,14 +753,15 @@ const playing = ref(false)
  * (PlaybackSettings): shown on a large screen, folded on a phone and on a
  * low screen, so that the score starts right below play and stop.
  */
-const COMPACT = '(max-width: 600px), (max-height: 500px)'
-const compactQuery = typeof window.matchMedia === 'function' ? window.matchMedia(COMPACT) : null
+const compactQuery = typeof window.matchMedia === 'function' ? window.matchMedia(SMALL_SCREEN) : null
 const compact = ref(compactQuery?.matches ?? false)
-const settingsShown = ref(typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 1024px) and (min-height: 640px)').matches : true)
+const settingsShown = ref(typeof window.matchMedia === 'function' ? window.matchMedia(LARGE_SCREEN).matches : true)
 /** The actions for the shown passage (text reference, link, task) */
 const placeShown = ref(false)
 /** The bar that stays at the top: following the playback keeps clear of it */
 const barElement = ref<HTMLElement | null>(null)
+// the focus stays below the bar (WCAG 2.4.11): the view scrolls inside the modal
+useStickyHeader(barElement, '.score-viewer')
 /** A recording of oneself runs, or waits unsaved */
 const recorderState = ref<RecorderState>('idle')
 
@@ -2259,7 +2262,7 @@ onBeforeUnmount(() => {
 
 /* Wide and tall enough: score, scan and review fill the rest of the window
    side by side and scroll inside, instead of the whole view scrolling */
-@media (min-width: 1024px) and (min-height: 640px) {
+@media (min-width: 1024px) and (min-height: 561px) {
 	.score-viewer__workspace {
 		flex: 1 1 0;
 		flex-wrap: nowrap;
@@ -2277,12 +2280,14 @@ onBeforeUnmount(() => {
 	}
 }
 
-/* A low screen, e.g. a phone held sideways: the bar never takes more
-   than part of the height, so that the score stays in view */
-@media (max-height: 560px) {
+/* A phone, upright or held sideways: the bar never takes more than part
+   of the height, so that the score stays in view (with room at the start
+   for the focus outline of the first button) */
+@media (max-width: 600px), (max-height: 560px) {
 	.score-viewer__playbar {
 		max-height: 45vh;
 		overflow-y: auto;
+		padding-inline-start: var(--default-grid-baseline);
 	}
 }
 

@@ -8,13 +8,18 @@
  * obscured): the scrolling content area gets a scroll padding as high as
  * the header, so that the browser scrolls a focused element below the
  * header instead of under it (e.g. when tabbing backwards through a list).
+ * The header may appear later than the component (the bar of a score view
+ * comes with the score); the container is the scrolling element around it.
  */
 import type { Ref } from 'vue'
 
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, watch } from 'vue'
 
 /** Room between the header and a focused element (px). */
 const GAP = 8
+
+/** The scrolling content of the app pages */
+export const APP_CONTENT = '#app-content-vue, .app-content'
 
 let owners = 0
 
@@ -22,8 +27,9 @@ let owners = 0
  * Use in a component with a sticky header.
  *
  * @param header - the sticky element
+ * @param containers - selector of the scrolling element around it, the nearest one counts
  */
-export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>): void {
+export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, containers: string = APP_CONTENT): void {
 	let observer: ResizeObserver | null = null
 	let container: HTMLElement | null = null
 	const owner = ++owners
@@ -35,24 +41,30 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>): void
 		}
 	}
 
-	onMounted(() => {
-		container = header.value?.closest<HTMLElement>('#app-content-vue, .app-content') ?? null
-		if (!container || !header.value) {
-			return
-		}
-		update()
-		if (typeof ResizeObserver !== 'undefined') {
-			observer = new ResizeObserver(update)
-			observer.observe(header.value)
-		}
-	})
-
-	onBeforeUnmount(() => {
+	const release = (): void => {
 		observer?.disconnect()
+		observer = null
 		// Another view may already have taken over the container
 		if (container && container.dataset.stickyOwner === String(owner)) {
 			container.style.scrollPaddingTop = ''
 			delete container.dataset.stickyOwner
 		}
-	})
+		container = null
+	}
+
+	watch(header, (element) => {
+		release()
+		container = element?.parentElement?.closest<HTMLElement>(containers) ?? null
+		if (!container || !element) {
+			container = null
+			return
+		}
+		update()
+		if (typeof ResizeObserver !== 'undefined') {
+			observer = new ResizeObserver(update)
+			observer.observe(element)
+		}
+	}, { immediate: true, flush: 'post' })
+
+	onBeforeUnmount(release)
 }

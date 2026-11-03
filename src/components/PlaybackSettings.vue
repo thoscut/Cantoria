@@ -107,6 +107,7 @@ const voiceHeadingId = useId()
 const measuresHeadingId = useId()
 const moreHeadingId = useId()
 const moreId = useId()
+const toolIds = { mixer: useId(), lyrics: useId(), pitch: useId(), marks: useId(), recorder: useId() }
 const tempoId = useId()
 const tempoHintId = useId()
 const rangeErrorId = useId()
@@ -223,57 +224,86 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 		</section>
 
 		<section v-if="canPlay" class="playback-settings__section" :aria-labelledby="moreHeadingId">
-			<h3 :id="moreHeadingId" class="playback-settings__heading">
+			<!-- a heading like the other two, the button to open it beside it -->
+			<div class="playback-settings__heading-row">
+				<h3 :id="moreHeadingId" class="playback-settings__heading">
+					{{ t('cantoria', 'More for practising') }}
+				</h3>
 				<NcButton variant="tertiary"
-					alignment="start"
 					:aria-expanded="moreShown ? 'true' : 'false'"
 					:aria-controls="moreId"
+					:aria-describedby="moreHeadingId"
 					@click="moreShown = !moreShown">
 					<template #icon>
 						<NcIconSvgWrapper :path="moreShown ? mdiChevronUp : mdiChevronDown" />
 					</template>
-					{{ t('cantoria', 'More for practising') }}
+					{{ moreShown ? t('cantoria', 'Hide') : t('cantoria', 'Show') }}
 				</NcButton>
-			</h3>
+			</div>
 			<p v-if="!moreShown" class="playback-settings__hint">
 				{{ t('cantoria', 'Starting tones, metronome, transposing, mixer, lyrics, your pitch, remembered passages and recording yourself.') }}
 			</p>
 			<!-- v-show: a running recording or the microphone go on while folded -->
+			<!-- each tool under a small heading of its own (D25) -->
 			<div v-show="moreShown" :id="moreId" class="playback-settings__more">
-				<PracticeTools v-model:mix="mix"
-					v-model:transpose="transpose"
-					v-model:metronome="metronome"
-					:voices="mixerVoices"
-					:playing="playing"
-					@tones="emit('tones')" />
-				<PracticeLyrics v-if="lyricsVoiceLabel"
-					v-model:shown="lyricsShown"
-					v-model:step="lyricsStep"
-					part="choices"
-					:syllables="syllables"
-					:position="position"
-					:voice-label="lyricsVoiceLabel" />
-				<PracticePitch v-model:shown="pitchShown"
-					v-model:problem="pitchProblem"
-					part="choices"
-					:notes="pitchNotes"
-					:position="position"
-					:playing="playing"
-					:voice-label="pitchVoiceLabel"
-					:fifths="fifths"
-					@announce="emit('announce', $event)" />
-				<PracticeMarks :piece="marksKey"
-					:from="shownFrom"
-					:to="shownTo"
-					@apply="emit('applyMark', $event)"
-					@announce="emit('announce', $event)" />
-				<PracticeRecorder v-model:state="recorder"
-					:title="title"
-					:playing="playing"
-					:position="playbackPosition"
-					:start-playback="startPlayback"
-					:pause-playback="pausePlayback"
-					@announce="emit('announce', $event)" />
+				<section class="playback-settings__tool" :aria-labelledby="toolIds.mixer">
+					<h4 :id="toolIds.mixer" class="playback-settings__tool-heading">
+						{{ t('cantoria', 'Tones and mixer') }}
+					</h4>
+					<PracticeTools v-model:mix="mix"
+						v-model:transpose="transpose"
+						v-model:metronome="metronome"
+						:voices="mixerVoices"
+						:playing="playing"
+						@tones="emit('tones')" />
+				</section>
+				<section v-if="lyricsVoiceLabel && syllables.length > 0" class="playback-settings__tool" :aria-labelledby="toolIds.lyrics">
+					<h4 :id="toolIds.lyrics" class="playback-settings__tool-heading">
+						{{ t('cantoria', 'Lyrics') }}
+					</h4>
+					<PracticeLyrics v-model:shown="lyricsShown"
+						v-model:step="lyricsStep"
+						part="choices"
+						:syllables="syllables"
+						:position="position"
+						:voice-label="lyricsVoiceLabel" />
+				</section>
+				<section class="playback-settings__tool" :aria-labelledby="toolIds.pitch">
+					<h4 :id="toolIds.pitch" class="playback-settings__tool-heading">
+						{{ t('cantoria', 'Your pitch while singing') }}
+					</h4>
+					<PracticePitch v-model:shown="pitchShown"
+						v-model:problem="pitchProblem"
+						part="choices"
+						:notes="pitchNotes"
+						:position="position"
+						:playing="playing"
+						:voice-label="pitchVoiceLabel"
+						:fifths="fifths"
+						@announce="emit('announce', $event)" />
+				</section>
+				<section class="playback-settings__tool" :aria-labelledby="toolIds.marks">
+					<h4 :id="toolIds.marks" class="playback-settings__tool-heading">
+						{{ t('cantoria', 'Remembered passages') }}
+					</h4>
+					<PracticeMarks :piece="marksKey"
+						:from="shownFrom"
+						:to="shownTo"
+						@apply="emit('applyMark', $event)"
+						@announce="emit('announce', $event)" />
+				</section>
+				<section class="playback-settings__tool" :aria-labelledby="toolIds.recorder">
+					<h4 :id="toolIds.recorder" class="playback-settings__tool-heading">
+						{{ t('cantoria', 'Record myself') }}
+					</h4>
+					<PracticeRecorder v-model:state="recorder"
+						:title="title"
+						:playing="playing"
+						:position="playbackPosition"
+						:start-playback="startPlayback"
+						:pause-playback="pausePlayback"
+						@announce="emit('announce', $event)" />
+				</section>
 			</div>
 		</section>
 	</div>
@@ -298,8 +328,36 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 	min-width: 0;
 }
 
+/* Three sections, each under a fine line and a heading a little larger
+   than the labels of the fields (D25) */
+.playback-settings__section + .playback-settings__section {
+	padding-top: calc(2 * var(--default-grid-baseline));
+	border-top: 1px solid var(--color-border);
+}
+
 .playback-settings__heading {
 	margin: 0;
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+.playback-settings__heading-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
+}
+
+.playback-settings__tool {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline);
+	min-width: 0;
+}
+
+.playback-settings__tool-heading {
+	margin: 0;
+	color: var(--color-text-maxcontrast);
 	font-size: var(--default-font-size, 15px);
 	font-weight: bold;
 }

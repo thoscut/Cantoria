@@ -136,8 +136,8 @@ const next = computed(() => shownLine(lines.value[lineIndex.value + 1]))
 	text-decoration-thickness: 2px;
 }
 
-/* A low screen (a phone held sideways): one line, smaller */
-@media (max-height: 560px) {
+/* A phone, upright or held sideways: one line, smaller */
+@media (max-width: 600px), (max-height: 560px) {
 	.practice-lyrics__now {
 		font-size: 1.2em;
 	}
