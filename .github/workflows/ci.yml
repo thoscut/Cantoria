@@ -5,17 +5,26 @@
 #
 # Every job runs in a container image pinned by its digest (the tag is noted
 # for reading; the digest decides) and installs what it needs, so it does
-# not depend on the software of the runner host (the REUSE check runs in the
-# image of its Docker action). Actions are pinned to the commit of a release
-# (the version is noted next to the hash). To move an image to a newer
-# build, look up the digest of the tag (e.g. `docker buildx imagetools
+# not depend on the software of the runner host. Actions are pinned to the
+# commit of a release (the version is noted next to the hash). reuse is
+# installed with pip in fixed versions with the hashes of all its
+# dependencies (tools/release/reuse-requirements.txt). To move an image to a
+# newer build, look up the digest of the tag (e.g. `docker buildx imagetools
 # inspect node:24`) and replace it everywhere it occurs, also in
-# release.yml and docs.yml.
+# release.yml.
+#
+# The job "changes" decides whether code changed: documentation alone
+# (docs/, *.md, tools/screenshots/, the GitHub templates) skips build and
+# tests, while the checks of the documentation and of REUSE always run.
+# The job "ci-ok" ("CI result") waits for all jobs and is red when one
+# failed or was cancelled, or when one was skipped although code changed; it
+# is the one required check of the branch protection (docs/release.md), so
+# a pull request with documentation alone is not left waiting.
 #
 # The job "archive" builds the release archive with tools/release/package.sh
-# on every run; the integration tests install that archive, so they test
-# exactly what is handed out. The workflow Release (release.yml) calls this
-# workflow for a tag and continues only when all of it is green.
+# on every run with code; the integration tests install that archive, so
+# they test exactly what is handed out. The workflow Release (release.yml)
+# calls this workflow for a tag and continues only when all of it is green.
 #
 # Forgejo Actions (e.g. Codeberg) reads .github/workflows as well when a
 # repository has no .forgejo/workflows; there the runner needs the label
@@ -26,22 +35,11 @@
 name: CI
 
 on:
+  # Every push and pull request, also with documentation alone (the job
+  # "changes" decides what runs), so that the required check always reports
   push:
     branches: [main]
-    paths-ignore:
-      # Documentation alone needs no build and no tests (same list below)
-      - 'docs/**'
-      - '**/*.md'
-      - 'tools/screenshots/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/pull_request_template.md'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'tools/screenshots/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/pull_request_template.md'
   workflow_dispatch:
   # From the workflow Release, for a tag
   workflow_call:
@@ -50,9 +48,12 @@ on:
 # are spent on the current state only. On main every commit has a group of
 # its own: a concurrency group keeps only one waiting run and cancels the
 # one before it, so a shared group would leave a commit without a result
-# when three merges come quickly.
+# when three merges come quickly. The workflow and the event are part of the
+# group (in a called workflow github.workflow is the caller's name, e.g.
+# "Release"), so that a manual run or the workflow Release for a commit of
+# main never cancels the push run of the same commit.
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -64,11 +65,40 @@ env:
   DEBIAN_FRONTEND: noninteractive
 
 jobs:
+  changes:
+    # Code changed, or documentation alone? For a pull request the merge
+    # commit against the current base, for a push to main the commits of the
+    # push; a manual run, a tag or a push whose base is unknown counts as
+    # code (.github/scripts/code-changed.sh).
+    name: Changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container:
+      image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
+    outputs:
+      code: ${{ steps.paths.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The base of the push (github.event.before) must be in the history
+          fetch-depth: 0
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Decide which jobs run
+        id: paths
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: sh .github/scripts/code-changed.sh "$EVENT" "$BEFORE" >> "$GITHUB_OUTPUT"
+
   appinfo:
     # The app store refuses a release whose appinfo/info.xml does not match
     # its schema, e.g. a wrong order of elements. The schema is pinned with
     # its checksum (tools/release/check-appinfo.sh).
     name: App info against the app store schema
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -85,19 +115,55 @@ jobs:
   reuse:
     # Every file states its copyright and license (https://reuse.software),
     # as in Nextcloud's own apps; see "Licensing (REUSE)" in tests/README.md.
-    # The content of the release archive is checked in the job "archive".
+    # Always, also for documentation alone (new documents and screenshots).
+    # The job "archive" checks the content of the release archive with the
+    # same reuse.
     name: REUSE compliance
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    container:
+      image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
+    steps:
+      - name: Install job tools
+        run: apt-get update -qq && apt-get install -y -qq --no-install-recommends python3-venv >/dev/null
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Install reuse (pinned with hashes)
+        run: tools/release/install-reuse.sh
+      - name: Check copyright and license information (reuse lint)
+        run: reuse lint
+
+  docs:
+    # Always, also for documentation alone: equal headings in the German and
+    # English guides, links and anchors, screenshots that exist
+    # (src/__tests__/docs.test.ts), and that the table of promises in
+    # SECURITY.md names only tests that exist (src/__tests__/security.test.ts).
+    # When code changed, the job "node" runs them again with all others.
+    name: Documentation (headings, links, screenshots)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Check copyright and license information (reuse lint)
-        uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check the documentation
+        run: npx vitest run src/__tests__/docs.test.ts src/__tests__/security.test.ts
 
   php-lint:
     name: PHP lint ${{ matrix.php }}
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -123,6 +189,8 @@ jobs:
 
   composer:
     name: Composer (validate, audit)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -148,6 +216,8 @@ jobs:
 
   psalm:
     name: Psalm
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
@@ -169,6 +239,8 @@ jobs:
 
   cs-check:
     name: Coding standard
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -194,6 +266,8 @@ jobs:
     # from lib/ResponseDefinitions.php and the controllers and must be
     # committed in the state the code describes.
     name: OpenAPI description up to date
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -226,6 +300,8 @@ jobs:
 
   phpunit:
     name: Unit tests ${{ matrix.php }}
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -261,6 +337,8 @@ jobs:
     # shipped; their reports are handled through the dependency updates
     # (.github/dependabot.yml). npm audit reads the lock files only.
     name: Audit the npm dependencies of the archive and the MCP server
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -277,6 +355,8 @@ jobs:
 
   node:
     name: Frontend (lint, styles, types, unit tests, build, translations)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
@@ -330,24 +410,25 @@ jobs:
     # CHANGELOG entry or frozen migration needed). The integration tests
     # install this archive.
     name: Release archive
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
       image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
     steps:
       - name: Install job tools
-        # xmllint for the schema of info.xml, reuse (pinned) for the content
+        # xmllint for the schema of info.xml, python3-venv for reuse
         run: |
           apt-get update -qq
           apt-get install -y -qq --no-install-recommends libxml2-utils python3-venv >/dev/null
-          python3 -m venv /opt/reuse
-          /opt/reuse/bin/pip install --quiet --disable-pip-version-check reuse==6.3.0
-          ln -s /opt/reuse/bin/reuse /usr/local/bin/reuse
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Trust the workspace for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Install reuse (pinned with hashes) for the content of the archive
+        run: tools/release/install-reuse.sh
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
@@ -373,6 +454,8 @@ jobs:
     # The MCP server for agents (tools/mcp): own package and lock file, not
     # part of the app or its release archive.
     name: MCP server (build, tests)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -388,6 +471,28 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Build and test (node:test, HTTP mocked)
         run: npm test
+
+  ci-ok:
+    # The one required check (docs/release.md): green only when every job
+    # passed, or when documentation alone changed and the jobs for code were
+    # skipped. Runs also when a job failed or was cancelled (always()), so
+    # that it is never skipped itself: a branch protection takes a skipped
+    # required check as passed.
+    name: CI result
+    if: always()
+    needs: [changes, reuse, docs, appinfo, php-lint, composer, psalm, cs-check, openapi, phpunit, npm-audit, node, archive, mcp, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container:
+      image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: All jobs passed (or were skipped for documentation alone)
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: node .github/scripts/ci-result.mjs
 
   integration:
     # The integration tests in tests/Integration against a freshly installed

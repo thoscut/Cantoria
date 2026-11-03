@@ -11,12 +11,13 @@ import { build } from 'vite'
 import { shellFiles } from './src/offline/rules.ts'
 
 // Unit tests (npm test) run the pure logic in Node, without the build plugins;
-// tools/l10n checks the translations. Tests of components compile them with
-// the Vue plugin and choose jsdom in their file (@vitest-environment jsdom).
+// tools/l10n checks the translations, .github/scripts the scripts of the CI.
+// Tests of components compile them with the Vue plugin and choose jsdom in
+// their file (@vitest-environment jsdom).
 const testConfig = {
 	plugins: [vue()],
 	test: {
-		include: ['src/**/*.test.ts', 'tools/l10n/*.test.mjs'],
+		include: ['src/**/*.test.ts', 'tools/l10n/*.test.mjs', '.github/scripts/*.test.mjs'],
 		environment: 'node',
 		// the components of Nextcloud import their styles: through Vite, not Node
 		server: { deps: { inline: [/@nextcloud\/vue/] } },

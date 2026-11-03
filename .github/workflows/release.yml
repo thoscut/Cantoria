@@ -17,6 +17,12 @@
 #
 # Signing needs the private key and stays with a maintainer: they sign
 # this archive with tools/release/sign.sh, which builds nothing.
+#
+# Started by hand (workflow_dispatch) on main, the steps 1 and 2 run for
+# that commit without the checks of a final version and without a draft: a
+# trial of the chain before the first tag (docs/release.md). The CI it
+# calls has a concurrency group of its own ("Release-workflow_dispatch-…"),
+# so it does not cancel the push run of the same commit.
 
 name: Release
 
@@ -48,9 +54,6 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y -qq --no-install-recommends libxml2-utils python3-venv >/dev/null
-          python3 -m venv /opt/reuse
-          /opt/reuse/bin/pip install --quiet --disable-pip-version-check reuse==6.3.0
-          ln -s /opt/reuse/bin/reuse /usr/local/bin/reuse
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -58,6 +61,8 @@ jobs:
           path: rebuild
       - name: Trust the workspace for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE/rebuild"
+      - name: Install reuse (pinned with hashes, as in the job "archive")
+        run: rebuild/tools/release/install-reuse.sh
       - name: Build the archive (no npm cache)
         env:
           MODE: ${{ github.ref_type == 'tag' && 'release' || 'unreleased' }}
