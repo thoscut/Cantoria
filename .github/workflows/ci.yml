@@ -425,6 +425,8 @@ jobs:
         env:
           # Throwaway database of this job only
           POSTGRES_PASSWORD: nextcloud-ci
+          # Nextcloud expects the database to exist (MariaDB creates it itself)
+          POSTGRES_DB: nextcloud
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
