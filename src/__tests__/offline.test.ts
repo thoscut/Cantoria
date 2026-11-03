@@ -6,7 +6,7 @@
 import type { Catalog } from '../offline/rules.ts'
 
 import { describe, expect, it } from 'vitest'
-import { COLLECTIONS, localDay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, requestKind, syncCatalog, usable } from '../offline/rules.ts'
+import { COLLECTIONS, KEEP_HEADER, localDay, mayStay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, pieceAddresses, requestKind, shellFiles, syncCatalog, usable } from '../offline/rules.ts'
 
 const SCOPE = '/index.php/apps/cantoria/'
 const TOKEN = 'a'.repeat(32)
@@ -130,5 +130,42 @@ describe('pieces kept on the device', () => {
 
 	it('expire at the end of their last day on the device', () => {
 		expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+	})
+})
+
+describe('what may stay on the device (S N5)', () => {
+	it('only an answer the server marks with X-Cantoria-Keep: 1', () => {
+		expect(KEEP_HEADER).toBe('X-Cantoria-Keep')
+		expect(mayStay(new Headers({ 'X-Cantoria-Keep': '1' }))).toBe(true)
+		expect(mayStay(new Headers({ 'X-Cantoria-Keep': '0' }))).toBe(false)
+		expect(mayStay(new Headers())).toBe(false)
+	})
+
+	it('names the notes and the scan of a piece as the worker and the pages ask for them', () => {
+		for (const name of ['member', 'folder', 'public'] as const) {
+			const key = name === 'folder' ? '42' : TOKEN
+			const { notes, scan } = pieceAddresses(name, key)
+			expect(requestKind(SCOPE + scan, SCOPE, '', false), name).toEqual({ kind: 'scan', collection: name, key })
+			expect(requestKind(SCOPE + notes, SCOPE, name === 'public' ? 'document' : '', name === 'public'), name)
+				.toEqual(name === 'public' ? { kind: 'page', collection: name, key } : { kind: 'score', collection: name, key })
+		}
+	})
+})
+
+describe('the scripts of the pages that keep pieces (A1)', () => {
+	const manifest = {
+		'src/member.ts': { file: 'js/cantoria-member.mjs', imports: ['_shared.js'], dynamicImports: ['node_modules/verovio/index.js'], css: ['css/member.css'] },
+		'src/public.ts': { file: 'js/cantoria-public.mjs', imports: ['_shared.js'] },
+		'src/main.ts': { file: 'js/cantoria-main.mjs', imports: ['_archive.js'] },
+		'_shared.js': { file: 'js/shared.chunk.mjs', imports: ['_shared.js'], assets: ['img/note.svg'] },
+		'_archive.js': { file: 'js/archive.chunk.mjs' },
+		'node_modules/verovio/index.js': { file: 'js/verovio.chunk.mjs' },
+	}
+
+	it('come from the manifest of the build, with what they import later, and nothing of the archive', () => {
+		expect(shellFiles(manifest, ['src/member.ts', 'src/public.ts'])).toEqual([
+			'css/member.css', 'img/note.svg', 'js/cantoria-member.mjs', 'js/cantoria-public.mjs', 'js/shared.chunk.mjs', 'js/verovio.chunk.mjs',
+		])
+		expect(shellFiles(manifest, ['src/unknown.ts'])).toEqual([])
 	})
 })
