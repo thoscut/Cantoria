@@ -222,6 +222,8 @@ if [ "${#VEROVIO_LICENSE[@]}" != 1 ] || [ ! -f "${VEROVIO_LICENSE[0]}" ]; then
 	echo "expected one js/verovio-module-*.chunk.mjs.license in the build" >&2
 	exit 1
 fi
+# (the tags below are for the archive, not for this script)
+# REUSE-IgnoreStart
 cat >> "${VEROVIO_LICENSE[0]}" <<'VEROVIO'
 
 Compiled into the Verovio module (js/third-party-licenses.txt):
@@ -241,6 +243,7 @@ SPDX-FileCopyrightText: 2014-2017 Thomas Fussell (miniz-cpp)
 SPDX-FileCopyrightText: 1999-2018 Craig Stuart Sapp (midifile)
 SPDX-FileCopyrightText: 2000 Michael Barr (CRC, public domain)
 VEROVIO
+# REUSE-IgnoreEnd
 
 # Refuse to package anything internal or development-only.
 for forbidden in _intern node_modules tests src tools vendor-bin docs .github; do
