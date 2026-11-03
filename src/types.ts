@@ -594,6 +594,8 @@ export interface PublicExcerpt {
 	expires?: string | null
 	/** may be kept on a device (milestone 0.15): module "offline", confirmed public domain */
 	offline?: boolean
+	/** the module "offline" is on, whether or not this piece may be kept (A24) */
+	offlineModule?: boolean
 	/** may be printed: confirmed public domain, as visitors have no license */
 	print?: boolean
 	/** when the server made the page (ISO time): newer than the last check means it came from the server */
