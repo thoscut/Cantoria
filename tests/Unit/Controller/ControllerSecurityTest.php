@@ -915,7 +915,10 @@ final class ControllerSecurityTest extends TestCase {
 		});
 		$groups = $this->createStub(IGroupManager::class);
 		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === 'anna' && $group === 'settings-team');
-		$groups->method('get')->willReturnCallback(function (string $id): IGroup {
+		$groups->method('get')->willReturnCallback(function (string $id): ?IGroup {
+			if ($id === 'future-choir') {
+				return null;
+			}
 			$group = $this->createStub(IGroup::class);
 			$group->method('getGID')->willReturn($id);
 			return $group;
@@ -950,6 +953,11 @@ final class ControllerSecurityTest extends TestCase {
 		// ... nor to a group whose members it manages as group admin ...
 		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update([Roles::LIBRARIAN => ['archive', 'board-helpers']])->getStatus());
 		self::assertSame(['archive'], $stored[Roles::LIBRARIAN]);
+		// ... nor to a group that does not exist yet, which whoever creates it could fill (S N21) ...
+		$future = $controller('anna')->update([Roles::READER => ['future-choir']]);
+		self::assertSame(Http::STATUS_FORBIDDEN, $future->getStatus());
+		self::assertSame(['error' => 'Only an administrator can give a role to a group that does not exist yet.'], $future->getData());
+		self::assertSame([], $stored[Roles::READER]);
 		// ... nor move the archive folder, but it can save it unchanged
 		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update(null, 8)->getStatus());
 		self::assertSame(Http::STATUS_OK, $controller('anna')->update(null, 7)->getStatus());

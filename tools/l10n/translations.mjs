@@ -2757,6 +2757,7 @@ export const singular = {
 		'Nur die Administration kann einer Gruppe eine Rolle geben, die du als Gruppenadministration verwaltest.',
 		'Nur die Administration kann einer Gruppe eine Rolle geben, die Sie als Gruppenadministration verwalten.',
 	],
+	'Only an administrator can give a role to a group that does not exist yet.': 'Nur die Administration kann einer Gruppe eine Rolle geben, die es noch nicht gibt.',
 	'Only an administrator can give a role to a group you belong to.': [
 		'Nur die Administration kann einer Gruppe, zu der du gehörst, eine Rolle geben.',
 		'Nur die Administration kann einer Gruppe, zu der Sie gehören, eine Rolle geben.',
