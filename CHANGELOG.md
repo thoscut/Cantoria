@@ -16,6 +16,21 @@ All notable changes to this app are documented in this file. The format follows
   and MariaDB, and so also in Nextcloud All-in-One. The integration tests
   run in the CI on Nextcloud 33 and 35, each with MariaDB 11.8 and with
   PostgreSQL 17. SQLite and Oracle stay unsupported.
+- **Ended links stay in reach.** Links that ended in the last 30 days stay
+  in the list and can be extended. The message to the choir after sharing
+  a programme can be edited and has the date, how to sign in, the guide
+  for choir members and what they may do with the notes.
+- **Import:** Excel dates become ISO dates, CSV files with commas or tabs
+  are read, an empty shelf mark is built from binder and number, and the
+  example row of the template is skipped with a warning.
+- **Concert folder pieces leave the device** when the licenses of the copy
+  end (`keepUntil`).
+- **Tests:** a unit test that every migration is listed in `RELEASED`, a
+  test that keeps `tests/README.md` in step with the test classes, a
+  matrix test of the rights rule, tests of the worker filling without a
+  build, and new tests for the programme share, the link list and
+  `occ cantoria:modules`. Screenshot scenes for the hand-over, the setup,
+  the import template, programmes and the message, each in German too.
 - **Share a whole programme with the choir.** In a concert or rehearsal,
   "Share with the choir …" shares the pieces of the programme with the
   choir members in one step; pieces that may not be shared are named with
@@ -126,12 +141,13 @@ All notable changes to this app are documented in this file. The format follows
   English pictures.
 
 - **After the expert review of 3 November 2026:**
-  - `main` carries 0.17.0-dev.1. The release archive is built from the
+  - `main` carries 0.17.0-dev.2. The release archive is built from the
     commit only (`git archive`) with `npm ci --ignore-scripts`, checked with
     `reuse lint` and installed by the integration tests on every CI run.
     The release workflow runs the full CI, rebuilds on a fresh runner and
     compares, then makes a draft release with the unsigned archive and
-    `SHA256SUMS`. Container images are pinned by digest, the App Store
+    `SHA256SUMS`. Container images are pinned by digest, `reuse` by version
+    and hashes, the App Store
     schema by commit and checksum; on `main` every commit keeps its own CI
     run.
   - Sharing a programme never shortens a link, applies note and scan to
@@ -159,6 +175,47 @@ All notable changes to this app are documented in this file. The format follows
     public links and the repertoire page. `main` carries 0.17.0-dev.2 for
     the new column of links (`cantoria_links.event_id`).
 
+- **After the second review round of 3 November 2026:**
+  - The CI decides in a job which paths changed and reports one required
+    check, "CI result"; documentation-only pull requests run the
+    documentation and REUSE checks. The Docs workflow is part of the CI.
+    `reuse` 6.3.0 is installed with the hashes of all dependencies
+    (wheels only) instead of the REUSE Docker action, and checks a copy of
+    the finished archive. Release candidates (`-rc.N`, `-beta.N`) get all
+    checks of a final version, the concurrency group includes workflow
+    and event, downloads in release scripts retry. `tests/README.md`,
+    `docs/release.md` (branch protection, trial run of the release) and
+    `SECURITY.md` ("Releases") describe the chain as it is.
+  - Printing and keeping a piece on a device follow one rule
+    (`RightsPolicy::printDenial` and `deviceDenial`) for "Shared with me",
+    the concert folder, public links, the link dialog and
+    `X-Cantoria-Keep`; the rights confirmation takes its "public domain
+    only" ways from the server. A MusicXML kept on a device needs a license
+    for digital score files unless public domain is confirmed; pieces kept
+    under a download license alone leave the device at the next check.
+    "Shared with me" reads the licenses of each version once.
+  - Versions of the kind "Arrangement" or "Adaptation" need their arranger
+    recorded before public domain is suggested; "Original" is explained as
+    a work no one has arranged; the text origin "Traditional (public
+    domain)" is now "Traditional (no known author)".
+  - Programme and practice keys are an HMAC with the secret of the
+    instance; practice settings kept in a browser start afresh once.
+  - The stage view of the concert folder and "Shared with me" opens at the
+    notes and folds away head, scan, reference and notes; it has Previous
+    and Next and 48 px targets on touch. One button "Delete everything on
+    this device" names the practice data it removes. The two Show buttons
+    of the playback settings say what they show. Programme headings in
+    "Shared with me" stand apart from piece titles, and "New" is part of
+    the accessible name. The iPad advice is the same in app and guides.
+  - Links name the latest day they can be extended to and why (six months,
+    one year, the license); sharing a programme never reuses a link with a
+    voice, verse or tempo. The ODS template marks the shelf mark as text.
+    German says "behalten" for pieces kept on a device. The store text says
+    that choir members need an account or a public link.
+  - The privacy templates name every storage on the device (the "new"
+    marks, the hash of the account, the service worker) and state the
+    exception of § 25 TDDDG with a reservation.
+
 ### Removed
 
 - Upgrade code for internal builds that were never published: the module
@@ -168,6 +225,25 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Fixed
 
+- After the second review round of 3 November 2026: the pedal no longer
+  skips a piece while the next one loads, and a link to a piece puts the
+  focus into the notes. A public page with a piece that may not be kept no
+  longer deletes every public piece kept on the device. The back gesture
+  closes the scan in full screen, and Back from a piece leads to the list.
+  After the scan view or a deletion the focus returns to the button that
+  opened it; Escape in the stage view with a dialog open closes only the
+  dialog; "Discard the recording?" shows its answers in full; scroll room
+  is kept only under a bar that sticks. The song order and the statistics
+  treat copies of the kind "Preservation copy" like marked versions. The
+  hand-over and print-station folders remove files whose license ended
+  while the version stays listed. The screenshot tool no longer stops
+  after the first shot and emulates forced colours. The template example
+  row is no longer imported, the reason of the age limit is right, "Not
+  available." is translated and two "du" texts left the formal German.
+  The check for shares inside the backup folder works on Nextcloud 33 to
+  35, which answer only for the direct children of a folder. Worker
+  checks ran only with a build, and skipped tests now fail the suite. A
+  changed released migration stops every build.
 - Focus lies in the notes after every change of piece in the concert
   folder, so the page-turn pedal turns at once. The back gesture returns to
   the list. "10 of 12 pieces" names why the others stay behind. A new
@@ -185,6 +261,21 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Security
 
+- After the second review round of 3 November 2026: public links no
+  longer offer printing or keeping under a rights conflict. The audit
+  retention period, erasure and deleted accounts also remove accounts and
+  names from the old and new values of the audit log, and the access
+  report finds them there. The backup stops when anything inside its
+  folder is shared. Spreadsheet XML with more than a million elements is
+  refused before it is loaded. The list page of "Shared with me" and the
+  concert folder comes from the device only without a network, not
+  because the network is slow. Delegated settings cannot give roles to
+  groups that do not exist. A failed checksum during the review import is
+  logged without the account. The service worker refuses protocol-relative
+  paths and line breaks in the app path. `sign.sh` recommends `occ` of an
+  uninstalled server archive. Liberation Serif 1.04 in Verovio is listed
+  under GPL-2.0-only WITH Font-exception-2.0, with the license texts and
+  its source.
 - The scan of a public link needs a license for its download. A link ends
   at the latest when the license that releases it ends and at most a year
   after it was made; an expired public link gets a new address when it is

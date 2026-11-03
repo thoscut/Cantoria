@@ -144,10 +144,10 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | im Review; offen sind die Punkte der zweiten Runde vom 3. November (Probelauf der Release-Kette, kleine Fehler im neuen Code, Texte) und beim Maintainer Markenprüfung, Signaturzertifikat, Branch-Schutz, Schriftlizenz Liberation und die Angaben des Repositorys | PR #14, #15, #16 |
-| 0.18 Rechte auf allen neuen Wegen | im Review; offen sind die Punkte der zweiten Runde (eine Regel für Behalten und Drucken, Ordner räumen, MusicXML auf Links, Protokollwerte) und zwei Entscheidungen des Maintainers (R B9, S N2) | PR #14, #16 |
-| 0.19 Üben und Vortragen am Gerät | im Review; offen sind die Punkte der zweiten Runde (Bühnenansicht beginnt bei den Noten, Fokus, Zurück), `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
-| 0.20 Einführen und umsteigen | im Review; offen sind die Punkte der zweiten Runde (abgelaufene Links, Nachricht an den Chor, Import, Texte), Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
+| 0.17 Bereit zur ersten Veröffentlichung | im Review bis auf den Probelauf der Release-Kette nach dem Merge und, beim Maintainer, Markenprüfung, Signaturzertifikat, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation und die Angaben des Repositorys auf GitHub | PR #14, #15, #16 |
+| 0.18 Rechte auf allen neuen Wegen | im Review bis auf drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) | PR #14, #16 |
+| 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
+| 0.20 Einführen und umsteigen | im Review bis auf Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
 | 1.0 Stabil | geplant | – |
 
 Die aktuelle Version ist 0.16.1: Die App heißt jetzt Cantoria, vorher
@@ -722,7 +722,13 @@ ersten Tag.*
   vorhandenen Bestand, neben dem Chorsystem; README verlinkt
   `alongside-a-choir-system.md` und `for-choir-members.md` (W B13, W B14).
 
-*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+bis auf den Probelauf der Release-Kette (erst nach dem Merge möglich), den
+Vergleich der Migrationsliste mit dem vorigen Tag und die Punkte des
+Maintainers: Branch-Schutz mit dem Pflicht-Check „CI result“, Angaben des
+Repositorys auf GitHub (W B22), anwaltliche Klärung der Schrift Liberation
+(bis dahin als GPL-2.0 mit Font-Ausnahme ausgewiesen) und die Unterlage für
+den App Store, die noch `package.sh --sign` nennt (T3).*
 
 - **Kleine Fehler im neuen Code, vor der nächsten Version:** Das Pedal
   überspringt kein Stück mehr, wenn man während des Ladens drückt
@@ -865,7 +871,15 @@ dieses Kontos, sonst hält die Sicherung an).*
 - **Bestätigungsdialog** um die neuen Wege ergänzen, Bestätigung beim
   Abspielen nach außen prüfen (R B14, B15, M4).
 
-*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+bis auf: ob ein Schutzstatus „unbekannt“ auch als Rechtekonflikt gilt
+(würde viele öffentliche Links schließen; Entscheidung des Maintainers),
+eine Markierung im Manifest, um alte MusicXML im Übergabeordner neu zu
+bereinigen, die Wiedervorlage bestätigter Fassungen, deren Vorschlag jetzt
+„unbekannt“ lautet, und das Bündeln der Rollenprüfung und der
+Lizenzabfrage in `attribution()` mit Lasttest (Rest von A25, 1.0). Die
+Entscheidung zu MusicXML auf Geräten (R B26) ist vorsichtig getroffen und
+sollte vor 1.0 anwaltlich bestätigt werden.*
 
 - **Eine Regel für Behalten und Drucken:** heute steht sie an fünf
   Stellen, und öffentliche Links prüfen bei einem Rechtekonflikt nur
@@ -987,7 +1001,10 @@ den Weg über Lesezeichen). Auf echten Geräten geprüft ist nichts davon.*
 - **Die Abnahme auf Geräten** umfasst Bühnenansicht, Pedal, Querformat und
   Scan (D2, D8, D19).
 
-*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+und in Chromium geprüft; Escape im echten Vollbild, die Zurück-Geste auf
+Android und iOS und die Lage der Noten auf echten Geräten gehören zur
+Geräteabnahme.*
 
 - **Bühnenansicht beginnt bei den Noten:** Kopf, Scan-Knopf, Textverweis,
   Notiz und Anleitungslink im Modus einklappen; heute beginnen die Noten
@@ -1085,7 +1102,11 @@ Demodaten.*
 - **Doku für Hoster:** Datenbankprüfung und MusicSheet Viewer ergänzen
   (W B11).
 
-*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+bis auf die neuen Bilder selbst (das Werkzeug ist repariert und kennt die
+Szenen, aufnehmen geht nur in einer Nextcloud mit den Demodaten), die
+Abgrenzung zum Orchestra Scores Manager in `alongside-a-choir-system.md`
+und im Store-Text (steht im README) und den Versionshinweis im Store.*
 
 - **Abgelaufene Links zeigen:** Sie erscheinen heute nirgends, also lässt
   sich ein Link nach dem Ablauf nicht mehr verlängern (U40).
