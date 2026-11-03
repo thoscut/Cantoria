@@ -564,8 +564,7 @@ final class ControllerSecurityTest extends TestCase {
 	private function publicLinkController(?array $excerpt, ?File $scan = null, bool $mayKeep = false): PublicLinkController {
 		$shared = $this->createStub(SharedLinkService::class);
 		$shared->method('publicExcerpt')->willReturn($excerpt);
-		$shared->method('publicScan')->willReturn($scan);
-		$shared->method('publicMayKeep')->willReturn($mayKeep);
+		$shared->method('publicScan')->willReturn($scan === null ? null : ['file' => $scan, 'keep' => $mayKeep]);
 		return new PublicLinkController($this->createStub(IRequest::class), $shared, $this->createStub(IInitialState::class), $this->l10n(),
 			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class));
 	}
@@ -642,16 +641,15 @@ final class ControllerSecurityTest extends TestCase {
 
 	public function testMemberRoutesRefuseOthersAndThrottleUnknownTokens(): void {
 		$shared = $this->createStub(SharedLinkService::class);
-		$shared->method('memberScore')->willReturnCallback(function (string $token, string $uid): string {
+		$shared->method('memberScore')->willReturnCallback(function (string $token, string $uid): array {
 			if ($uid !== 'singer') {
 				throw new AccessDeniedException('This page is only for choir members. Roles are linked to groups; please ask an administrator.');
 			}
 			if ($token === str_repeat('u', 32)) {
 				throw new UnknownLinkException('This link does not exist.');
 			}
-			return '<score-partwise/>';
+			return ['xml' => '<score-partwise/>', 'keep' => $token === str_repeat('k', 32)];
 		});
-		$shared->method('memberMayKeep')->willReturnCallback(fn (string $token): bool => $token === str_repeat('k', 32));
 		$controller = fn (?string $uid): MemberController => new MemberController($this->createStub(IRequest::class), $uid, $shared,
 			$this->createStub(PracticeAudioService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 
@@ -739,14 +737,13 @@ final class ControllerSecurityTest extends TestCase {
 		$folder = $this->createStub(ConcertFolderService::class);
 		$folder->method('mayOpen')->willReturnCallback(fn (string $uid): bool => $uid === 'conductor');
 		$folder->method('concerts')->willReturn([]);
-		$folder->method('score')->willReturnCallback(function (int $id, string $uid): string {
+		$folder->method('score')->willReturnCallback(function (int $id, string $uid): array {
 			if ($uid !== 'conductor') {
 				throw new AccessDeniedException('The concert folder is for the conductor and the catalog librarian.');
 			}
-			return '<score-partwise/>';
+			return ['xml' => '<score-partwise/>', 'keep' => $id === 8];
 		});
 		$folder->method('scan')->willThrowException(new NotFoundException('This programme item has no scan.'));
-		$folder->method('mayKeep')->willReturnCallback(fn (int $id): bool => $id === 8);
 
 		$page = $this->concertFolderController('conductor', $folder)->page();
 		self::assertSame('concert-folder', $page->getTemplateName());
@@ -791,7 +788,7 @@ final class ControllerSecurityTest extends TestCase {
 
 	public function testTheScanOfAMemberLinkIsShownInlineAfterTheSameChecks(): void {
 		$shared = $this->createStub(SharedLinkService::class);
-		$shared->method('memberScan')->willReturnCallback(function (string $token, string $uid): File {
+		$shared->method('memberScan')->willReturnCallback(function (string $token, string $uid): array {
 			if ($uid !== 'singer') {
 				throw new AccessDeniedException('This page is only for choir members. Roles are linked to groups; please ask an administrator.');
 			}
@@ -801,9 +798,8 @@ final class ControllerSecurityTest extends TestCase {
 			if ($token === str_repeat('n', 32)) {
 				throw new NotFoundException('The scan of this link is not available at the moment.');
 			}
-			return $this->createStub(File::class);
+			return ['file' => $this->createStub(File::class), 'keep' => true];
 		});
-		$shared->method('memberMayKeep')->willReturn(true);
 		$controller = fn (?string $uid): MemberController => new MemberController($this->createStub(IRequest::class), $uid, $shared,
 			$this->createStub(PracticeAudioService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 

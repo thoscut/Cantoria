@@ -115,22 +115,28 @@ describe('choosing valid versions', () => {
 describe('consequences of confirming the rights', () => {
 	const all = (): boolean => true
 	const none = (): boolean => false
+	/**
+	 * What the server names as opened only by confirmed public domain (RightsPolicy::FREE_ONLY_WAYS).
+	 *
+	 * @param way - key of the way
+	 */
+	const freeOnly = (way: string): boolean => ['public_device', 'public_print', 'public_repertoire'].includes(way)
 
 	it('names what becomes possible for public domain', () => {
-		const [sentence] = confirmConsequences('public_domain', false, all)
+		const [sentence] = confirmConsequences('public_domain', false, all, freeOnly)
 		expect(sentence).toContain('singers\' portal')
 		expect(sentence).toContain('practice files')
 		expect(sentence).toContain('public links')
 	})
 
 	it('names only switched-on functions', () => {
-		const [sentence] = confirmConsequences('public_domain', false, (module) => module === 'portal')
+		const [sentence] = confirmConsequences('public_domain', false, (module) => module === 'portal', freeOnly)
 		expect(sentence).toBe('After the confirmation this becomes possible: singers\' portal.')
-		expect(confirmConsequences('public_domain', false, none)).toEqual([])
+		expect(confirmConsequences('public_domain', false, none, freeOnly)).toEqual([])
 	})
 
 	it('names every way out, also the newer ones (R B14)', () => {
-		const [sentence] = confirmConsequences('public_domain', false, all)
+		const [sentence] = confirmConsequences('public_domain', false, all, freeOnly)
 		for (const way of ['concert folder', 'on the device without a network', 'sharing a programme with the choir', 'playback and the scan for choir members',
 			'devices of choir members', 'hand-over folder for the choir system', 'playback and the scan of public links', 'public links on a device',
 			'public repertoire page']) {
@@ -140,29 +146,37 @@ describe('consequences of confirming the rights', () => {
 
 	it('names a newer way only with its modules', () => {
 		const only = (...modules: string[]) => (module: string) => modules.includes(module)
-		expect(confirmConsequences('public_domain', false, only('concert_folder'))[0]).toBe('After the confirmation this becomes possible: printing from the concert folder.')
-		expect(confirmConsequences('public_domain', false, only('offline'))).toEqual([])
-		expect(confirmConsequences('public_domain', false, only('member_links', 'offline'))[0]).toContain('devices of choir members')
-		expect(confirmConsequences('public_domain', false, only('member_links'))[0]).not.toContain('devices')
-		expect(confirmConsequences('public_domain', false, only('member_links'))[0]).not.toContain('programme')
-		expect(confirmConsequences('public_domain', false, only('choir_handover'))[0]).toContain('hand-over folder')
+		expect(confirmConsequences('public_domain', false, only('concert_folder'), freeOnly)[0]).toBe('After the confirmation this becomes possible: printing from the concert folder.')
+		expect(confirmConsequences('public_domain', false, only('offline'), freeOnly)).toEqual([])
+		expect(confirmConsequences('public_domain', false, only('member_links', 'offline'), freeOnly)[0]).toContain('devices of choir members')
+		expect(confirmConsequences('public_domain', false, only('member_links'), freeOnly)[0]).not.toContain('devices')
+		expect(confirmConsequences('public_domain', false, only('member_links'), freeOnly)[0]).not.toContain('programme')
+		expect(confirmConsequences('public_domain', false, only('choir_handover'), freeOnly)[0]).toContain('hand-over folder')
 	})
 
 	it('says that a protected version needs licenses', () => {
-		expect(confirmConsequences('protected', false, all)[0]).toContain('valid license')
-		expect(confirmConsequences('protected', false, all)[0]).toContain('playback and the scan of public links')
+		expect(confirmConsequences('protected', false, all, freeOnly)[0]).toContain('valid license')
+		expect(confirmConsequences('protected', false, all, freeOnly)[0]).toContain('playback and the scan of public links')
 	})
 
 	it('names no license for what only confirmed public domain opens', () => {
 		// no license lets a visitor keep a public link, and the repertoire page lists only confirmed public domain
-		const [sentence] = confirmConsequences('protected', false, all)
+		const [sentence] = confirmConsequences('protected', false, all, freeOnly)
 		expect(sentence).not.toContain('public links on a device')
+		expect(sentence).not.toContain('printing from public links')
 		expect(sentence).not.toContain('repertoire')
-		expect(confirmConsequences('protected', false, (module) => module === 'public_repertoire')).toEqual([])
+		expect(confirmConsequences('protected', false, (module) => module === 'public_repertoire', freeOnly)).toEqual([])
+	})
+
+	it('takes from the server which ways only confirmed public domain opens (A23)', () => {
+		expect(confirmConsequences('public_domain', false, all, freeOnly)[0]).toContain('printing from public links')
+		// a way the server does not name is one a license can open
+		expect(confirmConsequences('protected', false, all, none)[0]).toContain('public links on a device')
+		expect(confirmConsequences('protected', false, all, (way) => way === 'public_device')[0]).toContain('printing from public links')
 	})
 
 	it('says that a preservation copy stays internal', () => {
-		expect(confirmConsequences('public_domain', true, all)[0]).toContain('internal preservation copy')
+		expect(confirmConsequences('public_domain', true, all, freeOnly)[0]).toContain('internal preservation copy')
 	})
 })
 

@@ -73,6 +73,16 @@ export function isModuleActive(key: string): boolean {
 	return moduleActive(moduleStates.value, key)
 }
 
+/**
+ * Whether only confirmed public domain opens a way out, never a license: the
+ * server says so (RightsPolicy::FREE_ONLY_WAYS), the dialogs only repeat it.
+ *
+ * @param way - key of the way, e.g. `public_device`
+ */
+export function isFreeOnly(way: string): boolean {
+	return meta.value?.freeOnlyWays.includes(way) ?? false
+}
+
 const NO_PERSONAL_VIEW: PersonalView = { navigation: [], cards: [] }
 
 /** What the account has hidden in its own view. */

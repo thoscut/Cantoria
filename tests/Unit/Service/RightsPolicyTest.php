@@ -388,34 +388,169 @@ final class RightsPolicyTest extends TestCase {
 	}
 
 	/**
-	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string}>
+	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string, 3: ?string}>
 	 */
 	public static function deviceCopyCases(): iterable {
 		$confirmed = ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'];
 		$noCopy = 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license for download or self-printing. The catalog librarian records it on the tab "Rights".';
-		// version values, licenses, expected denial of a copy on the device of the conductor
-		yield 'confirmed public domain' => [$confirmed, [], null];
-		yield 'unconfirmed public domain' => [['rights_status' => 'public_domain'], [], $noCopy];
-		yield 'rights open: unknown counts as protected' => [['rights_status' => 'unknown'], [], $noCopy];
-		yield 'protected, only copies for the folders' => [['rights_status' => 'protected'], [['photocopy']], $noCopy];
-		yield 'protected, download license' => [['rights_status' => 'protected'], [['member_download']], null];
-		yield 'protected, self-printing' => [['rights_status' => 'protected'], [['self_print']], null];
-		yield 'protected, license ended' => [['rights_status' => 'protected'], [['self_print', null, '2026-10-21']], $noCopy];
-		yield 'preservation copy' => [$confirmed + ['preservation_copy' => true], [], 'Internal preservation copy: it is not kept on a device.'];
+		$noScores = 'Not available without a network: unless public domain is confirmed, the notes (MusicXML) also need a license for digital score files. The catalog librarian records it on the tab "Rights".';
+		// version values, licenses, expected denial of a copy on the device of the conductor with the notes, with the scan alone
+		yield 'confirmed public domain' => [$confirmed, [], null, null];
+		yield 'unconfirmed public domain' => [['rights_status' => 'public_domain'], [], $noCopy, $noCopy];
+		yield 'rights open: unknown counts as protected' => [['rights_status' => 'unknown'], [], $noCopy, $noCopy];
+		yield 'protected, only copies for the folders' => [['rights_status' => 'protected'], [['photocopy']], $noCopy, $noCopy];
+		yield 'protected, download license: the scan, not the MusicXML (R B26)' => [['rights_status' => 'protected'], [['member_download']], $noScores, null];
+		yield 'protected, self-printing and digital score files' => [['rights_status' => 'protected'], [['self_print'], ['digital_scores']], null, null];
+		yield 'protected, digital score files alone' => [['rights_status' => 'protected'], [['digital_scores']], $noCopy, $noCopy];
+		yield 'protected, license ended' => [['rights_status' => 'protected'], [['self_print,digital_scores', null, '2026-10-21']], $noCopy, $noCopy];
+		yield 'preservation copy' => [$confirmed + ['preservation_copy' => true], [], 'Internal preservation copy: it is not kept on a device.',
+			'Internal preservation copy: it is not kept on a device.'];
 	}
 
 	/**
 	 * The concert folder keeps the score and the scan for weeks on the device
 	 * of the conductor: a copy, which needs confirmed public domain or a
-	 * license for download or self-printing (milestone 0.19).
+	 * license for download or self-printing (milestone 0.19), and for the
+	 * MusicXML a license for digital score files (R B26).
 	 *
 	 * @param array<string, mixed> $values
 	 * @param list<array{0: string, 1?: ?string, 2?: ?string}> $licenseSpecs
 	 */
 	#[DataProvider('deviceCopyCases')]
-	public function testACopyOnTheDeviceOfTheConductorNeedsTheRightsForIt(array $values, array $licenseSpecs, ?string $denial): void {
+	public function testACopyOnTheDeviceOfTheConductorNeedsTheRightsForIt(array $values, array $licenseSpecs, ?string $withNotes, ?string $scanOnly): void {
 		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
-		self::assertSame($denial, $this->practicePolicy([Roles::CONDUCTOR], $licenses)->deviceCopyDenial(self::version($values), self::UID));
+		$policy = $this->practicePolicy([Roles::CONDUCTOR], $licenses);
+		self::assertSame($withNotes, $policy->deviceDenial(RightsPolicy::CIRCLE_FOLDER, self::version($values), self::TODAY));
+		self::assertSame($scanOnly, $policy->deviceDenial(RightsPolicy::CIRCLE_FOLDER, self::version($values), self::TODAY, null, false));
+	}
+
+	// ---- one rule for printing and keeping on a device, for every circle (A23, R B26, B30) ----
+
+	/**
+	 * A policy with a person register whose protection proposal is given.
+	 *
+	 * @param list<License> $licenses
+	 */
+	private function matrixPolicy(string $proposal, array $licenses, ?LicenseMapper $mapper = null): RightsPolicy {
+		$roles = $this->createStub(Roles::class);
+		$time = $this->createStub(ITimeFactory::class);
+		$time->method('getDateTime')->willReturn(new \DateTime(self::TODAY . ' 12:00:00'));
+		if ($mapper === null) {
+			$mapper = $this->createStub(LicenseMapper::class);
+			$mapper->method('findByVersion')->willReturn($licenses);
+		}
+		$rights = new RightsService($this->createStub(IDBConnection::class), $this->createStub(WorkVersionMapper::class), $mapper,
+			$this->createStub(AuditLog::class), $roles, $this->createStub(IUserManager::class), $time, $this->createStub(IDateTimeZone::class));
+		$persons = $this->createStub(PersonService::class);
+		$persons->method('protection')->willReturn(['status' => $proposal]);
+		return new RightsPolicy($roles, $rights, $mapper, $persons);
+	}
+
+	/**
+	 * Rights status x licenses x way: printing and keeping on a device with
+	 * the notes (MusicXML) or with the scan alone, for choir members, the
+	 * concert folder and the visitors of a public link. The expectation is
+	 * written out here as the documentation says it (admin guide, sharing):
+	 * - choir members: released for them (confirmed public domain or the
+	 *   portal), then confirmed public domain or a license for download or
+	 *   self-printing; on a device the MusicXML also needs digital score files;
+	 * - concert folder: the same without the release for members;
+	 * - public: only confirmed public domain without a rights conflict, whatever
+	 *   the licenses (R B30).
+	 */
+	public function testPrintingAndKeepingFollowOneRuleForEveryCircle(): void {
+		$states = [
+			'confirmed public domain' => [['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'], ProtectionTerm::FREE],
+			'confirmed, but a rights conflict' => [['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'], ProtectionTerm::PROTECTED],
+			'unconfirmed public domain' => [['rights_status' => 'public_domain'], ProtectionTerm::FREE],
+			'protected' => [['rights_status' => 'protected'], ProtectionTerm::PROTECTED],
+			'open' => [['rights_status' => 'unknown'], ProtectionTerm::PROTECTED],
+		];
+		$licenseSets = ['', 'portal', 'portal,member_download', 'portal,self_print', 'portal,member_download,digital_scores', 'member_download,digital_scores',
+			'online_publication', 'online_publication,online_download', 'online_publication,online_download,digital_scores,member_download'];
+		$checked = 0;
+		foreach ($states as $stateName => [$values, $proposal]) {
+			$version = self::version($values + ['publication_status' => 'free']);
+			$confirmed = ($values['confirmed_at'] ?? null) !== null;
+			$free = $confirmed && $proposal !== ProtectionTerm::PROTECTED;
+			foreach ($licenseSets as $set) {
+				$uses = $set === '' ? [] : explode(',', $set);
+				$policy = $this->matrixPolicy($proposal, $uses === [] ? [] : [self::license($set)]);
+				$has = fn (string ...$any): bool => array_intersect($any, $uses) !== [];
+				$copy = $confirmed || $has('member_download', 'self_print');
+				$notes = $confirmed || $has('digital_scores');
+				$expected = [
+					'members' => ['print' => ($confirmed || $has('portal')) && $copy],
+					'folder' => ['print' => $copy],
+					'public' => ['print' => $free],
+				];
+				foreach ($expected as $circle => $ways) {
+					$expected[$circle] += ['scan on a device' => $ways['print'], 'notes on a device' => $ways['print'] && ($circle === 'public' || $notes)];
+				}
+				foreach ($expected as $circle => $ways) {
+					$circleKey = $circle === 'folder' ? RightsPolicy::CIRCLE_FOLDER : $circle;
+					$actual = [
+						'print' => $policy->printDenial($circleKey, $version, self::TODAY),
+						'scan on a device' => $policy->deviceDenial($circleKey, $version, self::TODAY, null, false),
+						'notes on a device' => $policy->deviceDenial($circleKey, $version, self::TODAY),
+					];
+					foreach ($ways as $way => $allowed) {
+						$case = "$stateName, licenses [$set], $circle, $way";
+						if ($allowed) {
+							self::assertNull($actual[$way], $case);
+						} else {
+							self::assertIsString($actual[$way], $case);
+							self::assertNotSame('', $actual[$way], $case . ': says why');
+						}
+						$checked++;
+					}
+				}
+			}
+		}
+		self::assertSame(5 * 9 * 3 * 3, $checked);
+	}
+
+	public function testAVisitorNeverKeepsWhatAConflictSuspends(): void {
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'publication_status' => 'free']);
+		$licensed = $this->matrixPolicy(ProtectionTerm::PROTECTED, [self::license('online_publication,online_download,digital_scores')]);
+		self::assertNull($licensed->publicViewDenial($confirmed, self::TODAY), 'the license shows it');
+		self::assertSame('Visitors of a public link hold no license: printing the piece or keeping it on a device needs confirmed public domain without a rights conflict.',
+			$licensed->printDenial('public', $confirmed, self::TODAY), 'R B30: no print, the conflict counts as for scan and playback');
+		self::assertNotNull($licensed->deviceDenial('public', $confirmed, self::TODAY));
+		self::assertNull($this->matrixPolicy(ProtectionTerm::FREE, [])->deviceDenial('public', $confirmed, self::TODAY));
+		self::assertSame('Not released for publication. The catalog librarian sets the publication status of the version to "Released for publication".',
+			$this->matrixPolicy(ProtectionTerm::FREE, [])->printDenial('public', self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']), self::TODAY));
+	}
+
+	public function testTheDeviceLearnsWhenTheLicensesForTheCopyEnd(): void {
+		$protected = self::version(['rights_status' => 'protected']);
+		$policy = $this->practicePolicy([], [self::license('portal', null, '2027-06-30'), self::license('member_download', null, '2027-03-31'),
+			self::license('digital_scores', null, '2027-01-31')]);
+		self::assertSame('2027-01-31', $policy->deviceEnd('members', $protected, self::TODAY), 'the earliest: here the digital score files');
+		self::assertSame('2027-03-31', $policy->deviceEnd('members', $protected, self::TODAY, false), 'the scan alone');
+		self::assertSame('2027-01-31', $policy->deviceEnd(RightsPolicy::CIRCLE_FOLDER, $protected, self::TODAY), 'R B29');
+		self::assertSame('2027-03-31', $policy->deviceEnd(RightsPolicy::CIRCLE_FOLDER, self::version(['rights_status' => 'protected']), self::TODAY, false),
+			'the folder needs no release for choir members');
+		self::assertNull($policy->deviceEnd('members', self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']), self::TODAY));
+		self::assertNull($this->practicePolicy([], [self::license('portal,member_download,digital_scores')])->deviceEnd('members', $protected, self::TODAY),
+			'no end');
+	}
+
+	public function testWhileRememberingTheLicensesOfAVersionAreReadOnce(): void {
+		$mapper = $this->createMock(LicenseMapper::class);
+		$mapper->expects(self::exactly(2))->method('findByVersion')->with(self::VERSION_ID)->willReturn([self::license('portal,member_download')]);
+		$policy = $this->matrixPolicy(ProtectionTerm::FREE, [], $mapper);
+		$protected = self::version(['rights_status' => 'protected']);
+		$answers = $policy->remembering(fn (): array => [$policy->memberViewDenial($protected, self::TODAY), $policy->memberScanDenial($protected, self::TODAY),
+			$policy->printDenial('members', $protected, self::TODAY), $policy->deviceDenial('members', $protected, self::TODAY, null, false)]);
+		self::assertSame([null, null, null, null], $answers);
+		// outside it every question reads them anew: a license saved in the same request counts
+		self::assertNull($policy->memberViewDenial($protected, self::TODAY));
+	}
+
+	public function testAnUnknownCircleIsRefused(): void {
+		$this->expectException(\InvalidArgumentException::class);
+		$this->practicePolicy([])->printDenial('internal', self::version(['rights_status' => 'protected']), self::TODAY);
 	}
 
 	// ---- milestone 0.18: the scan of public links, the end and the number of licenses, rights conflicts ----

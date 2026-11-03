@@ -467,9 +467,9 @@ class LinkService {
 			'playback' => $denial === null && $playDenial === null,
 			'practiceAudio' => $members && $denial === null && $playDenial === null && $this->modules->isEnabled(Modules::MEMBER_PRACTICE_AUDIO)
 				&& $this->policy->memberPracticeAudioDenial($version, $today, $copy) === null,
-			// whether the recipients can keep it on their device (milestone 0.19); null: the module is off
+			// whether the recipients can keep it on their device (milestone 0.19, the one rule of RightsPolicy); null: the module is off
 			'offline' => !$this->modules->isEnabled(Modules::OFFLINE) ? null
-				: $denial === null && ($members ? $scanDenial === null : $version->getRightsStatus() === 'public_domain' && $version->isConfirmed()),
+				: $denial === null && $this->policy->deviceDenial($circle, $version, $today, $copy) === null,
 			// the last day of the license that releases it; null: no end
 			'until' => $denial === null ? $this->policy->releaseEnd($version, $circle, false, $today) : null,
 			// a hint, no barrier: more choir members than the licenses are for (W B17)

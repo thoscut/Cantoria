@@ -112,12 +112,13 @@ const confirmDeleteButton = ref<FocusTarget>(null)
 const deviceStatus = ref('')
 
 /**
- * What the server says about keeping an item.
+ * What the server says about keeping an item; the device drops it when the
+ * licenses for the copy end (`keepUntil`, R B29), as on "Shared with me".
  *
  * @param item - programme item
  */
 function forDevice(item: FolderItem): PieceForDevice {
-	return { key: String(item.id), title: item.title, composer: item.composer, expires: null, offline: item.offline, scan: item.scan, score: item.score }
+	return { key: String(item.id), title: item.title, composer: item.composer, expires: item.keepUntil ?? null, offline: item.offline, scan: item.scan, score: item.score }
 }
 
 function isKept(item: FolderItem): boolean {

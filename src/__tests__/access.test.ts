@@ -25,6 +25,7 @@ function user(admin: boolean, roles: string[]): Meta {
 		roleLabels: {},
 		fields: { work: {}, version: {}, copy: {} },
 		licenseUses: {},
+		freeOnlyWays: [],
 		personFields: {},
 		contributionRoles: {},
 		archive: { id: 0, path: '' },

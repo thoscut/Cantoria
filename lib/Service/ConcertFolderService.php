@@ -33,14 +33,17 @@ use OCP\Files\File;
  * (with the module "offline", milestone 0.19). Only reads: nothing is
  * changed from the folder. For the conductor and the catalog librarian; the
  * rights policy decides about every piece as in the score view
- * (RightsPolicy::viewDenial, playDenial), a copy on the device needs the
- * rights for one (RightsPolicy::deviceCopyDenial), and an internal
+ * (RightsPolicy::viewDenial, playDenial), a copy on the device and a
+ * print need the rights for one (RightsPolicy::deviceDenial, printDenial,
+ * the same rule as for choir members: for the notes as MusicXML on the
+ * device also a license for digital score files), and an internal
  * preservation copy is not opened at all: it is a copy for the archive, not
- * material for the rehearsal and the concert.
+ * material for the rehearsal and the concert. The device learns until when
+ * the licenses allow the copy (`keepUntil`, R B29), as on "Shared with me".
  *
  * @psalm-type FolderItem = array{id: int, position: int, title: string, composer: string, shelfmark: ?string,
  *     participation: ?string, note: ?string, encore: bool, duration: ?int, score: bool, scan: bool, scanSize: ?int, canPlay: bool,
- *     reason: ?string, offline: bool, offlineReason: ?string, print: bool, practiceKey: ?string}
+ *     reason: ?string, offline: bool, offlineReason: ?string, keepUntil: ?string, print: bool, practiceKey: ?string}
  * @psalm-type FolderConcert = array{id: int, kind: string, title: string, date: ?string, startTime: ?string,
  *     location: ?string, status: string, items: list<FolderItem>}
  */
@@ -63,6 +66,7 @@ class ConcertFolderService {
 		private ScanService $scans,
 		private Modules $modules,
 		private ProgrammeCopies $programmeCopies,
+		private RightsService $rights,
 	) {
 	}
 
@@ -111,49 +115,46 @@ class ConcertFolderService {
 
 	/**
 	 * The MusicXML of an item, after the same checks as the score view; a
-	 * compressed score (.mxl) unpacked, as the shared pages read it.
+	 * compressed score (.mxl) unpacked, as the shared pages read it. `keep`:
+	 * whether the notes and the scan may stay on the device (header
+	 * X-Cantoria-Keep, which the service worker follows; S N5), the module
+	 * "offline" and the rights for a copy, checked again with every answer.
 	 *
+	 * @return array{xml: string, keep: bool}
 	 * @throws UserFacingException
 	 */
-	public function score(int $itemId, string $uid): string {
-		['score' => $score] = $this->filesOf($this->open($itemId, $uid));
-		if ($score === null) {
+	public function score(int $itemId, string $uid): array {
+		['copy' => $copy, 'version' => $version] = $this->open($itemId, $uid);
+		$files = $this->filesOf($copy);
+		if ($files['score'] === null) {
 			throw new NotFoundException('This programme item has no score.');
 		}
-		$content = $this->scores->content($score->getId(), $uid)['content'];
-		return MusicXmlExcerpt::whole($this->scores->scoreText($content)['xml']);
+		$content = $this->scores->content($files['score']->getId(), $uid)['content'];
+		return ['xml' => MusicXmlExcerpt::whole($this->scores->scoreText($content)['xml']), 'keep' => $this->mayKeep($version, $uid, $copy, true)];
 	}
 
 	/**
-	 * The scan (PDF) of an item, after the same checks as the score view.
+	 * The scan (PDF) of an item, after the same checks as the score view;
+	 * `keep` as for the score.
 	 *
+	 * @return array{file: File, keep: bool}
 	 * @throws UserFacingException
 	 */
-	public function scan(int $itemId, string $uid): File {
-		['scan' => $scan] = $this->filesOf($this->open($itemId, $uid));
-		if ($scan === null) {
+	public function scan(int $itemId, string $uid): array {
+		['copy' => $copy, 'version' => $version] = $this->open($itemId, $uid);
+		$files = $this->filesOf($copy);
+		if ($files['scan'] === null) {
 			throw new NotFoundException('This programme item has no scan.');
 		}
-		return $this->scans->scan($scan->getId(), $uid);
+		return ['file' => $this->scans->scan($files['scan']->getId(), $uid), 'keep' => $this->mayKeep($version, $uid, $copy, $files['score'] !== null)];
 	}
 
 	/**
-	 * Whether the notes and the scan of an item may stay on the device
-	 * (header X-Cantoria-Keep, which the service worker follows; S N5): the
-	 * module "offline" and the rights for a copy, checked again with every
-	 * answer.
+	 * Whether a piece may stay on the device: the module "offline" and the
+	 * rights (keepDenial).
 	 */
-	public function mayKeep(int $itemId, string $uid): bool {
-		if (!$this->offlineOn()) {
-			return false;
-		}
-		try {
-			$copy = $this->open($itemId, $uid);
-			$version = $this->versions->find($copy->getVersionId());
-		} catch (UserFacingException|DoesNotExistException) {
-			return false;
-		}
-		return $this->keepDenial($version, $uid, $copy) === null;
+	private function mayKeep(WorkVersion $version, string $uid, Copy $copy, bool $withScore): bool {
+		return $this->offlineOn() && $this->keepDenial($version, $uid, $copy, $withScore) === null;
 	}
 
 	/**
@@ -174,10 +175,22 @@ class ConcertFolderService {
 	}
 
 	/**
-	 * Why a version may not be kept on a device, or null.
+	 * Why a version may not be kept on a device, or null (RightsPolicy, the
+	 * one rule for every circle).
+	 *
+	 * @param bool $withScore whether the piece kept has notes (MusicXML)
 	 */
-	public function keepDenial(WorkVersion $version, string $uid, ?Copy $copy): ?string {
-		return $this->folderViewDenial($version, $uid, $copy) ?? $this->policy->deviceCopyDenial($version, $uid, $copy);
+	public function keepDenial(WorkVersion $version, string $uid, ?Copy $copy, bool $withScore = true): ?string {
+		return $this->folderViewDenial($version, $uid, $copy)
+			?? $this->policy->deviceDenial(RightsPolicy::CIRCLE_FOLDER, $version, $this->rights->today($uid), $copy, $withScore);
+	}
+
+	/**
+	 * Why a version may not be printed from the folder, or null.
+	 */
+	private function printDenial(WorkVersion $version, string $uid, ?Copy $copy): ?string {
+		return $this->folderViewDenial($version, $uid, $copy)
+			?? $this->policy->printDenial(RightsPolicy::CIRCLE_FOLDER, $version, $this->rights->today($uid), $copy);
 	}
 
 	/**
@@ -198,8 +211,9 @@ class ConcertFolderService {
 			?? ($this->modules->isEnabled('playback') ? null : Modules::PLAYBACK_OFF));
 		$score = $files['score'] !== null && $viewDenial === null;
 		$scan = $files['scan'] !== null && $viewDenial === null;
-		$keepDenial = $version === null ? null : $this->keepDenial($version, $uid, $copy);
+		$keepDenial = $version === null ? null : $this->keepDenial($version, $uid, $copy, $score);
 		$offline = $this->offlineOn() && ($score || $scan);
+		$kept = $offline && $keepDenial === null;
 		return [
 			'id' => $item->getId(),
 			'position' => $item->getPosition(),
@@ -215,10 +229,12 @@ class ConcertFolderService {
 			'scanSize' => $files['scan'] !== null && $scan ? $files['scan']->getSize() : null,
 			'canPlay' => $score && $playDenial === null,
 			'reason' => $viewDenial ?? ($score ? $playDenial : null),
-			'offline' => $offline && $keepDenial === null,
+			'offline' => $kept,
 			'offlineReason' => $offline ? $keepDenial : null,
-			// printing the notes is a copy, too (B21): the same rights as a copy on the device
-			'print' => $version !== null && ($score || $scan) && $keepDenial === null,
+			// the last day the licenses allow the copy on the device; null: no end (R B29)
+			'keepUntil' => $kept && $version !== null ? $this->policy->deviceEnd(RightsPolicy::CIRCLE_FOLDER, $version, $this->rights->today($uid), $score) : null,
+			// printing the notes is a copy, too (B21)
+			'print' => $version !== null && ($score || $scan) && $this->printDenial($version, $uid, $copy) === null,
 			'practiceKey' => $version === null ? null : SharedLinkService::practiceKey($version),
 		];
 	}
@@ -226,9 +242,10 @@ class ConcertFolderService {
 	/**
 	 * An item of a programme still to be sung, for an account of the folder.
 	 *
+	 * @return array{copy: Copy, version: WorkVersion}
 	 * @throws UserFacingException
 	 */
-	private function open(int $itemId, string $uid): Copy {
+	private function open(int $itemId, string $uid): array {
 		$this->requireRole($uid);
 		try {
 			$item = $this->items->find($itemId);
@@ -248,7 +265,7 @@ class ConcertFolderService {
 		if ($denial !== null) {
 			throw new AccessDeniedException($denial);
 		}
-		return $copy;
+		return ['copy' => $copy, 'version' => $version];
 	}
 
 	/**
