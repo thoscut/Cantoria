@@ -16,8 +16,10 @@ use PHPUnit\Framework\TestCase;
  * it does not run it a second time, so a change would reach new
  * installations only. A change of the schema is a new migration.
  *
- * When a version with a new migration is released, its file and checksum
- * are added below (sha256sum lib/Migration/<file>).
+ * A migration counts as released as soon as it is on `main`, where test
+ * instances run it: its file and checksum are added below in the same pull
+ * request (sha256sum lib/Migration/<file>). `tools/release/package.sh`
+ * stops when a migration of the archive is missing here.
  */
 class ReleasedMigrationsTest extends TestCase {
 	/** File name => SHA-256 of the released migrations */

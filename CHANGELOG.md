@@ -14,7 +14,7 @@ All notable changes to this app are documented in this file. The format follows
 
 - **Share a whole programme with the choir.** In a concert or rehearsal,
   "Share with the choir …" shares the pieces of the programme with the
-  chosen groups in one step; pieces that may not be shared are named with
+  choir members in one step; pieces that may not be shared are named with
   their reason instead of being left out silently. "Open in the concert
   folder" opens the folder at the first piece that is not struck.
 - **Extend links.** A link that is about to run out can be extended in the
@@ -41,6 +41,30 @@ All notable changes to this app are documented in this file. The format follows
   REUSE for the documentation and runs Dependabot. The release workflow
   builds a reproducible, checked archive with the license notices of the
   bundled packages; `docs/release.md` describes tag and release.
+
+- **After the expert review of 3 November 2026:**
+  - A license use of its own for the download of the scan on public links,
+    and for passing on digital score files (MusicXML) and recordings in the
+    hand-over folder.
+  - After sharing a programme, a message to the choir to copy; links that
+    end within a week are marked; a hint when there are more choir members
+    than licenses.
+  - The stage view in "Shared with me"; a note where printing is not
+    licensed; the hint for iPhone and iPad also at "Make all … available".
+  - An import template (CSV, ODS) under Archive management, the import
+    columns in both administration guides, a link to the guide for choir
+    members in every state of "Shared with me" and a section "What you may
+    do with the scores" in it.
+  - Retention of the audit log (10 years by default,
+    `audit_retention_years`); the access report lists every record with an
+    account; downloads of the complete backup are logged.
+  - `tools/release/sign.sh` signs the archive the CI built, without
+    building; `tools/release/compare.sh` checks that a signed archive
+    differs only by `appinfo/signature.json`. The release guide gains the
+    trademark check before the certificate request, frozen migrations and
+    the upgrade test before the upload.
+  - The screenshot tool takes phone sizes, contrast mode and print and
+    checks with axe-core (`--axe`).
 
 ### Changed
 
@@ -75,7 +99,7 @@ All notable changes to this app are documented in this file. The format follows
 - Cantoria has a mark of its own (a C with an eighth note) as app icon, in
   the Files app and on the dashboard. The App Store text names practising,
   playing without a network, sharing a programme and the six setup steps.
-- **One migration for the first release.** The 18 migrations of the
+- **One migration for the first release.** The 17 migrations of the
   internal builds are folded into `Version001700Date20261030000000`; an
   instance that ran them skips it. A test keeps released migrations
   unchanged (`tests/Unit/Migration/ReleasedMigrationsTest.php`). The log
@@ -87,12 +111,75 @@ All notable changes to this app are documented in this file. The format follows
   picture of the English guides, and a test keeps the German guides free of
   English pictures.
 
+- **After the expert review of 3 November 2026:**
+  - `main` carries 0.17.0-dev.1. The release archive is built from the
+    commit only (`git archive`) with `npm ci --ignore-scripts`, checked with
+    `reuse lint` and installed by the integration tests on every CI run.
+    The release workflow runs the full CI, rebuilds on a fresh runner and
+    compares, then makes a draft release with the unsigned archive and
+    `SHA256SUMS`. Container images are pinned by digest, the App Store
+    schema by commit and checksum; on `main` every commit keeps its own CI
+    run.
+  - Sharing a programme never shortens a link, applies note and scan to
+    existing links and checks only the chosen pieces; "Extend" is a
+    labelled button.
+  - The stage view covers the whole page, so questions and lists stay
+    visible; it folds its settings, has its exit in the bar, ends on Escape
+    and has 48 px targets. On a phone the scan opens as a view of its own.
+    One small-screen limit for both score views, headings for each
+    practising tool, a sharper icon at 16 px, one icon for the concert
+    folder and a framed selection in contrast mode.
+  - Setup asks for the functions before the roles and checks the roles they
+    need; presets are folded under the scenarios. Store text and README
+    describe Cantoria as the archive and the rights of a choir's existing
+    stock, alongside its choir system.
+  - Backup format 2 with logical table names and the table of the mirror
+    folder (format 1 is still read). The export column is "Im Chorportal
+    seit" ("Auf Singste seit" is still read). A "traditional" melody needs
+    an arranger or the kind "Original" before it counts as public domain.
+    Practice entries of choir members in the log keep only the day. Legal
+    and privacy documents cover devices, the concert folder, the microphone
+    and storage in the browser.
+
 ### Removed
 
 - Upgrade code for internal builds that were never published: the module
   switches of installations before 0.1.27, moving backups of versions
   before 0.10 out of the archive folder, and moving practice passages
   stored under title and composer to the practice key.
+
+### Fixed
+
+- Focus lies in the notes after every change of piece in the concert
+  folder, so the page-turn pedal turns at once. The back gesture returns to
+  the list. "10 of 12 pieces" names why the others stay behind. A new
+  version opens without a network: the worker preloads the scripts from the
+  build manifest. The sticky bar no longer hides the focus.
+- Texts no longer present the scan of public links as rights-checked; the
+  accessibility statement names only checks that were done; the German
+  guides use one word for one meaning; § 66 UrhG is described correctly.
+- Copyright notices of Verovio's music fonts and of the libraries compiled
+  into it are part of the license notices. Untracked files no longer reach
+  the archive, and a migration missing from `ReleasedMigrationsTest` stops
+  the build.
+
+### Security
+
+- The scan of a public link needs a license for its download. A link ends
+  at the latest when the license that releases it ends and at most a year
+  after it was made; an expired public link gets a new address when it is
+  extended; the route is rate limited. A rights conflict closes public
+  links that no license carries. Devices keep pieces only until the
+  license for copies ends.
+- Internal preservation copies and accounts stay out of programmes, the
+  CSV export, `_cantoria-app` and task lists for roles that may not view
+  them. The hand-over folder gets only cleaned MusicXML. Backups go only
+  into a folder private to the archive account. Group admins cannot give
+  roles to groups they manage. Logs name no paths or accounts.
+- The service worker keeps only answers the server marks with
+  `X-Cantoria-Keep: 1` and removes the rest; it exists only with the module
+  "Practising without a network". No npm install scripts run on the signing
+  path, and CI checkouts keep no credentials.
 
 ## [0.16.1] - 2026-10-29
 

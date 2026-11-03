@@ -29,6 +29,9 @@ und nutzerfreundlich** (Leitlinien 11, 13, 14 und 15).
 3. **Nichts wird gelöscht.**
    - Exemplare bekommen einen Status.
    - Jede Änderung wird protokolliert: wer, wann, alt, neu, Grund.
+   - Die gesetzliche Ausnahme: Nach Ablauf der Aufbewahrungsfrist
+     (Standard zehn Jahre, `audit_retention_years`) entfernt die App Konto
+     und Namen aus den Protokolleinträgen; der Eintrag selbst bleibt.
 4. **Dateien werden nur gelesen.** Die App ändert, verschiebt und benennt
    keine Datei um. Sie schreibt nur in ihren eigenen Unterordner
    `_cantoria-app` (Exporte und Stände des Werkverzeichnisses) und in den
@@ -40,6 +43,9 @@ und nutzerfreundlich** (Leitlinien 11, 13, 14 und 15).
      schreibt nur in den eigenen Zielordner, nie in den Archivordner. Dort
      ersetzt oder entfernt sie nur Dateien, die sie selbst geschrieben hat.
      Jede Schreib- und Löschaktion steht im Protokoll.
+   - Der Übergabeordner an das Chorsystem (`choir_handover`), nur mit
+     seinem Modul und nach denselben Regeln wie der Spiegelordner; MusicXML
+     nur geprüft und bereinigt.
 5. **Rollen statt Personen.**
    - Rollen werden Nextcloud-Gruppen zugeordnet.
    - Jede Rolle schreibt nur ihre Felder.
@@ -138,10 +144,10 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | auf `main` bis auf Markenprüfung, Signaturzertifikat und Branch-Schutz (Sache des Maintainers); neu offen: Release-Weg schließen, Sicherungsformat, ehrliche Texte zum Scan | PR #14, #15 |
-| 0.18 Rechte auf allen neuen Wegen | Konzertmappe an die Speicherregel gebunden (auf `main`); der Rest geplant | PR #14 |
-| 0.19 Üben und Vortragen am Gerät | auf `main` bis auf Scan am Handy, gemeinsame Logik, Abnahme auf echten Geräten; neu offen: Bühnenansicht nachbessern | PR #14 |
-| 0.20 Einführen und umsteigen | auf `main`: Szenarien, Begriffe, Anleitung für Chormitglieder, App-Icon, Store-Text; offen: Import-Assistent, Screenshots, Rückweg, Demo, Positionierung | PR #14 |
+| 0.17 Bereit zur ersten Veröffentlichung | im Review bis auf Markenprüfung, Signaturzertifikat, Branch-Schutz und Klärung der Schriftlizenz Liberation (Sache des Maintainers) | PR #14, #15, #16 |
+| 0.18 Rechte auf allen neuen Wegen | im Review; offen: Abmelden am gemeinsamen Gerät, Bestätigungsdialog für die neuen Wege, zwei Entscheidungen des Maintainers | PR #14, #16 |
+| 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
+| 0.20 Einführen und umsteigen | im Review; offen: Import aus XLSX und ODS, Screenshots aus einer echten Nextcloud, „Mit mir geteilt“ nach Programmen, Demo | PR #14, #16 |
 | 1.0 Stabil | geplant | – |
 
 Die aktuelle Version ist 0.16.1: Die App heißt jetzt Cantoria, vorher
@@ -633,7 +639,7 @@ Prüfsumme), Release-Workflow, Audit und Dependabot; die neuen Punkte
 stehen am Ende des Abschnitts.* Was nach dem ersten Release im App
 Store nur noch schwer zu ändern ist, kommt zuerst.
 
-- **Migrationen zusammenfassen und einfrieren:** die 18 Migrationen zu
+- **Migrationen zusammenfassen und einfrieren:** die 17 Migrationen zu
   einer Grundmigration zusammenfassen und den Upgrade-Code für Vorversionen
   entfernen, die es nie gab (`ModuleDefaults`, `moveOldBackups`,
   `moveOldMarks`, Datenmigrationen). Ab dem ersten Release sind
@@ -663,7 +669,12 @@ Store nur noch schwer zu ändern ist, kommt zuerst.
   `composer audit` als Pflichtschritt in der CI, Dependabot oder Renovate
   (S N10, T).
 
-*Ergänzt am 3. November 2026:*
+*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf die
+Klärung der Schriftlizenz Liberation in Verovio (Version 1.04 von 2007
+stand unter GPL-2.0 mit Font-Ausnahme, Verovio nennt OFL; Sache des
+Maintainers, gegebenenfalls anwaltlich) und die amtliche Markenprüfung.
+Der Upgrade-Job von der letzten veröffentlichten Version folgt mit dem
+ersten Tag.*
 
 - **Lizenzhinweise fertig:** die Copyright-Vermerke der Notenschriften
   (die OFL verlangt sie), die in Verovio einkompilierten Bibliotheken und
@@ -752,7 +763,16 @@ Links (R B2) und die Exporte (S N1).
   dem Abmelden auf dem Gerät bleibt; `SECURITY.md` danach berichtigen
   (S N6).
 
-*Ergänzt am 3. November 2026:*
+*Ergänzt am 3. November 2026; im Review (PR #16). Mit PR #16 sind auch die
+früheren Punkte dieses Meilensteins umgesetzt (Exporte, Scan in
+öffentlichen Links, Übergabeordner, Nutzungsarten, Lizenzende, § 66 UrhG,
+Aufgaben, Delegation, Protokoll, Datenschutz-Paket), mit drei Resten:
+Abmelden am gemeinsamen Gerät (S N6) und der Bestätigungsdialog für die
+neuen Wege (R B14, B15) sind offen. Zwei Entscheidungen liegen beim
+Maintainer: ob „Konto vergessen“ die Konto-IDs in Belegen wie `createdBy`
+entfernt (R B9), und ob der Sicherungsordner vom Konto der
+Archivverwaltung gelöst wird (S N2; heute nur in einen privaten Ordner
+dieses Kontos, sonst hält die Sicherung an).*
 
 - **Links verlängern mit Grenzen:** eine feste Obergrenze ab Erstellung
   und höchstens bis zum Ende der Lizenz; abgelaufene öffentliche Links
@@ -822,7 +842,11 @@ auf echten Geräten.
   echten Nextcloud, mit Protokoll; das schließt die offene Abnahme von
   0.13 bis 0.15 ein.
 
-*Ergänzt am 3. November 2026:*
+*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf
+`usePlayback` (die gemeinsame Abspiel-Logik bleibt bis zur Geräteabnahme
+doppelt) und eine eigene Startadresse für den Home-Bildschirm (U25: der
+Core bindet das Manifest des Themings ein; die Seiten erklären statt dessen
+den Weg über Lesezeichen). Auf echten Geräten geprüft ist nichts davon.*
 
 - **Bühnenansicht reparieren:** Vollbild für das ganze Dokument statt nur
   für den Abschnitt des Stücks, damit Rückfragen und Auswahllisten
@@ -884,7 +908,12 @@ für Hoster, Rückweg, Demo.
 - **Zeigen, was es kann:** Demo oder kurzes Video, Store-Text und
   Doku-Seite „Cantoria neben anderen Lösungen“ (W).
 
-*Ergänzt am 3. November 2026:*
+*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf den
+Import aus XLSX und ODS (die Vorlage gibt es als CSV und ODS),
+„Mit mir geteilt“ nach Programmen geordnet mit „neu“-Markierung (U24) und
+die neuen Bilder: Das Werkzeug kennt die neuen Szenen und prüft mit
+axe-core, aufnehmen lässt es sich nur in einer Nextcloud mit den
+Demodaten.*
 
 - **Die Sänger erfahren von neuen Stücken:** nach dem Teilen eines
   Programms ein Text zum Kopieren für die Nachricht an den Chor;
