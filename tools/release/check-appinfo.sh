@@ -24,6 +24,7 @@ XSD_URL="https://raw.githubusercontent.com/nextcloud/appstore/$XSD_COMMIT/nextcl
 
 XSD=$(mktemp)
 trap 'rm -f "$XSD"' EXIT
-curl -fsSL -o "$XSD" "$XSD_URL"
+# A short network failure is retried; the checksum decides
+curl -fsSL --retry 3 --retry-all-errors -o "$XSD" "$XSD_URL"
 echo "$XSD_SHA256  $XSD" | sha256sum -c --quiet -
 xmllint --noout --schema "$XSD" "$ROOT/appinfo/info.xml"
