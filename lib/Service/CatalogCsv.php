@@ -17,8 +17,9 @@ use OCA\Cantoria\Exception\InvalidInputException;
  * The legacy catalog format ("Werkverzeichnis") has German column headers and
  * German values for the rights status. It is kept exactly: UTF-8 with BOM,
  * `;` as separator, CRLF line endings and quotes only where needed, so that an
- * import followed by an export reproduces the same file byte for byte. PHP's
- * fputcsv is not suitable because it also quotes fields containing spaces.
+ * import followed by an export reproduces the same file byte for byte (with
+ * the current header of a renamed column, FORMER_HEADERS). PHP's fputcsv is
+ * not suitable because it also quotes fields containing spaces.
  *
  * The extended format appends every other field as `level.field` columns.
  */
@@ -42,7 +43,7 @@ final class CatalogCsv {
 		'Rechte-Ersteinschätzung' => [Fields::VERSION, 'rights_assessment'],
 		'Rechtestatus' => [Fields::VERSION, 'rights_status'],
 		'Rechte bestätigt' => [Fields::VERSION, 'rights_confirmed'],
-		'Auf Singste seit' => [Fields::VERSION, 'portal_since'],
+		'Im Chorportal seit' => [Fields::VERSION, 'portal_since'],
 		'Verlag / Bestellnummer' => [Fields::VERSION, 'publisher'],
 		'Lizenz' => [Fields::VERSION, 'license'],
 		'Erwerbsbeleg' => [Fields::VERSION, 'proof_of_purchase'],
@@ -80,6 +81,14 @@ final class CatalogCsv {
 		'Rechte-Ersteinschätzung' => 'Komponist gestorben 1901',
 		'Rechtestatus' => 'gemeinfrei',
 		'Seiten' => '4',
+	];
+
+	/**
+	 * Former headers that the import still reads as the current one: the
+	 * column of the singers' portal had the name of one provider.
+	 */
+	public const FORMER_HEADERS = [
+		'Auf Singste seit' => 'Im Chorportal seit',
 	];
 
 	/** Legacy values of the rights status column => choice key */
@@ -128,6 +137,13 @@ final class CatalogCsv {
 			'header' => $header,
 			'rows' => [array_map(fn (string $column): string => self::TEMPLATE_EXAMPLE[$column] ?? '', $header)],
 		];
+	}
+
+	/**
+	 * The current name of a header (FORMER_HEADERS), or the header itself.
+	 */
+	public static function currentHeader(string $header): string {
+		return self::FORMER_HEADERS[$header] ?? $header;
 	}
 
 	public static function isLegacyColumn(string $header): bool {

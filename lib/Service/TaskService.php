@@ -31,6 +31,9 @@ use OCP\IUserManager;
  * - Only the catalog librarian closes a task (applied or discarded), because
  *   only the librarian writes the catalog; a check addressed to operations
  *   may also be closed by operations.
+ * - A task about an internal preservation copy is only for the roles that
+ *   may view it (RightsPolicy::PRESERVATION_COPY_VIEWERS): only they create
+ *   it, it is addressed to one of them, and only they find it in a list.
  */
 class TaskService {
 	public const ADDRESSEES = [Roles::CONDUCTOR, Roles::LIBRARIAN, Roles::OPERATIONS, Roles::READER];
@@ -76,6 +79,9 @@ class TaskService {
 		$task->setCopyId($copy->getId());
 		$task->setValue('kind', self::choice($data['kind'] ?? 'question', Task::KINDS, 'Kind of task'));
 		$task->setAddressee(self::choice($data['addressee'] ?? null, self::ADDRESSEES, 'Addressee'));
+		if (RightsPolicy::isPreservationCopy($version, $copy) && !in_array($task->getAddressee(), RightsPolicy::PRESERVATION_COPY_VIEWERS, true)) {
+			throw new InvalidInputException('A task about an internal preservation copy goes to the catalog librarian or the conductor.');
+		}
 		$task->setValue('category', isset($data['category']) && $data['category'] !== '' ? self::choice($data['category'], self::CATEGORIES, 'Category') : null);
 		$task->setValue('page', self::positive($data['page'] ?? null, 'Page'));
 		$task->setValue('verse', self::positive($data['verse'] ?? null, 'Verse'));
@@ -105,7 +111,7 @@ class TaskService {
 	}
 
 	public function answer(int $taskId, string $answer, string $uid): void {
-		$task = $this->load($taskId);
+		$task = $this->find($taskId, $uid);
 		if (!$this->roles->hasAnyRole($uid, [$task->getAddressee()])) {
 			throw new AccessDeniedException('Only the addressed role can answer this task.');
 		}
@@ -128,7 +134,7 @@ class TaskService {
 	}
 
 	public function close(int $taskId, string $status, ?string $note, string $uid): void {
-		$task = $this->load($taskId);
+		$task = $this->find($taskId, $uid);
 		$mayClose = $this->roles->hasAnyRole($uid, [Roles::LIBRARIAN])
 			|| ($task->getKind() === 'check' && $this->roles->hasAnyRole($uid, [$task->getAddressee()]));
 		if (!$mayClose) {
@@ -168,15 +174,18 @@ class TaskService {
 				$result[$task->getId()] = $task;
 			}
 		}
-		return $this->withContext(array_values($result));
+		return $this->withContext(array_values($result), $uid);
 	}
 
 	/**
+	 * The open (or all) tasks the account may see: those about internal
+	 * preservation copies only for the roles that may view them.
+	 *
 	 * @return list<array<string, mixed>>
 	 */
-	public function all(bool $includeClosed): array {
+	public function all(bool $includeClosed, string $uid): array {
 		$statuses = $includeClosed ? [Task::OPEN, Task::ANSWERED, Task::APPLIED, Task::DISCARDED] : [Task::OPEN, Task::ANSWERED];
-		return $this->withContext($this->tasks->findByStatus($statuses));
+		return $this->withContext($this->tasks->findByStatus($statuses), $uid);
 	}
 
 	/**
@@ -187,22 +196,29 @@ class TaskService {
 	}
 
 	/**
-	 * One task (no role check: every archive role reads the tasks).
+	 * One task. Every archive role reads the tasks, but a task about an
+	 * internal preservation copy only the roles that may view it.
 	 *
-	 * @throws NotFoundException
+	 * @throws NotFoundException|AccessDeniedException
 	 */
-	public function find(int $taskId): Task {
-		return $this->load($taskId);
+	public function find(int $taskId, string $uid): Task {
+		$task = $this->load($taskId);
+		if ($this->withContext([$task], $uid) === []) {
+			throw new AccessDeniedException('Internal preservation copy: only the catalog librarian and the conductor may view it.');
+		}
+		return $task;
 	}
 
 	/**
 	 * Adds shelf mark, binder and title to tasks, sorted by binder and number
-	 * so that a printed list follows the shelf.
+	 * so that a printed list follows the shelf. With an account, tasks about
+	 * internal preservation copies stay out unless it may view them.
 	 *
 	 * @param list<Task> $tasks
 	 * @return list<array<string, mixed>>
 	 */
-	public function withContext(array $tasks): array {
+	public function withContext(array $tasks, ?string $uid = null): array {
+		$hidePreservationCopies = $uid !== null && !$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
 		$copies = [];
 		foreach ($this->copies->findAll() as $copy) {
 			$copies[$copy->getId()] = $copy;
@@ -213,6 +229,9 @@ class TaskService {
 		foreach ($tasks as $task) {
 			$copy = $copies[$task->getCopyId()] ?? null;
 			$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
+			if ($hidePreservationCopies && ($version === null || RightsPolicy::isPreservationCopy($version, $copy))) {
+				continue;
+			}
 			$work = $version === null ? null : ($works[$version->getWorkId()] ?? null);
 			$rows[] = $task->jsonSerialize() + [
 				'shelfmark' => $copy?->getShelfmark(),

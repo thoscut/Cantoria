@@ -71,7 +71,8 @@ class RightsNoticeService {
 			try {
 				$notice = $this->read($node);
 			} catch (\Throwable $e) {
-				$this->logger->info('Cantoria: rights notice of ' . $file->getPath() . ' not read: ' . $e->getMessage());
+				// The id of the file, not its path, which may name the account
+				$this->logger->info('Cantoria: rights notice of archive file ' . $file->getId() . ' not read: ' . $e->getMessage());
 				$notice = null;
 				$counts['failed']++;
 			}
@@ -186,7 +187,7 @@ class RightsNoticeService {
 			return 1;
 		} catch (UserFacingException $e) {
 			// e.g. an account without a role that may propose (file sync by occ)
-			$this->logger->info('Cantoria: no proposal from the rights notice of ' . $file->getPath() . ': ' . $e->getMessage());
+			$this->logger->info('Cantoria: no proposal from the rights notice of archive file ' . $file->getId() . ': ' . $e->getMessage());
 			return 0;
 		}
 	}

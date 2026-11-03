@@ -62,7 +62,8 @@ below explain the reasons.
 | The repertoire page lists only public-domain works and links only to `cpdl.org` and `imslp.org` over https | `SharingTest::testTheRepertoirePageShowsChosenPublicDomainWorksOnly`, `testLinksToCpdlAndImslpMustBeHttpsToTheirSite` |
 | The API for agents needs its module, a role and a limit on every route, and decides nothing | CS `testEveryApiV1RouteNeedsTheInterfaceItsModuleARoleAndALimit`, `testNoApiV1RouteDecidesOrCorrects`, `testASwitchedOffApiV1RouteAnswers404WithOcsMeta`; agent run in `tools/ci/integration-demo.sh` |
 | The scan in links for choir members needs a license for copies unless public domain is confirmed; public playback of protected versions a license for online playback | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testPublicLinks`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
-| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the catalog and entry of the app's pages and the API for agents, for every role; programmes follow in the next row, other lists such as exports and tasks are not part of these tests | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies` |
+| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages, the API for agents, the CSV export and the task lists, for every role; programmes follow below | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies`, `testTheExportHoldsTheCopiesOfTheListAndNoAccounts`, `testTaskListsHoldTheSameCopies`, `testATaskAboutAPreservationCopyStaysWithTheRolesThatMayViewIt` |
+| Exports in the archive folder (`_cantoria-app`) hold no accounts and no internal preservation copies; the complete state before an import goes into the backup folder | `PreservationCopyParityTest::testTheExportFolderHoldsNoPreservationCopiesAndNoAccounts` |
 | In a programme (concert detail, API for agents, options for sharing it) an internal preservation copy shows shelf mark, ids and warnings only to the roles that may view it | `PreservationCopyParityTest::testProgrammesShowPreservationCopiesOnlyToTheRolesThatMayViewThem`; `ProgrammeShareTest::testAPreservationCopyShowsNeitherShelfMarkNorCopyToOtherRoles`; `LinkRolesTest::testTheOptionsHideAPreservationCopyFromTheOperationsRole` |
 | Sharing a programme and extending links only by the roles that make links, with the rights of today, rate limited | `LinkRolesTest::testOnlyTheRolesThatMakeLinksShareAProgrammeAndExtendLinks`, `testExtendingChecksTheRightsOfTodayForEveryCircleAndTheScan`; CS `testExpensiveEndpointsAreRateLimited` |
 | A link lasts at most 183 days from the day it is made or extended, at most a year after it was made and never beyond the license that releases it; extending never shortens a link, and an expired public link gets a new token | `SharingTest::testALinkIsExtendedOnlyByItsCreatorOrTheLibrarianAndWithTheRightsOfToday`, `testALinkLastsAtMostUntilTheLicenseEnds`, `testAnExpiredPublicLinkGetsANewTokenWhenExtended`; `ProgrammeShareTest::testALinkIsNeverShortened`, `testAPieceLastsAtMostUntilItsLicenseEnds`; `RightsPolicyTest::testALinkLastsAtMostAsLongAsItsLicense` |
@@ -76,17 +77,19 @@ below explain the reasons.
 | Spreadsheets are read without document type declarations and with limits against ZIP bombs | `XlsxReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testAFarCellCannotInflateTheWorkbook` |
 | A rights notice in a MusicXML file never sets a rights status | `RightsNoticeServiceTest::testANoticeBecomesAtMostAProposal`, `testTheDoctypeOfMusicXmlIsAcceptedButNoInternalSubset`; `archive_extras_test` |
 | The print station never writes into the archive folder and replaces only files it wrote itself | `print_mirror_test`; CS `testThePrintStationIsSyncedByTheCatalogLibrarianAndAdministrators` |
-| The hand-over to a choir system never writes into the archive folder or the folder of the print station and hands over only what choir members may have | `handover_test`; CS `testTheHandOverIsSyncedByTheCatalogLibrarianAndAdministrators` |
-| Backups and annual snapshots lie outside the archive folder | `workflow_test` ("the backup lies in the backup folder"), `archive_extras_test` ("the snapshot lies outside the archive folder"), `notifications_test` |
+| The hand-over to a choir system never writes into the archive folder or the folder of the print station and hands over only what choir members may have; MusicXML only cleaned and with a license for digital score files, recordings only with a license for passing them on | `handover_test`; CS `testTheHandOverIsSyncedByTheCatalogLibrarianAndAdministrators`; `HandoverContentTest::testMusicXmlGoesInCleaned`, `testAFileThatIsNoScoreStaysOut`; `RightsPolicyTest::testTheHandOverNeedsUsesForDigitalScoresAndRecordings` |
+| Backups and annual snapshots lie outside the archive folder, in a folder that only the account that set the archive folder can open; a shared folder stops the backup | `workflow_test` ("the backup lies in the backup folder"), `archive_extras_test` ("the snapshot lies outside the archive folder"), `notifications_test`; `AppSettingsTest::testAFolderOfTheAccountThatIsSharedIsNotTakenOver`, `testTheStoredFolderStopsTheBackupOnceItIsShared` |
+| Every download of the complete backup is in the audit log | `FullBackupDownloadTest::testEveryDownloadIsRecorded`, `testARefusedDownloadIsNotRecorded` |
 | The database holds link tokens only as hash and encrypted; tokens of links for choir members and public links only for their creator and the catalog librarian, no account names in link lists | `LinkTokensTest::testTheTableHoldsTheHashAndTheEncryptedTokenOnly`, `testTheTokenIsReadBackOnlyWithTheSecretOfTheInstance`, `testOnlyTheCreatorAndTheLibrarianSeeTokensThatOpenALinkToOthers` |
-| Excerpts and whole pieces for choir members and the public carry no encoder, miscellaneous fields, comments or processing instructions | `MusicXmlExcerptTest::testNamesAndNotesOutsideTheMusicDoNotLeaveTheServer` |
+| Excerpts and whole pieces for choir members and the public, and MusicXML in the hand-over folder, carry no encoder, miscellaneous fields, comments or processing instructions | `MusicXmlExcerptTest::testNamesAndNotesOutsideTheMusicDoNotLeaveTheServer`; `HandoverContentTest::testMusicXmlGoesInCleaned` |
 | The rights notice is not read from documents with an internal DTD subset, however long the prolog | `RightsNoticeServiceTest::testTheDoctypeOfMusicXmlIsAcceptedButNoInternalSubset` |
 | Backups hold no link tokens; a restore brings links back revoked | `ExportServiceTest::testABackupHoldsNoLinkTokensAndASnapshotNoAccounts`; `backup_test` |
-| A deleted account leaves no account in the folder book and the audit log; access and erasure for one person record no name | `PrivacyTest::testADeletedAccountLeavesNoAccountBehind`, `testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName`, `testTheReportNamesLoansEntriesAndPersonsOfAnAccountOrAName` |
+| A deleted account leaves no account in the folder book and the audit log; access and erasure for one person record no name; the access report knows every field with an account | `PrivacyTest::testADeletedAccountLeavesNoAccountBehind`, `testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName`, `testTheReportNamesLoansEntriesAndPersonsOfAnAccountOrAName`, `testTheReportKnowsEveryFieldWithAnAccount` |
+| After the retention period (default ten years) audit entries keep their roles, not account and name | `PrivacyTest::testTheAuditLogLosesAccountsAfterTheRetentionPeriod` |
 | Folders that never come back lose their holder after 36 months; persons without a known death keep only the year of birth | `FolderBookServiceTest::testFoldersThatNeverComeBackLoseTheHolderAfterThreeYears`; `PrivacyTest::testPersonsWithoutAKnownDeathKeepOnlyTheYearOfBirth` |
 | Of the weekly backups the newest eight are kept | `ExportServiceTest::testOnlyTheNewestWeeklyBackupsAreKept` |
 | Annual snapshots name nobody: no accounts, folder book, audit log or links | `ExportServiceTest::testABackupHoldsNoLinkTokensAndASnapshotNoAccounts`; `backup_test`, `archive_extras_test`; CS `testAnnualSnapshotsCheckTheRolesOnTheServer` |
-| A restore writes only into an empty catalog, checks every value against its column and writes nothing when it fails | `backup_test`; `FullBackupServiceTest::testColumnValue`, `testRefusesDeeplyNestedJson`, `testRefusesWhatIsNoBackup` |
+| A restore writes only into an empty catalog, checks every value against its column and writes nothing when it fails, also not from a file without a known table | `backup_test`; `FullBackupServiceTest::testColumnValue`, `testRefusesDeeplyNestedJson`, `testRefusesWhatIsNoBackup`, `testRefusesABackupWithoutAKnownTable` |
 | The folder book is read and written only by its roles; its entries of the audit log are hidden from others | CS `testTheFolderBookIsReadByTheArchiveRolesAndMaintainedByTheLibrarians`, `testFolderBookEntriesOfTheAuditLogAreHiddenFromOtherRoles`; `folder_book_test` |
 | After the retention period names and notes of a loan are removed, also from the audit log | `FolderBookServiceTest::testExpiredLoansLoseTheirPersonalDataAlsoInTheAuditLog`; `folder_book_test` |
 | The search of Nextcloud answers only catalog roles, in pages, without preservation copies for others | `CatalogSearchProviderTest::testAccountsWithoutACatalogRoleFindNothing`, `testPreservationCopiesOnlyForTheRolesThatMayViewThem`, `testResultsComeInPages` |
@@ -116,7 +119,10 @@ below explain the reasons.
   Those groups cannot give a role to a group they belong to, cannot set or
   change the archive folder and cannot switch on the modules that open the
   archive to the outside (agents, choir members, the public, the print
-  station); these stay with administrators. Changes of roles and groups and
+  station); these stay with administrators. A group admin (sub-admin) of
+  Nextcloud with the settings cannot give a role to a group they manage
+  either, as they could add themselves to it
+  (CS `testDelegatedSettingsCannotGrantRolesOrMoveTheArchiveFolder`). Changes of roles and groups and
   of the archive folder are in the audit log with the old and the new
   value, as are changes of modules.
   Admins write catalog data only if they also hold a role; restoring a
@@ -375,7 +381,9 @@ these rules:
 - **Data minimisation.** Answers contain no account names (who confirmed or
   chose something) and no file contents. Internal preservation copies are
   left out of the search for roles that may not view them and refused
-  (403) as a copy, text reference or target of a task.
+  (403) as a copy, text reference or target of a task. The same holds for
+  the task lists and the CSV export of the app's pages, and a task about a
+  preservation copy can only be addressed to the roles that may view it.
 - **Limits.** Every route is rate limited per account (30 to 300 requests
   in 10 minutes); internal errors are logged and answered with a generic
   message.
@@ -463,6 +471,13 @@ account can do; it offers a stable, documented and limited contract.
   identifiers unchecked), and checks every value against the type, length and
   nullability of its column. It runs in one transaction; the check that the
   catalog is empty is part of that transaction. JSON nesting is limited.
+  Tables are named logically in the file (format 2; format 1 with the
+  database names is still read); a file without any known table is refused.
+- The backup folder is used only while it is private to the account that
+  set the archive folder: its owner, no shares, not mounted from elsewhere
+  (`AppSettings::privateFolder`, failing closed). A stored folder that was
+  shared or moved stops the backup with a message; a folder of the same
+  name that is not private is never taken over.
 - The complete backup (download and the weekly file) contains the whole
   catalog including the audit log, tasks, the register of persons and the
   folder book. The roles that read all of it in the app (catalog,
@@ -471,9 +486,15 @@ account can do; it offers a stable, documented and limited contract.
   without a role thus get the names of the folder book through the backup,
   although the routes of the folder book refuse them (403): backup and
   restore stay with the administration, which can read the database
-  anyway. Backups
+  anyway. Every download is recorded in the audit log (account, time, file
+  name), as the copy is out of reach of the retention periods. Backups
   hold no link tokens: after a restore every link is revoked. Of the weekly
   backups the newest eight are kept.
+- The catalog CSV of the app's pages and the exports in `_cantoria-app`,
+  which everyone with the archive folder can read, contain no accounts;
+  internal preservation copies only in the download of the roles that may
+  view them, never in `_cantoria-app`. The state before an import is kept
+  complete in the backup folder.
 - Annual snapshots (module `annual_snapshot`) are kept for years and name
   nobody: they hold the catalog tables without accounts, without the folder
   book, audit log, tasks, proposals, links and reviews, plus a list of
@@ -493,8 +514,15 @@ account can do; it offers a stable, documented and limited contract.
 - After a retention period set by the administration (default 12 months
   after the return) the daily background job removes name, account and
   notes of the loan, in the loan and in its own entries of the audit log,
-  also while the module is switched off. This is the only change the app
-  ever makes to the audit log; it notes the removal without the name.
+  also while the module is switched off. It notes the removal without the
+  name.
+- The audit log keeps account and name for a retention period (default ten
+  years, `audit_retention_years`; claims of rights holders are time-barred
+  after ten years at the latest); then the daily job removes them and keeps
+  the roles. Entries of choir members are written without account and name
+  and with the day only. Besides this, the app changes the audit log only
+  for the folder book retention, a deleted account and the erasure for one
+  person.
 - Backups made before still contain the names until the weekly backups are
   rotated out after eight weeks; backups stored by hand or downloaded, the
   trash bin and file versions of Nextcloud and server backups keep them

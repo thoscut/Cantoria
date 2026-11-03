@@ -73,6 +73,7 @@ final class ProtectionText {
 			'running' => $l->t('Protected until the end of %3$s: the last of the persons involved, %1$s, died in %2$s.', [$p[0] ?? '', $p[1] ?? '', $p[2] ?? '']),
 			'composer_missing' => $l->t('No composer is recorded for this version. Add the composer under "Persons involved and protection" (tab Rights), or mark the melody as traditional with evidence; until then unknown means protected.'),
 			'lyricist_missing' => $l->t('No lyricist is recorded for this version. Add the lyricist under "Persons involved and protection" (tab Rights), or mark the text as traditional or the version as without text; until then unknown means protected.'),
+			'arranger_missing' => $l->t('The melody is traditional, but no arranger is recorded. Add the arranger on the tab "Rights", or choose "Original" as the kind of version; until then unknown means protected.'),
 			'traditional' => $l->t('Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.'),
 			'only_editors' => $l->t('Only editors are recorded for this version. Add the composer and the other persons involved; until then unknown means protected.'),
 			'year_missing' => $l->t('The year in which it first appeared is missing. Enter it in the field "Year first published" (tab Rights); until then the version counts as protected.'),

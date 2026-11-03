@@ -347,6 +347,37 @@ final class RightsPolicyTest extends TestCase {
 	}
 
 	/**
+	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string, 3: ?string}>
+	 */
+	public static function handoverCases(): iterable {
+		$confirmed = ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'];
+		$noScores = 'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").';
+		$noRecording = 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").';
+		// version values, licenses, expected denial for MusicXML, for a recording
+		yield 'confirmed public domain: MusicXML yes, a recording needs its own license' => [$confirmed, [], null, $noRecording];
+		yield 'confirmed public domain with a license for recordings' => [$confirmed, [['recording_sharing']], null, null];
+		yield 'download and printing cover no MusicXML' => [['rights_status' => 'protected'], [['portal,member_download,self_print,practice_audio']], $noScores, $noRecording];
+		yield 'digital score files and recordings' => [['rights_status' => 'protected'], [['portal,digital_scores,practice_audio,recording_sharing']], null, null];
+		yield 'recordings without practice audio' => [['rights_status' => 'protected'], [['portal,recording_sharing']], $noScores, self::PROTECTED_PLAY];
+		yield 'preservation copy' => [$confirmed + ['preservation_copy' => true], [['portal,digital_scores,recording_sharing']], self::MEMBER_PRESERVATION, self::MEMBER_PRESERVATION];
+	}
+
+	/**
+	 * The hand-over folder: MusicXML is a digital edition of its own, and a
+	 * recording has rights of performers and producer (R B6, B7).
+	 *
+	 * @param array<string, mixed> $values
+	 * @param list<array{0: string, 1?: ?string, 2?: ?string}> $licenseSpecs
+	 */
+	#[DataProvider('handoverCases')]
+	public function testTheHandOverNeedsUsesForDigitalScoresAndRecordings(array $values, array $licenseSpecs, ?string $score, ?string $audio): void {
+		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$policy = $this->practicePolicy([], $licenses);
+		self::assertSame($score, $policy->handoverScoreDenial(self::version($values), self::TODAY), 'MusicXML');
+		self::assertSame($audio, $policy->handoverAudioDenial(self::version($values), self::TODAY), 'recording');
+	}
+
+	/**
 	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string}>
 	 */
 	public static function deviceCopyCases(): iterable {

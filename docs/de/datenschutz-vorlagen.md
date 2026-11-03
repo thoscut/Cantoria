@@ -8,7 +8,8 @@
 
 Diese Vorlagen helfen dem Verein, die App Cantoria in seine
 Datenschutzunterlagen aufzunehmen. Sie beschreiben, was die App speichert
-(Stand: Version 0.11). Sie sind **keine Rechtsberatung**: Passe sie an deinen
+(Stand: November 2026, Version 0.16.1 mit den Änderungen bis Meilenstein
+0.20). Sie sind **keine Rechtsberatung**: Passe sie an deinen
 Verein, deine Nextcloud und deine Module an, und lass sie im Zweifel von
 deiner oder deinem Datenschutzbeauftragten prüfen. Eckige Klammern
 `[…]` füllst du selbst aus.
@@ -27,8 +28,15 @@ Allgemeine Angaben für alle Einträge:
 - **Technische und organisatorische Maßnahmen:** Zugriff nur mit
   Nextcloud-Konto und Rolle im Notenarchiv; Rollen nach Aufgaben getrennt;
   verschlüsselte Verbindung (HTTPS); Sicherungen im Sicherungsordner des
-  Kontos, das den Archivordner eingerichtet hat; [weitere Maßnahmen der
-  Nextcloud, z. B. Zwei-Faktor-Anmeldung].
+  Kontos, das den Archivordner eingerichtet hat, nur solange er nicht
+  geteilt ist; [weitere Maßnahmen der Nextcloud, z. B. Zwei-Faktor-Anmeldung].
+- **Sicherungen:** Die Sicherungen der App enthalten alle Daten unten. Von
+  den Wochensicherungen bleiben die acht neuesten. Von Hand abgelegte und
+  heruntergeladene Sicherungen (das Herunterladen steht im Protokoll)
+  bleiben, bis ihr sie löscht; dazu kommen Papierkorb und Versionen der
+  Nextcloud ([Frist laut `config.php`, z. B. 30 Tage]) und die Sicherungen
+  des Servers ([Frist]). Nach einer Wiederherstellung führt ihr die
+  vermerkten Löschungen erneut aus.
 
 **1.1 Notenarchiv: Werkverzeichnis und Protokoll**
 
@@ -36,11 +44,11 @@ Allgemeine Angaben für alle Einträge:
 |---|---|
 | Zweck | Verwaltung des Notenbestands des Vereins, Nachweis der Rechte und Lizenzen, Nachvollziehbarkeit von Änderungen |
 | Betroffene | Mitglieder mit einer Rolle im Notenarchiv (Notenwart, Chorleitung, Vorstand …) |
-| Daten | Konto und Anzeigename bei jeder Änderung, Zeitpunkt, was geändert wurde |
+| Daten | Konto und Anzeigename bei jeder Änderung, Zeitpunkt, was geändert wurde; wer Aufgaben, Vorschläge, Prüfpunkte, Links und Konzerte angelegt oder entschieden und wer Rechte bestätigt hat; das Herunterladen der vollständigen Sicherung |
 | Rechtsgrundlage | Art. 6 Abs. 1 lit. f DSGVO (Nachweis der Rechte und Änderungen); für Funktionsträger auch die Satzung |
 | Empfänger | die Rollen des Notenarchivs; [Anbieter der Nextcloud als Auftragsverarbeiter] |
 | Drittland | [nein / ja: …] |
-| Löschfrist | Das Protokoll wird nicht gelöscht (Nachweis). Wird ein Konto gelöscht, entfernt die App das Konto aus dem Protokoll; der Anzeigename bleibt. |
+| Löschfrist | Nach [10] Jahren entfernt die App Konto und Namen aus dem Protokoll und behält die Rolle (Einstellung `audit_retention_years`). Bis dahin dient es als Nachweis gegenüber Rechteinhabern bis zur Verjährung (§ 102 UrhG i. V. m. § 199 BGB: höchstens zehn Jahre; Art. 17 Abs. 3 lit. e DSGVO). Wird ein Konto gelöscht, entfernt die App das Konto aus dem Protokoll; der Anzeigename bleibt. Aufgaben, Vorschläge, Prüfpunkte, Links und Konzerte behalten als Nachweis, wer sie angelegt oder entschieden hat. |
 
 **1.2 Personenregister (Urheberinnen und Urheber)**
 
@@ -63,7 +71,7 @@ Allgemeine Angaben für alle Einträge:
 | Daten | Name oder Nextcloud-Konto, Tag der Ausgabe und Rücknahme, Notizen zur Ausgabe |
 | Rechtsgrundlage | Art. 6 Abs. 1 lit. b DSGVO (Mitgliedschaft) oder lit. f (Eigentum des Vereins) |
 | Empfänger | Rollen „Bestand“, „Betrieb“, „Chorleitung“ und „Lesen“ |
-| Löschfrist | [12] Monate nach der Rücknahme (einstellbar); eine Mappe, die nicht zurückkommt, 36 Monate nach der Ausgabe; bei gelöschtem Konto sofort (offene Ausgabe: nur das Konto). Sicherungen enthalten die Daten bis zu ihrer Rotation nach acht Wochen. |
+| Löschfrist | [12] Monate nach der Rücknahme (einstellbar); eine Mappe, die nicht zurückkommt, 36 Monate nach der Ausgabe; bei gelöschtem Konto sofort (offene Ausgabe: nur das Konto). Sicherungen: siehe oben. |
 
 **1.4 Teilen mit Chormitgliedern (nur mit den Modulen „Links für Chormitglieder“ und „Übe-Audio für Chormitglieder“)**
 
@@ -71,12 +79,23 @@ Allgemeine Angaben für alle Einträge:
 |---|---|
 | Zweck | Üben mit Ausschnitten, die Notenwart oder Chorleitung teilen |
 | Betroffene | Chormitglieder mit Nextcloud-Konto |
-| Daten | Aufrufe eines Links werden gezählt, ohne festzuhalten, wer; für jede Übe-Datei: Rolle „Chormitglied“, Fassung, Takte, Stimme, Format, Zeitpunkt, **ohne Konto und Namen** |
+| Daten | Aufrufe eines Links werden gezählt, ohne festzuhalten, wer; für jede Übe-Datei: Rolle „Chormitglied“, Fassung, Takte, Stimme, Format, Tag (ohne Uhrzeit), **ohne Konto und Namen**; im Log des Webservers wie bei jedem Aufruf der Nextcloud IP-Adresse, Zeitpunkt und aufgerufene Adresse (mit der Adresse des Links) |
 | Rechtsgrundlage | Art. 6 Abs. 1 lit. b DSGVO (Mitgliedschaft); für das Protokoll der Übe-Dateien lit. f (Nachweis gegenüber Rechteinhabern) |
-| Empfänger | die Rollen des Notenarchivs mit Zugriff auf das Protokoll |
-| Löschfrist | Das Protokoll wird nicht gelöscht; es enthält keine personenbezogenen Daten der Mitglieder. |
+| Empfänger | die Rollen des Notenarchivs mit Zugriff auf das Protokoll; Betreiber des Servers [Anbieter] für das Log des Webservers |
+| Löschfrist | Die Einträge der Übe-Dateien bleiben als Nachweis; sie enthalten weder Konto noch Namen und nur den Tag. In kleinen Stimmgruppen kann man sie mit anderem Wissen unter Umständen einer Person zuordnen (pseudonym). Log des Webservers: [z. B. 7 Tage]. |
 
-**1.5 Öffentliche Seiten (nur mit den Modulen „Öffentliche Links“ und „Öffentliche Repertoireseite“)**
+**1.5 Speicher auf dem Gerät (Übe-Einstellungen; mit den Modulen „Üben ohne Netz“ und „Konzertmappe“ auch Stücke)**
+
+| Feld | Eintrag |
+|---|---|
+| Zweck | Üben und Vortragen, auch ohne Netz: Einstellungen für den nächsten Besuch, auf Wunsch Stücke auf dem eigenen Gerät |
+| Betroffene | Chormitglieder, Chorleitung, Rollen des Notenarchivs; auf einem öffentlichen Link auch Besucherinnen und Besucher |
+| Daten | nur im Browser des Geräts, nicht beim Verein: Größe der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult (`localStorage`); auf Tippen gespeicherte Stücke mit Noten und auf Wunsch Scan (Cache Storage). Mikrofon („Meine Tonhöhe zeigen“, „Selbst aufnehmen“) nur nach Tippen und Erlaubnis des Browsers; Stimme und Aufnahme bleiben im Browser. |
+| Rechtsgrundlage | § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich für die gewünschte Funktion); für das Merken der Übe-Einstellungen [prüfen: Grenzfall] |
+| Empfänger | niemand; nichts davon wird an den Server übertragen |
+| Löschfrist | „Alles auf diesem Gerät löschen“ (Seiten für Chormitglieder, Konzertmappe), „Ohne Netz verfügbar“ ausschalten (öffentlicher Link) oder die Websitedaten im Browser löschen; Stücke, die nicht mehr geteilt sind oder nicht mehr behalten werden dürfen, beim nächsten Start mit Netz; nach 30 Tagen ohne Netz gesperrt |
+
+**1.6 Öffentliche Seiten (nur mit den Modulen „Öffentliche Links“ und „Öffentliche Repertoireseite“)**
 
 | Feld | Eintrag |
 |---|---|
@@ -85,9 +104,9 @@ Allgemeine Angaben für alle Einträge:
 | Daten | IP-Adresse, Zeitpunkt, aufgerufene Adresse (mit der Adresse des Links), Browserkennung: im Log des Webservers, im Schutz gegen Brute-Force-Angriffe und in der Begrenzung der Aufrufe der Nextcloud, bei Fehlern in `nextcloud.log` |
 | Rechtsgrundlage | Art. 6 Abs. 1 lit. f DSGVO (Sicherheit des Servers) |
 | Empfänger | Betreiber des Servers [Anbieter] |
-| Löschfrist | Log des Webservers: [z. B. 7 Tage]; Brute-Force-Schutz: [Nextcloud: 48 Stunden]; `nextcloud.log`: [Rotation …]. Die App setzt keine Cookies für Besucher ohne Konto und lädt nichts von Dritten. |
+| Löschfrist | Log des Webservers: [z. B. 7 Tage]; Brute-Force-Schutz: [Nextcloud: 48 Stunden]; `nextcloud.log`: [Rotation …]. Die App setzt keine eigenen Cookies und lädt nichts von Dritten; Speicher im Browser siehe 1.5. |
 
-**1.6 Agenten (nur mit dem Modul „Schnittstelle für Agenten“)**
+**1.7 Agenten (nur mit dem Modul „Schnittstelle für Agenten“)**
 
 | Feld | Eintrag |
 |---|---|
@@ -114,9 +133,19 @@ Baustein für die Datenschutzhinweise des Vereins, zum Beispiel als Abschnitt
 >
 > Wenn wir Ausschnitte mit dir teilen, zählen wir Aufrufe, ohne
 > festzuhalten, wer sie geöffnet hat. Machst du eine Übe-Datei, halten wir
-> fest, dass ein Chormitglied sie gemacht hat (Stück, Takte, Stimme), nicht
-> wer. Das brauchen wir als Nachweis gegenüber den Rechteinhabern (Art. 6
-> Abs. 1 lit. f DSGVO).
+> fest, dass ein Chormitglied sie an einem Tag gemacht hat (Stück, Takte,
+> Stimme), nicht wer und nicht die Uhrzeit. Das brauchen wir als Nachweis
+> gegenüber den Rechteinhabern (Art. 6 Abs. 1 lit. f DSGVO). In einer
+> kleinen Stimmgruppe kann man daraus unter Umständen auf dich schließen.
+>
+> Übe-Einstellungen wie Tempo und Mischpult und Stücke, die du „Ohne Netz
+> verfügbar“ machst, speichert die App nur im Browser deines Geräts; sie
+> gehen nicht an uns (§ 25 Abs. 2 Nr. 2 TDDDG). Mit „Alles auf diesem Gerät
+> löschen“ entfernst du sie. „Meine Tonhöhe zeigen“ und „Selbst aufnehmen“
+> nutzen das Mikrofon erst, wenn du es erlaubst; deine Stimme und deine
+> Aufnahme bleiben in deinem Browser. Die Stücke sind nur zum Üben im Chor:
+> Gib sie und Aufnahmen damit nicht weiter, und lösche sie, wenn du den Chor
+> verlässt.
 >
 > Du kannst Auskunft über deine Daten verlangen, ihre Berichtigung oder
 > Löschung und der Verarbeitung widersprechen. Wende dich an [Kontakt].
@@ -136,9 +165,16 @@ erscheint:
 > Webservers und dienen dazu, den Server vor Missbrauch zu schützen, zum
 > Beispiel vor dem Durchprobieren von Link-Adressen (Art. 6 Abs. 1 lit. f
 > DSGVO). Wir löschen sie nach [7 Tagen]; Einträge des Schutzes gegen
-> wiederholte Fehlversuche nach [48 Stunden]. Die Seiten setzen keine
-> Cookies und laden keine Inhalte von Dritten. Das Abspielen geschieht in
-> deinem Browser. [Verantwortlicher, Kontakt, Rechte wie in Abschnitt 2.]
+> wiederholte Fehlversuche nach [48 Stunden]. Die Seiten laden keine
+> Inhalte von Dritten; die App setzt keine eigenen Cookies [die Nextcloud
+> setzt technisch notwendige Sitzungs-Cookies: prüfen]. Das Abspielen
+> geschieht in deinem Browser. Übe-Einstellungen wie das Tempo und, wenn du
+> „Ohne Netz verfügbar“ wählst, das Stück liegen nur im Speicher deines
+> Browsers und werden nicht an uns übertragen; das ist für die Funktion
+> erforderlich, die du nutzt (§ 25 Abs. 2 Nr. 2 TDDDG). Du löschst das
+> Stück, indem du „Ohne Netz verfügbar“ wieder ausschaltest, und alles mit
+> den Websitedaten in deinem Browser.
+> [Verantwortlicher, Kontakt, Rechte wie in Abschnitt 2.]
 
 Vor dem Einschalten der öffentlichen Module prüfst du:
 

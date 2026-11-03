@@ -97,7 +97,8 @@ class StateService {
 		$this->modules->requireEnabled(self::MODULE);
 		$this->roles->requireAccess($uid);
 		$version = $this->loadVersion($versionId);
-		if ($version->getPreservationCopy() === true && !$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS)) {
+		if (!$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS)
+			&& RightsPolicy::versionHasPreservationCopy($version, $this->copies->findByVersion($version->getId()))) {
 			throw new AccessDeniedException('Internal preservation copy: only the catalog librarian and the conductor may view it.');
 		}
 		$states = $this->states->findByVersion($version->getId());

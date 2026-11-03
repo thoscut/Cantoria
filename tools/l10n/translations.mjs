@@ -712,6 +712,7 @@ export const singular = {
 		'Bitte beschreiben Sie die Rückfrage oder Aufgabe.',
 	],
 	'Only the addressed role can answer this task.': 'Nur die angesprochene Rolle kann diese Aufgabe beantworten.',
+	'A task about an internal preservation copy goes to the catalog librarian or the conductor.': 'Eine Aufgabe zu einer internen Erhaltungskopie geht an die Archivverwaltung oder die Chorleitung.',
 	'This task is not open any more.': 'Diese Aufgabe ist nicht mehr offen.',
 	'Please enter an answer.': ['Bitte gib eine Antwort ein.', 'Bitte geben Sie eine Antwort ein.'],
 	'Only the catalog librarian can close this task.': 'Nur die Rolle „Bestand“ kann diese Aufgabe abschließen.',
@@ -1664,6 +1665,7 @@ export const singular = {
 	'Due date': 'Fällig am',
 	'A backup can only be restored into an empty catalog.': 'Eine Sicherung lässt sich nur in einen leeren Bestand zurückspielen.',
 	'The file is not a backup of the music archive.': 'Die Datei ist keine Sicherung des Notenarchivs.',
+	'The file contains no table of the music archive. Is it a backup of Cantoria?': 'Die Datei enthält keine Tabelle des Notenarchivs. Ist es eine Sicherung von Cantoria?',
 	'The backup was made with a newer version of the app. Please update the app first.': [
 		'Die Sicherung stammt aus einer neueren Version der App. Bitte aktualisiere zuerst die App.',
 		'Die Sicherung stammt aus einer neueren Version der App. Bitte aktualisieren Sie zuerst die App.',
@@ -2718,6 +2720,10 @@ export const singular = {
 	'The scan of this link is not available at the moment.': 'Der Scan dieses Links ist gerade nicht verfügbar.',
 	// ---- 0.10: backups outside the archive folder, delegated settings ----
 	'Music archive backups': 'Notenarchiv-Sicherungen',
+	'The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.': [
+		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teile ihn nicht mehr oder verschiebe ihn; dann legt die App einen neuen an.',
+		'Der Sicherungsordner %1$s ist geteilt oder gehört nicht dem Konto %2$s: Andere könnten die Sicherungen lesen. Teilen Sie ihn nicht mehr oder verschieben Sie ihn; dann legt die App einen neuen an.',
+	],
 	'The folder in Nextcloud that holds the score files (for example one subfolder per binder). The app only reads files. Exports of the catalog are stored in its subfolder "_cantoria-app".': 'Der Ordner in der Nextcloud mit den Notendateien (zum Beispiel ein Unterordner je Archivmappe). Die App liest Dateien nur. Exporte des Werkverzeichnisses legt sie im Unterordner „_cantoria-app“ ab.',
 	'Backups and annual snapshots name choir members and accounts. They lie outside the archive folder, in a folder of the account that set it, which the role groups do not see unless it is shared with them.': 'Sicherungen und Jahresstände nennen Chormitglieder und Konten. Sie liegen außerhalb des Archivordners in einem Ordner des Kontos, das ihn festgelegt hat. Die Rollengruppen sehen ihn nicht, solange er nicht mit ihnen geteilt wird.',
 	'Backup folder:': 'Sicherungsordner:',
@@ -2736,6 +2742,10 @@ export const singular = {
 	'The last complete backup is older than %s days. Check that the background jobs of Nextcloud run, or store a backup by hand.': [
 		'Die letzte vollständige Sicherung ist älter als %s Tage. Prüfe, ob die Hintergrundjobs der Nextcloud laufen, oder lege eine Sicherung von Hand an.',
 		'Die letzte vollständige Sicherung ist älter als %s Tage. Prüfen Sie, ob die Hintergrundjobs der Nextcloud laufen, oder legen Sie eine Sicherung von Hand an.',
+	],
+	'Only an administrator can give a role to a group you manage as group admin.': [
+		'Nur die Administration kann einer Gruppe eine Rolle geben, die du als Gruppenadministration verwaltest.',
+		'Nur die Administration kann einer Gruppe eine Rolle geben, die Sie als Gruppenadministration verwalten.',
 	],
 	'Only an administrator can give a role to a group you belong to.': [
 		'Nur die Administration kann einer Gruppe, zu der du gehörst, eine Rolle geben.',
@@ -2769,7 +2779,9 @@ export const singular = {
 	'The whole PDF is shared, also with a link to some measures.': 'Geteilt wird immer das ganze PDF, auch bei einem Link auf einige Takte.',
 	'Current repertoire: photocopies without a license': 'Aktuelles Repertoire: Fotokopien ohne Lizenz',
 	'Online playback (audio on public links)': 'Online-Wiedergabe (Audio auf öffentlichen Links)',
-	'Download and printing by choir members (scan in links)': 'Download und Ausdruck durch Chormitglieder (Scan in Links)',
+	'Download, printing and copies on devices by choir members (scan in links, concert folder, hand-over folder)': 'Download, Ausdruck und Kopien auf Geräten durch Chormitglieder (Scan in Links, Konzertmappe, Übergabeordner)',
+	'Passing on digital score files (MusicXML) to choir members (hand-over folder)': 'Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder (Übergabeordner)',
+	'Passing on recordings to choir members (performers and producer agree; hand-over folder)': 'Weitergabe von Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind einverstanden; Übergabeordner)',
 	'Digitisation (scans, MusicXML transcriptions)': 'Digitalisierung (Scans, MusicXML-Übertragungen)',
 	'Photocopies of a version that is not confirmed public domain, without a license for copies for the binders.': 'Fotokopien einer Fassung ohne bestätigte Gemeinfreiheit und ohne Lizenz für Kopien für die Chormappen.',
 	'More copies than the licenses for the binders allow.': 'Mehr Kopien, als die Lizenzen für die Chormappen erlauben.',
@@ -2794,14 +2806,15 @@ export const singular = {
 	],
 	'Melody': 'Melodie',
 	'Text': 'Text',
-	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts.': [
-		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter.',
-		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter.',
+	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
+		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
 	],
 	'Choose "Traditional" only with evidence and note it under "Notes", or "Without text" for a version without words. Otherwise the protection proposal needs a lyricist.': [
 		'Wähle „Traditionell“ nur mit Beleg und notiere ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 		'Wählen Sie „Traditionell“ nur mit Beleg und notieren Sie ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 	],
+	'Traditional (no known composer)': 'Traditionell (ohne bekannte Komposition)',
 	'Traditional (public domain)': 'Traditionell (gemeinfrei)',
 	'Without text': 'Ohne Text',
 	'Public domain in doubt': 'Gemeinfreiheit fraglich',
@@ -2814,6 +2827,10 @@ export const singular = {
 		'Für diese Fassung ist kein Text erfasst. Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markiere den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 		'Für diese Fassung ist kein Text erfasst. Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markieren Sie den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 	],
+	'The melody is traditional, but no arranger is recorded. Add the arranger on the tab "Rights", or choose "Original" as the kind of version; until then unknown means protected.': [
+		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänze sie im Reiter „Rechte“ oder wähle als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
+		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänzen Sie sie im Reiter „Rechte“ oder wählen Sie als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
+	],
 	'Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.': [
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfe, dass keine Bearbeitung oder Übersetzung fehlt.',
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfen Sie, dass keine Bearbeitung oder Übersetzung fehlt.',
@@ -2821,6 +2838,8 @@ export const singular = {
 	// ---- 0.11: Datenschutz ----
 	'Name removed': 'Name entfernt',
 	'Personal data erased on request': 'Personenbezogene Daten auf Antrag gelöscht',
+	'Complete backup downloaded': 'Vollsicherung heruntergeladen',
+	'Accounts removed after the retention period': 'Konten nach Ablauf der Aufbewahrungsfrist entfernt',
 	'A choir member': 'Ein Chormitglied',
 	'Holder removed on {date}': 'Person wird am {date} entfernt',
 	'Before these pages go online: enter the addresses of the imprint and the privacy policy under Administration → Theming. The public pages show them; the privacy policy must name the server logs with IP addresses.': [
@@ -2997,7 +3016,15 @@ export const singular = {
 	],
 	'Internal preservation copy: never handed over.': 'Interne Erhaltungskopie: wird nie übergeben.',
 	'Choir members could save and print this file in the choir system: it needs confirmed public domain or a license for download and printing by choir members.': 'Chormitglieder könnten diese Datei im Chorsystem speichern und drucken: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz zum Herunterladen und Drucken durch Chormitglieder.',
-	'Practice recording: it needs confirmed public domain or a license for practice audio.': 'Übe-Aufnahme: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz für Übe-Audio.',
+	'Recording: it needs confirmed public domain or a license for practice audio, and in every case a license for passing on recordings (performers and producer agree).': 'Aufnahme: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz für Übe-Audio und in jedem Fall eine Lizenz zur Weitergabe von Aufnahmen (Mitwirkende und Hersteller sind einverstanden).',
+	'MusicXML file: it needs confirmed public domain or a license for passing on digital score files.': 'MusicXML-Datei: Dafür braucht es bestätigte Gemeinfreiheit oder eine Lizenz zur Weitergabe digitaler Notendateien.',
+	'The file is not accessible.': 'Die Datei ist nicht zugänglich.',
+	'The file is not a MusicXML score. Check the file in the archive folder.': [
+		'Die Datei ist keine MusicXML-Partitur. Prüfe die Datei im Archivordner.',
+		'Die Datei ist keine MusicXML-Partitur. Prüfen Sie die Datei im Archivordner.',
+	],
+	'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").': 'Eine Aufnahme hat eigene Rechte (Mitwirkende, Hersteller): Die Weitergabe an Chormitglieder braucht eine Lizenz zur Weitergabe von Aufnahmen (Reiter „Rechte“).',
+	'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").': 'Aus einer MusicXML-Datei lassen sich neue Noten und Stimmen machen: Ohne bestätigte Gemeinfreiheit braucht die Weitergabe an Chormitglieder eine Lizenz für digitale Notendateien (Reiter „Rechte“).',
 	'The sync of the hand-over folder for the choir system failed: %s': 'Der Abgleich des Übergabeordners für das Chorsystem ist fehlgeschlagen: %s',
 	'Hand-over to the choir system: folder of the music archive': 'Übergabe an das Chorsystem: Ordner des Notenarchivs',
 	'Liste.csv names the version, the revision and the license notice of every file; show the notice with the file in the choir system.': [
@@ -3327,6 +3354,7 @@ export const singular = {
 	'The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.': 'Der Link behält seine Adresse: Wer ihn hat, kann ihn weiter nutzen, und was die Chormitglieder auf ihren Geräten gespeichert haben, bleibt.',
 	'This piece cannot be shared.': 'Dieses Stück lässt sich nicht teilen.',
 	'Already shared until {date}: the link is extended to {new} and keeps its address.': 'Schon geteilt bis {date}: Der Link wird bis {new} verlängert und behält seine Adresse.',
+	'No copy of this piece is in the catalog.': 'Von diesem Stück ist kein Exemplar im Werkverzeichnis.',
 	'A new link for the choir members.': 'Ein neuer Link für die Chormitglieder.',
 	'Share "{title}" with the choir': '„{title}“ mit dem Chor teilen',
 	'Please choose at least one piece.': [

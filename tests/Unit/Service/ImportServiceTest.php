@@ -85,7 +85,7 @@ final class ImportServiceTest extends TestCase {
 		$copies->method('update')->willReturnCallback($this->update(...));
 
 		$export = $this->createStub(ExportService::class);
-		$export->method('store')->willReturnCallback(function (string $occasion, string $uid): string {
+		$export->method('snapshot')->willReturnCallback(function (string $occasion, string $uid): string {
 			$this->snapshots[] = [$occasion, $uid];
 			return self::SNAPSHOT;
 		});
@@ -320,6 +320,21 @@ final class ImportServiceTest extends TestCase {
 		$warnings = self::warnings($report);
 		self::assertContains('Shelf mark 5-1: "Rights confirmed" is already set and is not overwritten by the import.', $warnings);
 		self::assertContains('Shelf mark 5-1: "In singers\' portal since" is already set and is not overwritten by the import.', $warnings);
+	}
+
+	/**
+	 * The column of the singers' portal is "Im Chorportal seit" in every
+	 * export; files with the former name "Auf Singste seit" are still read.
+	 */
+	public function testTheFormerNameOfThePortalColumnIsStillRead(): void {
+		self::assertArrayHasKey('Im Chorportal seit', CatalogCsv::LEGACY_COLUMNS);
+		self::assertArrayNotHasKey('Auf Singste seit', CatalogCsv::columns(true));
+		foreach (['Auf Singste seit', 'Im Chorportal seit'] as $header) {
+			[, $version] = $this->givenEntry('5-1', [], ['portal_since' => null]);
+			$report = $this->service->import(self::csv(['Signatur', $header], ['5-1', '2026-01-01']), 'catalog.csv', self::UID, false);
+			self::assertSame('2026-01-01', $version->getPortalSince(), $header);
+			self::assertNotContains('Unknown columns are ignored: ' . $header, self::warnings($report), $header);
+		}
 	}
 
 	public function testEmptyDecisionFieldsAreFilled(): void {

@@ -507,15 +507,12 @@ class PrintMirrorService {
 		if ($source === null) {
 			return;
 		}
-		$handle = $source->fopen('r');
-		if ($handle === false) {
-			throw new \RuntimeException('cannot read ' . $source->getPath());
-		}
+		$handle = $this->content($entry['archiveFile'], $source);
 		try {
 			$file = $target->newFile($name, $handle);
 		} finally {
 			// newFile() may close the stream itself
-			if (get_resource_type($handle) === 'stream') {
+			if (is_resource($handle) && get_resource_type($handle) === 'stream') {
 				fclose($handle);
 			}
 		}
@@ -540,15 +537,12 @@ class PrintMirrorService {
 		if ($source === null) {
 			return;
 		}
-		$handle = $source->fopen('r');
-		if ($handle === false) {
-			throw new \RuntimeException('cannot read ' . $source->getPath());
-		}
+		$handle = $this->content($entry['archiveFile'], $source);
 		try {
 			$existing->putContent($handle);
 		} finally {
 			// putContent() may close the stream itself
-			if (get_resource_type($handle) === 'stream') {
+			if (is_resource($handle) && get_resource_type($handle) === 'stream') {
 				fclose($handle);
 			}
 		}
@@ -559,6 +553,20 @@ class PrintMirrorService {
 		$row->setWritten($this->time->getTime());
 		$this->mirrorFiles->update($row);
 		$this->audit->record($operation, $uid, $this->objectType(), $entry['copyId'], 'mirror_replaced', 'file', $row->getName(), $row->getName());
+	}
+
+	/**
+	 * What is written for a file of the archive folder: here the file
+	 * itself, as a stream; a subclass may write a cleaned copy instead.
+	 *
+	 * @return resource|string
+	 */
+	protected function content(ArchiveFile $file, File $source) {
+		$handle = $source->fopen('r');
+		if ($handle === false) {
+			throw new \RuntimeException('cannot read archive file ' . $file->getId());
+		}
+		return $handle;
 	}
 
 	/**

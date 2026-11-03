@@ -62,7 +62,7 @@ final class StateServiceTest extends TestCase {
 		return $state;
 	}
 
-	private function service(?Modules $modules = null, ?AuditLog $audit = null): StateService {
+	private function service(?Modules $modules = null, ?AuditLog $audit = null, bool $viewer = true, ?CopyMapper $copies = null): StateService {
 		$mapper = $this->createStub(VersionStateMapper::class);
 		$mapper->method('findByVersion')->willReturnCallback(fn (): array => $this->stored);
 		$mapper->method('find')->willReturnCallback(function (int $id): VersionState {
@@ -83,7 +83,13 @@ final class StateServiceTest extends TestCase {
 			return $state;
 		});
 		$roles = $this->createStub(Roles::class);
-		$roles->method('hasAnyRole')->willReturn(true);
+		$roles->method('hasAnyRole')->willReturnCallback(fn (string $uid, array $allowed): bool => $viewer
+			|| array_diff($allowed, \OCA\Cantoria\Service\RightsPolicy::PRESERVATION_COPY_VIEWERS) !== []);
+		$version = new \OCA\Cantoria\Db\WorkVersion();
+		$version->setId(3);
+		$version->setPreservationCopy(false);
+		$versions = $this->createStub(WorkVersionMapper::class);
+		$versions->method('find')->willReturn($version);
 		$users = $this->createStub(IUserManager::class);
 		$users->method('getDisplayName')->willReturn('Catalog Librarian');
 		$time = $this->createStub(ITimeFactory::class);
@@ -93,8 +99,8 @@ final class StateServiceTest extends TestCase {
 		$timeZone->method('getTimeZone')->willReturn(new \DateTimeZone('Europe/Berlin'));
 		$l = $this->createStub(IL10N::class);
 		$l->method('t')->willReturnCallback(fn (string $text, array $parameters = []): string => vsprintf($text, $parameters));
-		return new StateService($this->createStub(IDBConnection::class), $mapper, $this->createStub(WorkVersionMapper::class),
-			$this->createStub(CopyMapper::class), $this->createStub(ArchiveFileMapper::class), $this->createStub(ReviewPointMapper::class),
+		return new StateService($this->createStub(IDBConnection::class), $mapper, $versions,
+			$copies ?? $this->createStub(CopyMapper::class), $this->createStub(ArchiveFileMapper::class), $this->createStub(ReviewPointMapper::class),
 			$this->createStub(TranscriptionReportMapper::class), $audit ?? $this->createStub(AuditLog::class), $roles, $modules ?? $this->modulesWithout(),
 			$this->createStub(AppSettings::class), $users, $time, $timeZone, $l, $this->createStub(LoggerInterface::class));
 	}
@@ -191,5 +197,22 @@ final class StateServiceTest extends TestCase {
 		self::assertNull($this->service($this->modulesWithout([Modules::VERSION_STATES]))
 			->recordCorrection($copy, $version, $new, 'cc', $old, 'dd', $changes, [], null, 'carla', 'op'), 'switched off: nothing recorded');
 		self::assertCount(3, $this->stored);
+	}
+
+	/**
+	 * One rule (RightsPolicy): the revisions of a version with a copy of
+	 * the kind "Preservation copy" are only for the roles that may view it.
+	 */
+	public function testTheRevisionsOfAVersionWithACopyOfThePreservationKindAreOnlyForItsViewers(): void {
+		$copy = new \OCA\Cantoria\Db\Copy();
+		$copy->setVersionId(3);
+		$copy->setKind(\OCA\Cantoria\Service\RightsPolicy::PRESERVATION_COPY_KIND);
+		$copies = $this->createStub(CopyMapper::class);
+		$copies->method('findByVersion')->willReturn([$copy]);
+		$this->stored = [self::state(1, 1)];
+		self::assertSame(3, $this->service(copies: $copies)->forVersion(3, 'anna')['version_id']);
+		self::assertSame(3, $this->service(viewer: false)->forVersion(3, 'anna')['version_id'], 'an ordinary version');
+		$this->expectException(\OCA\Cantoria\Exception\AccessDeniedException::class);
+		$this->service(viewer: false, copies: $copies)->forVersion(3, 'anna');
 	}
 }

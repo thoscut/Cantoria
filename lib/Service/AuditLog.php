@@ -17,7 +17,8 @@ use OCP\IUserManager;
 /**
  * Writes the audit log: who, when, what, old, new, reason. Changes that belong
  * together share one operation id. Choir members are recorded by their role
- * only, without account or name.
+ * only, without account or name, and with the day only (in a small voice
+ * group the time of day could tell who it was).
  */
 class AuditLog {
 	public function __construct(
@@ -45,14 +46,17 @@ class AuditLog {
 	): void {
 		$entry = new AuditEntry();
 		$entry->setOperation($operation);
-		$entry->setTime($this->time->getTime());
+		$time = $this->time->getTime();
 		$roles = $uid === null ? [] : $this->roles->rolesOf($uid);
 		if ($uid !== null && $roles === [] && $this->roles->isMember($uid)) {
 			// A choir member (practice audio of a shared excerpt): recorded
-			// without account and name, only the role (milestone 0.11).
+			// without account and name, only the role (milestone 0.11), and
+			// at the start of the day (UTC) instead of to the second.
 			$roles = [Roles::MEMBER];
 			$uid = null;
+			$time -= $time % 86400;
 		}
+		$entry->setTime($time);
 		$entry->setUserId($uid);
 		$entry->setUserName($uid === null ? null : $this->userManager->getDisplayName($uid));
 		$entry->setRoles($roles === [] && $uid === null ? null : implode(',', $roles));

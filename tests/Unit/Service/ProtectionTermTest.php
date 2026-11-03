@@ -240,12 +240,39 @@ final class ProtectionTermTest extends TestCase {
 	}
 
 	public function testOnlyTraditionalPartsAndNoPersonsArePublicDomain(): void {
-		$proposal = ProtectionTerm::propose([], 2026, roles: [], melodyOrigin: ProtectionTerm::TRADITIONAL, textOrigin: ProtectionTerm::NO_TEXT);
+		$proposal = ProtectionTerm::propose([], 2026, roles: [], melodyOrigin: ProtectionTerm::TRADITIONAL, textOrigin: ProtectionTerm::NO_TEXT,
+			versionKind: ProtectionTerm::ORIGINAL_KIND);
 		self::assertSame(ProtectionTerm::FREE, $proposal['status']);
 		self::assertSame('traditional', $proposal['reason']);
 		self::assertSame('no_persons', ProtectionTerm::propose([], 2026, roles: [], melodyOrigin: ProtectionTerm::TRADITIONAL)['reason'],
 			'the text is not traditional: unknown means protected');
 		$proposal = ProtectionTerm::propose([], 2026, [ProtectionTerm::SCIENTIFIC_EDITION], null, [], [], ProtectionTerm::TRADITIONAL, ProtectionTerm::TRADITIONAL);
 		self::assertSame(ProtectionTerm::UNKNOWN, $proposal['status'], 'a special case without its year still counts as protected');
+	}
+
+	/**
+	 * Most choral settings of folk songs are arrangements with a protection
+	 * of their own (§ 3 UrhG): "traditional" is only public domain for an
+	 * unarranged original or with the arranger recorded (R B4).
+	 */
+	public function testATraditionalMelodyIsNoPublicDomainWithoutTheArranger(): void {
+		foreach (['arrangement', 'adaptation', null] as $kind) {
+			$proposal = ProtectionTerm::propose([], 2026, roles: [], melodyOrigin: ProtectionTerm::TRADITIONAL,
+				textOrigin: ProtectionTerm::TRADITIONAL, versionKind: $kind);
+			self::assertSame(ProtectionTerm::UNKNOWN, $proposal['status'], 'kind ' . ($kind ?? 'unknown'));
+			self::assertSame('arranger_missing', $proposal['reason']);
+		}
+		$lyricist = self::person('Simon Dach', '1659-04-15', 'exact');
+		$proposal = ProtectionTerm::propose([$lyricist], 2026, roles: ['lyricist'], melodyOrigin: ProtectionTerm::TRADITIONAL,
+			versionKind: 'arrangement');
+		self::assertSame('arranger_missing', $proposal['reason'], 'a known lyricist does not make the setting free');
+
+		$arranger = self::person('Friedrich Silcher', '1860-08-26', 'exact');
+		$proposal = ProtectionTerm::propose([$arranger], 2026, roles: ['arranger'], melodyOrigin: ProtectionTerm::TRADITIONAL,
+			textOrigin: ProtectionTerm::TRADITIONAL, versionKind: 'arrangement');
+		self::assertSame(ProtectionTerm::FREE, $proposal['status'], 'the arranger is recorded and died long ago');
+		$proposal = ProtectionTerm::propose([], 2026, roles: [], melodyOrigin: ProtectionTerm::TRADITIONAL,
+			textOrigin: ProtectionTerm::TRADITIONAL, versionKind: ProtectionTerm::ORIGINAL_KIND);
+		self::assertSame('traditional', $proposal['reason'], 'an unarranged original');
 	}
 }

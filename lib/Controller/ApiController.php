@@ -198,7 +198,9 @@ class ApiController extends Controller {
 	}
 
 	/**
-	 * Plain download link, therefore without CSRF token. Read-only.
+	 * Plain download link, therefore without CSRF token. Read-only. Without
+	 * accounts; internal preservation copies only for the roles that may
+	 * view them (ExportService::csvFor).
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -210,7 +212,7 @@ class ApiController extends Controller {
 		}
 		$today = $this->time->getDateTime('now', $this->timeZone->getTimeZone(false, $this->userId));
 		$name = $today->format('Ymd') . '_catalog' . ($extended === 1 ? '_full' : '') . '.csv';
-		$response = new DataDownloadResponse($this->export->csv($extended === 1), $name, 'text/csv; charset=utf-8');
+		$response = new DataDownloadResponse($this->export->csvFor($this->userId, $extended === 1), $name, 'text/csv; charset=utf-8');
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
 		return $response;
 	}

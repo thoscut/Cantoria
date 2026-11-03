@@ -282,15 +282,19 @@ Performance imports (`.xlsx`) are refused with 400
 cells, and with `The Excel workbook is damaged.` when a part contains a
 document type declaration.
 
-**Complete backup.** `GET /api/backup/full` (any role, plain download without
-CSRF token) returns all app tables as JSON
-(`{ "format": "cantoria-backup", "formatVersion": 1, "appVersion", "created", "tables": { "cantoria_works": [ … ] } }`).
-`POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or admin) restores
-such a file into an empty catalog and returns
+**Complete backup.** `GET /api/backup/full` (the roles that read the folder
+book and admins, plain download without CSRF token; every download is
+recorded in the audit log as `download_backup`) returns all app tables as
+JSON, named by their logical names without the prefix of the database
+(`{ "format": "cantoria-backup", "formatVersion": 2, "appVersion", "created", "tables": { "works": [ … ], "mirror_files": [ … ] } }`).
+Backups of format version 1 (tables named `cantoria_works` and so on) are
+still read. `POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or
+admin) restores such a file into an empty catalog and returns
 `{ "restored": { "cantoria_works": 120, … } }`. Errors (400):
 `A backup can only be restored into an empty catalog.`, `The file is not a
-backup of the music archive.`, `The backup was made with a newer version of
-the app. Please update the app first.` and
+backup of the music archive.`, `The file contains no table of the music
+archive. Is it a backup of Cantoria?`, `The backup was made with a newer
+version of the app. Please update the app first.` and
 `The backup contains an invalid value in %1$s, row %2$s, column %3$s.`
 (table, row number from 1, column). Only columns that exist in the installed
 schema are written; others are left out.
@@ -947,7 +951,10 @@ would say `free` becomes `unknown` with reason `composer_missing` or
 `lyricist_missing` when no person has the role `composer` or `lyricist` and
 the part is not marked `traditional` (or `none`). A version without persons
 whose parts are both marked and that has no special case gets `free` with
-reason `traditional`. Confirming public domain against a proposal that is
+reason `traditional`. A proposal that would say `free` for a version with a
+traditional melody becomes `unknown` with reason `arranger_missing` when no
+person has the role `arranger` and the kind of the version is not
+`original`. Confirming public domain against a proposal that is
 not `free` stays possible; the UI asks to tick that the proposal was
 checked.
 
@@ -2621,12 +2628,19 @@ Audit log: object type `choir_handover`, the same actions.
 Status, preview and sync answer as for the print station. What is written:
 
 - For every active copy of a version on the list (never internal
-  preservation copies): the PDF scans and MusicXML files if choir members
-  may save and print them (`RightsPolicy::memberScanDenial`, otherwise
-  reason `no_download`), and the audio files of the archive folder if
-  practice audio is allowed (`RightsPolicy::handoverAudioDenial`, otherwise
-  `no_practice_audio`). Names `<shelf mark> <title>.pdf`, `….musicxml` or
-  `.mxl`, recordings `<shelf mark> <title> - <file name>.<ext>`.
+  preservation copies): the PDF scans if choir members may save and print
+  them (`RightsPolicy::memberScanDenial`, otherwise reason `no_download`);
+  the MusicXML files with confirmed public domain or a license with the use
+  `digital_scores` (`RightsPolicy::handoverScoreDenial`, otherwise
+  `no_digital_scores`), checked like a score (otherwise `not_musicxml`)
+  and cleaned like the score of a link (`MusicXmlExcerpt::whole`: no
+  encoder, `miscellaneous`, comments or processing instructions; always
+  uncompressed); and the audio files of the archive folder if practice
+  audio is allowed and a license has the use `recording_sharing`, as a
+  recording has rights of performers and producer of its own
+  (`RightsPolicy::handoverAudioDenial`, otherwise `no_practice_audio`).
+  Names `<shelf mark> <title>.pdf`, `….musicxml`, recordings
+  `<shelf mark> <title> - <file name>.<ext>`.
 - `Liste.csv` (semicolon, UTF-8 with BOM, cells that start like a formula
   get a leading apostrophe): file, shelf mark, title, composer, version (kind and
   arranger), revision, revision valid since, rights status, license notice

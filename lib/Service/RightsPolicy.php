@@ -107,6 +107,26 @@ class RightsPolicy {
 	}
 
 	/**
+	 * Whether anything of a version is an internal preservation copy, for
+	 * what belongs to the version as a whole (reviews, revisions): the
+	 * version is marked as one, or one of its copies is of the kind
+	 * "Preservation copy" (isPreservationCopy).
+	 *
+	 * @param list<Copy> $copies the copies of the version
+	 */
+	public static function versionHasPreservationCopy(WorkVersion $version, array $copies): bool {
+		if (self::isPreservationCopy($version)) {
+			return true;
+		}
+		foreach ($copies as $copy) {
+			if (self::isPreservationCopy($version, $copy)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @param Copy|null $copy the copy, when the request is about one
 	 * @return string|null null when viewing is allowed, otherwise the reason
 	 */
@@ -249,17 +269,48 @@ class RightsPolicy {
 	}
 
 	/**
-	 * Whether an audio file of the archive folder (a practice recording) may
-	 * go into the hand-over folder for a choir system (module
-	 * "choir_handover"): released for choir members, and confirmed public
-	 * domain or a license for practice audio. Scans and MusicXML follow
-	 * memberScanDenial, as choir members can save and print them there.
+	 * Whether an audio file of the archive folder (a recording) may go into
+	 * the hand-over folder for a choir system (module "choir_handover"):
+	 * released for choir members, confirmed public domain or a license for
+	 * practice audio (the rights in the work), and in every case a license
+	 * for passing on recordings (`recording_sharing`). A recording has rights
+	 * of its own, of the performers and of the producer (§§ 73, 77, 78, 85
+	 * UrhG), which a public domain work or a license for practice audio does
+	 * not cover. Scans follow memberScanDenial, as choir members can save
+	 * and print them there; MusicXML follows handoverScoreDenial.
 	 *
 	 * @return string|null null when allowed, otherwise the reason
 	 */
 	public function handoverAudioDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
-		return $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy)
+		$denial = $this->memberViewDenial($version, $day, $copy) ?? $this->playRightsDenial($version, $day, $copy)
 			?? $this->practiceAudioRightsDenial($version, $day);
+		if ($denial !== null) {
+			return $denial;
+		}
+		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'recording_sharing', $day)) {
+			return null;
+		}
+		return 'A recording has rights of its own (performers, producer): passing it on to choir members needs a license for passing on recordings (tab "Rights").';
+	}
+
+	/**
+	 * Whether a MusicXML file may go into the hand-over folder: released for
+	 * choir members, and confirmed public domain or a license for passing on
+	 * digital score files (`digital_scores`). A MusicXML file is a complete
+	 * digital edition from which new prints and parts can be made; a license
+	 * for printing a PDF does not cover it.
+	 *
+	 * @return string|null null when allowed, otherwise the reason
+	 */
+	public function handoverScoreDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
+		$denial = $this->memberViewDenial($version, $day, $copy);
+		if ($denial !== null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+			return $denial;
+		}
+		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'digital_scores', $day)) {
+			return null;
+		}
+		return 'New prints and parts can be made from a MusicXML file: unless public domain is confirmed, passing it on to choir members needs a license for digital score files (tab "Rights").';
 	}
 
 	/**

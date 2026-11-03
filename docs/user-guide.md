@@ -662,9 +662,15 @@ measures, and they must exist in the score.
 Choir members can save and print a scan, which a license for the singers'
 portal usually does not allow. Unless public domain is confirmed, the scan
 in a link for choir members therefore needs a license with the use
-"Download and printing by choir members (scan in links)" (or
-"Self-printing by singers"); without it the dialog offers the notes and says
-why the scan is missing.
+"Download, printing and copies on devices by choir members (scan in links,
+concert folder, hand-over folder)" (or "Self-printing by singers"); without
+it the dialog offers the notes and says why the scan is missing. The same
+use lets the conductor keep a piece in the concert folder on a device and
+puts the scan into the hand-over folder for a choir system. MusicXML files
+and recordings in the hand-over folder need uses of their own: "Passing on
+digital score files (MusicXML) to choir members (hand-over folder)" and
+"Passing on recordings to choir members (performers and producer agree;
+hand-over folder)".
 
 Playback follows the same rules as in the archive (public domain, or a
 license for practice audio). Practice files for choir members additionally
@@ -1389,8 +1395,13 @@ is missing, the suggestion says "unknown" and names the missing role. For a
 folk song or a melody without known author, set **Melody** to
 **Traditional**, and **Text** to **Traditional** or **Without text** (in the
 section **Rights**, module "Protection terms"). Choose "Traditional" only
-with evidence and note the source under **Notes**. A version without persons
-whose melody and text are both traditional is suggested as public domain.
+with evidence and note the source under **Notes**. Most choral settings of
+folk songs are arrangements with a protection of their own: with a
+traditional melody, the suggestion needs someone with the role
+**Arranger** unless the kind of version is **Original** (an unarranged
+setting); otherwise it says "unknown". A version without persons whose
+melody and text are both traditional and whose kind is **Original** is
+suggested as public domain.
 
 **Confirm** public domain against a suggestion that does not say public
 domain is still possible: the dialog shows the reason and asks you to tick

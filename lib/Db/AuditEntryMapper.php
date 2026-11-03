@@ -129,6 +129,23 @@ class AuditEntryMapper extends QBMapper {
 	}
 
 	/**
+	 * Removes account and display name from the entries made before a time;
+	 * the roles stay, so that it is still known which function made a
+	 * change (retention period of the audit log, PrivacyService).
+	 *
+	 * @return int the number of entries changed
+	 */
+	public function pseudonymizeBefore(int $time): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('user_id', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
+			->set('user_name', $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL))
+			->where($qb->expr()->lt('time', $qb->createNamedParameter($time, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->orX($qb->expr()->isNotNull('user_id'), $qb->expr()->isNotNull('user_name')));
+		return $qb->executeStatement();
+	}
+
+	/**
 	 * Replaces a display name in the entries made under it.
 	 *
 	 * @return int the number of entries changed

@@ -54,6 +54,10 @@ for (const f of files(join(root, 'lib'), ['.php'])) {
 			if (/^'[A-Z]/.test(p[0])) add(unq(p[0]), base + ' warning parameter')
 		}
 	}
+	// Reasons kept as data, ['message' => '…', 'parameters' => […]], translated by the controller (e.g. EventController)
+	for (const m of src.matchAll(new RegExp("'message' => (" + STR + ')', 'g'))) {
+		if (/^'[A-Z]/.test(m[1])) add(unq(m[1]), base + ' reason')
+	}
 	// Labels given to the request checks, e.g. Input::text($value, 'Accession date'); they become exception parameters
 	for (const m of src.matchAll(new RegExp('Input::\\w+\\([^;]*?,\\s*(' + STR + ')\\s*\\)', 'g'))) {
 		if (/^'[A-Z]/.test(m[1])) add(unq(m[1]), base + ' input label')

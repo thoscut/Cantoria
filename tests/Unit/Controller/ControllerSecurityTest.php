@@ -116,6 +116,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
 use OCP\Files\IFilenameValidator;
 use OCP\Files\IRootFolder;
+use OCP\Group\ISubAdmin;
 use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use OCP\IDBConnection;
@@ -124,6 +125,7 @@ use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use OCP\IUser;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
 use OCP\Settings\IManager as ISettingsManager;
@@ -855,7 +857,7 @@ final class ControllerSecurityTest extends TestCase {
 		$controller = new SettingsController($this->createStub(IRequest::class), 'carla', $roles, $this->createStub(AppSettings::class),
 			$this->createStub(ArchiveAccess::class), $this->modulesWithout(), $this->createStub(RepertoireService::class),
 			$this->createStub(FullBackupService::class), $this->createStub(AuditLog::class), $this->createStub(IGroupManager::class), $this->l10n(),
-			$this->createStub(LoggerInterface::class));
+			$this->createStub(LoggerInterface::class), $this->createStub(ISubAdmin::class), $this->createStub(IUserManager::class));
 		$responses = [$controller->index(), $controller->update(['librarian' => ['everyone']]), $controller->groups('a'), $controller->access()];
 		foreach ($responses as $response) {
 			self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
@@ -878,7 +880,7 @@ final class ControllerSecurityTest extends TestCase {
 		$controller = fn (string $uid): SettingsController => new SettingsController($this->createStub(IRequest::class), $uid, $roles,
 			$this->createStub(AppSettings::class), $this->createStub(ArchiveAccess::class), $this->modulesWithout(['repertoire']),
 			$this->createStub(RepertoireService::class), $backup, $this->createStub(AuditLog::class), $groups, $this->l10n(),
-			$this->createStub(LoggerInterface::class));
+			$this->createStub(LoggerInterface::class), $this->createStub(ISubAdmin::class), $this->createStub(IUserManager::class));
 
 		$data = $controller('root')->index()->getData();
 		self::assertIsArray($data);
@@ -913,6 +915,21 @@ final class ControllerSecurityTest extends TestCase {
 		});
 		$groups = $this->createStub(IGroupManager::class);
 		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === 'anna' && $group === 'settings-team');
+		$groups->method('get')->willReturnCallback(function (string $id): IGroup {
+			$group = $this->createStub(IGroup::class);
+			$group->method('getGID')->willReturn($id);
+			return $group;
+		});
+		$users = $this->createStub(IUserManager::class);
+		$users->method('get')->willReturnCallback(function (string $uid): IUser {
+			$user = $this->createStub(IUser::class);
+			$user->method('getUID')->willReturn($uid);
+			return $user;
+		});
+		// Anna is group admin of "board-helpers": she could add herself to it.
+		$subAdmin = $this->createStub(ISubAdmin::class);
+		$subAdmin->method('isSubAdminOfGroup')->willReturnCallback(fn (IUser $user, IGroup $group): bool => $user->getUID() === 'anna'
+			&& $group->getGID() === 'board-helpers');
 		$settings = $this->createStub(AppSettings::class);
 		$settings->method('archiveInfo')->willReturn(['id' => 7, 'path' => 'Archiv', 'user' => 'root']);
 		$recorded = [];
@@ -923,11 +940,15 @@ final class ControllerSecurityTest extends TestCase {
 		});
 		$controller = fn (string $uid): SettingsController => new SettingsController($this->createStub(IRequest::class), $uid, $roles,
 			$settings, $this->createStub(ArchiveAccess::class), $this->modulesWithout(), $this->createStub(RepertoireService::class),
-			$this->createStub(FullBackupService::class), $audit, $groups, $this->l10n(), $this->createStub(LoggerInterface::class));
+			$this->createStub(FullBackupService::class), $audit, $groups, $this->l10n(), $this->createStub(LoggerInterface::class),
+			$subAdmin, $users);
 
 		// A group given the settings page cannot give a role to itself ...
 		$response = $controller('anna')->update([Roles::LIBRARIAN => ['archive', 'settings-team']]);
 		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['archive'], $stored[Roles::LIBRARIAN]);
+		// ... nor to a group whose members it manages as group admin ...
+		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update([Roles::LIBRARIAN => ['archive', 'board-helpers']])->getStatus());
 		self::assertSame(['archive'], $stored[Roles::LIBRARIAN]);
 		// ... nor move the archive folder, but it can save it unchanged
 		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update(null, 8)->getStatus());
@@ -1381,7 +1402,8 @@ final class ControllerSecurityTest extends TestCase {
 			$this->createStub(IUserManager::class), $this->createStub(IFactory::class), $this->createStub(ITimeFactory::class),
 			$this->createStub(IDateTimeZone::class), $this->createStub(LoggerInterface::class), $this->runLock(),
 			$this->createStub(WorkVersionMapper::class), $this->createStub(RightsPolicy::class), $this->createStub(RightsService::class),
-			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class));
+			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class),
+			$this->createStub(\OCA\Cantoria\Service\ScoreService::class));
 		return new HandoverController($this->createStub(IRequest::class), $uid, $roles, $service, $this->l10n(),
 			$this->createStub(LoggerInterface::class));
 	}

@@ -47,7 +47,8 @@ class WeeklyBackup extends TimedJob {
 		try {
 			$paths = $this->export->storeBackup('weekly', $uid);
 			$this->notifications->withdraw(NotificationService::EXPORT_FAILED, 'export', 'weekly');
-			$this->logger->info('Cantoria: weekly backup stored: ' . implode(', ', $paths['paths']));
+			// Only the number of files: their paths lie in the files of an account.
+			$this->logger->info('Cantoria: weekly backup stored (' . count($paths['paths']) . ' files)');
 		} catch (\Throwable $e) {
 			$this->logger->error('Cantoria: weekly backup failed: ' . $e->getMessage(), ['exception' => $e]);
 			// Only messages meant for users go into the notification (translated

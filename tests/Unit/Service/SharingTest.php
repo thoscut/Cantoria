@@ -892,12 +892,17 @@ final class SharingTest extends TestCase {
 		$roles->method('isMember')->willReturnCallback(fn (string $uid): bool => $uid === 'singer');
 		$users = $this->createStub(IUserManager::class);
 		$users->method('getDisplayName')->willReturnCallback(fn (string $uid): string => ucfirst($uid));
-		$log = new AuditLog($mapper, $users, $roles, $this->createStub(ITimeFactory::class));
+		$time = $this->createStub(ITimeFactory::class);
+		// 2026-10-22 21:14:07 UTC
+		$time->method('getTime')->willReturn(1792703647);
+		$log = new AuditLog($mapper, $users, $roles, $time);
 		$log->record('op', 'singer', 'version', 3, PracticeAudioService::ACTION);
 		$log->record('op', 'stranger', 'version', 3, PracticeAudioService::ACTION);
 		self::assertSame(['member', ''], array_map(fn (AuditEntry $entry): ?string => $entry->getRoles(), $entries));
 		self::assertNull($entries[0]->getUserId(), 'no account of a choir member');
 		self::assertNull($entries[0]->getUserName(), 'and no name');
+		self::assertSame('2026-10-22 00:00:00', gmdate('Y-m-d H:i:s', (int)$entries[0]->getTime()), 'and only the day: "Bass, 21:14:07" could tell who it was');
 		self::assertSame('stranger', $entries[1]->getUserId());
+		self::assertSame(1792703647, $entries[1]->getTime());
 	}
 }

@@ -18,6 +18,7 @@ use OCP\Files\NotPermittedException;
 use OCP\IAppConfig;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
+use OCP\Share\IManager as IShareManager;
 
 /**
  * App settings: the archive folder with the score files, its sub folder for
@@ -27,19 +28,26 @@ use OCP\L10N\IFactory;
  * with the audit log, complete JSON backup) and the annual snapshots. It lies
  * outside the archive folder, in the files of the account that set the
  * archive folder, so that the role groups who read the archive folder do not
- * see it. The app reads and writes it only as that account.
+ * see it. The app reads and writes it only as that account, and only while
+ * the folder belongs to that account and nobody else can open it: no share
+ * of it (or of a folder above it) to people, groups, other servers or by
+ * link, and no folder another account shared with it (see privateFolder).
+ * Its name, "Music archive backups" in the language of the account, is a
+ * generic name on purpose, like the "music archive" of the user interface.
  */
 class AppSettings {
 	public const EXPORT_FOLDER = '_cantoria-app';
 	/** App config: Nextcloud file id of the backup folder (0: not created yet) */
 	public const BACKUP_FOLDER_KEY = 'backup_folder_id';
-	/** Backups in the export folder of versions before 0.10, moved to the backup folder */
+	/** Folders tried with a number after the name before giving up */
+	private const MAX_NAME_TRIES = 20;
 
 	public function __construct(
 		private IAppConfig $appConfig,
 		private IRootFolder $rootFolder,
 		private IFactory $l10nFactory,
 		private IUserManager $userManager,
+		private IShareManager $shareManager,
 	) {
 	}
 
@@ -107,8 +115,11 @@ class AppSettings {
 	/**
 	 * The backup folder as the account that set the archive folder sees it;
 	 * created in its files when needed. It never lies inside the archive
-	 * folder. The first time, backups and annual snapshots that versions
-	 * before 0.10 wrote into the export folder are moved there.
+	 * folder, and it is used only while it is private to that account
+	 * (privateFolder): a stored folder that was shared since stops the
+	 * backup with what to do; a folder of the same name that is not the
+	 * account's own, or is shared, is never taken over, a new one with a
+	 * number after the name is created instead.
 	 *
 	 * @throws InvalidInputException with what to do when there is none
 	 */
@@ -125,6 +136,10 @@ class AppSettings {
 		$id = $this->appConfig->getValueInt(Application::APP_ID, self::BACKUP_FOLDER_KEY, 0);
 		$folder = $id > 0 ? $home->getFirstNodeById($id) : null;
 		if ($folder instanceof Folder && !$this->insideArchive($home, $folder)) {
+			if (!$this->privateFolder($folder, $info['user'])) {
+				throw new InvalidInputException('The backup folder %1$s is shared or does not belong to the account %2$s: others could read the backups. Stop sharing it or move it away; the app then creates a new one.',
+					[$home->getRelativePath($folder->getPath()) ?? $folder->getName(), $info['user']]);
+			}
 			return $folder;
 		}
 		$archive = $home->getFirstNodeById($info['id']);
@@ -133,15 +148,49 @@ class AppSettings {
 		}
 		$l = $this->l10nFactory->get(Application::APP_ID, $this->l10nFactory->getUserLanguage($this->userManager->get($info['user'])));
 		// Named in the language of the account when it is created
-		$name = $l->t('Music archive backups');
+		$base = $l->t('Music archive backups');
+		$folder = null;
 		try {
-			$existing = $home->nodeExists($name) ? $home->get($name) : null;
-			$folder = $existing instanceof Folder ? $existing : $home->newFolder($existing === null ? $name : $name . ' (2)');
+			for ($i = 1; $folder === null && $i <= self::MAX_NAME_TRIES; $i++) {
+				$name = $i === 1 ? $base : $base . ' (' . $i . ')';
+				if (!$home->nodeExists($name)) {
+					$folder = $home->newFolder($name);
+					break;
+				}
+				// An existing folder of that name only when it is the account's own and private
+				$existing = $home->get($name);
+				if ($existing instanceof Folder && !$this->insideArchive($home, $existing) && $this->privateFolder($existing, $info['user'])) {
+					$folder = $existing;
+				}
+			}
 		} catch (NotPermittedException) {
+			throw new InvalidInputException('The account %s may not create the backup folder in its files.', [$info['user']]);
+		}
+		if ($folder === null) {
 			throw new InvalidInputException('The account %s may not create the backup folder in its files.', [$info['user']]);
 		}
 		$this->appConfig->setValueInt(Application::APP_ID, self::BACKUP_FOLDER_KEY, $folder->getId());
 		return $folder;
+	}
+
+	/**
+	 * Whether only the account can open a folder: it is the account's own
+	 * (not a folder another account shared with it, not on external
+	 * storage), and neither it nor a folder above it is shared with others
+	 * or by link. Fails closed.
+	 */
+	public function privateFolder(Folder $folder, string $account): bool {
+		try {
+			if ($folder->getOwner()?->getUID() !== $account || $folder->isShared() || $folder->isMounted()) {
+				return false;
+			}
+			$access = $this->shareManager->getAccessList($folder);
+		} catch (\Throwable) {
+			return false;
+		}
+		$users = array_diff(array_map('strval', $access['users'] ?? []), [$account]);
+		return $users === [] && ($access['public'] ?? false) !== true && ($access['remote'] ?? false) === false
+			&& ($access['mail'] ?? []) === [];
 	}
 
 	/**

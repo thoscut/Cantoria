@@ -155,7 +155,9 @@ class HandoverController extends Controller {
 			HandoverService::INVALID_NAME => $this->l->t('Nextcloud does not allow this file name. Change the title in the catalog.'),
 			HandoverService::PRESERVATION => $this->l->t('Internal preservation copy: never handed over.'),
 			HandoverService::NO_DOWNLOAD => $this->l->t('Choir members could save and print this file in the choir system: it needs confirmed public domain or a license for download and printing by choir members.'),
-			HandoverService::NO_PRACTICE_AUDIO => $this->l->t('Practice recording: it needs confirmed public domain or a license for practice audio.'),
+			HandoverService::NO_PRACTICE_AUDIO => $this->l->t('Recording: it needs confirmed public domain or a license for practice audio, and in every case a license for passing on recordings (performers and producer agree).'),
+			HandoverService::NO_DIGITAL_SCORES => $this->l->t('MusicXML file: it needs confirmed public domain or a license for passing on digital score files.'),
+			HandoverService::NOT_MUSICXML => $this->l->t('The file is not a MusicXML score. Check the file in the archive folder.'),
 			HandoverService::WRITE_FAILED => $this->l->t('The file could not be written or removed (no permission, or it is locked). The next sync tries again.'),
 			default => $key,
 		};

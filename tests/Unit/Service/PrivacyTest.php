@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Tests\Unit\Service;
 
+use OCA\Cantoria\Db\AccountRecordFinder;
 use OCA\Cantoria\Db\AuditEntry;
 use OCA\Cantoria\Db\AuditEntryMapper;
 use OCA\Cantoria\Db\Folder;
@@ -21,6 +22,8 @@ use OCA\Cantoria\Service\AuditLog;
 use OCA\Cantoria\Service\FolderBookService;
 use OCA\Cantoria\Service\LifeDates;
 use OCA\Cantoria\Service\PrivacyService;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +38,8 @@ use PHPUnit\Framework\TestCase;
 final class PrivacyTest extends TestCase {
 	/** @var list<array{string, ?string}> */
 	private array $recorded = [];
+	/** Stored retention period of the audit log, null: not set */
+	private ?int $retentionYears = null;
 
 	private static function loan(int $id, ?string $uid, ?string $name, ?string $returnedOn): FolderLoan {
 		$loan = new FolderLoan();
@@ -69,7 +74,15 @@ final class PrivacyTest extends TestCase {
 			?string $field = null, mixed $old = null, mixed $new = null, ?string $reason = null): void {
 			$this->recorded[] = [$action, $uid];
 		});
-		return new PrivacyService($loanMapper, $folders, $folderBook, $entries, $persons, $audit);
+		$records = $this->createStub(AccountRecordFinder::class);
+		$records->method('find')->willReturnCallback(fn (array $fields, string $who): array => $who === 'kim'
+			? [['table' => 'cantoria_tasks', 'id' => 8, 'fields' => ['created_by' => 'kim']]] : []);
+		$config = $this->createStub(IAppConfig::class);
+		$config->method('getValueInt')->willReturnCallback(fn (string $app, string $key, int $default): int => $this->retentionYears ?? $default);
+		$time = $this->createStub(ITimeFactory::class);
+		$time->method('getTime')->willReturn(1793000000);
+		$time->method('getDateTime')->willReturnCallback(fn (string $when): \DateTime => new \DateTime($when));
+		return new PrivacyService($loanMapper, $folders, $folderBook, $entries, $persons, $audit, $records, $config, $time);
 	}
 
 	public function testTheReportNamesLoansEntriesAndPersonsOfAnAccountOrAName(): void {
@@ -84,8 +97,35 @@ final class PrivacyTest extends TestCase {
 		self::assertSame('Alto 3', $report['loans'][0]['folder']);
 		self::assertCount(1, $report['auditEntries']);
 		self::assertSame(['Kim Example'], array_column($report['persons'], 'name'));
-		self::assertSame([1], array_column($this->service($loans, $this->createStub(FolderBookService::class), $entries)->report('kim')['loans'], 'id'),
-			'by account');
+		$byAccount = $this->service($loans, $this->createStub(FolderBookService::class), $entries)->report('kim');
+		self::assertSame([1], array_column($byAccount['loans'], 'id'), 'by account');
+		self::assertSame([['table' => 'cantoria_tasks', 'id' => 8, 'fields' => ['created_by' => 'kim']]], $byAccount['records'],
+			'what the account created or decided');
+	}
+
+	/**
+	 * Every field of an entity that holds an account or its name is in the
+	 * access report (Art. 15 GDPR): new ones cannot be forgotten. The folder
+	 * book and the audit log have reports of their own.
+	 */
+	public function testTheReportKnowsEveryFieldWithAnAccount(): void {
+		$own = ['FolderLoan' => true, 'AuditEntry' => true];
+		$dir = __DIR__ . '/../../../lib/Db/';
+		$checked = 0;
+		foreach (glob($dir . '*Mapper.php') ?: [] as $mapperFile) {
+			$mapper = (string)file_get_contents($mapperFile);
+			if (preg_match("/parent::__construct\\(\\\$db, '([a-z_]+)', ([A-Za-z]+)::class/", $mapper, $m) !== 1 || isset($own[$m[2]])) {
+				continue;
+			}
+			$entity = (string)file_get_contents($dir . $m[2] . '.php');
+			preg_match_all('/protected \\??string \\$([a-zA-Z]+(?:By|ByName|Uid|UserId|UserName))\\b/', $entity, $fields);
+			foreach ($fields[1] as $field) {
+				$column = strtolower((string)preg_replace('/(?<!^)[A-Z]/', '_$0', $field));
+				self::assertContains($column, PrivacyService::ACCOUNT_FIELDS[$m[1]] ?? [], $m[2] . '::$' . $field . ' (' . $m[1] . ')');
+				$checked++;
+			}
+		}
+		self::assertGreaterThan(15, $checked);
 	}
 
 	public function testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName(): void {
@@ -115,6 +155,23 @@ final class PrivacyTest extends TestCase {
 		self::assertSame('Kim Example', $open->getHolderName(), 'the folder is still out: the name stays until its own term ends');
 		self::assertSame('robin', $other->getHolderUid());
 		self::assertSame([['changed', null]], $this->recorded);
+	}
+
+	/**
+	 * The audit log keeps who made a change for ten years by default (the
+	 * longest period of limitation, Art. 17 (3) (e) GDPR), then only the role.
+	 */
+	public function testTheAuditLogLosesAccountsAfterTheRetentionPeriod(): void {
+		$entries = $this->createMock(AuditEntryMapper::class);
+		// Ten years before now
+		$entries->expects(self::once())->method('pseudonymizeBefore')->with((new \DateTime('@1793000000'))->modify('-10 years')->getTimestamp())->willReturn(3);
+		self::assertSame(3, $this->service([], $this->createStub(FolderBookService::class), $entries)->applyRetention());
+		self::assertSame([['pseudonymised', null]], $this->recorded, 'recorded without a name');
+
+		$this->retentionYears = 0;
+		$never = $this->createMock(AuditEntryMapper::class);
+		$never->expects(self::never())->method('pseudonymizeBefore');
+		self::assertSame(0, $this->service([], $this->createStub(FolderBookService::class), $never)->applyRetention(), '0: kept for good');
 	}
 
 	public function testPersonsWithoutAKnownDeathKeepOnlyTheYearOfBirth(): void {

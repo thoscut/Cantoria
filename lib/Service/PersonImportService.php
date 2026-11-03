@@ -323,10 +323,11 @@ class PersonImportService {
 	}
 
 	/**
-	 * Stores the register of persons as CSV in the export folder.
+	 * Stores the register of persons as CSV in the export folder, without
+	 * accounts (every role group reads the archive folder).
 	 */
 	private function snapshot(string $uid): string {
-		[$header, $rows] = $this->personService->table();
+		[$header, $rows] = $this->personService->table(false);
 		$folder = $this->settings->exportFolder($uid);
 		$now = $this->time->getDateTime('now', $this->timeZone->getTimeZone(false, $uid));
 		$base = $now->format('Ymd-His') . '_persons_before-person-import';

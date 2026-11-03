@@ -43,7 +43,12 @@ use OCA\Cantoria\Db\Person;
  * missing person with rights of their own could be overlooked. A version
  * whose melody and text are both traditional (or without text) is proposed
  * by the other persons, and as public domain when there are none (an
- * arrangement of a folk song still counts with its arranger).
+ * arrangement of a folk song still counts with its arranger). A traditional
+ * melody is only taken as unarranged when the kind of the version is
+ * "Original": most choral settings of folk songs are arrangements with a
+ * protection of their own (§ 3 UrhG), so an arrangement, an adaptation or
+ * a version of unknown kind without a recorded arranger is `unknown` with
+ * the reason `arranger_missing` (unknown means protected).
  *
  * With a special case, persons involved only as editors count with these
  * 25 years instead of 70 years after their death; every other person still
@@ -92,6 +97,9 @@ final class ProtectionTerm {
 	/** Values of melody_origin and text_origin */
 	public const TRADITIONAL = 'traditional';
 	public const NO_TEXT = 'none';
+	/** Role of the arranger, and the kind of version (Fields::VERSION_KIND) that needs none */
+	public const ARRANGER_ROLE = 'arranger';
+	public const ORIGINAL_KIND = 'original';
 
 	/** Reasons why no date can be given, most serious first */
 	private const BLOCKING_ORDER = ['living', 'death_unknown', 'death_circa', 'identification_uncertain', 'year_missing'];
@@ -105,14 +113,36 @@ final class ProtectionTerm {
 	 * @param list<string>|null $roles roles recorded in the version (Fields::CONTRIBUTION_ROLES); null: no check of who wrote it
 	 * @param ?string $melodyOrigin `traditional` or null (melody_origin)
 	 * @param ?string $textOrigin `traditional`, `none` or null (text_origin)
+	 * @param ?string $versionKind kind of the version (Fields::VERSION_KIND), null when not recorded
 	 * @return Proposal
 	 */
 	public static function propose(array $persons, int $currentYear, array $cases = [], ?int $publishedYear = null, array $editorIds = [],
-		?array $roles = null, ?string $melodyOrigin = null, ?string $textOrigin = null): array {
+		?array $roles = null, ?string $melodyOrigin = null, ?string $textOrigin = null, ?string $versionKind = null): array {
 		$proposal = self::byPersonsAndCases($persons, $currentYear, $cases, $publishedYear, $editorIds);
 		if ($roles === null) {
 			return $proposal;
 		}
+		$proposal = self::byAuthors($proposal, $persons, $cases, $roles, $melodyOrigin, $textOrigin);
+		if ($proposal['status'] === self::FREE && $melodyOrigin === self::TRADITIONAL && $versionKind !== self::ORIGINAL_KIND
+			&& !in_array(self::ARRANGER_ROLE, $roles, true)) {
+			// A traditional melody in a setting whose arranger is not recorded:
+			// the arranger may still be protected (§ 3 UrhG).
+			return ['status' => self::UNKNOWN, 'until' => null, 'freeSince' => null, 'reason' => 'arranger_missing', 'parameters' => [],
+				'decisivePersonId' => null, 'blocking' => []] + (isset($proposal['special']) ? ['special' => $proposal['special']] : []);
+		}
+		return $proposal;
+	}
+
+	/**
+	 * The proposal checked for the composer and the lyricist (see propose()).
+	 *
+	 * @param Proposal $proposal
+	 * @param list<Person> $persons
+	 * @param list<string> $cases
+	 * @param list<string> $roles
+	 * @return Proposal
+	 */
+	private static function byAuthors(array $proposal, array $persons, array $cases, array $roles, ?string $melodyOrigin, ?string $textOrigin): array {
 		$melodyFree = $melodyOrigin === self::TRADITIONAL;
 		$textFree = in_array($textOrigin, [self::TRADITIONAL, self::NO_TEXT], true);
 		if ($persons === [] && $melodyFree && $textFree && array_intersect(self::SPECIAL_CASES, $cases) === []) {
