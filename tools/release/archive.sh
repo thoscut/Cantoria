@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# Shared by package.sh and sign.sh (sourced, not run).
+# Shared by package.sh, sign.sh and compare.sh (sourced, not run).
+# shellcheck shell=bash
 
 # pack_archive DIR APP_ID EPOCH ARCHIVE: packs DIR/APP_ID reproducibly
 # (files sorted, all times EPOCH, no owner names, gzip without a time).
