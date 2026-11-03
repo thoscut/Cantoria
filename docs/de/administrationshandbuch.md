@@ -1248,10 +1248,23 @@ Was kopiert wird, für jede für das Chorportal freigegebene Fassung (Zeilen
 Liste), aus ihren aktiven Exemplaren, nie aus
 internen Erhaltungskopien:
 
-- die Scans (PDF) und MusicXML-Dateien, wenn Chormitglieder sie speichern
-  und drucken dürfen (dieselbe Regel wie beim Herunterladen im Portal);
-- die Übe-Aufnahmen (Audiodateien im Archivordner), wenn die Rechte Übe-Audio
-  erlauben. Für die Übergabe erzeugt die App keine neuen Aufnahmen;
+- die Scans (PDF), wenn Chormitglieder sie speichern und drucken dürfen
+  (dieselbe Regel wie beim Herunterladen im Portal);
+- die MusicXML-Dateien bei bestätigter Gemeinfreiheit oder mit einer Lizenz
+  „Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder
+  (Übergabeordner)“: Eine MusicXML-Datei ist eine vollständige digitale
+  Ausgabe, aus der sich neue Drucke und Stimmen machen lassen; eine Lizenz
+  zum Ausdrucken deckt sie nicht. Die App legt sie geprüft und bereinigt
+  ab wie die Noten eines Links (ohne Encoder, Notizen, Kommentare),
+  immer unkomprimiert als `.musicxml`;
+- die Aufnahmen (Audiodateien im Archivordner), wenn die Rechte Übe-Audio
+  erlauben und eine Lizenz „Weitergabe von Aufnahmen an Chormitglieder
+  (Mitwirkende und Hersteller sind einverstanden; Übergabeordner)“
+  besteht, auch bei gemeinfreien Werken: An einer Aufnahme haben die
+  Mitwirkenden und der Hersteller eigene Rechte (§§ 73, 77, 78, 85 UrhG).
+  Für eine eigene Aufnahme der Chorleitung trägst du ihre Zustimmung als
+  solche Lizenz ein. Für die Übergabe erzeugt die App keine neuen
+  Aufnahmen;
 - `Liste.csv`: eine Zeile je Datei mit Signatur, Titel, Komposition,
   Fassung, aktuellem Stand und seit wann er gilt, Rechtestatus und
   Lizenzhinweis (bestätigt gemeinfrei, oder die Hinweise der gültigen

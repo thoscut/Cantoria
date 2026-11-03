@@ -19,6 +19,8 @@ use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\MirrorFileMapper;
 use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
+use OCA\Cantoria\Exception\InvalidInputException;
+use OCA\Cantoria\Exception\UserFacingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
@@ -38,9 +40,14 @@ use Psr\Log\LoggerInterface;
  * folder, manifest, preview, daily sync, only own files replaced or removed).
  *
  * It holds, for every version on the list of the singers' portal, the
- * scans (PDF) and MusicXML files of its active copies where choir members
- * may save and print them, and the practice recordings (audio files of the
- * archive folder) where practice audio is allowed (RightsPolicy, one rule).
+ * scans (PDF) of its active copies where choir members may save and print
+ * them, its MusicXML files where they may be passed on as digital score
+ * files, and its recordings (audio files of the archive folder) where
+ * practice audio and passing on recordings are allowed (RightsPolicy, one
+ * rule). MusicXML goes in as a checked and cleaned copy, like the score of
+ * a link: without encoder, notes in `miscellaneous`, comments and
+ * processing instructions (MusicXmlExcerpt::whole), always uncompressed as
+ * `.musicxml`; a file that is no MusicXML score stays out.
  * Beside them a list `Liste.csv` (file, shelf mark, title, version line,
  * rights and license notice per file), the notes of the conductor per
  * passage of the links for choir members as `<shelf mark> <title> Hinweise.txt`,
@@ -57,6 +64,10 @@ class HandoverService extends PrintMirrorService {
 	/** Why a file was skipped, besides those of the print station (keys; the controller translates them) */
 	public const NO_DOWNLOAD = 'no_download';
 	public const NO_PRACTICE_AUDIO = 'no_practice_audio';
+	/** MusicXML without confirmed public domain or a license for digital score files */
+	public const NO_DIGITAL_SCORES = 'no_digital_scores';
+	/** A file of the role "musicxml" that is no MusicXML score */
+	public const NOT_MUSICXML = 'not_musicxml';
 
 	/** Roles of archive files that go into the folder */
 	private const ROLES = ['score_pdf', 'musicxml', 'audio'];
@@ -94,6 +105,7 @@ class HandoverService extends PrintMirrorService {
 		private LicenseMapper $licenses,
 		private ExcerptLinkMapper $links,
 		private StateService $states,
+		private ScoreService $scores,
 	) {
 		parent::__construct($appConfig, $rootFolder, $settings, $releases, $archiveFiles, $copies, $mirrorFiles, $audit, $roles, $modules,
 			$notifications, $filenameValidator, $userManager, $l10nFactory, $time, $timeZone, $logger, $runLock);
@@ -203,7 +215,8 @@ class HandoverService extends PrintMirrorService {
 						$found = $archive->getFirstNodeById($file->getFileId());
 						$node = $found instanceof File ? $found : null;
 						$skip = $node === null ? self::NOT_ACCESSIBLE
-							: ($file->getRole() === 'score_pdf' && !ScanService::isPdf($node) ? self::NOT_PDF : null);
+							: ($file->getRole() === 'score_pdf' && !ScanService::isPdf($node) ? self::NOT_PDF
+								: ($file->getRole() === 'musicxml' && !$this->isScore($node) ? self::NOT_MUSICXML : null));
 					}
 					$entries[] = ['name' => $name, 'shelfmark' => $listed['shelfmark'], 'copyId' => $copy->getId(), 'archiveFile' => $file,
 						'node' => $skip === null ? $node : null, 'skip' => $skip];
@@ -334,10 +347,39 @@ class HandoverService extends PrintMirrorService {
 		if (RightsPolicy::isPreservationCopy($version, $copy)) {
 			return self::PRESERVATION;
 		}
-		if ($file->getRole() === 'audio') {
-			return $this->policy->handoverAudioDenial($version, $day, $copy) === null ? null : self::NO_PRACTICE_AUDIO;
+		return match ($file->getRole()) {
+			'audio' => $this->policy->handoverAudioDenial($version, $day, $copy) === null ? null : self::NO_PRACTICE_AUDIO,
+			'musicxml' => $this->policy->handoverScoreDenial($version, $day, $copy) === null ? null : self::NO_DIGITAL_SCORES,
+			default => $this->policy->memberScanDenial($version, $day, $copy) === null ? null : self::NO_DOWNLOAD,
+		};
+	}
+
+	/**
+	 * Whether a file of the role "musicxml" is a MusicXML score that the
+	 * viewer would read (ScoreService::isScore).
+	 */
+	private function isScore(File $node): bool {
+		try {
+			return $this->scores->isScore(UserFiles::content($node, ScoreService::MAX_BYTES, new InvalidInputException('The file is not accessible.')));
+		} catch (UserFacingException) {
+			return false;
 		}
-		return $this->policy->memberScanDenial($version, $day, $copy) === null ? null : self::NO_DOWNLOAD;
+	}
+
+	/**
+	 * MusicXML goes in cleaned, as the score of a link: checked, without
+	 * encoder, notes, comments and processing instructions, uncompressed.
+	 */
+	#[\Override]
+	protected function content(ArchiveFile $file, File $source) {
+		if ($file->getRole() !== 'musicxml') {
+			return parent::content($file, $source);
+		}
+		$content = UserFiles::content($source, ScoreService::MAX_BYTES, new InvalidInputException('The file is not accessible.'));
+		if (!$this->scores->isScore($content)) {
+			throw new InvalidInputException('This file is not a MusicXML score.');
+		}
+		return MusicXmlExcerpt::whole($this->scores->scoreText($content)['xml']);
 	}
 
 	/**
@@ -348,7 +390,8 @@ class HandoverService extends PrintMirrorService {
 	 * @param array<string, int> $counts names used so far
 	 */
 	private function entryName(string $base, ArchiveFile $file, array &$counts): string {
-		$extension = strtolower(pathinfo($file->getName(), PATHINFO_EXTENSION));
+		// MusicXML is written uncompressed (content), also from an .mxl file
+		$extension = $file->getRole() === 'musicxml' ? 'musicxml' : strtolower(pathinfo($file->getName(), PATHINFO_EXTENSION));
 		$stem = $file->getRole() === 'audio'
 			? self::fileBase($base . ' - ' . pathinfo($file->getName(), PATHINFO_FILENAME), null)
 			: $base;

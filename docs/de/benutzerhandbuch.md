@@ -709,9 +709,16 @@ in den Noten vorkommen.
 Chormitglieder können einen Scan speichern und ausdrucken; das erlaubt eine
 Lizenz für das Chorportal meist nicht. Ohne bestätigte Gemeinfreiheit
 braucht der Scan in einem Link für Chormitglieder deshalb eine Lizenz mit
-der Nutzung „Download und Ausdruck durch Chormitglieder (Scan in Links)“
-(oder „Selbstausdruck durch Chormitglieder“). Fehlt sie, bietet der Dialog
-die Noten an und sagt, warum der Scan fehlt.
+der Nutzung „Download, Ausdruck und Kopien auf Geräten durch Chormitglieder
+(Scan in Links, Konzertmappe, Übergabeordner)“ (oder „Selbstausdruck durch
+Chormitglieder“). Fehlt sie, bietet der Dialog die Noten an und sagt, warum
+der Scan fehlt. Dieselbe Nutzung erlaubt der Chorleitung, ein Stück in der
+Konzertmappe auf einem Gerät zu behalten, und legt den Scan in den
+Übergabeordner für ein Chorsystem. MusicXML-Dateien und Aufnahmen im
+Übergabeordner brauchen eigene Nutzungen: „Weitergabe digitaler
+Notendateien (MusicXML) an Chormitglieder (Übergabeordner)“ und „Weitergabe
+von Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind
+einverstanden; Übergabeordner)“.
 
 Für das Abspielen gelten dieselben Regeln wie im Archiv (gemeinfrei oder
 eine Lizenz für Übe-Audio). Übe-Dateien für Chormitglieder brauchen

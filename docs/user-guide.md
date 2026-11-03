@@ -661,9 +661,15 @@ measures, and they must exist in the score.
 Choir members can save and print a scan, which a license for the singers'
 portal usually does not allow. Unless public domain is confirmed, the scan
 in a link for choir members therefore needs a license with the use
-"Download and printing by choir members (scan in links)" (or
-"Self-printing by singers"); without it the dialog offers the notes and says
-why the scan is missing.
+"Download, printing and copies on devices by choir members (scan in links,
+concert folder, hand-over folder)" (or "Self-printing by singers"); without
+it the dialog offers the notes and says why the scan is missing. The same
+use lets the conductor keep a piece in the concert folder on a device and
+puts the scan into the hand-over folder for a choir system. MusicXML files
+and recordings in the hand-over folder need uses of their own: "Passing on
+digital score files (MusicXML) to choir members (hand-over folder)" and
+"Passing on recordings to choir members (performers and producer agree;
+hand-over folder)".
 
 Playback follows the same rules as in the archive (public domain, or a
 license for practice audio). Practice files for choir members additionally

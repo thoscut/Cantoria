@@ -1367,7 +1367,8 @@ final class ControllerSecurityTest extends TestCase {
 			$this->createStub(IUserManager::class), $this->createStub(IFactory::class), $this->createStub(ITimeFactory::class),
 			$this->createStub(IDateTimeZone::class), $this->createStub(LoggerInterface::class), $this->runLock(),
 			$this->createStub(WorkVersionMapper::class), $this->createStub(RightsPolicy::class), $this->createStub(RightsService::class),
-			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class));
+			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class),
+			$this->createStub(\OCA\Cantoria\Service\ScoreService::class));
 		return new HandoverController($this->createStub(IRequest::class), $uid, $roles, $service, $this->l10n(),
 			$this->createStub(LoggerInterface::class));
 	}

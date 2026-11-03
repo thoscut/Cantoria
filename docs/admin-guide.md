@@ -1140,11 +1140,21 @@ What it copies, for every version released for the singers' portal (rows
 "In order", "Add" and "No valid version chosen" of its list), from its active copies, never from internal
 preservation copies:
 
-- the scans (PDF) and MusicXML files, if choir members may save and print
-  them (the same rule as the download button of the portal);
-- the practice recordings (audio files in the archive folder), if the
-  rights allow practice audio. The app does not render new recordings for
-  the hand-over;
+- the scans (PDF), if choir members may save and print them (the same
+  rule as the download button of the portal);
+- the MusicXML files, with confirmed public domain or a license "Passing on
+  digital score files (MusicXML) to choir members (hand-over folder)": a
+  MusicXML file is a complete digital edition from which new prints and
+  parts can be made, which a license for printing does not cover. The app
+  writes them checked and cleaned like the score of a link (no encoder,
+  notes or comments), always uncompressed as `.musicxml`;
+- the recordings (audio files in the archive folder), if the rights allow
+  practice audio and a license "Passing on recordings to choir members
+  (performers and producer agree; hand-over folder)" exists, also for
+  works in the public domain: the performers and the producer of a
+  recording have rights of their own (§§ 73, 77, 78, 85 UrhG). For a
+  recording of your own conductor, record their consent as such a
+  license. The app does not render new recordings for the hand-over;
 - `Liste.csv`: one row per file with shelf mark, title, composer, version,
   current revision and since when it is valid, rights status and the
   license notice (confirmed public domain, or the notices of the valid

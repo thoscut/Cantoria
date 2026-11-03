@@ -2576,12 +2576,19 @@ Audit log: object type `choir_handover`, the same actions.
 Status, preview and sync answer as for the print station. What is written:
 
 - For every active copy of a version on the list (never internal
-  preservation copies): the PDF scans and MusicXML files if choir members
-  may save and print them (`RightsPolicy::memberScanDenial`, otherwise
-  reason `no_download`), and the audio files of the archive folder if
-  practice audio is allowed (`RightsPolicy::handoverAudioDenial`, otherwise
-  `no_practice_audio`). Names `<shelf mark> <title>.pdf`, `….musicxml` or
-  `.mxl`, recordings `<shelf mark> <title> - <file name>.<ext>`.
+  preservation copies): the PDF scans if choir members may save and print
+  them (`RightsPolicy::memberScanDenial`, otherwise reason `no_download`);
+  the MusicXML files with confirmed public domain or a license with the use
+  `digital_scores` (`RightsPolicy::handoverScoreDenial`, otherwise
+  `no_digital_scores`), checked like a score (otherwise `not_musicxml`)
+  and cleaned like the score of a link (`MusicXmlExcerpt::whole`: no
+  encoder, `miscellaneous`, comments or processing instructions; always
+  uncompressed); and the audio files of the archive folder if practice
+  audio is allowed and a license has the use `recording_sharing`, as a
+  recording has rights of performers and producer of its own
+  (`RightsPolicy::handoverAudioDenial`, otherwise `no_practice_audio`).
+  Names `<shelf mark> <title>.pdf`, `….musicxml`, recordings
+  `<shelf mark> <title> - <file name>.<ext>`.
 - `Liste.csv` (semicolon, UTF-8 with BOM, cells that start like a formula
   get a leading apostrophe): file, shelf mark, title, composer, version (kind and
   arranger), revision, revision valid since, rights status, license notice
