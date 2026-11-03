@@ -3,10 +3,16 @@
 
 # Weekly pull requests for dependency updates. Every update runs the CI like
 # any other pull request; security updates come at once.
+#
+# Only directories that the CI builds and tests are listed: an update of
+# tools/outreach (templates for letters, run locally, not shipped) would be
+# green without anything having used it, so it is updated by hand there
+# (npm update, then build the templates once). The container images of the
+# workflows are pinned by digest and moved by hand as well (see ci.yml).
 version: 2
 updates:
   - package-ecosystem: npm
-    directories: ['/', '/tools/mcp', '/tools/outreach']
+    directories: ['/', '/tools/mcp']
     schedule:
       interval: weekly
     groups:
