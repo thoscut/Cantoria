@@ -66,6 +66,8 @@ class Roles {
 	private array $cache = [];
 	/** @var array<string, bool> uid => settings given by the administration */
 	private array $delegated = [];
+	/** accounts in the groups of the choir members, once counted */
+	private ?int $memberCount = null;
 
 	public function __construct(
 		private IAppConfig $appConfig,
@@ -93,6 +95,7 @@ class Roles {
 		}
 		$this->appConfig->setValueArray(Application::APP_ID, 'groups_' . $role, array_values(array_unique($groups)));
 		$this->cache = [];
+		$this->memberCount = null;
 	}
 
 	/**
@@ -127,6 +130,23 @@ class Roles {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * How many accounts are in the groups of the choir members, each counted
+	 * once; for the hint when there are more of them than licenses (W B17).
+	 */
+	public function memberCount(): int {
+		if ($this->memberCount === null) {
+			$accounts = [];
+			foreach ($this->groups(self::MEMBER) as $gid) {
+				foreach ($this->groupManager->get($gid)?->getUsers() ?? [] as $user) {
+					$accounts[$user->getUID()] = true;
+				}
+			}
+			$this->memberCount = count($accounts);
+		}
+		return $this->memberCount;
 	}
 
 	public function isAdmin(string $uid): bool {

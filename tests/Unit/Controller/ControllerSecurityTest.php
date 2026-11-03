@@ -243,6 +243,8 @@ final class ControllerSecurityTest extends TestCase {
 		'AnnualSnapshotController::create', 'AnnualSnapshotController::compare',
 		// setting the current revision of a version writes
 		'StateController::setCurrent',
+		// sharing a programme and extending links write links and check the rights per piece (milestone 0.18, S N14)
+		'EventController::share', 'TaskController::extendLink',
 	];
 
 	/**

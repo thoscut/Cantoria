@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace OCA\Cantoria\Service;
 
 use OCA\Cantoria\Db\Copy;
+use OCA\Cantoria\Db\ExcerptLink;
+use OCA\Cantoria\Db\License;
 use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\WorkVersion;
 
@@ -34,7 +36,18 @@ use OCA\Cantoria\Db\WorkVersion;
  *   excerpt themselves.
  * - Public links need the release for publication (publication status
  *   "free", set by the catalog librarian) and confirmed public domain or a
- *   license for online publication; playback as above.
+ *   license for online publication; playback as above. The scan of a public
+ *   link can be saved and printed by everyone: it needs confirmed public
+ *   domain or a license for the download of the scan on public links
+ *   (`online_download`); a license for online publication covers showing
+ *   the notes, not handing out the sheet (R B2).
+ * - A rights conflict suspends public links (R M4): a version confirmed as
+ *   public domain whose protection proposal, by the persons recorded now,
+ *   says protected is published only with a license, until the catalog
+ *   librarian has checked the rights status.
+ * - How long a link may last follows the licenses that carry it
+ *   (releaseEnd): a link ends at the latest on the last day of the license
+ *   that releases it (R B20).
  *
  * What counts as an internal preservation copy is decided here alone, for
  * every way out (internal API, API for agents, links, scans, print station):
@@ -51,12 +64,37 @@ class RightsPolicy {
 	public const PRACTICE_AUDIO_MAKERS = [Roles::LIBRARIAN, Roles::CONDUCTOR];
 	/** Kind of copy (Fields, copy.kind) that makes its files an internal preservation copy */
 	public const PRESERVATION_COPY_KIND = 'preservation_copy';
+	/** License use for the download of the scan on public links (Fields::LICENSE_USES) */
+	public const PUBLIC_SCAN_USE = 'online_download';
+	/**
+	 * The license uses that carry a link, per circle: what the notes need,
+	 * and what the scan needs on top (each list: one of them is enough).
+	 * Choir members keep a piece on their device under the uses of the scan.
+	 */
+	private const CARRYING_USES = [
+		ExcerptLink::CIRCLE_MEMBERS => ['notes' => ['portal'], 'scan' => ['member_download', 'self_print']],
+		ExcerptLink::CIRCLE_PUBLIC => ['notes' => ['online_publication'], 'scan' => [self::PUBLIC_SCAN_USE]],
+	];
 
 	public function __construct(
 		private Roles $roles,
 		private RightsService $rights,
 		private LicenseMapper $licenses,
+		private ?PersonService $persons = null,
 	) {
+	}
+
+	/**
+	 * Confirmed public domain that may be published: no rights conflict
+	 * with the persons recorded now (R M4; without the person register, as
+	 * in some tests, there is none).
+	 */
+	private function freeToPublish(WorkVersion $version, string $day): bool {
+		if ($version->getRightsStatus() !== 'public_domain' || !$version->isConfirmed()) {
+			return false;
+		}
+		return $this->persons === null
+			|| $this->persons->protection($version->getId(), (int)substr($day, 0, 4))['status'] !== ProtectionTerm::PROTECTED;
 	}
 
 	/**
@@ -239,15 +277,123 @@ class RightsPolicy {
 		if ($version->getPublicationStatus() !== 'free') {
 			return 'Not released for publication. The catalog librarian sets the publication status of the version to "Released for publication".';
 		}
-		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+		if ($this->freeToPublish($version, $day)) {
 			return null;
 		}
 		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), 'online_publication', $day)) {
 			return null;
 		}
+		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+			return 'Rights conflict: confirmed as public domain, but protected by the persons recorded now. Public links stay closed until the catalog librarian checks the tab "Rights".';
+		}
 		return $version->getRightsStatus() === 'public_domain'
 			? 'Public domain is not confirmed yet. The catalog librarian confirms it on the tab "Rights"; then a public link can be made.'
 			: 'A public link needs confirmed public domain or a valid license for online publication. The catalog librarian records it on the tab "Rights".';
+	}
+
+	/**
+	 * Whether a public link may offer the PDF scan, which everyone who opens
+	 * the link can save and print: the release of the notes, and for a
+	 * version that is not confirmed public domain a license for the download
+	 * of the scan on public links. A license for online publication covers
+	 * showing the notes, not handing out the whole sheet (§ 19a UrhG; for
+	 * visitors § 53 (4) UrhG does not help). Checked when the link is made
+	 * or extended and on every call of the scan.
+	 *
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function publicScanDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
+		$denial = $this->publicViewDenial($version, $day, $copy);
+		if ($denial !== null || $this->freeToPublish($version, $day)) {
+			return $denial;
+		}
+		if ($this->rights->hasLicense($this->licenses->findByVersion($version->getId()), self::PUBLIC_SCAN_USE, $day)) {
+			return null;
+		}
+		return 'Everyone can save the scan of a public link: it needs confirmed public domain or a license for the download of the scan on public links. The catalog librarian records it on the tab "Rights".';
+	}
+
+	/**
+	 * The last day the licenses that release a version for a circle last
+	 * (milestone 0.18, R B20): for the notes, and with `$scan` also for the
+	 * scan (for choir members also what they keep on their device). Null
+	 * when nothing ends: confirmed public domain, a license without end, or
+	 * no release at all (the denials say so). Of several licenses for the
+	 * same use, the one that lasts longest counts.
+	 */
+	public function releaseEnd(WorkVersion $version, string $circle, bool $scan, string $day): ?string {
+		$uses = self::CARRYING_USES[$circle] ?? null;
+		if ($uses === null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+			return null;
+		}
+		$licenses = $this->licenses->findByVersion($version->getId());
+		$end = null;
+		foreach ($scan ? [$uses['notes'], $uses['scan']] : [$uses['notes']] as $group) {
+			$groupEnd = self::lastDay($licenses, $group, $day);
+			if ($groupEnd !== null && ($end === null || $groupEnd < $end)) {
+				$end = $groupEnd;
+			}
+		}
+		return $end;
+	}
+
+	/**
+	 * For how many people the licenses that release a version for a circle
+	 * were bought (W B17): the quantities of the licenses valid today, added
+	 * up, for the notes and for the scan; the smaller of the two. Null when
+	 * no quantity is known: confirmed public domain, no license, or a
+	 * license without a quantity. A hint for the dialogs, never a barrier.
+	 */
+	public function licensedQuantity(WorkVersion $version, string $circle, string $day): ?int {
+		$uses = self::CARRYING_USES[$circle] ?? null;
+		if ($uses === null || ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed())) {
+			return null;
+		}
+		$licenses = $this->licenses->findByVersion($version->getId());
+		$least = null;
+		foreach ([$uses['notes'], $uses['scan']] as $group) {
+			$sum = 0;
+			$covered = false;
+			foreach ($licenses as $license) {
+				if (array_filter($group, fn (string $use): bool => $license->covers($use, $day)) === []) {
+					continue;
+				}
+				$quantity = $license->getQuantity();
+				if ($quantity === null) {
+					continue 2;
+				}
+				$covered = true;
+				$sum += $quantity;
+			}
+			if ($covered && ($least === null || $sum < $least)) {
+				$least = $sum;
+			}
+		}
+		return $least;
+	}
+
+	/**
+	 * The last day of the licenses that cover one of the uses today; null
+	 * when one of them has no end or none covers them.
+	 *
+	 * @param list<License> $licenses
+	 * @param list<string> $uses
+	 */
+	private static function lastDay(array $licenses, array $uses, string $day): ?string {
+		$last = null;
+		foreach ($licenses as $license) {
+			foreach ($uses as $use) {
+				if (!$license->covers($use, $day)) {
+					continue;
+				}
+				$until = $license->getValidUntil();
+				if ($until === null) {
+					return null;
+				}
+				$last = $last === null || $until > $last ? $until : $last;
+			}
+		}
+		return $last;
 	}
 
 	/**

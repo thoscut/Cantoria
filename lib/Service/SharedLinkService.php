@@ -53,10 +53,17 @@ use OCP\Files\File;
  * notices of the licenses valid today ("Notice on shared pages"), so that
  * the authors are named (§ 13 UrhG) and a license's condition can be met.
  *
+ * The scan of a public link needs its own license (milestone 0.18, R B2):
+ * the download of the scan on public links, unless public domain is
+ * confirmed (RightsPolicy::publicScanDenial), checked on every call.
+ * Choir members learn until when a copy may stay on their device
+ * (`keepUntil`, the end of the license for download and printing), so that
+ * the device drops it then, even while the link lasts longer (R B8, B20).
+ *
  * @psalm-type Credit = array{role: string, name: string}
  * @psalm-type MemberLink = array{token: string, title: string, composer: string, measure_from: ?string, measure_to: ?string,
  *     voice: ?string, verse: ?int, tempo: ?int, note: ?string, expires: ?string, canPlay: bool, canExportAudio: bool, reason: ?string,
- *     scan: bool, scanSize: ?int, offline: bool, practiceKey: string, credits: list<Credit>, notices: list<string>}
+ *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, practiceKey: string, credits: list<Credit>, notices: list<string>}
  * @psalm-type PublicExcerpt = array{title: string, composer: string, measureFrom: ?string, measureTo: ?string, voice: ?string,
  *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, served: string, xml: string,
  *     credits: list<Credit>, notices: list<string>}
@@ -133,6 +140,8 @@ class SharedLinkService {
 				'scanSize' => $saveDenial === null ? $this->scanSize($link) : null,
 				// kept on the device (milestone 0.15): a copy, like saving the scan
 				'offline' => $saveDenial === null && $this->modules->isEnabled(Modules::OFFLINE),
+				// the last day the license allows a copy on the device; null: no end
+				'keepUntil' => $saveDenial === null ? $this->policy->releaseEnd($version, ExcerptLink::CIRCLE_MEMBERS, true, $today) : null,
 				'practiceKey' => self::practiceKey($version),
 			] + $this->attribution($version, $today);
 		}
@@ -225,6 +234,7 @@ class SharedLinkService {
 			return null;
 		}
 		$this->links->countHit($link->getId());
+		$scan = $link->getScanFileId() !== null && $this->policy->publicScanDenial($version, $today, $copy) === null;
 		return [
 			'title' => (string)$work->getTitle(),
 			'composer' => (string)$work->getComposer(),
@@ -234,8 +244,8 @@ class SharedLinkService {
 			'verse' => $link->getVerse(),
 			'tempo' => $link->getTempo(),
 			'canPlay' => $this->policy->publicPlayDenial($version, $today, $copy) === null,
-			'scan' => $link->getScanFileId() !== null,
-			'scanSize' => $this->scanSize($link),
+			'scan' => $scan,
+			'scanSize' => $scan ? $this->scanSize($link) : null,
 			'practiceKey' => self::practiceKey($version),
 			// Kept on a device (milestone 0.15): only confirmed public domain, as visitors have no license
 			'expires' => $link->getExpires(),
@@ -247,12 +257,14 @@ class SharedLinkService {
 
 	/**
 	 * The scan a public link offers, or null in every case in which the page
-	 * of the link is refused, and when the link offers no scan or it cannot
-	 * be read: the caller answers all of them with the same 404.
+	 * of the link is refused, when the rights do not allow everyone a copy of
+	 * the scan (RightsPolicy::publicScanDenial), and when the link offers no
+	 * scan or it cannot be read: the caller answers all of them with the same
+	 * 404.
 	 */
 	public function publicScan(string $token): ?File {
 		$open = $this->publicLink($token);
-		if ($open === null) {
+		if ($open === null || $this->policy->publicScanDenial($open['version'], $open['today'], $open['copy']) !== null) {
 			return null;
 		}
 		try {

@@ -32,6 +32,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 | `GET /api/events/{id}/ics`, `GET /api/events/upcoming/ics` | 60 in 10 minutes |
 | `POST /api/events/{id}/calendar`, `POST /api/events/upcoming/calendar` | 30 in 10 minutes |
 | `POST /api/events/{id}/share` | 30 in 10 minutes |
+| `POST /api/links/{id}/extend` | 60 in 10 minutes |
 | `GET /api/nextcloud-files/{fileId}/copy` | 120 in 10 minutes |
 | `GET /api/settings/access` | 20 in 10 minutes |
 | `GET /api/member/links/{token}/score` | 120 in 10 minutes |
@@ -2132,7 +2133,15 @@ recipients cannot play it. `playback`: the recipients can play it;
 `public`). `scan`: the rights allow the link to offer the scan; for choir
 members a version that is not confirmed public domain needs a license with
 the use `member_download` or `self_print` (milestone 0.11), and
-`scanReason` (translated) says so. `scans`: the PDF scans of the copy (role
+`scanReason` (translated) says so; for `public` it needs a license with
+the use `online_download` (download of the scan on public links,
+milestone 0.18), as a license for online publication covers showing the
+notes only. `until` (milestone 0.18): the last day of the license that
+releases the piece for the circle, after which no link lasts; `null`
+without an end. `quantity` (only `members`): `{ licensed, members }` when
+the group of the choir members has more accounts than the licenses valid
+today were bought for (a hint, nothing is blocked), else `null`.
+`scans`: the PDF scans of the copy (role
 `score_pdf`, still found) that an allowed link may offer; the dialog offers
 "Include the scan (PDF)" only when there is one and `scan` is true. A
 public link plays a protected version only with a license with the use
@@ -2156,8 +2165,8 @@ the programme what sharing would do, struck items left out:
 ```json
 { "expires": "2027-01-24", "latest": "2027-04-30",
   "items": [{ "id": 12, "title": "Ave verum corpus", "shelfmark": "1-03", "allowed": true, "reason": null,
-              "scan": true, "offline": true, "existing": { "id": 40, "expires": "2026-12-01" },
-              "copyId": 7, "scanFileId": 81 }] }
+              "scan": true, "offline": true, "existing": { "id": 40, "expires": "2026-12-01", "scan": false, "limit": "2027-09-30" },
+              "copyId": 7, "scanFileId": 81, "until": "2027-03-31", "quantity": null }] }
 ```
 
 `expires`: the suggested last day, 14 days after the concert and at most
@@ -2168,23 +2177,39 @@ for choir members to the whole piece (`GET /api/copies/{id}/link-options`);
 a copy. `scan` and `offline` as there. `existing`: an active link for
 choir members to the whole piece that the account may extend (its own, or
 any for the librarian), the one that lasts longest; sharing extends it
-instead of making a second one.
+instead of making a second one. `existing.scan`: it offers a scan already;
+`existing.limit`: the last day its age allows (a year after it was made;
+older links are not extended, a new one is made). `until` and `quantity`
+as in the link options. An internal preservation copy shows neither
+`shelfmark` nor `copyId` to the roles that may not view it, and its
+`reason` is `Not available.` (milestone 0.18).
 
 `POST /api/events/{id}/share` with `{ items: [itemId, …], expires?, note?,
 scan? }` shares the chosen items: each one goes through `POST
 /api/copies/{id}/links` with `circle: "members"`, the whole piece and, with
 `scan: true`, the scan where `scan` is true; an `existing` link is extended
-to `expires` (its note stays). The answer is `{ created, extended, failed:
-[{ id, title, reason }] }`; one piece that fails does not stop the others.
-No item: 400 `Please choose at least one piece.`.
+to `expires`, never shortened, and takes the note (when one is given) and
+the scan too (milestone 0.18). Each piece lasts at most until its `until`.
+The answer is `{ created, extended, kept, failed: [{ id, title, reason }],
+limited: [{ id, title, expires }] }`: `kept` counts links that lasted
+longer already, `limited` names the pieces whose license ends before
+`expires`. One piece that fails does not stop the others; only the chosen
+items are checked. No item: 400 `Please choose at least one piece.`.
 
 `POST /api/links/{id}/extend` with `{ expires? }` (no date: the latest)
 sets a new last day for the creator of the link or the librarian (else 403
 `Only the creator or the catalog librarian can extend this link.`). A
 revoked link is refused (400 `A revoked link cannot be extended. Please
-make a new one.`); an expired one can be extended. The module of the circle
-and the rights are checked again as for a new link. The audit log records
-`extended` with the old and the new day.
+make a new one.`); an expired one can be extended, an expired public link
+gets a new token (the answer carries it; milestone 0.18). The module of
+the circle and the rights are checked again as for a new link, including
+the scan the link offers. The new day lies at most 183 days ahead, at
+most a year after the link was made and never after the end of the
+license that releases it (400 `The expiry date must lie between today and
+%s: …`, or `This link was made more than a year ago …`), and never before
+the current one (400 `The link is valid until %s already. …`). The audit
+log records `extended` with the old and the new day and, beyond the
+archive roles, the last day of the license (`license_until`).
 
 ### The page of the choir members
 
@@ -2197,7 +2222,7 @@ role (module `member_links`) returns the page "Shared with me" (template
 { "links": [{ "token": "…", "title": "Abendlied", "composer": "J. Rheinberger", "measure_from": null, "measure_to": null,
               "voice": "Alto", "verse": null, "tempo": null, "note": "Please practise until Thursday.",
               "expires": "2027-04-23", "canPlay": true, "canExportAudio": false, "reason": null, "scan": true,
-              "scanSize": 2400000, "offline": true, "practiceKey": "2922db9b58cb760f1724",
+              "scanSize": 2400000, "offline": true, "keepUntil": null, "practiceKey": "2922db9b58cb760f1724",
               "credits": [{ "role": "lyricist", "name": "Matthias Claudius" }], "notices": ["By kind permission of …"] }],
   "offline": { "enabled": true, "version": "0.15.0" } }
 ```
@@ -2207,6 +2232,11 @@ module `offline` and where choir members may save and print the notes (the
 rule of `scan`, `RightsPolicy::memberScanDenial`). `scanSize` (milestone
 0.19): the size of the scan in bytes as the file sync last saw it, for the
 switch "With the scan (PDF, 2.4 MB)"; `null` without a scan or when unknown.
+`keepUntil` (milestone 0.18): the last day the license for download and
+printing allows a copy on the device, `null` without an end; the page keeps
+the piece on the device only until then or the end of the link, whichever
+comes first. A public link offers its scan (`scan`) only with confirmed
+public domain or a license with the use `online_download`.
 `practiceKey`: the key
 under which the browser remembers the passages and settings for practising
 of the version, the same for every link to it, a hash without catalog ids;
