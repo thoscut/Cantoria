@@ -64,6 +64,8 @@ export const COLLECTIONS: Record<CollectionName, Collection> = {
 
 /** The account of the pieces kept from public links: there is none */
 export const PUBLIC_ACCOUNT = 'public'
+/** The pages whose kept pieces belong to an account: all but public links */
+export const ACCOUNT_COLLECTIONS: CollectionName[] = ['member', 'folder']
 
 /** A piece kept on the device */
 export interface KeptPiece {
@@ -87,6 +89,13 @@ export interface Catalog {
 	/** last check with the server (ISO time) */
 	checked: string
 	pieces: Record<string, KeptPiece>
+	/**
+	 * The browser remembered this account when the list was written
+	 * (marker.ts). Once that memory is gone, the browser's storage was
+	 * cleared since, as Nextcloud's login page does after signing out
+	 * (S N6); a list without it (older versions) never counts as signed out.
+	 */
+	signedIn?: true
 }
 
 /** What the server says about keeping a piece (a link of the page, a programme item) */
@@ -288,7 +297,7 @@ export function parseCatalog(text: string | null, key: RegExp = TOKEN): Catalog 
 				}
 			}
 		}
-		return { v: 1, account: parsed.account, checked: parsed.checked, pieces }
+		return { v: 1, account: parsed.account, checked: parsed.checked, pieces, ...(parsed.signedIn === true ? { signedIn: true as const } : {}) }
 	} catch {
 		return null
 	}
@@ -321,4 +330,65 @@ export function syncCatalog(catalog: Catalog, fresh: PieceForDevice[], now: Date
 		pieces[key] = { title: server.title, composer: server.composer, expires: server.expires, scan, kept: piece.kept }
 	}
 	return { catalog: { ...catalog, checked: now.toISOString(), pieces }, removed, scansRemoved }
+}
+
+/** Why the kept pieces of an account must go: another account, or someone signed out since */
+export type StaleReason = 'account' | 'signedOut'
+
+/**
+ * Whether the kept pieces of a page with an account must go before anything
+ * of them is shown (S N6): another account uses the app in this browser
+ * now or did since, or the browser's storage was cleared since the pieces
+ * were kept, as Nextcloud's login page does after signing out (it deletes
+ * IndexedDB, but not Cache Storage). A page knows its account; the service
+ * worker and a page without signing in know only the remembered one.
+ *
+ * @param catalog - the list of kept pieces of a page with an account
+ * @param remembered - the account the browser remembers (marker.ts); null: none; undefined: it cannot be read, then only the account decides
+ * @param account - the account of the page (accountKey); null: not known (the worker, a page without signing in)
+ */
+export function staleCatalog(catalog: Catalog, remembered: string | null | undefined, account: string | null): StaleReason | null {
+	if ((account ?? remembered ?? catalog.account) !== catalog.account) {
+		return 'account'
+	}
+	return remembered === null && catalog.signedIn === true ? 'signedOut' : null
+}
+
+/** What a page cleans up at its start, before it shows anything (S N6) */
+export interface DeviceCleanUp {
+	/** the collections whose pieces go, with the reason */
+	remove: Partial<Record<CollectionName, StaleReason>>
+	/** the passages and settings for practising in this browser are another account's */
+	forgetPractising: boolean
+	/** the account to remember in the browser from now on; null: nothing to write */
+	remember: string | null
+}
+
+/**
+ * What a page of the app cleans up at its start in this browser (S N6): the
+ * kept pieces of another account or of a signed-out one, and the passages
+ * and settings of another account. A page without signing in (a public
+ * link) removes only what was kept before someone signed out: a session
+ * that simply ended is no reason to take the pieces of the account.
+ *
+ * @param catalogs - the lists of kept pieces of the pages with an account
+ * @param remembered - the account the browser remembers; null: none; undefined: it cannot be read
+ * @param account - the account of the page; null without signing in
+ */
+export function deviceCleanUp(catalogs: Partial<Record<CollectionName, Catalog | null>>, remembered: string | null | undefined, account: string | null): DeviceCleanUp {
+	const remove: Partial<Record<CollectionName, StaleReason>> = {}
+	for (const name of ACCOUNT_COLLECTIONS) {
+		const catalog = catalogs[name]
+		const reason = catalog ? staleCatalog(catalog, remembered, account) : null
+		if (reason !== null) {
+			remove[name] = reason
+		}
+	}
+	// a page kept from before signing out is no sign-in of its account
+	const signedOut = Object.values(remove).includes('signedOut')
+	return {
+		remove,
+		forgetPractising: account !== null && typeof remembered === 'string' && remembered !== account,
+		remember: account !== null && remembered !== undefined && remembered !== account && !signedOut ? account : null,
+	}
 }

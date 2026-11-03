@@ -90,10 +90,10 @@ Allgemeine Angaben für alle Einträge:
 |---|---|
 | Zweck | Üben und Vortragen, auch ohne Netz: Einstellungen für den nächsten Besuch, auf Wunsch Stücke auf dem eigenen Gerät |
 | Betroffene | Chormitglieder, Chorleitung, Rollen des Notenarchivs; auf einem öffentlichen Link auch Besucherinnen und Besucher |
-| Daten | nur im Browser des Geräts, nicht beim Verein: Größe der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult (`localStorage`); auf Tippen gespeicherte Stücke mit Noten und auf Wunsch Scan (Cache Storage). Mikrofon („Meine Tonhöhe zeigen“, „Selbst aufnehmen“) nur nach Tippen und Erlaubnis des Browsers; Stimme und Aufnahme bleiben im Browser. |
+| Daten | nur im Browser des Geräts, nicht beim Verein: Größe der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult (`localStorage`); auf Tippen gespeicherte Stücke mit Noten und auf Wunsch Scan (Cache Storage); ein Hash des angemeldeten Kontos, damit Stücke eines anderen Kontos oder von vor dem Abmelden entfernt werden (IndexedDB). Mikrofon („Meine Tonhöhe zeigen“, „Selbst aufnehmen“) nur nach Tippen und Erlaubnis des Browsers; Stimme und Aufnahme bleiben im Browser. |
 | Rechtsgrundlage | § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich für die gewünschte Funktion); für das Merken der Übe-Einstellungen [prüfen: Grenzfall] |
 | Empfänger | niemand; nichts davon wird an den Server übertragen |
-| Löschfrist | „Alles auf diesem Gerät löschen“ (Seiten für Chormitglieder, Konzertmappe), „Ohne Netz verfügbar“ ausschalten (öffentlicher Link) oder die Websitedaten im Browser löschen; Stücke, die nicht mehr geteilt sind oder nicht mehr behalten werden dürfen, beim nächsten Start mit Netz; nach 30 Tagen ohne Netz gesperrt |
+| Löschfrist | „Alles auf diesem Gerät löschen“ (Seiten für Chormitglieder, Konzertmappe), „Ohne Netz verfügbar“ ausschalten (öffentlicher Link) oder die Websitedaten im Browser löschen; das Abmelden bei Nextcloud löscht es meist auch (in manchen Browsern beim nächsten Start einer Seite von Cantoria); Stücke, die nicht mehr geteilt sind oder nicht mehr behalten werden dürfen, beim nächsten Start mit Netz; nach 30 Tagen ohne Netz gesperrt |
 
 **1.6 Öffentliche Seiten (nur mit den Modulen „Öffentliche Links“ und „Öffentliche Repertoireseite“)**
 

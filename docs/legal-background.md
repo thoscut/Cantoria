@@ -179,7 +179,8 @@ consent as a scan (use "Digitisation").
   members. Pass on the license's duties to delete to the members.
 - **Internal playback.** For the archive roles an imported, not yet
   confirmed status "public domain" is enough for playback. That is
-  defensible internally; only what is confirmed is shared.
+  defensible internally; only what is confirmed is shared, and only that
+  plays for choir members and on public links.
 - **IMSLP and CPDL.** The public repertoire page links only to the page of
   the work. Not every edition offered there is free in Germany, for example
   arrangements or editions that are free only in Canada or the USA. For
@@ -220,14 +221,17 @@ device.
   own (Nextcloud sets the session cookies it needs to work). It remembers
   settings in the browser (`localStorage`: size of the
   notes, count-in, passages, practice settings such as tempo and mixer,
-  folded filters), and on a tap it keeps pieces in the Cache Storage.
+  folded filters), and on a tap it keeps pieces in the Cache Storage. For
+  a shared device it remembers a hash of the signed-in account in
+  IndexedDB, so that pieces of another account, or kept before signing out,
+  are removed (a security measure; [SECURITY.md](../SECURITY.md)).
   Storing on a device needs consent unless it is strictly necessary for a
   service the person explicitly asked for (§ 25 (2) no. 2 TDDDG). Keeping a
   piece on a tap clearly is; remembering practice settings for the next
   visit is a borderline case. Nothing of it reaches the server or third
   parties; "Delete everything on this device" removes it (on a public link:
   switching off "Available without a network" and clearing the site data in
-  the browser). Name it in
+  the browser), and signing out of Nextcloud usually does, too. Name it in
   the privacy information instead of promising "no cookies"; text blocks
   are in the [privacy templates](privacy-templates.md).
 

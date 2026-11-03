@@ -238,6 +238,8 @@ final class RightsPolicyTest extends TestCase {
 	private const PUBLIC_UNCONFIRMED = 'Public domain is not confirmed yet. The catalog librarian confirms it on the tab "Rights"; then a public link can be made.';
 	private const PUBLIC_NO_LICENSE = 'A public link needs confirmed public domain or a valid license for online publication. The catalog librarian records it on the tab "Rights".';
 	private const PUBLIC_NO_AUDIO = 'Playback on a public link needs public domain or a license for online playback (audio). The catalog librarian records it on the tab "Rights".';
+	private const MEMBER_UNCONFIRMED_PLAY = 'Public domain is not confirmed yet: playback for choir members needs a confirmed rights status or a license for practice audio.';
+	private const PUBLIC_UNCONFIRMED_PLAY = 'Public domain is not confirmed yet: a public link plays only after the confirmation or with a license for online playback (audio), both on the tab "Rights".';
 	private const MEMBER_NO_DOWNLOAD = 'Choir members can save and print the scan: unless public domain is confirmed, it needs a license for download and printing by choir members. The catalog librarian records it on the tab "Rights".';
 
 	/**
@@ -248,8 +250,11 @@ final class RightsPolicyTest extends TestCase {
 		// version values, licenses [uses, from, until], expected denial of viewing, playback, practice audio
 		yield 'confirmed public domain' => [$confirmed, [], null, null, null];
 		yield 'unconfirmed public domain' => [['rights_status' => 'public_domain'], [], self::MEMBER_UNCONFIRMED, self::MEMBER_UNCONFIRMED, self::MEMBER_UNCONFIRMED];
-		yield 'unconfirmed public domain, portal license' => [['rights_status' => 'public_domain'], [['portal']], null, null, self::UNCONFIRMED_EXPORT];
+		// outside the archive only confirmed public domain plays (R B15): the portal license releases the notes, not their sound
+		yield 'unconfirmed public domain, portal license' => [['rights_status' => 'public_domain'], [['portal']], null, self::MEMBER_UNCONFIRMED_PLAY, self::MEMBER_UNCONFIRMED_PLAY];
 		yield 'unconfirmed public domain, portal and practice audio' => [['rights_status' => 'public_domain'], [['portal,practice_audio']], null, null, null];
+		yield 'unconfirmed public domain, portal and an ended license for practice audio' => [['rights_status' => 'public_domain'],
+			[['portal'], ['practice_audio', null, '2026-10-21']], null, self::MEMBER_UNCONFIRMED_PLAY, self::MEMBER_UNCONFIRMED_PLAY];
 		yield 'protected, portal license' => [['rights_status' => 'protected'], [['portal']], null, self::PROTECTED_PLAY, self::PROTECTED_PLAY];
 		yield 'protected, portal and practice audio' => [['rights_status' => 'protected'], [['portal'], ['practice_audio']], null, null, null];
 		yield 'protected, practice audio only' => [['rights_status' => 'protected'], [['practice_audio']], self::MEMBER_NOT_RELEASED, self::MEMBER_NOT_RELEASED, self::MEMBER_NOT_RELEASED];
@@ -287,7 +292,10 @@ final class RightsPolicyTest extends TestCase {
 		yield 'confirmed public domain, not released' => [$confirmed, [], self::PUBLIC_NOT_RELEASED, self::PUBLIC_NOT_RELEASED];
 		yield 'confirmed public domain, blocked' => [$confirmed + ['publication_status' => 'blocked'], [], self::PUBLIC_NOT_RELEASED, self::PUBLIC_NOT_RELEASED];
 		yield 'unconfirmed public domain, released' => [['rights_status' => 'public_domain'] + $free, [], self::PUBLIC_UNCONFIRMED, self::PUBLIC_UNCONFIRMED];
-		yield 'unconfirmed public domain, online license' => [['rights_status' => 'public_domain'] + $free, [['online_publication']], null, null];
+		// an unconfirmed "public domain" shown under a license for online publication does not play (R B15)
+		yield 'unconfirmed public domain, online license' => [['rights_status' => 'public_domain'] + $free, [['online_publication']], null, self::PUBLIC_UNCONFIRMED_PLAY];
+		yield 'unconfirmed public domain, online publication and online playback' => [['rights_status' => 'public_domain'] + $free,
+			[['online_publication,online_audio']], null, null];
 		yield 'protected, online license' => [['rights_status' => 'protected'] + $free, [['online_publication']], null, self::PUBLIC_NO_AUDIO];
 		yield 'protected, online and practice audio: practice audio is no online playback' => [['rights_status' => 'protected'] + $free,
 			[['online_publication,practice_audio']], null, self::PUBLIC_NO_AUDIO];
@@ -359,6 +367,8 @@ final class RightsPolicyTest extends TestCase {
 		yield 'download and printing cover no MusicXML' => [['rights_status' => 'protected'], [['portal,member_download,self_print,practice_audio']], $noScores, $noRecording];
 		yield 'digital score files and recordings' => [['rights_status' => 'protected'], [['portal,digital_scores,practice_audio,recording_sharing']], null, null];
 		yield 'recordings without practice audio' => [['rights_status' => 'protected'], [['portal,recording_sharing']], $noScores, self::PROTECTED_PLAY];
+		yield 'unconfirmed public domain: a recording plays only as for choir members' => [['rights_status' => 'public_domain'], [['portal,recording_sharing']],
+			$noScores, self::MEMBER_UNCONFIRMED_PLAY];
 		yield 'preservation copy' => [$confirmed + ['preservation_copy' => true], [['portal,digital_scores,recording_sharing']], self::MEMBER_PRESERVATION, self::MEMBER_PRESERVATION];
 	}
 
@@ -491,5 +501,9 @@ final class RightsPolicyTest extends TestCase {
 		self::assertSame(self::PUBLIC_NO_DOWNLOAD, $build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicScanDenial($confirmed, self::TODAY),
 			'the scan then needs its own license');
 		self::assertNull($build(ProtectionTerm::PROTECTED, [])->memberViewDenial($confirmed, self::TODAY), 'choir members are not concerned');
+		// playback follows the publishing: under a conflict only a license for online playback carries it (R B15)
+		self::assertNull($build(ProtectionTerm::FREE, [])->publicPlayDenial($confirmed, self::TODAY));
+		self::assertSame(self::PUBLIC_NO_AUDIO, $build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicPlayDenial($confirmed, self::TODAY));
+		self::assertNull($build(ProtectionTerm::PROTECTED, [self::license('online_publication,online_audio')])->publicPlayDenial($confirmed, self::TODAY));
 	}
 }

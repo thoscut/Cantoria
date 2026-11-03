@@ -6,7 +6,7 @@
 import type { Catalog } from '../offline/rules.ts'
 
 import { describe, expect, it } from 'vitest'
-import { COLLECTIONS, KEEP_HEADER, localDay, mayStay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, pieceAddresses, requestKind, shellFiles, syncCatalog, usable } from '../offline/rules.ts'
+import { ACCOUNT_COLLECTIONS, COLLECTIONS, deviceCleanUp, KEEP_HEADER, localDay, mayStay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, pieceAddresses, requestKind, shellFiles, staleCatalog, syncCatalog, usable } from '../offline/rules.ts'
 
 const SCOPE = '/index.php/apps/cantoria/'
 const TOKEN = 'a'.repeat(32)
@@ -130,6 +130,61 @@ describe('pieces kept on the device', () => {
 
 	it('expire at the end of their last day on the device', () => {
 		expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+	})
+})
+
+describe('a shared device (S N6)', () => {
+	const anna = (signedIn: boolean): Catalog => ({ ...catalog('2026-10-01T00:00:00.000Z'), account: 'anna', ...(signedIn ? { signedIn: true as const } : {}) })
+
+	it('keeps in the list whether the browser remembered its account', () => {
+		expect(parseCatalog(JSON.stringify(anna(true)))?.signedIn).toBe(true)
+		expect(parseCatalog(JSON.stringify(anna(false)))).not.toHaveProperty('signedIn')
+		expect(parseCatalog(JSON.stringify({ ...anna(false), signedIn: 'yes' }))).not.toHaveProperty('signedIn')
+	})
+
+	it('removes the pieces of another account', () => {
+		expect(staleCatalog(anna(true), 'anna', 'ben')).toBe('account')
+		// another account used the app since, as the worker sees it
+		expect(staleCatalog(anna(true), 'ben', null)).toBe('account')
+		expect(staleCatalog(anna(true), 'anna', 'anna')).toBeNull()
+		expect(staleCatalog(anna(true), 'anna', null)).toBeNull()
+	})
+
+	it('removes the pieces kept before someone signed out, which cleared what the browser remembers', () => {
+		expect(staleCatalog(anna(true), null, null)).toBe('signedOut')
+		expect(staleCatalog(anna(true), null, 'anna')).toBe('signedOut')
+		// a list of an older version never counts as signed out, nor a browser that cannot remember
+		expect(staleCatalog(anna(false), null, null)).toBeNull()
+		expect(staleCatalog(anna(true), undefined, null)).toBeNull()
+		expect(staleCatalog(anna(true), undefined, 'ben')).toBe('account')
+	})
+
+	it('cleans up at the start of a page with another account, and remembers it', () => {
+		const plan = deviceCleanUp({ member: anna(true), folder: { ...anna(false), account: 'ben' } }, 'anna', 'ben')
+		expect(plan).toEqual({ remove: { member: 'account' }, forgetPractising: true, remember: 'ben' })
+		expect(deviceCleanUp({ member: anna(true) }, 'anna', 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('without signing in removes only what was kept before signing out, never because a session ended', () => {
+		expect(deviceCleanUp({ member: anna(true), folder: null }, null, null)).toEqual({ remove: { member: 'signedOut' }, forgetPractising: false, remember: null })
+		// the session ended, nobody signed out: the pieces of the account stay
+		expect(deviceCleanUp({ member: anna(true) }, 'anna', null)).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('does not remember the account of a page kept from before signing out', () => {
+		// the page "Shared with me" from the device, after signing out: its account is not signed in
+		expect(deviceCleanUp({ member: anna(true) }, null, 'anna')).toEqual({ remove: { member: 'signedOut' }, forgetPractising: false, remember: null })
+	})
+
+	it('adopts the pieces of an older version, and decides nothing where the browser cannot remember', () => {
+		expect(deviceCleanUp({ member: anna(false) }, null, 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: 'anna' })
+		expect(deviceCleanUp({ member: anna(true) }, undefined, 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('never touches the pieces of public links, which belong to the browser', () => {
+		expect(ACCOUNT_COLLECTIONS).toEqual(['member', 'folder'])
+		const visitor = { ...anna(true), account: 'public' }
+		expect(deviceCleanUp({ public: visitor }, null, 'ben').remove).toEqual({})
 	})
 })
 

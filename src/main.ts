@@ -6,10 +6,11 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import { installEscapeClose } from './escapeClose.ts'
+import { claimDevice } from './offline/device.ts'
 
 import '@nextcloud/dialogs/style.css'
 
 installEscapeClose()
 
-const app = createApp(App)
-app.mount('#cantoria')
+// what another account kept in this browser goes first: pieces, passages and settings (S N6)
+claimDevice(null).finally(() => createApp(App).mount('#cantoria'))

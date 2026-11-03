@@ -44,7 +44,13 @@ deinem Handy nicht geht, sag der Chorleitung Bescheid.
   getrennt.
 - Öffne die Seite mindestens alle 30 Tage einmal mit Netz, sonst sind die
   Stücke gesperrt.
-- Auf einem geteilten Gerät: unten **Alles auf diesem Gerät löschen**.
+- Auf einem geteilten Gerät: oben **Von diesem Gerät entfernen** oder unten
+  **Alles auf diesem Gerät löschen**, bevor du das Gerät weitergibst. Das
+  Abmelden bei Nextcloud löscht Stücke, Stellen und Einstellungen meist
+  auch, in manchen Browsern (Chrome, Android) erst beim nächsten Öffnen von
+  Cantoria auf dem Gerät. Schließt du nur den Browser, bleibst du
+  angemeldet, und alles bleibt für die Person, die das Gerät als Nächste
+  benutzt.
 
 ## Was du mit den Noten darfst
 
@@ -69,6 +75,7 @@ deinem Handy nicht geht, sag der Chorleitung Bescheid.
 | „Mit dir ist noch nichts geteilt“ | Die Chorleitung hat noch nichts geteilt, oder der Link ist abgelaufen. Frag nach einem neuen Link. |
 | Kein Ton | Tippe einmal auf **Abspielen** (Browser spielen erst nach einem Tipp) und prüfe den Stummschalter des Handys. |
 | „Gesperrt: seit mehr als … Tagen nicht mit dem Server abgeglichen“ | Öffne die Seite einmal mit Netz. |
+| Nach dem Abmelden fehlen die Stücke ohne Netz | Das Abmelden entfernt sie vom Gerät. Melde dich mit Netz an und schalte **Ohne Netz verfügbar** wieder ein. |
 | Ohne Netz fehlen die Stücke auf dem iPhone | Du hast sie in Safari eingeschaltet, öffnest aber den Home-Bildschirm (oder umgekehrt). Schalte sie dort noch einmal ein, wo du übst. |
 | „Meine Tonhöhe zeigen“ oder „Selbst aufnehmen“ geht nicht | Erlaube dem Browser das Mikrofon für diese Seite. |
 
