@@ -50,6 +50,7 @@ import { MAX_DAYS_UNCHECKED, usable } from '../offline/rules.ts'
 import { forgetPractising } from '../score/practiceSettings.ts'
 import { authorizeMemberPracticeAudio, fetchMemberLinks, fetchMemberScore } from './api.ts'
 import { useLeaveGuard } from './leaveGuard.ts'
+import { deviceUntil } from './linkDates.ts'
 import { scopeText } from './linkScope.ts'
 
 /**
@@ -127,7 +128,8 @@ const homeScreen = homeScreenAdvice()
  * @param link - member link
  */
 function forDevice(link: MemberLink): PieceForDevice {
-	return { key: link.token, title: link.title, composer: link.composer, expires: link.expires, offline: link.offline, scan: link.scan }
+	// on the device until the link or the license for a copy ends, whichever comes first
+	return { key: link.token, title: link.title, composer: link.composer, expires: deviceUntil(link.expires, link.keepUntil), offline: link.offline, scan: link.scan }
 }
 
 /**

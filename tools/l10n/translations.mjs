@@ -2788,9 +2788,9 @@ export const singular = {
 	'Text: {name}': 'Text: {name}',
 	'Translation: {name}': 'Übersetzung: {name}',
 	'Arrangement: {name}': 'Bearbeitung: {name}',
-	'%1$s %2$s is confirmed as public domain, but by the persons recorded now the protection proposal no longer says so. Please check the rights status; public links and the repertoire page stay online until you decide.': [
-		'%1$s %2$s ist als gemeinfrei bestätigt, nach den jetzt erfassten Personen lautet der Vorschlag zur Schutzfrist aber nicht mehr so. Bitte prüfe den Rechtestatus; öffentliche Links und die Repertoireseite bleiben online, bis du entscheidest.',
-		'%1$s %2$s ist als gemeinfrei bestätigt, nach den jetzt erfassten Personen lautet der Vorschlag zur Schutzfrist aber nicht mehr so. Bitte prüfen Sie den Rechtestatus; öffentliche Links und die Repertoireseite bleiben online, bis Sie entscheiden.',
+	'%1$s %2$s is confirmed as public domain, but by the persons recorded now the protection proposal no longer says so. Please check the rights status; until you decide, public links without a license stay closed, the repertoire page stays online.': [
+		'%1$s %2$s ist als gemeinfrei bestätigt, nach den jetzt erfassten Personen lautet der Vorschlag zur Schutzfrist aber nicht mehr so. Bitte prüfe den Rechtestatus; bis du entscheidest, bleiben öffentliche Links ohne Lizenz geschlossen, die Repertoireseite bleibt online.',
+		'%1$s %2$s ist als gemeinfrei bestätigt, nach den jetzt erfassten Personen lautet der Vorschlag zur Schutzfrist aber nicht mehr so. Bitte prüfen Sie den Rechtestatus; bis Sie entscheiden, bleiben öffentliche Links ohne Lizenz geschlossen, die Repertoireseite bleibt online.',
 	],
 	'Melody': 'Melodie',
 	'Text': 'Text',
@@ -3298,16 +3298,16 @@ export const singular = {
 	'Open in the concert folder': 'In der Konzertmappe öffnen',
 	'No: the rights allow no copy on the device': 'Nein: Die Rechte erlauben keine Kopie auf dem Gerät',
 	'The recipients see the scan in the page. Whoever sees the scan can also save it.': 'Wer den Link bekommt, sieht den Scan in der Seite. Wer den Scan sieht, kann ihn auch speichern.',
-	'Please choose a day between today and {date}.': [
-		'Bitte wähle einen Tag zwischen heute und {date}.',
-		'Bitte wählen Sie einen Tag zwischen heute und {date}.',
+	'Please choose a day between {from} and {date}.': [
+		'Bitte wähle einen Tag zwischen {from} und {date}.',
+		'Bitte wählen Sie einen Tag zwischen {from} und {date}.',
 	],
 	'The link is valid until {date}.': 'Der Link gilt bis {date}.',
 	'Extend link': 'Link verlängern',
 	'Extend': 'Verlängern',
 	'The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.': 'Der Link behält seine Adresse: Wer ihn hat, kann ihn weiter nutzen, und was die Chormitglieder auf ihren Geräten gespeichert haben, bleibt.',
 	'This piece cannot be shared.': 'Dieses Stück lässt sich nicht teilen.',
-	'Already shared until {date}: the link is extended and keeps its address.': 'Schon geteilt bis {date}: Der Link wird verlängert und behält seine Adresse.',
+	'Already shared until {date}: the link is extended to {new} and keeps its address.': 'Schon geteilt bis {date}: Der Link wird bis {new} verlängert und behält seine Adresse.',
 	'A new link for the choir members.': 'Ein neuer Link für die Chormitglieder.',
 	'Share "{title}" with the choir': '„{title}“ mit dem Chor teilen',
 	'Please choose at least one piece.': [
@@ -3321,10 +3321,10 @@ export const singular = {
 	],
 	'Available without a network.': 'Ohne Netz verfügbar.',
 	'Not available without a network: the rights allow no copy on the device.': 'Nicht ohne Netz verfügbar: Die Rechte erlauben keine Kopie auf dem Gerät.',
-	'The choir members see this note with each new link; extended links keep theirs.': 'Die Chormitglieder sehen diese Notiz bei jedem neuen Link; verlängerte Links behalten ihre.',
-	'Include the scans (PDF) where the rights allow it': 'Die Scans (PDF) mitgeben, wo die Rechte es erlauben',
+	'The choir members see this note with each piece, also with links that exist already. Empty: they keep their note.': 'Die Chormitglieder sehen diese Notiz bei jedem Stück, auch bei schon bestehenden Links. Leer: Sie behalten ihre Notiz.',
+	'Include the scans (PDF) where the rights allow it, also with links that exist already': 'Die Scans (PDF) mitgeben, wo die Rechte es erlauben, auch bei schon bestehenden Links',
 	'Where it says "Available without a network", the singers can practise the piece on the train, too.': 'Wo „Ohne Netz verfügbar“ steht, können die Chormitglieder das Stück auch im Zug üben.',
-	'{created} new, {extended} extended. The choir members find them under "Shared with me".': '{created} neu, {extended} verlängert. Die Chormitglieder finden sie unter „Mit mir geteilt“.',
+	'{created} new, {extended} extended, {kept} already shared for longer. The choir members find them under "Shared with me".': '{created} neu, {extended} verlängert, {kept} schon länger geteilt. Die Chormitglieder finden sie unter „Mit mir geteilt“.',
 	'Only the creator or the catalog librarian can extend this link.': 'Diesen Link können nur die Person, die ihn erstellt hat, und die Rolle „Bestand“ verlängern.',
 	'A revoked link cannot be extended. Please make a new one.': [
 		'Ein widerrufener Link lässt sich nicht verlängern. Bitte erstelle einen neuen.',
@@ -3371,9 +3371,47 @@ export const singular = {
 	'Open file {path} (opens in a new tab)': 'Datei {path} öffnen (öffnet sich in einem neuen Tab)',
 	'Help: access to the archive folder (opens in a new tab)': 'Hilfe: Zugriff auf den Archivordner (öffnet sich in einem neuen Tab)',
 	'Filters': 'Filter',
+	// ---- 0.18: links, extending and sharing a programme (review of 3 November 2026) ----
+	'Download of the scan on public links': 'Download des Scans auf öffentlichen Links',
+	'Everyone can save the scan of a public link: it needs confirmed public domain or a license for the download of the scan on public links. The catalog librarian records it on the tab "Rights".': 'Den Scan eines öffentlichen Links kann jede Person speichern: Er braucht bestätigte Gemeinfreiheit oder eine Lizenz für den Download des Scans. Die Archivverwaltung erfasst sie im Reiter „Rechte“.',
+	'Rights conflict: confirmed as public domain, but protected by the persons recorded now. Public links stay closed until the catalog librarian checks the tab "Rights".': 'Rechtekonflikt: als gemeinfrei bestätigt, nach den jetzt erfassten Personen aber geschützt. Öffentliche Links bleiben geschlossen, bis die Archivverwaltung den Reiter „Rechte“ prüft.',
+	'The expiry date must lie between today and %s: the license that releases the piece, or the age of the link, allows no later day.': 'Das Ablaufdatum muss zwischen heute und %s liegen: Die Lizenz für das Stück oder das Alter des Links erlaubt keinen späteren Tag.',
+	'This link was made more than a year ago and cannot be extended any more. Please make a new one.': [
+		'Dieser Link wurde vor mehr als einem Jahr angelegt und lässt sich nicht mehr verlängern. Bitte lege einen neuen an.',
+		'Dieser Link wurde vor mehr als einem Jahr angelegt und lässt sich nicht mehr verlängern. Bitte legen Sie einen neuen an.',
+	],
+	'The link is valid until %s already. Extending never shortens a link; to end it earlier, revoke it.': [
+		'Der Link gilt schon bis %s. Verlängern verkürzt nie; um ihn früher zu beenden, widerrufe ihn.',
+		'Der Link gilt schon bis %s. Verlängern verkürzt nie; um ihn früher zu beenden, widerrufen Sie ihn.',
+	],
+	'Not available.': 'Nicht verfügbar.',
+	'Already shared until {date}; it stays so.': 'Schon geteilt bis {date}; das bleibt so.',
+	'The license ends on {date}: shared until then at most.': 'Die Lizenz endet am {date}: höchstens bis dahin geteilt.',
+	'Licensed for {licensed} people, but {members} accounts are in the group of the choir members.': 'Lizenziert für {licensed} Personen, aber in der Gruppe der Chormitglieder sind {members} Konten.',
+	'Hint:': 'Hinweis:',
+	'Hello everyone, the pieces for "{title}" are shared with you in Cantoria under "Shared with me": {url}. Choose your voice there and practise difficult passages with "Loop".': [
+		'Hallo zusammen, die Stücke für „{title}“ findet ihr in Cantoria unter „Mit mir geteilt“: {url}. Wählt dort eure Stimme und übt schwierige Stellen mit „Schleife“.',
+		'Guten Tag zusammen, die Stücke für „{title}“ finden Sie in Cantoria unter „Mit mir geteilt“: {url}. Wählen Sie dort Ihre Stimme und üben Sie schwierige Stellen mit „Schleife“.',
+	],
+	'The message has been copied.': 'Die Nachricht wurde kopiert.',
+	'The message could not be copied. Please select and copy it by hand.': [
+		'Die Nachricht ließ sich nicht kopieren. Bitte markiere und kopiere sie von Hand.',
+		'Die Nachricht ließ sich nicht kopieren. Bitte markieren und kopieren Sie sie von Hand.',
+	],
+	'Shared until the license ends:': 'Geteilt, bis die Lizenz endet:',
+	'until {date}': 'bis {date}',
+	'Message to the choir': 'Nachricht an den Chor',
+	'Copy message to the choir': 'Nachricht an den Chor kopieren',
+	'Ends today': 'Endet heute',
+	'The link has a new address. Please copy it and pass it on again.': [
+		'Der Link hat eine neue Adresse. Bitte kopiere sie und gib sie neu weiter.',
+		'Der Link hat eine neue Adresse. Bitte kopieren Sie sie und geben Sie sie neu weiter.',
+	],
+	'A link lasts at most a year after it was made and never beyond the end of the license that releases the piece.': 'Ein Link gilt höchstens ein Jahr nach dem Anlegen und nie über das Ende der Lizenz hinaus, die das Stück freigibt.',
 }
 
 export const plural = {
+	'Ends in %n day|Ends in %n days': ['Endet in %n Tag', 'Endet in %n Tagen'],
 	'%n piece is in the choir system but not recorded as in the portal|%n pieces are in the choir system but not recorded as in the portal': [
 		'%n Stück ist im Chorsystem, aber nicht als im Portal vermerkt',
 		'%n Stücke sind im Chorsystem, aber nicht als im Portal vermerkt',
