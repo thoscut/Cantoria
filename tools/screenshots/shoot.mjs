@@ -3,7 +3,7 @@
  * Recreates the screenshots of the documentation (docs/screenshots) from a
  * Nextcloud with the Cantoria app and the public demo data (tools/demo).
  *
- *   node shoot.mjs --url http://localhost:8080 [--prepare] [--only a,b] [--out dir]
+ *   node shoot.mjs --url http://localhost:8080 [--prepare] [--only a,b] [--out dir] [--axe]
  *
  * See README.md in this folder for the requirements, the accounts and the
  * environment variables with their passwords.
@@ -27,13 +27,15 @@ const { values: args } = parseArgs({
 		prepare: { type: 'boolean', default: false },
 		'no-optimize': { type: 'boolean', default: false },
 		list: { type: 'boolean', default: false },
+		axe: { type: 'boolean', default: false },
 		'demo-folder': { type: 'string', default: 'Cantoria-Demo' },
 	},
 })
 
 if (args.list) {
 	for (const shot of SHOTS) {
-		console.log(`${shot.file.padEnd(32)} ${shot.account.padEnd(12)} ${shot.lang} ${shot.theme}`)
+		const extras = [shot.viewport ? `${shot.viewport.width} x ${shot.viewport.height}` : '', shot.forcedColors ? 'contrast' : '', shot.media ?? ''].filter(Boolean).join(' ')
+		console.log(`${shot.file.padEnd(32)} ${shot.account.padEnd(12)} ${shot.lang} ${shot.theme} ${extras}`.trimEnd())
 	}
 	process.exit(0)
 }
@@ -90,6 +92,7 @@ async function browserPath() {
 	return found
 }
 
+/** The window of the desktop pictures; a shot can ask for another one (`viewport`, e.g. a phone). */
 const WIDTH = 1600
 const HEIGHT = 1000
 const BASE = args.url.replace(/\/+$/, '')
@@ -117,6 +120,7 @@ class Session {
 		this.page = null
 		this.lang = null
 		this.theme = null
+		this.look = null
 	}
 
 	async open() {
@@ -196,13 +200,31 @@ class Session {
 			accountLanguages.set(this.uid, lang)
 		}
 		this.lang = lang
-		if (theme !== this.theme) {
-			await this.page.emulateMediaFeatures([
-				{ name: 'prefers-color-scheme', value: theme },
-				{ name: 'prefers-reduced-motion', value: 'reduce' },
-			])
-			this.theme = theme
+		this.theme = theme
+	}
+
+	/**
+	 * Window and media of the next screenshot: the size of a phone or a
+	 * tablet (`viewport`, touch and a device scale of 2 below 1000 pixels),
+	 * the contrast mode of Windows (`forcedColors`) and print (`media`).
+	 * Every shot sets all of them, so that none carries over to the next.
+	 */
+	async look({ theme, viewport = null, forcedColors = false, media = null }) {
+		const width = viewport?.width ?? WIDTH
+		const height = viewport?.height ?? HEIGHT
+		const key = JSON.stringify([theme, width, height, forcedColors, media])
+		if (key === this.look) {
+			return
 		}
+		const small = width < 1000
+		await this.page.setViewport({ width, height, deviceScaleFactor: small ? 2 : 1, isMobile: small, hasTouch: small })
+		await this.page.emulateMediaFeatures([
+			{ name: 'prefers-color-scheme', value: theme },
+			{ name: 'prefers-reduced-motion', value: 'reduce' },
+			{ name: 'forced-colors', value: forcedColors ? 'active' : 'none' },
+		])
+		await this.page.emulateMediaType(media)
+		this.look = key
 	}
 }
 
@@ -329,13 +351,19 @@ function helpers(session) {
 			}
 			await sleep(600)
 		},
+		/** Size of the window of this shot. */
+		size() {
+			const viewport = page.viewport() ?? { width: WIDTH, height: HEIGHT }
+			return { width: viewport.width, height: viewport.height }
+		},
 		/** Remove the focus ring and the mouse hover before a screenshot. */
 		async calm() {
 			await page.evaluate(() => {
 				document.activeElement?.blur?.()
 				document.querySelectorAll('.toastify').forEach((toast) => toast.remove())
 			})
-			await page.mouse.move(WIDTH - 2, HEIGHT - 2)
+			const { width, height } = h.size()
+			await page.mouse.move(width - 2, height - 2)
 			await sleep(400)
 		},
 		/**
@@ -345,7 +373,8 @@ function helpers(session) {
 		 * @param {object} options pad: padding; maxHeight: cut at this height;
 		 *   fit: only as high as the visible content of the elements
 		 */
-		async rect(selectors, { pad = 16, maxHeight = HEIGHT, minWidth = 0, fit = false } = {}) {
+		async rect(selectors, { pad = 16, maxHeight = h.size().height, minWidth = 0, fit = false } = {}) {
+			const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = h.size()
 			const box = await page.evaluate((selectors, fit, pad) => {
 				const rects = []
 				let first = null
@@ -393,9 +422,9 @@ function helpers(session) {
 			}
 			const x = Math.max(0, Math.floor(box.x))
 			const y = Math.max(0, Math.floor(box.y))
-			const width = Math.max(minWidth, Math.min(WIDTH, Math.ceil(box.right)) - x)
-			const height = Math.min(maxHeight, Math.min(HEIGHT, Math.ceil(box.bottom)) - y)
-			return { x, y, width: Math.min(width, WIDTH - x), height }
+			const width = Math.max(minWidth, Math.min(WINDOW_WIDTH, Math.ceil(box.right)) - x)
+			const height = Math.min(maxHeight, Math.min(WINDOW_HEIGHT, Math.ceil(box.bottom)) - y)
+			return { x, y, width: Math.min(width, WINDOW_WIDTH - x), height }
 		},
 	}
 	return h
@@ -444,7 +473,34 @@ async function session(role, lang = 'en') {
 	return sessions.get(key)
 }
 
+/** The script of axe-core, read once */
+let axeSource = null
+
+/**
+ * axe-core on the page as the screenshot shows it (--axe): the rules of
+ * WCAG 2.0 to 2.2, levels A and AA. The script comes from the tool's own
+ * dependencies and is put into the page only for the check.
+ *
+ * @param {object} page the browser tab
+ * @return {Promise<object[]>} violations: rule, impact, help and the first targets
+ */
+async function axe(page) {
+	axeSource ??= readFileSync(join(HERE, 'node_modules', 'axe-core', 'axe.min.js'), 'utf8')
+	await page.evaluate(axeSource)
+	return page.evaluate(async () => {
+		const result = await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } })
+		return result.violations.map((violation) => ({
+			rule: violation.id,
+			impact: violation.impact,
+			help: violation.help,
+			targets: violation.nodes.slice(0, 5).map((node) => node.target.join(' ')),
+		}))
+	})
+}
+
 let failures = 0
+/** shot file => violations found by axe-core (--axe) */
+const axeReport = {}
 try {
 	if (args.prepare) {
 		await prepare({ session, sleep, demoFolder: args['demo-folder'], log: (...text) => console.log('prepare:', ...text) })
@@ -458,6 +514,7 @@ try {
 		}
 		const s = await session(shot.account, shot.lang)
 		await s.use(shot)
+		await s.look(shot)
 		const h = helpers(s)
 		try {
 			const clip = await shot.run(h, state)
@@ -467,7 +524,15 @@ try {
 			const buffer = await s.page.screenshot({ type: 'png', captureBeyondViewport: false, ...(clip ? { clip } : {}) })
 			const file = resolve(args.out, shot.file)
 			const size = await writePng(file, buffer)
-			console.log(`${shot.file}: ${clip ? `${clip.width} x ${clip.height}` : `${WIDTH} x ${HEIGHT}`}, ${Math.round(size / 1024)} KB`)
+			const { width, height } = h.size()
+			console.log(`${shot.file}: ${clip ? `${clip.width} x ${clip.height}` : `${width} x ${height}`}, ${Math.round(size / 1024)} KB`)
+			if (args.axe) {
+				const violations = await axe(s.page)
+				axeReport[shot.file] = violations
+				for (const violation of violations) {
+					console.error(`${shot.file}: axe ${violation.impact} ${violation.rule}: ${violation.help} (${violation.targets.join(', ')})`)
+				}
+			}
 		} catch (error) {
 			failures++
 			console.error(`${shot.file}: FAILED ${error.message}`)
@@ -475,6 +540,13 @@ try {
 		if (shot.after) {
 			await shot.after(h, state).catch(() => {})
 		}
+	}
+	if (args.axe) {
+		// The record of the check, next to the pictures (docs/accessibility.md names what was checked)
+		writeFileSync(resolve(args.out, 'axe-report.json'), JSON.stringify(axeReport, null, '\t') + '\n')
+		const found = Object.values(axeReport).reduce((sum, violations) => sum + violations.length, 0)
+		console.log(`axe-core: ${found} violation(s) in ${Object.keys(axeReport).length} picture(s), see axe-report.json`)
+		failures += found
 	}
 } finally {
 	// Back to English, the language the accounts started with
