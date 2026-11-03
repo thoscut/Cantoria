@@ -97,7 +97,6 @@ final class Fields {
 		'online_publication' => 'Online publication (public links)',
 		'online_audio' => 'Online playback (audio on public links)',
 		'online_download' => 'Download of the scan on public links',
-		'member_download' => 'Download and printing by choir members (scan in links)',
 		'member_download' => 'Download, printing and copies on devices by choir members (scan in links, concert folder, hand-over folder)',
 		'digital_scores' => 'Passing on digital score files (MusicXML) to choir members (hand-over folder)',
 		'recording_sharing' => 'Passing on recordings to choir members (performers and producer agree; hand-over folder)',
