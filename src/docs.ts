@@ -39,6 +39,7 @@ export const ADMIN_GUIDE = {
 	sharing: { en: 'sharing-the-archive-folder', de: 'den-archivordner-teilen' },
 	access: { en: 'checking-who-can-open-the-archive-folder', de: 'prüfen-wer-den-archivordner-öffnen-kann' },
 	import: { en: '4-first-import', de: '4-erster-import' },
+	importColumns: { en: 'the-columns-of-the-catalog-file', de: 'die-spalten-der-werkverzeichnis-datei' },
 	backup: { en: '5-backups-and-restore', de: '5-sicherung-und-wiederherstellung' },
 	modules: { en: '12-modules-and-presets', de: '12-module-und-voreinstellungen' },
 	folderBook: { en: '15-folder-book-retention-period', de: '15-mappenbuch-löschfrist' },
@@ -88,7 +89,7 @@ export function helpUrl(): string {
 
 /**
  * The one-page guide for choir members (milestone 0.19), which the conductor
- * can pass on; linked from the empty page "Shared with me".
+ * can pass on; linked from the page "Shared with me", empty or not.
  */
 export function membersGuideUrl(): string {
 	return DOCS + (isGerman() ? FILES.members.de : FILES.members.en)

@@ -216,6 +216,9 @@ class SettingsController extends Controller {
 			'catalog' => ['copies' => $counts['cantoria_copies'] ?? 0, 'files' => $counts['cantoria_files'] ?? 0],
 			// ... and whether the functions for the choir were chosen (milestone 0.19)
 			'modulesChosen' => $this->modules->chosen(),
+			// ... and the roles these functions need a group for (U31)
+			'concertFolder' => $this->modules->isEnabled(Modules::CONCERT_FOLDER),
+			'memberLinks' => $this->modules->isEnabled(Modules::MEMBER_LINKS),
 			// Restoring a backup stays with admins (and the catalog role in the app).
 			'admin' => $admin,
 			'catalogEmpty' => $admin ? array_sum($counts) === 0 : null,

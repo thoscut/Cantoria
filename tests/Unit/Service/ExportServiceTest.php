@@ -14,6 +14,7 @@ use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\WorkMapper;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Service\AppSettings;
+use OCA\Cantoria\Service\CatalogCsv;
 use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\FullBackupService;
 use OCA\Cantoria\Service\OdsWriter;
@@ -87,6 +88,24 @@ final class ExportServiceTest extends TestCase {
 			'20260901-030000_backup_weekly.json', '20260901-030000_catalog_weekly.csv', '20260901-030000_catalog_weekly.ods',
 			'20260902-030000_backup_weekly.json', '20260902-030000_catalog_weekly.csv', '20260902-030000_catalog_weekly.ods',
 		], $deleted);
+	}
+
+	public function testTheImportTemplateIsTheCatalogFormatOrOneSheet(): void {
+		$sheets = null;
+		$ods = $this->createStub(OdsWriter::class);
+		$ods->method('write')->willReturnCallback(function (array $written) use (&$sheets): string {
+			$sheets = $written;
+			return 'ods';
+		});
+		$service = new ExportService($this->createStub(WorkMapper::class), $this->createStub(WorkVersionMapper::class),
+			$this->createStub(CopyMapper::class), $this->createStub(AppSettings::class), $this->createStub(ITimeFactory::class),
+			$this->createStub(IDateTimeZone::class), $this->createStub(AuditEntryMapper::class), $ods,
+			$this->createStub(PersonService::class), $this->createStub(FullBackupService::class), $this->createStub(IAppConfig::class));
+		$template = CatalogCsv::template();
+
+		self::assertSame(CatalogCsv::write($template['header'], $template['rows']), $service->importTemplate('csv'));
+		self::assertSame('ods', $service->importTemplate('ods'));
+		self::assertSame([['name' => 'Catalog', 'rows' => [$template['header'], ...$template['rows']]]], $sheets);
 	}
 
 	public function testABackupHoldsNoLinkTokensAndASnapshotNoAccounts(): void {

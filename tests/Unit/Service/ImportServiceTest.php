@@ -197,6 +197,14 @@ final class ImportServiceTest extends TestCase {
 		self::assertSame([], $this->snapshots);
 	}
 
+	public function testTheTemplateImportsWithoutWarnings(): void {
+		$template = CatalogCsv::template();
+		$report = $this->service->import(CatalogCsv::write($template['header'], $template['rows']), 'template.csv', self::UID, true);
+
+		self::assertSame(1, $report['created']);
+		self::assertSame([], $report['warnings'], 'no missing columns and no invalid value');
+	}
+
 	public function testDryRunOfANonEmptyCatalogTakesNoSnapshot(): void {
 		$this->givenEntry('5-1', ['title' => 'Ave verum corpus']);
 		$report = $this->service->import(self::csv(['Signatur', 'Titel'], ['5-1', 'Ave verum']), 'catalog.csv', self::UID, true);

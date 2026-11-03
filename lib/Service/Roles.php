@@ -45,7 +45,7 @@ class Roles {
 	public const CONTRIBUTOR = 'contributor';
 	/** Board, auditors: read everything */
 	public const READER = 'reader';
-	/** Choir members: only the excerpts shared with them (module member_links); no archive role */
+	/** Choir members: only the pieces and excerpts shared with them (module member_links); no archive role */
 	public const MEMBER = 'member';
 
 	/** The archive roles */
@@ -59,7 +59,7 @@ class Roles {
 		self::CONDUCTOR => 'Conductor',
 		self::CONTRIBUTOR => 'Proposals (tools)',
 		self::READER => 'Read only (board, auditors)',
-		self::MEMBER => 'Choir members (shared excerpts only)',
+		self::MEMBER => 'Choir members (shared pieces and excerpts only)',
 	];
 
 	/** @var array<string, list<string>> */

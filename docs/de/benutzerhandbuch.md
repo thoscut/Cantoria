@@ -366,6 +366,8 @@ Aktionsmenü (⋯) die Aktion **In Cantoria öffnen**:
 - **Scans (PDF), MuseScore, Audio und die übrigen Dateien eines Exemplars:**
   Die Aktion öffnet das Exemplar in der Seitenleiste von Cantoria. Ein
   Klick auf ein PDF öffnet weiterhin den Viewer von Nextcloud.
+  MuseScore-Dateien zeigt die App nicht selbst; die Notenansicht liest die
+  MusicXML, die aus MuseScore exportiert wurde.
 
 Die Aktion gibt es für Konten mit einer Archivrolle und für die
 Administration, und nur für Dateien im Archivordner mit einer Dateiart, die
@@ -531,14 +533,14 @@ deinem Browser: Über dein Üben wird nichts auf dem Server gespeichert.
   Seite verlässt. Nimm Kopfhörer, sonst wird die Begleitung mit aufgenommen.
   Aufnehmen geht nur über https.
 - **Text mitlesen** (wenn die Noten Text haben) zeigt über den Noten die
-  Zeile deiner Fokusstimme (oder der ersten Stimme mit Text) groß an, die
+  Zeile deiner hervorgehobenen Stimme (oder der ersten Stimme mit Text) groß an, die
   gesungene Silbe fett und unterstrichen, darunter die nächste Zeile. Bei
   einer Wiederholung kommt die nächste Strophe. **Text lernen** blendet
   Schritt für Schritt Buchstaben aus: **Einige ausgeblendet**, **Die meisten
   ausgeblendet** und **Nur Anfangsbuchstaben**, wo nur der erste Buchstabe
   jedes Wortes bleibt.
-- **Meine Tonhöhe zeigen** (mit einer Fokusstimme) fragt nach dem Mikrofon
-  und zeigt über den Noten die Töne der Fokusstimme als Kästchen und deinen
+- **Meine Tonhöhe zeigen** (mit einer hervorgehobenen Stimme) fragt nach dem Mikrofon
+  und zeigt über den Noten die Töne der hervorgehobenen Stimme als Kästchen und deinen
   Gesang als Linie, dazu in Worten, etwa „Sopran: A4 · Gesungen: G4, zu tief
   (−200 ct)“. Bis 30 Cent gilt ein Ton als sauber. Verglichen wird in der
   Oktave der Stimme, so kann ein Mann eine Sopranlinie mitsingen. Die
@@ -1112,7 +1114,7 @@ Hochformat, klappt die Programmliste weg, sobald ein Stück offen ist;
 Für die Probe und die Bühne:
 
 - **Bühnenansicht** zeigt nur das Stück, wo der Browser es kann auf dem
-  ganzen Bildschirm, und hält den Bildschirm an. Ein zweiter Druck auf
+  ganzen Bildschirm, und hält den Bildschirm wach. Ein zweiter Druck auf
   **Bühnenansicht** oder die Escape-Taste beendet sie.
 - **Nächstes** steht in der Leiste, die oben bleibt, und am Ende der Noten,
   **Vorheriges: …** und **Nächstes: …** unter dem Titel.
@@ -1600,7 +1602,7 @@ in einem leeren Werkverzeichnis wieder her. Siehe das
 
 ### Jahresstände
 
-Mit dem Modul **Jahresstände** friert die App den Stand des Archivs einmal
+Mit dem Modul **Jahresstände** friert die App das Archiv einmal
 im Jahr ein, für die Unterlagen von Vorstand und Revision. Ein Jahresstand
 ist ein datierter Ordner
 (`annual-snapshots/<year>_<date-time>/` im Sicherungsordner des Kontos, das
@@ -2096,12 +2098,12 @@ oder dir den Vergleich auszudrucken.
 ### Ein Jahresstand ist als unvollständig aufgeführt
 
 Eine Datei fehlt, z. B. weil die Seite geschlossen wurde, während sie
-geschrieben wurde. Friere den Stand erneut ein; den unvollständigen Ordner
+geschrieben wurde. Friere das Archiv erneut ein; den unvollständigen Ordner
 kannst du in der Dateien-App löschen, wenn du willst.
 
 ### „Der letzte automatische Jahresstand ist fehlgeschlagen“
 
-Die Meldung sagt, warum; friere den Stand von Hand ein. Der automatische
+Die Meldung sagt, warum; friere das Archiv von Hand ein. Der automatische
 Jahresstand versucht es bis Ende Januar täglich erneut (siehe
 [Jahresstände](#jahresstände)).
 

@@ -6,7 +6,18 @@ It logs in as the demo accounts in a headless Chromium-based browser, opens
 each view and saves the window or a cropped part of it. The public link and
 the public repertoire page are taken without signing in.
 
-- **Window:** fixed at 1600 × 1000 pixels, device scale 1.
+- **Window:** 1600 × 1000 pixels, device scale 1. A picture can ask for
+  another window (`viewport` in `shots.mjs`): phones (390 × 844, 360 × 780,
+  844 × 390 in landscape) get touch and a device scale of 2.
+- **Contrast mode and print:** `forcedColors: true` emulates the contrast
+  mode of Windows (`forced-colors: active`), `media: 'print'` the print
+  styles. Every picture sets theme, window, contrast and media again, so
+  nothing carries over to the next one.
+- **Accessibility check:** with `--axe`, axe-core (rules of WCAG 2.0 to 2.2,
+  A and AA) checks every view right after its picture. The violations are
+  printed and written to `axe-report.json` in the target folder; any
+  violation makes the run fail. This is the record that
+  [docs/accessibility.md](../../docs/accessibility.md) refers to.
 - **Themes:** light, and dark where the file name says so (`*-dark.png`).
 - **Languages:** English; the pictures in `de/` use the German interface in
   informal address. Every picture of the English guides has a German twin
@@ -83,7 +94,8 @@ tests.
    upload the folder in the Files app.
 5. Roles, archive folder and the modules of the newer pictures (sharing,
    folder book, mirror folder of the print station, annual snapshots,
-   proposals, statistics; they are part of no preset or not of Standard):
+   proposals, statistics, practising without a network and the concert
+   folder; they are part of no preset or not of Standard):
 
    ```sh
    php occ cantoria:setup demo-librarian Cantoria-Demo \
@@ -91,7 +103,8 @@ tests.
      -r conductor=demo-conductors -r contributor=demo-tools -r reader=demo-board \
      -r member=demo-members
    php occ cantoria:modules enable member_links member_practice_audio public_links \
-     public_repertoire folder_book print_mirror annual_snapshot proposals statistics
+     public_repertoire folder_book print_mirror annual_snapshot proposals statistics \
+     offline concert_folder
    ```
 
 6. Import the catalog and link the files:
@@ -138,7 +151,8 @@ NC_PASSWORD='…' node shoot.mjs --url http://localhost:8080 --prepare
 | `--browser path` | browser executable (or `BROWSER_PATH`) |
 | `--demo-folder name` | folder of the demo data in the librarian's files (default: `Cantoria-Demo`) |
 | `--no-optimize` | keep the screenshots as the browser made them |
-| `--list` | list the pictures with account, language and theme |
+| `--list` | list the pictures with account, language, theme, window, contrast and media |
+| `--axe` | check every view with axe-core and write `axe-report.json` |
 
 Passwords come from the environment only and are never printed:
 `NC_PASSWORD` for all accounts, or `NC_PASSWORD_<UID>` per account

@@ -161,7 +161,7 @@ class Modules {
 			'modules' => [self::CONCERT_FOLDER => true, self::MEMBER_LINKS => true, self::MEMBER_PRACTICE_AUDIO => true, self::OFFLINE => true,
 				self::PUBLIC_LINKS => true, self::PUBLIC_REPERTOIRE => true],
 			'label' => 'Also public pages',
-			'description' => 'Adds public links without login and a public page with the repertoire.',
+			'description' => 'Adds public links without login and a public page with the repertoire. Everyone with a public link can download the scan it offers.',
 			'rights' => 'Only for confirmed public domain or a license for online publication. Enter the imprint and the privacy policy under Administration → Theming first.'],
 	];
 
@@ -322,7 +322,7 @@ class Modules {
 			'description' => 'To the catalog librarian: a corrected MusicXML file was saved in the app, or a new transcription has done review points.'],
 		self::MEMBER_LINKS => ['group' => 'sharing', 'requires' => ['excerpt_links', 'playback', 'releases'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Links for choir members',
-			'description' => 'The role "Choir members" sees only the excerpts shared with it: measures with the voice emphasised, to view and play. Only for versions released for the singers\' portal; the server sends only the measures of the excerpt. Not part of any preset.'],
+			'description' => 'The role "Choir members" sees only the pieces and excerpts shared with it: the score with the voice emphasised, to view, play and practise. Only for versions released for the singers\' portal; for an excerpt the server sends only its measures. Not part of any preset.'],
 		self::MEMBER_PRACTICE_AUDIO => ['group' => 'sharing', 'requires' => [self::MEMBER_LINKS, 'practice_audio'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Practice audio for choir members',
 			'description' => 'Choir members make a WAV or MIDI file of one voice of a shared excerpt, where the rights allow practice audio files. Every export is recorded. Not part of any preset.'],
@@ -331,7 +331,7 @@ class Modules {
 			'description' => 'Pieces are kept on a device and viewed, played and practised without a network: by choir members (with the sharing with choir members), by visitors of a public link to a piece whose public domain is confirmed (with public links) and in the concert folder. Only where the rights allow a copy. Kept pieces are checked at every start with a network and locked after 30 days without one. Without this module nothing is kept on a device. Not part of any preset.'],
 		self::PUBLIC_LINKS => ['group' => 'sharing', 'requires' => ['excerpt_links', 'playback', 'publication'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public links',
-			'description' => 'Links that show and play an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls, and name no accounts. What a browser shows can be saved; the scan is added only where the rights allow it. Not part of any preset.'],
+			'description' => 'Links that show and play a whole piece or an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls, and name no accounts. What a browser shows can be saved, and everyone with the link can download a scan it offers: add the scan only where the rights allow that. Not part of any preset.'],
 		self::PUBLIC_REPERTOIRE => ['group' => 'sharing', 'requires' => ['rights'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public repertoire page',
 			'description' => 'A public page with the works the catalog librarian chooses among those with a version confirmed as public domain: title, composer and lyricist, life dates, scoring and links to CPDL and IMSLP. Not part of any preset.'],
