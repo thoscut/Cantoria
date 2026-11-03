@@ -204,6 +204,8 @@ while read -r sum license; do
 done <<'LICENSES'
 074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff Apache-2.0
 f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df BSD-2-Clause
+000c7fc2d306b8f74db81d1b44ce9a96da4c1674185714cbe4e9d6b82db45aa7 Font-exception-2.0
+aaf135472f81c5b4a0dca9367e5bb5e9750032b5bebe5442b36e4c0a47430df3 GPL-2.0-only
 fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0 GPL-3.0-or-later
 f2ec607f67bb0dd3053b49835b02110d5cd0f8eb6da3aac4dc0b142a6b299be9 ISC
 996af0513df21f7496288951c41428a03c174e9e4a9d63665c57d670f845ccb1 LGPL-3.0-or-later
@@ -242,12 +244,13 @@ Compiled into the Verovio module (js/third-party-licenses.txt):
 SPDX-License-Identifier: OFL-1.1
 SPDX-License-Identifier: BSD-2-Clause
 SPDX-License-Identifier: Unlicense
+SPDX-License-Identifier: GPL-2.0-only WITH Font-exception-2.0
 SPDX-FileCopyrightText: 2021 Steinberg Media Technologies GmbH (Bravura)
 SPDX-FileCopyrightText: 2018 Steinberg Media Technologies GmbH (Petaluma)
 SPDX-FileCopyrightText: 2014 Etienne Darbellay, Jean-Francois Marti and Laurent Pugin (Leipzig)
 SPDX-FileCopyrightText: 2025 MuseScore BVBA (Leland)
 SPDX-FileCopyrightText: Grzegorz Pruchniakowski (Gootville)
-SPDX-FileCopyrightText: 2007 Ascender Corporation (Liberation)
+SPDX-FileCopyrightText: 2007 Ascender Corporation (Liberation Serif 1.04, Red Hat, Inc.)
 SPDX-FileCopyrightText: 2006-2026 Arseny Kapoulkine (pugixml)
 SPDX-FileCopyrightText: 2010 Hong Jiang (jsonxx)
 SPDX-FileCopyrightText: 2019-2020 Paul Walker (tuning-library)

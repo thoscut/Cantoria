@@ -105,7 +105,7 @@ const thirdPartyLicenses = {
 					head.push(`Source: ${entry.source}`)
 				}
 				if (entry.name === 'verovio') {
-					head.push('Verovio embeds the SMuFL music fonts Bravura, Gootville, Leipzig, Leland and Petaluma under the SIL Open Font License 1.1 (LICENSES/OFL-1.1.txt). The texts of the LGPL and GPL are in LICENSES/LGPL-3.0-or-later.txt and LICENSES/GPL-3.0-or-later.txt.')
+					head.push('Verovio embeds the SMuFL music fonts Bravura, Gootville, Leipzig, Leland and Petaluma under the SIL Open Font License 1.1 (LICENSES/OFL-1.1.txt) and the text font Liberation Serif 1.04 under the GPL version 2 with the font exception (LICENSES/GPL-2.0-only.txt, LICENSES/Font-exception-2.0.txt; see the notices at the end). The texts of the LGPL and GPL are in LICENSES/LGPL-3.0-or-later.txt and LICENSES/GPL-3.0-or-later.txt.')
 				}
 				const texts = entry.texts.length > 0 ? entry.texts : ['The package ships no license file; the text of the license named above is in LICENSES/ or at https://spdx.org/licenses/.']
 				return [head.join('\n'), ...texts].join('\n\n')
