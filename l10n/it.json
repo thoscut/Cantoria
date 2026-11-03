@@ -1768,9 +1768,6 @@
         "Cantoria keeps them in this browser on this device; another browser does not see them.": "Cantoria li conserva in questo browser su questo dispositivo; un altro browser non li vede.",
         "The browser keeps them even when space runs short.": "Il browser li conserva anche quando lo spazio scarseggia.",
         "The browser may delete them when space runs short.": "Il browser può eliminarli quando lo spazio scarseggia.",
-        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari e la schermata Home tengono i brani separati: apri questa pagina nel modo in cui vuoi usarla senza rete.",
-        "Delete everything on this device": "Elimina tutto su questo dispositivo",
-        "Delete kept pieces, passages and settings": "Elimina i brani salvati, i passaggi e le impostazioni",
         "This browser cannot keep pieces for practising without a network.": "Questo browser non può salvare brani per studiare senza rete.",
         "Discard the recording?": "Scartare la registrazione?",
         "Your recording is not saved. If you open \"{title}\" now, it is gone.": "La tua registrazione non è salvata. Se apri “{title}” adesso, andrà persa.",
@@ -1824,6 +1821,7 @@
         "Other pieces ({count})": "Altri brani ({count})",
         "Making it available without a network …": "Lo rendo disponibile senza rete …",
         "Choose a piece from the list to see and hear it.": "Scegli un brano dall'elenco per vederlo e ascoltarlo.",
+        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari e la schermata Home tengono i brani separati: apri questa pagina nel modo in cui vuoi usarla senza rete.",
         "Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.": "I passaggi e le impostazioni per lo studio vengono ricordati solo in questo browser. Su un dispositivo condiviso, eliminali quando hai finito.",
         "A piece shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Un brano condiviso dal coro. La riproduzione proviene da un semplice sintetizzatore nel tuo browser; non sostituisce una registrazione.",
         "An excerpt of a score, shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Un estratto di uno spartito, condiviso dal coro. La riproduzione proviene da un semplice sintetizzatore nel tuo browser; non sostituisce una registrazione.",
@@ -1831,6 +1829,8 @@
         "Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.": "Salvato in questo browser: questa pagina si apre senza rete finché il link è valido. Aprila con la rete almeno ogni {days} giorni.",
         "Keep this piece in this browser to view, play and practise it without a network.": "Salva questo brano in questo browser per vederlo, riprodurlo e studiarlo senza rete.",
         "Please reload the page. If it stays empty, the link may no longer be valid.": "Ricarica la pagina. Se resta vuota, il link potrebbe non essere più valido.",
+        "Delete everything on this device": "Elimina tutto su questo dispositivo",
+        "Delete kept pieces, passages and settings": "Elimina i brani salvati, i passaggi e le impostazioni",
         "The scan could not be loaded. Without a network, only a scan kept on this device opens.": "Non è stato possibile caricare la scansione. Senza rete si apre solo una scansione salvata su questo dispositivo.",
         "Loading the scan …": "Caricamento della scansione …",
         "Show the scan (PDF)": "Mostra la scansione (PDF)",
@@ -2099,7 +2099,7 @@
         "Year in which the edition appeared (§ 70) or in which the work first appeared or was first performed in public (§ 71), e.g. 1998. Needed for both special cases.": "Anno in cui è uscita l'edizione (§ 70) o in cui l'opera è stata pubblicata o eseguita in pubblico per la prima volta (§ 71), ad es. 1998. Necessario per entrambi i casi speciali.",
         "The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.": "Il numero dell'opera presso la società di gestione collettiva, ad es. dalla ricerca del repertorio GEMA. Compare nell'ordine dei brani di un concerto.",
         "Choose \"Traditional\" only with evidence and note it under \"Notes\", or \"Without text\" for a version without words. Otherwise the protection proposal needs a lyricist.": "Scegli “Tradizionale” solo con una prova e annotala in “Note”, oppure “Senza testo” per una versione senza parole. Altrimenti la proposta sulla durata della protezione ha bisogno di una persona per il testo.",
-        "Traditional (public domain)": "Tradizionale (pubblico dominio)",
+        "Traditional (no known author)": "Tradizionale (autore sconosciuto)",
         "Without text": "Senza testo",
         "Original print": "Stampa originale",
         "Photocopy": "Fotocopia",
@@ -2967,10 +2967,6 @@
         "_%n piece is not available without a network yet. {reason}_::_%n pieces are not available without a network yet. {reason}_": [
             "%n brano non è ancora disponibile senza rete. {reason}",
             "%n brani non sono ancora disponibili senza rete. {reason}"
-        ],
-        "_%n shared link_::_%n shared links_": [
-            "%n link condiviso",
-            "%n link condivisi"
         ],
         "_Make %n available without a network_::_Make all %n available without a network_": [
             "Rendi disponibile senza rete %n brano",

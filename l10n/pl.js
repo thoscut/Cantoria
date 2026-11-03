@@ -1769,9 +1769,6 @@ OC.L10N.register(
         "Cantoria keeps them in this browser on this device; another browser does not see them.": "Cantoria przechowuje je w tej przeglądarce na tym urządzeniu; inna przeglądarka ich nie widzi.",
         "The browser keeps them even when space runs short.": "Przeglądarka zachowa je nawet przy braku miejsca.",
         "The browser may delete them when space runs short.": "Przeglądarka może je usunąć, gdy zabraknie miejsca.",
-        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari i ekran początkowy przechowują utwory osobno: otwórz tę stronę tak, jak chcesz z niej korzystać bez sieci.",
-        "Delete everything on this device": "Usuń wszystko z tego urządzenia",
-        "Delete kept pieces, passages and settings": "Usuń zachowane utwory, fragmenty i ustawienia",
         "This browser cannot keep pieces for practising without a network.": "Ta przeglądarka nie może zachować utworów do ćwiczenia bez sieci.",
         "Discard the recording?": "Odrzucić nagranie?",
         "Your recording is not saved. If you open \"{title}\" now, it is gone.": "Twoje nagranie nie jest zapisane. Jeśli teraz otworzysz „{title}”, zostanie utracone.",
@@ -1825,6 +1822,7 @@ OC.L10N.register(
         "Other pieces ({count})": "Inne utwory ({count})",
         "Making it available without a network …": "Udostępnianie bez sieci …",
         "Choose a piece from the list to see and hear it.": "Wybierz utwór z listy, aby go zobaczyć i usłyszeć.",
+        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari i ekran początkowy przechowują utwory osobno: otwórz tę stronę tak, jak chcesz z niej korzystać bez sieci.",
         "Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.": "Fragmenty i ustawienia ćwiczeń są zapamiętywane tylko w tej przeglądarce. Na wspólnym urządzeniu usuń je po zakończeniu.",
         "A piece shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Utwór udostępniony przez chór. Odtwarzanie pochodzi z prostego syntezatora w Twojej przeglądarce; nie zastępuje nagrania.",
         "An excerpt of a score, shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Fragment nut udostępniony przez chór. Odtwarzanie pochodzi z prostego syntezatora w Twojej przeglądarce; nie zastępuje nagrania.",
@@ -1832,6 +1830,8 @@ OC.L10N.register(
         "Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.": "Zachowane w tej przeglądarce: ta strona otwiera się bez sieci, dopóki link jest ważny. Otwórz ją z siecią co najmniej raz na {days} dni.",
         "Keep this piece in this browser to view, play and practise it without a network.": "Zachowaj ten utwór w tej przeglądarce, aby oglądać, odtwarzać i ćwiczyć go bez sieci.",
         "Please reload the page. If it stays empty, the link may no longer be valid.": "Wczytaj stronę ponownie. Jeśli pozostanie pusta, link może już nie być ważny.",
+        "Delete everything on this device": "Usuń wszystko z tego urządzenia",
+        "Delete kept pieces, passages and settings": "Usuń zachowane utwory, fragmenty i ustawienia",
         "The scan could not be loaded. Without a network, only a scan kept on this device opens.": "Nie udało się wczytać skanu. Bez sieci otwiera się tylko skan zachowany na tym urządzeniu.",
         "Loading the scan …": "Wczytywanie skanu …",
         "Show the scan (PDF)": "Pokaż skan (PDF)",
@@ -2100,7 +2100,7 @@ OC.L10N.register(
         "Year in which the edition appeared (§ 70) or in which the work first appeared or was first performed in public (§ 71), e.g. 1998. Needed for both special cases.": "Rok, w którym ukazało się wydanie (§ 70), albo w którym utwór został po raz pierwszy wydany lub publicznie wykonany (§ 71), np. 1998. Wymagany w obu przypadkach szczególnych.",
         "The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.": "Numer utworu w organizacji zbiorowego zarządzania, np. z wyszukiwarki repertuaru GEMA. Trafia do kolejności utworów koncertu.",
         "Choose \"Traditional\" only with evidence and note it under \"Notes\", or \"Without text\" for a version without words. Otherwise the protection proposal needs a lyricist.": "Wybierz „Tradycyjny” tylko z dowodem i zapisz go w „Uwagach” albo „Bez tekstu” dla wersji bez słów. W przeciwnym razie propozycja okresu ochrony potrzebuje osoby od tekstu.",
-        "Traditional (public domain)": "Tradycyjny (domena publiczna)",
+        "Traditional (no known author)": "Tradycyjny (autor nieznany)",
         "Without text": "Bez tekstu",
         "Original print": "Druk oryginalny",
         "Photocopy": "Fotokopia",
@@ -3087,11 +3087,6 @@ OC.L10N.register(
             "%n utwór nie jest jeszcze dostępny bez sieci. {reason}",
             "%n utwory nie są jeszcze dostępne bez sieci. {reason}",
             "%n utworów nie jest jeszcze dostępnych bez sieci. {reason}"
-        ],
-        "_%n shared link_::_%n shared links_": [
-            "%n udostępniony link",
-            "%n udostępnione linki",
-            "%n udostępnionych linków"
         ],
         "_Make %n available without a network_::_Make all %n available without a network_": [
             "Udostępnij %n bez sieci",

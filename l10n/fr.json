@@ -1768,9 +1768,6 @@
         "Cantoria keeps them in this browser on this device; another browser does not see them.": "Cantoria les conserve dans ce navigateur sur cet appareil ; un autre navigateur ne les voit pas.",
         "The browser keeps them even when space runs short.": "Le navigateur les garde même quand l'espace vient à manquer.",
         "The browser may delete them when space runs short.": "Le navigateur peut les supprimer quand l'espace manque.",
-        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari et l'écran d'accueil gardent les morceaux séparément : ouvrez cette page de la façon dont vous voulez l'utiliser sans réseau.",
-        "Delete everything on this device": "Tout supprimer sur cet appareil",
-        "Delete kept pieces, passages and settings": "Supprimer les morceaux gardés, les passages et les réglages",
         "This browser cannot keep pieces for practising without a network.": "Ce navigateur ne peut pas garder de morceaux pour s'exercer sans réseau.",
         "Discard the recording?": "Abandonner l'enregistrement ?",
         "Your recording is not saved. If you open \"{title}\" now, it is gone.": "Votre enregistrement n'est pas sauvegardé. Si vous ouvrez « {title} » maintenant, il sera perdu.",
@@ -1824,6 +1821,7 @@
         "Other pieces ({count})": "Autres morceaux ({count})",
         "Making it available without a network …": "Mise à disposition sans réseau …",
         "Choose a piece from the list to see and hear it.": "Choisissez un morceau dans la liste pour le voir et l'écouter.",
+        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari et l'écran d'accueil gardent les morceaux séparément : ouvrez cette page de la façon dont vous voulez l'utiliser sans réseau.",
         "Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.": "Les passages et réglages d'entraînement ne sont retenus que dans ce navigateur. Sur un appareil partagé, supprimez-les quand vous avez fini.",
         "A piece shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Un morceau partagé par le chœur. La lecture provient d'un simple synthétiseur dans votre navigateur ; elle ne remplace pas un enregistrement.",
         "An excerpt of a score, shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Un extrait de partition partagé par le chœur. La lecture provient d'un synthétiseur simple dans votre navigateur ; elle ne remplace pas un enregistrement.",
@@ -1831,6 +1829,8 @@
         "Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.": "Gardé dans ce navigateur : cette page s'ouvre sans réseau tant que le lien est valable. Ouvrez-la avec un réseau au moins tous les {days} jours.",
         "Keep this piece in this browser to view, play and practise it without a network.": "Gardez ce morceau dans ce navigateur pour le voir, l'écouter et le travailler sans réseau.",
         "Please reload the page. If it stays empty, the link may no longer be valid.": "Veuillez recharger la page. Si elle reste vide, le lien n'est peut-être plus valable.",
+        "Delete everything on this device": "Tout supprimer sur cet appareil",
+        "Delete kept pieces, passages and settings": "Supprimer les morceaux gardés, les passages et les réglages",
         "The scan could not be loaded. Without a network, only a scan kept on this device opens.": "Le scan n'a pas pu être chargé. Sans réseau, seul un scan gardé sur cet appareil s'ouvre.",
         "Loading the scan …": "Chargement du scan …",
         "Show the scan (PDF)": "Afficher le scan (PDF)",
@@ -2099,7 +2099,7 @@
         "Year in which the edition appeared (§ 70) or in which the work first appeared or was first performed in public (§ 71), e.g. 1998. Needed for both special cases.": "Année de parution de l'édition (§ 70) ou année de première parution ou de première exécution publique de l'œuvre (§ 71), p. ex. 1998. Nécessaire pour les deux cas particuliers.",
         "The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.": "Le numéro de l'œuvre auprès de la société de gestion collective, p. ex. issu de la recherche de répertoire de la GEMA. Il figure dans l'ordre des chants d'un concert.",
         "Choose \"Traditional\" only with evidence and note it under \"Notes\", or \"Without text\" for a version without words. Otherwise the protection proposal needs a lyricist.": "Ne choisissez « Traditionnel » qu'avec une preuve et notez-la sous « Remarques », ou « Sans texte » pour une version sans paroles. Sinon, la proposition de durée de protection a besoin d'une personne pour le texte.",
-        "Traditional (public domain)": "Traditionnel (domaine public)",
+        "Traditional (no known author)": "Traditionnel (auteur inconnu)",
         "Without text": "Sans texte",
         "Original print": "Impression originale",
         "Photocopy": "Photocopie",
@@ -2967,10 +2967,6 @@
         "_%n piece is not available without a network yet. {reason}_::_%n pieces are not available without a network yet. {reason}_": [
             "%n morceau n'est pas encore disponible sans réseau. {reason}",
             "%n morceaux ne sont pas encore disponibles sans réseau. {reason}"
-        ],
-        "_%n shared link_::_%n shared links_": [
-            "%n lien partagé",
-            "%n liens partagés"
         ],
         "_Make %n available without a network_::_Make all %n available without a network_": [
             "Rendre %n disponible sans réseau",

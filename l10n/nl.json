@@ -1768,9 +1768,6 @@
         "Cantoria keeps them in this browser on this device; another browser does not see them.": "Cantoria bewaart ze in deze browser op dit apparaat; een andere browser ziet ze niet.",
         "The browser keeps them even when space runs short.": "De browser bewaart ze ook als de ruimte krap wordt.",
         "The browser may delete them when space runs short.": "De browser kan ze verwijderen als de ruimte krap wordt.",
-        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari en het beginscherm houden de stukken gescheiden: open deze pagina zoals je haar zonder netwerk wilt gebruiken.",
-        "Delete everything on this device": "Alles op dit apparaat verwijderen",
-        "Delete kept pieces, passages and settings": "Bewaarde stukken, passages en instellingen verwijderen",
         "This browser cannot keep pieces for practising without a network.": "Deze browser kan geen stukken bewaren om zonder netwerk te oefenen.",
         "Discard the recording?": "Opname weggooien?",
         "Your recording is not saved. If you open \"{title}\" now, it is gone.": "Je opname is niet opgeslagen. Als je nu “{title}” opent, is ze weg.",
@@ -1824,6 +1821,7 @@
         "Other pieces ({count})": "Andere stukken ({count})",
         "Making it available without a network …": "Wordt beschikbaar gemaakt zonder netwerk …",
         "Choose a piece from the list to see and hear it.": "Kies een stuk uit de lijst om het te bekijken en te beluisteren.",
+        "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari en het beginscherm houden de stukken gescheiden: open deze pagina zoals je haar zonder netwerk wilt gebruiken.",
         "Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.": "Passages en oefeninstellingen worden alleen in deze browser onthouden. Verwijder ze op een gedeeld apparaat als je klaar bent.",
         "A piece shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Een stuk, gedeeld door het koor. Het afspelen komt van een eenvoudige synthesizer in je browser; het is geen vervanging voor een opname.",
         "An excerpt of a score, shared by the choir. Playback comes from a simple synthesizer in your browser; it is no substitute for a recording.": "Een fragment uit bladmuziek, gedeeld door het koor. Het afspelen komt van een eenvoudige synthesizer in je browser; het is geen vervanging voor een opname.",
@@ -1831,6 +1829,8 @@
         "Kept in this browser: this page opens without a network, while the link is valid. Open it once with a network at least every {days} days.": "Bewaard in deze browser: deze pagina opent zonder netwerk zolang de link geldig is. Open hem minstens elke {days} dagen een keer met netwerk.",
         "Keep this piece in this browser to view, play and practise it without a network.": "Bewaar dit stuk in deze browser om het zonder netwerk te bekijken, af te spelen en te oefenen.",
         "Please reload the page. If it stays empty, the link may no longer be valid.": "Laad de pagina opnieuw. Blijft ze leeg, dan is de link misschien niet meer geldig.",
+        "Delete everything on this device": "Alles op dit apparaat verwijderen",
+        "Delete kept pieces, passages and settings": "Bewaarde stukken, passages en instellingen verwijderen",
         "The scan could not be loaded. Without a network, only a scan kept on this device opens.": "De scan kon niet worden geladen. Zonder netwerk opent alleen een scan die op dit apparaat is bewaard.",
         "Loading the scan …": "Scan wordt geladen …",
         "Show the scan (PDF)": "Scan (PDF) tonen",
@@ -2099,7 +2099,7 @@
         "Year in which the edition appeared (§ 70) or in which the work first appeared or was first performed in public (§ 71), e.g. 1998. Needed for both special cases.": "Jaar waarin de uitgave verscheen (§ 70) of waarin het werk voor het eerst verscheen of voor het eerst openbaar werd uitgevoerd (§ 71), bijv. 1998. Nodig voor beide bijzondere gevallen.",
         "The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.": "Het nummer van het werk bij de collectieve beheersorganisatie, bijv. uit het repertoire-zoeken van de GEMA. Het komt in de liedvolgorde van een concert.",
         "Choose \"Traditional\" only with evidence and note it under \"Notes\", or \"Without text\" for a version without words. Otherwise the protection proposal needs a lyricist.": "Kies “Traditioneel” alleen met bewijs en noteer het bij “Opmerkingen”, of “Zonder tekst” voor een versie zonder woorden. Anders heeft het voorstel voor de beschermingstermijn een persoon voor de tekst nodig.",
-        "Traditional (public domain)": "Traditioneel (publiek domein)",
+        "Traditional (no known author)": "Traditioneel (auteur onbekend)",
         "Without text": "Zonder tekst",
         "Original print": "Originele druk",
         "Photocopy": "Fotokopie",
@@ -2967,10 +2967,6 @@
         "_%n piece is not available without a network yet. {reason}_::_%n pieces are not available without a network yet. {reason}_": [
             "%n stuk is nog niet beschikbaar zonder netwerk. {reason}",
             "%n stukken zijn nog niet beschikbaar zonder netwerk. {reason}"
-        ],
-        "_%n shared link_::_%n shared links_": [
-            "%n gedeelde link",
-            "%n gedeelde links"
         ],
         "_Make %n available without a network_::_Make all %n available without a network_": [
             "%n beschikbaar maken zonder netwerk",
