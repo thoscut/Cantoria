@@ -30,7 +30,7 @@ class OdsWriter {
 
 	/**
 	 * @param list<array{name: string, rows: list<list<string>>, text?: list<int>}> $sheets in order; the first row is the header;
-	 *                                                                             `text`: indexes of the columns formatted as text
+	 *                                                                                      `text`: indexes of the columns formatted as text
 	 * @return string binary .ods content
 	 */
 	public function write(array $sheets): string {

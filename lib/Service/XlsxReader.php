@@ -209,7 +209,7 @@ class XlsxReader {
 		if (!$withTime) {
 			return $date->format('Y-m-d');
 		}
-		$minutes = (int)round(($serial - floor($serial)) * 1440);
+		$minutes = (int)round(($serial - floor($serial)) * 1440.0);
 		return $date->modify('+' . $minutes . ' minutes')->format($minutes === 0 ? 'Y-m-d' : 'Y-m-d H:i');
 	}
 
