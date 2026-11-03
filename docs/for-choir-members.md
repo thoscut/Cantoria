@@ -15,7 +15,9 @@ with the choir. You only need a browser, no app. The details are in the
 1. Sign in with the choir's Nextcloud account and open **Cantoria**. A link
    in a message from the conductor opens the piece directly.
 2. You see **Shared with me**: the pieces and excerpts for the choir, each
-   with its validity. Choose one; the notes appear below (on a phone) or
+   with its validity, the pieces of a concert under its title and date in
+   the order of the programme. **New** marks what was added since your last
+   visit in this browser. Choose one; the notes appear below (on a phone) or
    beside the list (on a large screen).
 3. **Other pieces** below the title takes you back to the list.
 

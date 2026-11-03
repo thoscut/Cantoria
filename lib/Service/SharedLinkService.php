@@ -13,6 +13,10 @@ use OCA\Cantoria\Db\ArchiveFileMapper;
 use OCA\Cantoria\Db\ContributionMapper;
 use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
+use OCA\Cantoria\Db\Event;
+use OCA\Cantoria\Db\EventItem;
+use OCA\Cantoria\Db\EventItemMapper;
+use OCA\Cantoria\Db\EventMapper;
 use OCA\Cantoria\Db\ExcerptLink;
 use OCA\Cantoria\Db\ExcerptLinkMapper;
 use OCA\Cantoria\Db\LicenseMapper;
@@ -60,10 +64,17 @@ use OCP\Files\File;
  * (`keepUntil`, the end of the license for download and printing), so that
  * the device drops it then, even while the link lasts longer (R B8, B20).
  *
+ * The page lists the pieces by programme (milestone 0.20, U24): `programmes`
+ * of a link names the programmes it was shared with as a whole, with title,
+ * date, the place of the programme on the page and of the piece in it
+ * (memberProgrammes()). Programmes appear with a key, not with their id.
+ *
  * @psalm-type Credit = array{role: string, name: string}
+ * @psalm-type MemberProgramme = array{key: string, title: string, date: ?string, order: int, position: int}
  * @psalm-type MemberLink = array{token: string, title: string, composer: string, measure_from: ?string, measure_to: ?string,
  *     voice: ?string, verse: ?int, tempo: ?int, note: ?string, expires: ?string, canPlay: bool, canExportAudio: bool, reason: ?string,
- *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, print: bool, practiceKey: string, credits: list<Credit>, notices: list<string>}
+ *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, print: bool, practiceKey: string, credits: list<Credit>, notices: list<string>,
+ *     programmes: list<MemberProgramme>}
  * @psalm-type PublicExcerpt = array{title: string, composer: string, measureFrom: ?string, measureTo: ?string, voice: ?string,
  *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, print: bool, served: string, xml: string,
  *     credits: list<Credit>, notices: list<string>}
@@ -88,6 +99,8 @@ class SharedLinkService {
 		private ContributionMapper $contributions,
 		private PersonMapper $persons,
 		private LicenseMapper $licenses,
+		private EventMapper $events,
+		private EventItemMapper $items,
 	) {
 	}
 
@@ -95,7 +108,7 @@ class SharedLinkService {
 	 * The links for choir members that are active and still allowed, newest
 	 * first: what the page "Shared with me" lists. `reason` (English source
 	 * string) says why the piece cannot be played; `scan` whether the link
-	 * offers the scan.
+	 * offers the scan; `programmes` under which programmes the page lists it.
 	 *
 	 * @return list<MemberLink>
 	 * @throws AccessDeniedException when the account is no choir member
@@ -104,6 +117,8 @@ class SharedLinkService {
 		$this->requireMember($uid);
 		$today = $this->rights->today($uid);
 		$rows = [];
+		/** @var list<array{copy: int, version: int, programme: ?int}> $pieces per row */
+		$pieces = [];
 		foreach ($this->links->findUnrevokedByCircle(ExcerptLink::CIRCLE_MEMBERS) as $link) {
 			$token = $this->tokens->reveal($link);
 			if ($token === null || self::expired($link, $today)) {
@@ -146,8 +161,95 @@ class SharedLinkService {
 				'print' => $saveDenial === null,
 				'practiceKey' => self::practiceKey($version),
 			] + $this->attribution($version, $today);
+			$pieces[] = ['copy' => $copy->getId(), 'version' => $version->getId(), 'programme' => $link->getEventId()];
 		}
-		return $rows;
+		$programmes = $this->memberProgrammes($pieces, $today);
+		$listed = [];
+		foreach ($rows as $index => $row) {
+			$listed[] = $row + ['programmes' => $programmes[$index] ?? []];
+		}
+		return $listed;
+	}
+
+	/**
+	 * The programmes under which "Shared with me" lists each link (U24). A
+	 * link that came with "Share the programme with the choir" knows its
+	 * programme; it stands under every programme shared that way that holds
+	 * its piece (its copy, or its version for an item without a copy), at
+	 * the place of the piece among the items not struck, so that a piece of
+	 * two concerts is found in both. Where a programme has a link of its own
+	 * for a piece, other links to it stay out of that programme. A link whose
+	 * programme no longer holds its piece, and every link made on its own,
+	 * stands under none.
+	 *
+	 * Order on the page: the next programme first, then the later ones;
+	 * past programmes after them, the latest first; those without a date at
+	 * the end.
+	 *
+	 * @param list<array{copy: int, version: int, programme: ?int}> $pieces per row
+	 * @return list<list<MemberProgramme>> per row
+	 */
+	private function memberProgrammes(array $pieces, string $today): array {
+		$programmes = [];
+		foreach (array_unique(array_filter(array_column($pieces, 'programme'), fn (?int $id): bool => $id !== null)) as $id) {
+			try {
+				$programmes[] = $this->events->find($id);
+			} catch (DoesNotExistException) {
+			}
+		}
+		usort($programmes, fn (Event $a, Event $b): int => self::compareProgrammes($a, $b, $today));
+		$listed = array_fill(0, count($pieces), []);
+		foreach ($programmes as $order => $event) {
+			$items = array_values(array_filter($this->items->findByEvent($event->getId()), fn (EventItem $item): bool => $item->getStruck() !== true));
+			/** @var array<int, int> $placed row => position */
+			$placed = [];
+			/** @var array<int, true> $own positions with a link of this programme */
+			$own = [];
+			foreach ($pieces as $row => $piece) {
+				if ($piece['programme'] === null) {
+					continue;
+				}
+				foreach ($items as $position => $item) {
+					if (self::holds($item, $piece['copy'], $piece['version'])) {
+						$placed[$row] = $position;
+						if ($piece['programme'] === $event->getId()) {
+							$own[$position] = true;
+						}
+						break;
+					}
+				}
+			}
+			$key = substr(hash('sha256', 'cantoria-programme|' . $event->getId()), 0, 20);
+			foreach ($placed as $row => $position) {
+				if (!isset($own[$position]) || $pieces[$row]['programme'] === $event->getId()) {
+					$listed[$row][] = ['key' => $key, 'title' => (string)$event->getTitle(), 'date' => $event->getEventDate(),
+						'order' => $order, 'position' => $position];
+				}
+			}
+		}
+		return array_values($listed);
+	}
+
+	/**
+	 * Whether an item of a programme is the piece of a link.
+	 */
+	private static function holds(EventItem $item, int $copyId, int $versionId): bool {
+		$itemCopy = $item->getCopyId();
+		return $itemCopy !== null ? $itemCopy === $copyId : $item->getVersionId() === $versionId;
+	}
+
+	/**
+	 * Programmes still to come by date, then past ones from the latest, then
+	 * those without a date; the same date by id.
+	 */
+	private static function compareProgrammes(Event $a, Event $b, string $today): int {
+		$when = fn (Event $event): int => $event->getEventDate() === null ? 2 : ((string)$event->getEventDate() < $today ? 1 : 0);
+		$byWhen = $when($a) <=> $when($b);
+		if ($byWhen !== 0) {
+			return $byWhen;
+		}
+		$byDate = (string)$a->getEventDate() <=> (string)$b->getEventDate();
+		return ($when($a) === 1 ? -$byDate : $byDate) ?: $a->getId() <=> $b->getId();
 	}
 
 	/**

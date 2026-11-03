@@ -31,6 +31,11 @@ use OCP\AppFramework\Db\Entity;
  * (`cantoria_files.id`, role `score_pdf`) offered besides the notes; null
  * for none.
  *
+ * `event_id` (circle `members` only) is the programme the link was last
+ * shared with as a whole ("Share the programme with the choir",
+ * ProgrammeShareService; review of 3 November 2026, U24), so that "Shared
+ * with me" lists it under that programme; null for a link made on its own.
+ *
  * `token` holds the SHA-256 hash of the token in the address (milestone
  * 0.11): a link is found by the hash, so a copy of the table opens no link.
  * `token_secret` holds the token encrypted with the secret of the instance,
@@ -77,6 +82,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setHits(int $hits)
  * @method int|null getScanFileId()
  * @method void setScanFileId(?int $scanFileId)
+ * @method int|null getEventId()
+ * @method void setEventId(?int $eventId)
  */
 class ExcerptLink extends Entity implements JsonSerializable {
 	use FieldAccess {
@@ -107,11 +114,12 @@ class ExcerptLink extends Entity implements JsonSerializable {
 	protected ?int $revoked = null;
 	protected int $hits = 0;
 	protected ?int $scanFileId = null;
+	protected ?int $eventId = null;
 	/** The token of a link just made, for the answer to its creator; not a column */
 	private ?string $issued = null;
 
 	public function __construct() {
-		foreach (['copyId', 'fileId', 'verse', 'tempo', 'taskId', 'created', 'revoked', 'hits', 'scanFileId'] as $field) {
+		foreach (['copyId', 'fileId', 'verse', 'tempo', 'taskId', 'created', 'revoked', 'hits', 'scanFileId', 'eventId'] as $field) {
 			$this->addType($field, 'integer');
 		}
 		foreach (['token', 'tokenSecret', 'fileEtag', 'measureFrom', 'measureTo', 'voice', 'note', 'circle', 'createdBy', 'expires'] as $field) {

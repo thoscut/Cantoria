@@ -3469,7 +3469,7 @@ export const singular = {
 	'The columns of the import (administration guide)': 'Die Spalten des Imports (Administrationshandbuch)',
 	'Template (CSV)': 'Vorlage (CSV)',
 	'Template (ODS)': 'Vorlage (ODS)',
-	// ---- 0.20: import from .xlsx and .ods (review of 3 November 2026) ----
+	// ---- 0.20: import from .xlsx and .ods, "Shared with me" by programme (review of 3 November 2026) ----
 	'The CSV file is not UTF-8 encoded. In Excel: "Save as" → "CSV UTF-8"; in LibreOffice: "Save as" → "Text CSV" with the character set UTF-8.': 'Die CSV-Datei ist nicht UTF-8-kodiert. In Excel: „Speichern unter“ → „CSV UTF-8“; in LibreOffice: „Speichern unter“ → „Text CSV“ mit dem Zeichensatz UTF-8.',
 	'Only the sheet "%s" was read; the other sheets of the file are left out.': 'Gelesen wurde nur das Tabellenblatt „%s“; die anderen Blätter der Datei bleiben außen vor.',
 	'The file is neither CSV nor .xlsx or .ods. Please save it in one of these formats, for example in Excel with "Save as" → "Excel workbook (.xlsx)".': [
@@ -3479,6 +3479,8 @@ export const singular = {
 	'The file is not an OpenDocument spreadsheet (.ods).': 'Die Datei ist keine OpenDocument-Tabelle (.ods).',
 	'The OpenDocument spreadsheet is damaged.': 'Die OpenDocument-Tabelle ist beschädigt.',
 	'The OpenDocument spreadsheet is too large to import.': 'Die OpenDocument-Tabelle ist zu groß für den Import.',
+	'More pieces': 'Weitere Stücke',
+	New: 'Neu',
 }
 
 export const plural = {
@@ -3726,5 +3728,9 @@ export const plural = {
 	'Please enter whole numbers (0 or more) for %n copy: {shelfmarks}.|Please enter whole numbers (0 or more) for %n copies: {shelfmarks}.': {
 		du: ['Bitte gib für %n Exemplar ganze Zahlen (0 oder mehr) ein: {shelfmarks}.', 'Bitte gib für %n Exemplare ganze Zahlen (0 oder mehr) ein: {shelfmarks}.'],
 		sie: ['Bitte geben Sie für %n Exemplar ganze Zahlen (0 oder mehr) ein: {shelfmarks}.', 'Bitte geben Sie für %n Exemplare ganze Zahlen (0 oder mehr) ein: {shelfmarks}.'],
+	},
+	'%n piece added since your last visit|%n pieces added since your last visit': {
+		du: ['%n Stück seit deinem letzten Besuch dazugekommen', '%n Stücke seit deinem letzten Besuch dazugekommen'],
+		sie: ['%n Stück seit Ihrem letzten Besuch dazugekommen', '%n Stücke seit Ihrem letzten Besuch dazugekommen'],
 	},
 }

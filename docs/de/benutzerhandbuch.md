@@ -762,7 +762,9 @@ Stück einzeln zu teilen:
 Jedes Stück wird geteilt, als hättest du es einzeln geteilt: als ganzes
 Stück, mit denselben Rechten und demselben Eintrag im Änderungsprotokoll.
 Steht bei einem Stück *Ohne Netz verfügbar.*, können die Chormitglieder es
-auf ihrem Gerät behalten und auch im Zug üben.
+auf ihrem Gerät behalten und auch im Zug üben. Unter **Mit mir geteilt**
+finden die Chormitglieder die Stücke unter Titel und Datum des Programms,
+in seiner Reihenfolge.
 
 > [!NOTE]
 > Das ganze Stück spielt in der vollen Reihenfolge der Noten, mit allen
@@ -1879,6 +1881,15 @@ sehen **Mit mir geteilt**: die mit dem Chor geteilten Stücke und
 Ausschnitte. Jeder Eintrag der Liste ist kurz: der Titel, Komposition und
 **Ganzes Stück** oder die Takte mit der Stimme, wie lange er gilt und, wo
 es eingeschaltet ist, **Ohne Netz verfügbar**.
+
+Die Stücke eines Programms, das als Ganzes mit dem Chor geteilt ist, stehen
+unter seinem Titel und Datum, in der Reihenfolge des Programms; das nächste
+Konzert steht oben, und ein Stück aus zwei Konzerten steht unter beiden.
+Einzeln geteilte Stücke und Ausschnitte folgen unter **Weitere Stücke**.
+**Neu** markiert, was seit deinem letzten Besuch dazugekommen ist; dein
+Browser merkt sich, was er angezeigt hat, nur auf diesem Gerät, und schickt
+davon nichts an den Server. Beim ersten Besuch in einem Browser ist nichts
+markiert; **Alles auf diesem Gerät löschen** vergisst auch das.
 
 ![Die Seite „Mit mir geteilt“ eines Chormitglieds: das ganze Stück „Der Mond ist aufgegangen“ mit der Notiz der Chorleitung, der Gültigkeit, der Schaltfläche „Scan (PDF) zeigen“, der Wiedergabe mit Einzähler und Schleife und den Noten mit hervorgehobenem Alt.](../screenshots/de/shared-with-me.png)
 

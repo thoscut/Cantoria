@@ -23,12 +23,18 @@
  * The stage view (milestone 0.19) shows only the piece on the whole screen,
  * as in the concert folder. Opening a piece from the list adds an entry to
  * the history, so that the back gesture of a phone returns to the list.
+ * The list (milestone 0.20, U24) shows the pieces of a shared programme under
+ * its title and date, in programme order, the next concert first, and the
+ * pieces shared on their own below; a piece new since the last visit in
+ * this browser is marked "New" (src/sharing/memberList.ts; nothing of it
+ * goes to the server).
  */
 import type { FocusTarget } from '../focus.ts'
 import type { PieceForDevice } from '../offline/rules.ts'
 import type { MemberLink, MemberPageState, MemberPracticeAudioInput } from '../types.ts'
 
 import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline, mdiOpenInNew } from '@mdi/js'
+import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
@@ -56,6 +62,7 @@ import { authorizeMemberPracticeAudio, fetchMemberLinks, fetchMemberScore } from
 import { useLeaveGuard } from './leaveGuard.ts'
 import { deviceUntil } from './linkDates.ts'
 import { scopeText } from './linkScope.ts'
+import { forgetVisits, groupByProgramme, newSinceLastVisit } from './memberList.ts'
 import { useStage } from './stage.ts'
 
 /**
@@ -84,6 +91,8 @@ function initialOffline(): { enabled: boolean, version: string } {
 
 const links = initialLinks()
 const offlineConfig = initialOffline()
+/** Tokens of the links that came since the last visit in this browser (U24) */
+const newTokens = ref(newSinceLastVisit(links, getCurrentUser()?.uid ?? ''))
 const deviceHeadingId = useId()
 const listHeadingId = useId()
 const excerptHeadingId = useId()
@@ -217,9 +226,31 @@ async function keepAll(): Promise<void> {
 	}
 }
 
+/**
+ * The list in sections (U24): one per programme shared with the choir, in
+ * programme order, then the pieces shared on their own; their heading only
+ * when there are programmes above them.
+ */
+const sections = (() => {
+	const { programmes, others } = groupByProgramme(links)
+	const list = programmes.map((programme) => ({
+		key: 'programme-' + programme.key,
+		heading: [programme.title || t('cantoria', 'Programme'), programme.date ? formatDate(programme.date) : ''].filter(Boolean).join(' · '),
+		links: programme.links,
+	}))
+	if (others.length > 0) {
+		list.push({ key: 'others', heading: programmes.length > 0 ? t('cantoria', 'More pieces') : '', links: others })
+	}
+	return list
+})()
+/** New pieces, counted once even when they stand in two programmes */
+const newCount = computed(() => links.filter((link) => newTokens.value.has(link.token)).length)
+
 /** Delete the kept pieces and everything remembered for practising, on this device only. */
 async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
+	forgetVisits()
+	newTokens.value = new Set()
 	confirmingDelete.value = false
 	deviceStatus.value = t('cantoria', 'Everything Cantoria kept on this device is deleted.')
 }
@@ -469,34 +500,46 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 									<span>{{ keepErrors.all }}</span>
 								</p>
 							</div>
-							<ul class="member-app__items">
-								<li v-for="link in links"
-									:key="link.token"
-									class="member-app__item"
-									:class="{ 'member-app__item--selected': link.token === selectedToken }">
-									<button type="button"
-										class="member-app__open"
-										:aria-current="link.token === selectedToken ? 'true' : undefined"
-										@click="select(link)">
-										{{ link.title }}
-									</button>
-									<p class="member-app__muted">
-										{{ [link.composer, place(link)].filter(Boolean).join(' · ') }}
-									</p>
-									<p v-if="link.expires || (offlineOn && (isKept(link) || withoutNetwork))" class="member-app__meta">
-										<span v-if="link.expires" class="member-app__muted">
-											{{ t('cantoria', 'Valid until {date}', { date: formatDate(link.expires) }) }}
+							<p v-if="newCount > 0" class="member-app__muted">
+								{{ n('cantoria', '%n piece added since your last visit', '%n pieces added since your last visit', newCount) }}
+							</p>
+							<template v-for="section in sections" :key="section.key">
+								<h3 v-if="section.heading" :id="`${listHeadingId}-${section.key}`" class="member-app__group-title">
+									{{ section.heading }}
+								</h3>
+								<ul class="member-app__items" :aria-labelledby="section.heading ? `${listHeadingId}-${section.key}` : listHeadingId">
+									<li v-for="link in section.links"
+										:key="link.token"
+										class="member-app__item"
+										:class="{ 'member-app__item--selected': link.token === selectedToken }">
+										<span class="member-app__item-head">
+											<button type="button"
+												class="member-app__open"
+												:aria-current="link.token === selectedToken ? 'true' : undefined"
+												@click="select(link)">
+												{{ link.title }}
+											</button>
+											<!-- a word, not only a color (WCAG 1.4.1) -->
+											<span v-if="newTokens.has(link.token)" class="member-app__new">{{ t('cantoria', 'New') }}</span>
 										</span>
-										<span v-if="offlineOn && isKept(link) && !(withoutNetwork && lockText(link) !== '')" class="member-app__badge">
-											<NcIconSvgWrapper :path="mdiCellphoneCheck" :size="16" aria-hidden="true" />
-											{{ t('cantoria', 'Available without a network') }}
-										</span>
-										<span v-else-if="withoutNetwork" class="member-app__muted">
-											{{ isKept(link) ? lockText(link) : t('cantoria', 'Needs a network') }}
-										</span>
-									</p>
-								</li>
-							</ul>
+										<p class="member-app__muted">
+											{{ [link.composer, place(link)].filter(Boolean).join(' · ') }}
+										</p>
+										<p v-if="link.expires || (offlineOn && (isKept(link) || withoutNetwork))" class="member-app__meta">
+											<span v-if="link.expires" class="member-app__muted">
+												{{ t('cantoria', 'Valid until {date}', { date: formatDate(link.expires) }) }}
+											</span>
+											<span v-if="offlineOn && isKept(link) && !(withoutNetwork && lockText(link) !== '')" class="member-app__badge">
+												<NcIconSvgWrapper :path="mdiCellphoneCheck" :size="16" aria-hidden="true" />
+												{{ t('cantoria', 'Available without a network') }}
+											</span>
+											<span v-else-if="withoutNetwork" class="member-app__muted">
+												{{ isKept(link) ? lockText(link) : t('cantoria', 'Needs a network') }}
+											</span>
+										</p>
+									</li>
+								</ul>
+							</template>
 						</section>
 						<section v-if="selected" class="member-app__excerpt" :aria-labelledby="excerptHeadingId">
 							<div class="member-app__excerpt-head">
@@ -802,6 +845,31 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 
 .member-app__item:last-child {
 	border-bottom: none;
+}
+
+/* the title of a programme above its pieces */
+.member-app__group-title {
+	margin: calc(2 * var(--default-grid-baseline)) 0 0;
+	padding: 0 calc(2 * var(--default-grid-baseline));
+	font-size: 1em;
+	font-weight: bold;
+	overflow-wrap: anywhere;
+}
+
+.member-app__item-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 var(--default-grid-baseline);
+}
+
+/* "New": a word in a frame, not only a color */
+.member-app__new {
+	padding: 0 var(--default-grid-baseline);
+	border: 1px solid var(--color-primary-element);
+	border-radius: var(--border-radius-small, 4px);
+	color: var(--color-main-text);
+	font-size: 0.9em;
 }
 
 /* the chosen excerpt: a bar at the start, not only a color (WCAG 1.4.1) */

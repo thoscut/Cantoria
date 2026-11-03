@@ -709,7 +709,9 @@ sharing each piece on its own:
 Each piece is shared as if you shared it on its own: as the whole piece,
 with the same rights and the same entry in the audit log. Where a piece
 says *Available without a network.*, the choir members can keep it on
-their device and practise it on the train, too.
+their device and practise it on the train, too. Under **Shared with me**
+the choir members find the pieces under the title and date of the
+programme, in its order.
 
 > [!NOTE]
 > The whole piece plays in the full order of the score, with all repeats,
@@ -1759,6 +1761,15 @@ Choir members sign in to Nextcloud and open **Cantoria**. They see
 entry of the list is short: the title, composer and **Whole piece** or the
 measures with the voice, how long it is valid and, where it is switched on,
 **Available without a network**.
+
+The pieces of a programme shared with the choir as a whole stand under its
+title and date, in the order of the programme; the next concert comes
+first, and a piece sung in two concerts stands under both. Pieces and
+excerpts shared on their own follow under **More pieces**. **New** marks
+what was added since your last visit; your browser remembers what it has
+listed, on this device only, and sends nothing of it to the server. At the
+first visit in a browser nothing is marked; **Delete everything on this
+device** forgets it, too.
 
 ![The page "Shared with me" of a choir member with the piece "Der Mond ist aufgegangen" and the score with the alto highlighted.](screenshots/shared-with-me.png)
 

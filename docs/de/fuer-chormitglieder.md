@@ -15,8 +15,11 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
 1. Melde dich mit deinem Nextcloud-Konto des Chors an und öffne **Cantoria**.
    Ein Link aus einer Nachricht der Chorleitung öffnet das Stück direkt.
 2. Du siehst **Mit mir geteilt**: die Stücke und Ausschnitte für den Chor,
-   jedes mit seiner Gültigkeit. Wähle eines; die Noten erscheinen darunter
-   (auf dem Handy) oder daneben (auf einem großen Bildschirm).
+   jedes mit seiner Gültigkeit, die Stücke eines Konzerts unter seinem Titel
+   und Datum in der Reihenfolge des Programms. **Neu** markiert, was seit
+   deinem letzten Besuch in diesem Browser dazugekommen ist. Wähle eines;
+   die Noten erscheinen darunter (auf dem Handy) oder daneben (auf einem
+   großen Bildschirm).
 3. **Andere Stücke** unter dem Titel führt zurück zur Liste.
 
 ## Deine Stimme üben

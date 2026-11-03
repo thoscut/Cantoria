@@ -102,8 +102,9 @@ class LinkService {
 
 	/**
 	 * @param array<array-key, mixed> $data field => value (request data)
+	 * @param int|null $programme the programme shared as a whole with the choir members (ProgrammeShareService); never from a request
 	 */
-	public function create(int $copyId, array $data, string $uid): ExcerptLink {
+	public function create(int $copyId, array $data, string $uid, ?int $programme = null): ExcerptLink {
 		$values = Input::values($data);
 		$circle = $values['circle'] ?? ExcerptLink::CIRCLE_INTERNAL;
 		if (!is_string($circle) || !in_array($circle, ExcerptLink::CIRCLES, true)) {
@@ -200,6 +201,7 @@ class LinkService {
 			}
 		}
 		$link->setScanFileId($scanFileId);
+		$link->setEventId($circle === ExcerptLink::CIRCLE_MEMBERS ? $programme : null);
 		$link->setCircle($circle);
 		$link->setCreatedBy($uid);
 		$link->setCreated($this->time->getTime());
@@ -287,10 +289,11 @@ class LinkService {
 	 * (empty: the note stays), and `scan_file_id`, a scan to offer from now
 	 * on, with the same checks as when a link is made. A link that offers a
 	 * scan the rights of today no longer allow is not extended: a new link
-	 * without the scan is needed.
+	 * without the scan is needed. `programme`: the programme the link is
+	 * shared with now, for "Shared with me" (U24; choir members only).
 	 *
 	 * @param mixed $expires the new last day; empty: the latest
-	 * @param array{note?: ?string, scan_file_id?: ?int} $changes
+	 * @param array{note?: ?string, scan_file_id?: ?int, programme?: int} $changes
 	 * @throws UserFacingException
 	 */
 	public function extend(int $linkId, mixed $expires, string $uid, array $changes = []): ExcerptLink {
@@ -359,6 +362,12 @@ class LinkService {
 			$scanFileId = $this->checkScan($link->getCopyId(), $scanFileId, $uid);
 			$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'scan_file_id', $link->getScanFileId(), $scanFileId);
 			$link->setScanFileId($scanFileId);
+			$changed = true;
+		}
+		$programme = $changes['programme'] ?? null;
+		if ($programme !== null && $circle === ExcerptLink::CIRCLE_MEMBERS && $programme !== $link->getEventId()) {
+			// where "Shared with me" lists it; no question of rights, so not in the audit log
+			$link->setEventId($programme);
 			$changed = true;
 		}
 		if ($circle === ExcerptLink::CIRCLE_PUBLIC && $old !== null && $old < $today) {

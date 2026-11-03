@@ -40,6 +40,10 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * may view it (S N13). `quantity` says when there are more choir members
  * than the licenses were bought for (a hint, W B17).
  *
+ * Milestone 0.20 (U24): each link made or extended here records the
+ * programme, so that "Shared with me" lists the pieces under it in
+ * programme order (SharedLinkService::forMember).
+ *
  * Reasons are English source strings with parameters; the controller
  * translates them.
  *
@@ -130,13 +134,13 @@ class ProgrammeShareService {
 					// never shorter than it is
 					$day = $existing['expires'] !== null && $existing['expires'] > $day ? $existing['expires'] : $day;
 					$link = $this->linkService->extend($existing['id'], $day, $uid,
-						['note' => $note, 'scan_file_id' => $existing['scan'] ? null : $scanFileId]);
+						['note' => $note, 'scan_file_id' => $existing['scan'] ? null : $scanFileId, 'programme' => $eventId]);
 					$longer = $existing['expires'] === null || (string)$link->getExpires() > $existing['expires'];
 					$result[$longer ? 'extended' : 'kept']++;
 					$lasts = (string)$link->getExpires();
 				} else {
 					$this->linkService->create($option['copyId'], ['circle' => ExcerptLink::CIRCLE_MEMBERS, 'expires' => $until,
-						'note' => $note, 'scan_file_id' => $scanFileId], $uid);
+						'note' => $note, 'scan_file_id' => $scanFileId], $uid, $eventId);
 					$result['created']++;
 					$lasts = $until;
 				}

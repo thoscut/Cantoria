@@ -103,11 +103,11 @@ final class ProgrammeShareTest extends TestCase {
 				default => throw new AccessDeniedException(self::NOT_RELEASED),
 			};
 		});
-		$linkService->method('create')->willReturnCallback(function (int $copyId, array $data) use ($createFails): ExcerptLink {
+		$linkService->method('create')->willReturnCallback(function (int $copyId, array $data, string $uid, ?int $programme = null) use ($createFails): ExcerptLink {
 			if ($createFails !== null) {
 				throw new InvalidInputException($createFails);
 			}
-			$this->calls[] = ['create', $copyId, $data];
+			$this->calls[] = ['create', $copyId, $data, ['programme' => $programme]];
 			return new ExcerptLink();
 		});
 		$linkService->method('extend')->willReturnCallback(function (int $linkId, mixed $expires, string $uid, array $changes = []): ExcerptLink {
@@ -175,9 +175,9 @@ final class ProgrammeShareTest extends TestCase {
 		$result = $this->service(links: [self::link(50, 31, 'carla')])->share(4, ['items' => [1, 2, 3], 'expires' => '2026-12-27', 'note' => 'Bis Donnerstag', 'scan' => true], 'carla');
 		self::assertSame(['created' => 1, 'extended' => 1, 'kept' => 0], ['created' => $result['created'], 'extended' => $result['extended'], 'kept' => $result['kept']]);
 		self::assertSame([
-			['extend', 50, '2026-12-27', ['note' => 'Bis Donnerstag', 'scan_file_id' => 7]],
-			['create', 32, ['circle' => ExcerptLink::CIRCLE_MEMBERS, 'expires' => '2026-12-27', 'note' => 'Bis Donnerstag', 'scan_file_id' => null]],
-		], $this->calls, 'the note and the scan apply to the extended link, too; the scan only where it may be offered');
+			['extend', 50, '2026-12-27', ['note' => 'Bis Donnerstag', 'scan_file_id' => 7, 'programme' => 4]],
+			['create', 32, ['circle' => ExcerptLink::CIRCLE_MEMBERS, 'expires' => '2026-12-27', 'note' => 'Bis Donnerstag', 'scan_file_id' => null], ['programme' => 4]],
+		], $this->calls, 'the note and the scan apply to the extended link, too; the scan only where it may be offered; both know the programme (U24)');
 		self::assertSame([['id' => 3, 'title' => 'Werk 123', 'reason' => ['message' => self::NOT_RELEASED, 'parameters' => []]]], $result['failed']);
 
 		$this->calls = [];
@@ -189,7 +189,7 @@ final class ProgrammeShareTest extends TestCase {
 	public function testALinkIsNeverShortened(): void {
 		$result = $this->service(links: [self::link(50, 31, 'carla', expires: '2027-03-01')])->share(4, ['items' => [1], 'expires' => '2026-12-27'], 'carla');
 		self::assertSame([0, 0, 1], [$result['created'], $result['extended'], $result['kept']], 'it stays as it is (U23)');
-		self::assertSame([['extend', 50, '2027-03-01', ['note' => null, 'scan_file_id' => null]]], $this->calls, 'the later last day stays');
+		self::assertSame([['extend', 50, '2027-03-01', ['note' => null, 'scan_file_id' => null, 'programme' => 4]]], $this->calls, 'the later last day stays');
 		self::assertSame([], $result['limited']);
 	}
 

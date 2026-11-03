@@ -25,6 +25,7 @@ class ReleasedMigrationsTest extends TestCase {
 	/** File name => SHA-256 of the released migrations */
 	private const RELEASED = [
 		'Version001700Date20261030000000.php' => 'd08479cff65cc171a58dce790bee0f2e0681554224103da7d2a290698c58c429',
+		'Version001700Date20261103140000.php' => 'e3fcf49739ec5189ad91ef4d7fe6028c21ca97f8ba5068d5862799c59213c4c9',
 	];
 
 	public function testReleasedMigrationsAreUnchanged(): void {
