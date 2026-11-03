@@ -65,6 +65,16 @@ All notable changes to this app are documented in this file. The format follows
     the upgrade test before the upload.
   - The screenshot tool takes phone sizes, contrast mode and print and
     checks with axe-core (`--axe`).
+  - Import of the catalog from Excel (.xlsx) and OpenDocument (.ods)
+    spreadsheets as well as CSV, with the same columns; the report names
+    the sheet it read.
+  - "Shared with me" lists the pieces of a programme shared with the choir
+    under its title and date, in programme order, single pieces under
+    "More pieces"; "New" marks pieces added since the last visit, which
+    only this browser remembers.
+  - "Remove from this device" at the top of "Shared with me" and the
+    concert folder, with the number of kept pieces; notes on shared
+    devices in the guides.
 
 ### Changed
 
@@ -140,6 +150,10 @@ All notable changes to this app are documented in this file. The format follows
     Practice entries of choir members in the log keep only the day. Legal
     and privacy documents cover devices, the concert folder, the microphone
     and storage in the browser.
+  - The confirmation of the rights status names every way a piece leaves
+    the app: concert folder, devices, programmes, scan, hand-over folder,
+    public links and the repertoire page. `main` carries 0.17.0-dev.2 for
+    the new column of links (`cantoria_links.event_id`).
 
 ### Removed
 
@@ -155,6 +169,8 @@ All notable changes to this app are documented in this file. The format follows
   the list. "10 of 12 pieces" names why the others stay behind. A new
   version opens without a network: the worker preloads the scripts from the
   build manifest. The sticky bar no longer hides the focus.
+- Public and member playback and the audio of the hand-over folder no
+  longer play an unconfirmed public domain without a matching license.
 - Texts no longer present the scan of public links as rights-checked; the
   accessibility statement names only checks that were done; the German
   guides use one word for one meaning; § 66 UrhG is described correctly.
@@ -180,6 +196,12 @@ All notable changes to this app are documented in this file. The format follows
   `X-Cantoria-Keep: 1` and removes the rest; it exists only with the module
   "Practising without a network". No npm install scripts run on the signing
   path, and CI checkouts keep no credentials.
+- Pieces that a signed-out or another account kept on a shared device are
+  removed before a page or the service worker shows them; Firefox, Safari
+  and Edge already clear them at logout, Chrome at the next Cantoria page.
+- The .ods reader refuses a DOCTYPE and limits the size of the archive,
+  repeated cells and the whole text; the text of an .xlsx file is limited
+  to 20 MB as well.
 
 ## [0.16.1] - 2026-10-29
 

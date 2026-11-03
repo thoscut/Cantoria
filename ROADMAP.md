@@ -145,9 +145,9 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
 | 0.17 Bereit zur ersten Veröffentlichung | im Review bis auf Markenprüfung, Signaturzertifikat, Branch-Schutz und Klärung der Schriftlizenz Liberation (Sache des Maintainers) | PR #14, #15, #16 |
-| 0.18 Rechte auf allen neuen Wegen | im Review; offen: Abmelden am gemeinsamen Gerät, Bestätigungsdialog für die neuen Wege, zwei Entscheidungen des Maintainers | PR #14, #16 |
+| 0.18 Rechte auf allen neuen Wegen | im Review bis auf zwei Entscheidungen des Maintainers (R B9, S N2) | PR #14, #16 |
 | 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
-| 0.20 Einführen und umsteigen | im Review; offen: Import aus XLSX und ODS, Screenshots aus einer echten Nextcloud, „Mit mir geteilt“ nach Programmen, Demo | PR #14, #16 |
+| 0.20 Einführen und umsteigen | im Review bis auf Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
 | 1.0 Stabil | geplant | – |
 
 Die aktuelle Version ist 0.16.1: Die App heißt jetzt Cantoria, vorher
@@ -766,10 +766,12 @@ Links (R B2) und die Exporte (S N1).
 *Ergänzt am 3. November 2026; im Review (PR #16). Mit PR #16 sind auch die
 früheren Punkte dieses Meilensteins umgesetzt (Exporte, Scan in
 öffentlichen Links, Übergabeordner, Nutzungsarten, Lizenzende, § 66 UrhG,
-Aufgaben, Delegation, Protokoll, Datenschutz-Paket), mit drei Resten:
-Abmelden am gemeinsamen Gerät (S N6) und der Bestätigungsdialog für die
-neuen Wege (R B14, B15) sind offen. Zwei Entscheidungen liegen beim
-Maintainer: ob „Konto vergessen“ die Konto-IDs in Belegen wie `createdBy`
+Aufgaben, Delegation, Protokoll, Datenschutz-Paket, Abmelden am
+gemeinsamen Gerät, Bestätigungsdialog für die neuen Wege). Am gemeinsamen
+Gerät räumen Firefox, Safari und Edge schon beim Abmelden auf, Chrome erst
+beim nächsten Aufruf einer Seite von Cantoria; Abmeldungen über SSO und
+abgelaufene Sitzungen deckt das nicht ab (S N6, `SECURITY.md`). Zwei
+Entscheidungen liegen beim Maintainer: ob „Konto vergessen“ die Konto-IDs in Belegen wie `createdBy`
 entfernt (R B9), und ob der Sicherungsordner vom Konto der
 Archivverwaltung gelöst wird (S N2; heute nur in einen privaten Ordner
 dieses Kontos, sonst hält die Sicherung an).*
@@ -883,8 +885,12 @@ Tonhöhe und Transponieren, englische Rollennamen) mit Glossar und
 Doku-Test, der zitierte Meldungen gegen die Oberfläche prüft, die Meldung
 „für Chormitglieder abgeschaltet“ statt „keine Rolle“, einseitige
 Anleitung für Chormitglieder, neues App-Icon, Store-Text.
-*Offen:* Import-Assistent, Screenshots aus einem echten Nextcloud, Doku
-für Hoster, Rückweg, Demo.
+Mit PR #16 dazu: Import aus CSV, XLSX und ODS mit Vorlage und neutralem
+Spaltennamen, Doku für Hoster, Sicherung mit logischen Tabellennamen und
+`cantoria_mirror_files`.
+*Offen:* Screenshots aus einem echten Nextcloud, Download und
+Wiederherstellung der Sicherung als Datenstrom, Demo, freie Zuordnung der
+Spalten (nach 1.0).
 
 - **Import-Assistent:** XLSX und ODS neben CSV, eine Vorlagedatei und
   neutrale Spaltennamen (heute z. B. „Auf Singste seit“); die freie
@@ -908,10 +914,8 @@ für Hoster, Rückweg, Demo.
 - **Zeigen, was es kann:** Demo oder kurzes Video, Store-Text und
   Doku-Seite „Cantoria neben anderen Lösungen“ (W).
 
-*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf den
-Import aus XLSX und ODS (die Vorlage gibt es als CSV und ODS),
-„Mit mir geteilt“ nach Programmen geordnet mit „neu“-Markierung (U24) und
-die neuen Bilder: Das Werkzeug kennt die neuen Szenen und prüft mit
+*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf die
+neuen Bilder: Das Werkzeug kennt die neuen Szenen und prüft mit
 axe-core, aufnehmen lässt es sich nur in einer Nextcloud mit den
 Demodaten.*
 
