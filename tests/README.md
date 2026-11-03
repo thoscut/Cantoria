@@ -43,6 +43,8 @@ What is covered:
 
 | Test | Subject |
 |---|---|
+| `Command/ModulesCommandTest` | `occ cantoria:modules`: the list as table and JSON, enable and disable through the settings with the changes reported, preset and scenario by exactly one name, a wrong call changes nothing and says why |
+| `Service/LinkListTest` | the list of links: links that ended in the last 30 days stay listed, each link names the latest day it can be extended to and why (six months, one year, the license), only for accounts that may extend it |
 | `Service/CatalogCsvTest` | CSV parsing (BOM, double BOM, `;`, quotes, CRLF in cells, empty lines), writing byte for byte like Python's `csv` module with `QUOTE_MINIMAL` and CRLF (reference output embedded), round trip, legacy publication rules |
 | `Service/FieldValueTest` | value checks per field type, length in characters, strict calendar dates (e.g. `2026-02-31`) |
 | `Service/FieldsTest` | the field registry against the schema of the migrations: every column has a field or is listed as internal, `max` equals the column length, types and NOT NULL fit, every legacy CSV column maps to a field |
