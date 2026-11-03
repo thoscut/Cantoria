@@ -158,7 +158,7 @@ onMounted(async () => {
 			</NcSettingsSection>
 
 			<NcSettingsSection :id="sections.modules"
-				:name="t('cantoria', 'Modules')"
+				:name="t('cantoria', 'Functions and modules')"
 				:doc-url="adminGuideUrl(ADMIN_GUIDE.modules)">
 				<ModuleSettings @changed="load" />
 			</NcSettingsSection>

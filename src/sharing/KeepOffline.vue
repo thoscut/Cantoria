@@ -121,7 +121,8 @@ function setScan(on: boolean): void {
 				:loading="busy"
 				@update:model-value="setKept">
 				{{ label || t('cantoria', 'Available without a network') }}
-				<template v-if="progress || lock || withoutNetwork" #description>
+				<!-- No empty line: without a network a kept piece needs no description (U36) -->
+				<template v-if="progress || lock || (withoutNetwork && !kept)" #description>
 					{{ progress || lock || (kept ? '' : t('cantoria', 'Needs a network to change.')) }}
 				</template>
 			</NcCheckboxRadioSwitch>

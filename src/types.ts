@@ -889,6 +889,10 @@ export interface Settings {
 	catalog: { copies: number, files: number }
 	/** the functions for the choir were chosen (a scenario, a preset or a switch) */
 	modulesChosen?: boolean
+	/** the module "concert_folder" is active: the role "Conductor" needs a group (setup) */
+	concertFolder?: boolean
+	/** the module "member_links" is active: the role "Choir members" needs a group (setup) */
+	memberLinks?: boolean
 	/** role key => English label */
 	roleLabels: Record<string, string>
 	archive: ArchiveInfo
