@@ -189,8 +189,15 @@ final class ConcertFolderTest extends TestCase {
 
 	public function testAPieceIsKeptOnADeviceOnlyWithTheRightsForACopy(): void {
 		$reason = 'Not available without a network: unless public domain is confirmed, a copy on a device needs a license.';
-		$item = $this->folder([], true, [31 => $reason])->concerts('carla')[0]['items'][0];
+		$folder = $this->folder([], true, [31 => $reason]);
+		$item = $folder->concerts('carla')[0]['items'][0];
 		self::assertSame([true, false, $reason], [$item['score'], $item['offline'], $item['offlineReason']], 'viewing as in the score view, but no copy');
+		self::assertFalse($item['print'], 'no print view either: printing is a copy (B21)');
+		self::assertFalse($folder->mayKeep(10, 'carla'), 'the worker keeps nothing of it (X-Cantoria-Keep)');
+		self::assertTrue($this->folder()->mayKeep(10, 'carla'));
+		self::assertTrue($this->folder()->concerts('carla')[0]['items'][0]['print']);
+		self::assertFalse($this->folder()->mayKeep(12, 'carla'), 'struck: nothing to keep');
+		self::assertFalse($this->folder([], false)->mayKeep(10, 'carla'), 'no role for the folder');
 	}
 
 	public function testWithoutTheModuleOfflineNothingIsKeptOnADevice(): void {
@@ -198,6 +205,8 @@ final class ConcertFolderTest extends TestCase {
 		self::assertFalse($folder->offlineOn());
 		$item = $folder->concerts('carla')[0]['items'][0];
 		self::assertSame([true, false, null], [$item['score'], $item['offline'], $item['offlineReason']], 'no reason per piece: the page offers nothing');
+		self::assertTrue($item['print'], 'printing does not hang on the module');
+		self::assertFalse($folder->mayKeep(10, 'carla'), 'the worker keeps nothing without the module');
 		self::assertTrue($this->folder()->offlineOn());
 	}
 

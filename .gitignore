@@ -22,6 +22,7 @@
 /tools/outreach/sender.json
 /tools/outreach/sender/
 /js/
+/.vite/
 /css/
 
 # Internal, non-public material (reviews, requirements); never in the public repository

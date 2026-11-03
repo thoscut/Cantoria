@@ -543,7 +543,7 @@ final class SharingTest extends TestCase {
 	 * @param list<ExcerptLink> $links
 	 * @param array<string, ?string> $denials
 	 */
-	private function shared(array $links, array $denials = [], bool $member = true): SharedLinkService {
+	private function shared(array $links, array $denials = [], bool $member = true, array $versionValues = []): SharedLinkService {
 		$mapper = $this->createStub(ExcerptLinkMapper::class);
 		$mapper->method('findByToken')->willReturnCallback(function (string $token) use ($links): ExcerptLink {
 			foreach ($links as $link) {
@@ -561,7 +561,7 @@ final class SharingTest extends TestCase {
 		$copies = $this->createStub(CopyMapper::class);
 		$copies->method('find')->willReturn($this->copy());
 		$versions = $this->createStub(WorkVersionMapper::class);
-		$versions->method('find')->willReturn($this->version(['arranger_text' => 'K. Satz']));
+		$versions->method('find')->willReturn($this->version(['arranger_text' => 'K. Satz'] + $versionValues));
 		$work = new Work();
 		$work->setId(7);
 		$work->setTitle('Abendlied');
@@ -632,7 +632,7 @@ final class SharingTest extends TestCase {
 		self::assertCount(1, $list, 'only active links for choir members');
 		self::assertSame(['token' => self::TOKEN, 'title' => 'Abendlied', 'composer' => 'J. Rheinberger', 'measure_from' => '2', 'measure_to' => '3',
 			'voice' => 'Alto', 'verse' => null, 'tempo' => null, 'note' => 'Please practise until Thursday.', 'expires' => '2026-12-31',
-			'canPlay' => true, 'canExportAudio' => true, 'reason' => null, 'scan' => false, 'scanSize' => null, 'offline' => true, 'keepUntil' => null,
+			'canPlay' => true, 'canExportAudio' => true, 'reason' => null, 'scan' => false, 'scanSize' => null, 'offline' => true, 'keepUntil' => null, 'print' => true,
 			'practiceKey' => SharedLinkService::practiceKey($this->version()),
 			'credits' => [['role' => 'lyricist', 'name' => 'H. Claudius'], ['role' => 'arranger', 'name' => 'K. Satz']],
 			'notices' => ['By kind permission of Carus']], $list[0], 'the authors by name only, the notices of licenses valid today');
@@ -642,9 +642,31 @@ final class SharingTest extends TestCase {
 		self::assertStringContainsString('<measure number="3"', $xml);
 		self::assertStringNotContainsString('<measure number="1"', $xml, 'never the whole score');
 		self::assertSame([9], $this->hits, 'the call is counted');
+		self::assertTrue($shared->memberMayKeep(self::TOKEN, 'singer'), 'the worker may keep it (X-Cantoria-Keep)');
+		self::assertFalse($shared->memberMayKeep(str_repeat('i', 32), 'singer'), 'not a link for choir members');
+		self::assertSame([9], $this->hits, 'asking whether it may stay is no call');
 
 		$this->expectException(UnknownLinkException::class);
 		$shared->memberScore(str_repeat('i', 32), 'singer');
+	}
+
+	/**
+	 * Printing the notes and keeping them on the device are copies (B21,
+	 * S N5): without the rights for a copy the page offers no print view,
+	 * and the worker keeps nothing of the answers.
+	 */
+	public function testWithoutTheRightsForACopyNothingIsPrintedOrKept(): void {
+		$shared = $this->shared([$this->link('members')], ['memberScanDenial' => 'Choir members can save and print the scan: it needs a license.']);
+		self::assertSame([false, false], [$shared->forMember('singer')[0]['print'], $shared->forMember('singer')[0]['offline']]);
+		self::assertFalse($shared->memberMayKeep(self::TOKEN, 'singer'));
+		self::assertFalse($this->shared([$this->link('members')], [], false)->memberMayKeep(self::TOKEN, 'reader'), 'no choir member');
+
+		self::assertFalse($this->shared([$this->link('public')])->publicMayKeep(self::TOKEN), 'a public link without confirmed public domain');
+		$free = $this->shared([$this->link('public')], [], true, ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
+		$excerpt = $free->publicExcerpt(self::TOKEN);
+		self::assertSame([true, true], [$excerpt['offline'] ?? null, $excerpt['print'] ?? null], 'confirmed public domain');
+		self::assertTrue($free->publicMayKeep(self::TOKEN), 'it may stay on the device');
+		self::assertFalse($free->publicMayKeep(str_repeat('z', 32)), 'unknown');
 	}
 
 	public function testOthersAndWithdrawnLinksGetNothing(): void {
@@ -732,7 +754,8 @@ final class SharingTest extends TestCase {
 		$excerpt = $this->shared([$this->link('public')])->publicExcerpt(self::TOKEN);
 		self::assertNotNull($excerpt);
 		self::assertSame(['title', 'composer', 'measureFrom', 'measureTo', 'voice', 'verse', 'tempo', 'canPlay', 'scan', 'scanSize', 'practiceKey', 'expires', 'offline',
-			'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
+			'print', 'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
+		self::assertSame([false, false], [$excerpt['offline'], $excerpt['print']], 'no copy, also on paper, without confirmed public domain (B21)');
 		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $excerpt['served'], 'when the page was made, for the check on the device');
 		self::assertSame(['By kind permission of Carus'], $excerpt['notices']);
 		self::assertSame(['role', 'name'], array_keys($excerpt['credits'][0]), 'no life dates');

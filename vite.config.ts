@@ -4,16 +4,22 @@
  */
 
 import { createAppConfig } from '@nextcloud/vite-config'
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
+import vue from '@vitejs/plugin-vue'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
 import { join, resolve } from 'path'
 import { build } from 'vite'
+import { shellFiles } from './src/offline/rules.ts'
 
 // Unit tests (npm test) run the pure logic in Node, without the build plugins;
-// tools/l10n checks the translations
+// tools/l10n checks the translations. Tests of components compile them with
+// the Vue plugin and choose jsdom in their file (@vitest-environment jsdom).
 const testConfig = {
+	plugins: [vue()],
 	test: {
 		include: ['src/**/*.test.ts', 'tools/l10n/*.test.mjs'],
 		environment: 'node',
+		// the components of Nextcloud import their styles: through Vite, not Node
+		server: { deps: { inline: [/@nextcloud\/vue/] } },
 	},
 }
 
@@ -21,15 +27,27 @@ const testConfig = {
  * The service worker of the pages that keep pieces on a device (milestone
  * 0.15): a classic script without imports, built after the app into
  * js/cantoria-offline-worker.js; OfflineController::worker serves it from
- * the app's path, so that it covers the pages.
+ * the app's path, so that it covers the pages. It carries the list of the
+ * scripts and styles of these pages from Vite's manifest of the build
+ * (.vite/manifest.json), which it loads before it takes over after an
+ * update of the app (A1), with the style sheet of each page, which the
+ * server adds to the page (templates/*.php).
  */
+const OFFLINE_PAGES: Record<string, string> = { 'src/member.ts': 'member', 'src/public.ts': 'public', 'src/concertFolder.ts': 'concert-folder' }
 const offlineWorker = {
 	name: 'cantoria-offline-worker',
 	apply: 'build' as const,
 	async closeBundle() {
+		const manifest = JSON.parse(readFileSync(join('.vite', 'manifest.json'), 'utf-8'))
+		const styles = Object.values(OFFLINE_PAGES).map((page) => `css/cantoria-${page}.css`)
+		const files = [...shellFiles(manifest, Object.keys(OFFLINE_PAGES)), ...styles.filter((file) => existsSync(file))]
+		if (!Object.values(OFFLINE_PAGES).every((page) => files.includes(`js/cantoria-${page}.mjs`))) {
+			throw new Error('The manifest of the build lacks the pages that keep pieces')
+		}
 		await build({
 			configFile: false,
 			logLevel: 'warn',
+			define: { __CANTORIA_SHELL_FILES__: JSON.stringify(files) },
 			build: {
 				outDir: 'js',
 				emptyOutDir: false,
@@ -119,6 +137,8 @@ export default process.env.VITEST
 			thirdPartyLicense: false,
 			config: {
 				plugins: [offlineWorker, thirdPartyLicenses],
+				// the list of the built files, for the service worker (.vite/manifest.json)
+				build: { manifest: true },
 			},
 		},
 	)

@@ -345,8 +345,8 @@ const words = computed(() => {
 	}
 }
 
-/* A low screen (a phone held sideways): a flatter display */
-@media (max-height: 560px) {
+/* A phone, upright or held sideways: a flatter display */
+@media (max-width: 600px), (max-height: 560px) {
 	.practice-pitch__display {
 		height: 48px;
 	}

@@ -27,8 +27,8 @@ import {
 	mdiCheckAll,
 	mdiDeleteOutline,
 	mdiDownload,
+	mdiFolderMusicOutline,
 	mdiLockOutline,
-	mdiMusicBoxMultipleOutline,
 	mdiPencilOutline,
 	mdiPrinterOutline,
 	mdiShareVariantOutline,
@@ -506,7 +506,7 @@ function revisionText(item: EventItem): string {
 						</NcButton>
 						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
 							<template #icon>
-								<NcIconSvgWrapper :path="mdiMusicBoxMultipleOutline" />
+								<NcIconSvgWrapper :path="mdiFolderMusicOutline" />
 							</template>
 							{{ t('cantoria', 'Open in the concert folder') }}
 						</NcButton>

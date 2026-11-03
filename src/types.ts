@@ -487,6 +487,8 @@ export interface MemberLink {
 	offline?: boolean
 	/** last day the license allows a copy on the device (milestone 0.18); null without end */
 	keepUntil?: string | null
+	/** the rights allow printing the notes (a copy, as the scan); false: the print view says so instead */
+	print?: boolean
 	/** key of the piece for what is remembered in the browser while practising (milestone 0.15) */
 	practiceKey?: string
 	credits: Credit[]
@@ -530,6 +532,8 @@ export interface FolderItem {
 	offline: boolean
 	/** translated reason why it may not be kept */
 	offlineReason: string | null
+	/** the rights allow printing the notes; false: the print view says so instead */
+	print?: boolean
 	practiceKey: string | null
 }
 
@@ -575,6 +579,8 @@ export interface PublicExcerpt {
 	expires?: string | null
 	/** may be kept on a device (milestone 0.15): module "offline", confirmed public domain */
 	offline?: boolean
+	/** may be printed: confirmed public domain, as visitors have no license */
+	print?: boolean
 	/** when the server made the page (ISO time): newer than the last check means it came from the server */
 	served?: string
 	/** MusicXML with only the measures of the excerpt, or the whole piece */

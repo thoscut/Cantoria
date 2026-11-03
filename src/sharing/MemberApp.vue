@@ -18,15 +18,19 @@
  * With the module "offline" (milestone 0.15) a piece can be made available
  * without a network, where its rights allow downloading it, and then be
  * viewed, played and practised without a network (src/offline/). At every
- * start with a network the kept pieces are checked with the server.
+ * start with a network the kept pieces are checked with the server
+ * (src/offline/useKeptPieces.ts, the same as the other two pages).
+ * The stage view (milestone 0.19) shows only the piece on the whole screen,
+ * as in the concert folder. Opening a piece from the list adds an entry to
+ * the history, so that the back gesture of a phone returns to the list.
  */
-import type { Catalog, PieceForDevice } from '../offline/rules.ts'
+import type { FocusTarget } from '../focus.ts'
+import type { PieceForDevice } from '../offline/rules.ts'
 import type { MemberLink, MemberPageState, MemberPracticeAudioInput } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiMusicNoteOutline, mdiOpenInNew } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline, mdiOpenInNew } from '@mdi/js'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
-import { isAxiosError } from '@nextcloud/axios'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -43,16 +47,16 @@ import KeepOffline from './KeepOffline.vue'
 import ScanFrame from './ScanFrame.vue'
 import { membersGuideUrl } from '../docs.ts'
 import { focusAfterUpdate, focusElement } from '../focus.ts'
-import { formatDate, formatDateTime, formatSize } from '../format.ts'
-import { askToPersist, checkWithServer, forgetPieces, keepPieces, keepShell, offlineSupported, readCatalog, removeEverything, setUpWorker, storageInfo } from '../offline/device.ts'
+import { formatDate } from '../format.ts'
 import { deviceErrorText } from '../offline/errors.ts'
+import { homeScreenHint } from '../offline/hints.ts'
 import { homeScreenAdvice } from '../offline/platform.ts'
-import { MAX_DAYS_UNCHECKED, usable } from '../offline/rules.ts'
-import { forgetPractising } from '../score/practiceSettings.ts'
+import { useKeptPieces } from '../offline/useKeptPieces.ts'
 import { authorizeMemberPracticeAudio, fetchMemberLinks, fetchMemberScore } from './api.ts'
 import { useLeaveGuard } from './leaveGuard.ts'
 import { deviceUntil } from './linkDates.ts'
 import { scopeText } from './linkScope.ts'
+import { useStage } from './stage.ts'
 
 /**
  * The links from the page; an empty list if the state is missing.
@@ -80,8 +84,6 @@ function initialOffline(): { enabled: boolean, version: string } {
 
 const links = initialLinks()
 const offlineConfig = initialOffline()
-/** Pieces can be kept on this device: module on, and the browser can */
-const offlineOn = offlineConfig.enabled && offlineSupported()
 const deviceHeadingId = useId()
 const listHeadingId = useId()
 const excerptHeadingId = useId()
@@ -101,24 +103,27 @@ const recordingUnsaved = ref(false)
 /** The piece to open once the person decided about the recording */
 const pendingLink = ref<MemberLink | null>(null)
 useLeaveGuard(recordingUnsaved)
+const stageButton = ref<FocusTarget>(null)
+const { on: stageOn, toggle: toggleStage } = useStage(() => focusElement(stageButton.value))
 
 // ---- available without a network (milestones 0.15 and 0.19) ----------------
 
-/** The kept pieces of this account on this device */
-const catalog = ref<Catalog | null>(null)
-/** The server answered the last check; false: shown from the device */
-const reachable = ref(true)
+const device = useKeptPieces('member', {
+	enabled: offlineConfig.enabled,
+	version: offlineConfig.version,
+	fresh: async () => (await fetchMemberLinks()).map(forDevice),
+	// "Delete everything" on this page deletes every piece of the app on this device
+	deletes: null,
+})
+const { offlineOn, storage, withoutNetwork, keptCount, storageText, checkedText } = device
 /** Token of the piece being kept or removed, or 'all' */
 const keeping = ref<string | null>(null)
 /** Why keeping a piece did not work, by token; 'all' for the button for all */
 const keepErrors = ref<Record<string, string>>({})
 /** "3 of 12 pieces ready …" while all are kept */
 const keepProgress = ref('')
-const storage = ref<{ usage: number | null, quota: number | null, persisted: boolean } | null>(null)
 const confirmingDelete = ref(false)
 const deviceStatus = ref('')
-const withoutNetwork = computed(() => offlineOn && !reachable.value)
-const keptCount = computed(() => Object.keys(catalog.value?.pieces ?? {}).length)
 /** Links that may be kept and are not yet */
 const notKept = computed(() => links.filter((link) => link.offline && !isKept(link)))
 const homeScreen = homeScreenAdvice()
@@ -139,7 +144,7 @@ function forDevice(link: MemberLink): PieceForDevice {
  * @param link - member link
  */
 function isKept(link: MemberLink): boolean {
-	return catalog.value?.pieces[link.token] !== undefined
+	return device.isKept(link.token)
 }
 
 /**
@@ -148,7 +153,7 @@ function isKept(link: MemberLink): boolean {
  * @param link - member link
  */
 function scanKept(link: MemberLink): boolean {
-	return catalog.value?.pieces[link.token]?.scan === true
+	return device.scanKept(link.token)
 }
 
 /**
@@ -157,46 +162,7 @@ function scanKept(link: MemberLink): boolean {
  * @param link - member link
  */
 function lockText(link: MemberLink): string {
-	switch (usable(catalog.value, link.token, new Date())) {
-	case 'ok':
-		return ''
-	case 'expired':
-		return t('cantoria', 'This link has expired. It is removed from this device at the next start with a network.')
-	case 'unchecked':
-		return n('cantoria', 'Locked: not checked with the server for more than %n day. Please open this page once with a network.',
-			'Locked: not checked with the server for more than %n days. Please open this page once with a network.', MAX_DAYS_UNCHECKED)
-	default:
-		return t('cantoria', 'There is no network, and this piece is not available without a network.')
-	}
-}
-
-async function refreshStorage(): Promise<void> {
-	storage.value = await storageInfo()
-}
-
-/**
- * Check the kept pieces with the server; without an answer the page shows
- * what is kept on the device. With an answer the scripts of the page are
- * kept again, so that the page still opens without a network after an
- * update of the app.
- */
-async function checkDevice(): Promise<void> {
-	if (!offlineOn) {
-		return
-	}
-	catalog.value = await readCatalog('member')
-	try {
-		const fresh = await fetchMemberLinks()
-		reachable.value = true
-		catalog.value = await checkWithServer('member', fresh.map(forDevice))
-		if (keptCount.value > 0) {
-			keepShell(offlineConfig.version).catch((error) => console.warn('Cantoria: the page could not be kept for use without a network', error))
-		}
-	} catch (error) {
-		// an answer of the server (e.g. not logged in) is no missing network
-		reachable.value = isAxiosError(error) && error.response !== undefined
-	}
-	await refreshStorage()
+	return device.lockText(link.token)
 }
 
 /**
@@ -211,20 +177,17 @@ async function setKept(link: MemberLink, keep: boolean, withScan: boolean): Prom
 	keepErrors.value = { ...keepErrors.value, [link.token]: '' }
 	try {
 		if (keep) {
-			catalog.value = await keepPieces('member', [forDevice(link)], withScan, offlineConfig.version)
-			await askToPersist()
+			await device.keep([forDevice(link)], withScan)
 			deviceStatus.value = t('cantoria', '"{title}" is available without a network.', { title: link.title })
 		} else {
-			catalog.value = await forgetPieces('member', [link.token])
+			await device.forget([link.token])
 			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: link.title })
 		}
 	} catch (error) {
 		console.warn('Cantoria: keeping a piece on this device failed', error)
 		keepErrors.value = { ...keepErrors.value, [link.token]: deviceErrorText(error) }
-		catalog.value = await readCatalog('member')
 	} finally {
 		keeping.value = null
-		await refreshStorage()
 	}
 }
 
@@ -238,12 +201,10 @@ async function keepAll(): Promise<void> {
 	}
 	progress(0)
 	try {
-		catalog.value = await keepPieces('member', pieces.map(forDevice), false, offlineConfig.version, progress)
-		await askToPersist()
+		await device.keep(pieces.map(forDevice), false, progress)
 		deviceStatus.value = n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', pieces.length)
 	} catch (error) {
 		console.warn('Cantoria: keeping the pieces on this device failed', error)
-		catalog.value = await readCatalog('member')
 		const missing = pieces.filter((link) => !isKept(link)).length
 		keepErrors.value = {
 			...keepErrors.value,
@@ -253,40 +214,14 @@ async function keepAll(): Promise<void> {
 	} finally {
 		keeping.value = null
 		keepProgress.value = ''
-		await refreshStorage()
 	}
 }
 
 /** Delete the kept pieces and everything remembered for practising, on this device only. */
 async function deleteDevice(): Promise<void> {
-	await removeEverything(null)
-	forgetPractising()
-	catalog.value = null
+	await device.deleteDevice()
 	confirmingDelete.value = false
 	deviceStatus.value = t('cantoria', 'Everything Cantoria kept on this device is deleted.')
-	await refreshStorage()
-}
-
-/** Space text: used of available */
-const storageText = computed(() => {
-	const info = storage.value
-	if (!info || info.usage === null) {
-		return ''
-	}
-	return info.quota === null
-		? t('cantoria', '{used} used on this device.', { used: formatSize(info.usage) })
-		: t('cantoria', '{used} of {available} used on this device.', { used: formatSize(info.usage), available: formatSize(info.quota) })
-})
-
-const checkedText = computed(() => {
-	const checked = catalog.value ? Date.parse(catalog.value.checked) : NaN
-	return Number.isFinite(checked)
-		? t('cantoria', 'Last checked with the server: {time}.', { time: formatDateTime(Math.floor(checked / 1000)) })
-		: ''
-})
-
-function onOnline(): void {
-	checkDevice()
 }
 
 /** Words of a text reference (the same texts as in the archive). */
@@ -347,24 +282,39 @@ async function loadSelectedScore(): Promise<void> {
 }
 
 /**
+ * The address of a link, so that it can be bookmarked.
+ *
+ * @param link - member link, or null for the list
+ */
+function linkAddress(link: MemberLink | null): string {
+	return window.location.pathname + (link ? '?link=' + encodeURIComponent(link.token) : '') + window.location.hash
+}
+
+/**
  * Show an excerpt next to or below the list; the address names it, so
- * that it can be bookmarked. An unsaved recording of the shown piece is not
- * lost without a question.
+ * that it can be bookmarked, and a new entry in the history lets the back
+ * gesture of a phone return to the list (U29). An unsaved recording of the
+ * shown piece is not lost without a question.
  *
  * @param link - member link
  * @param moveFocus - put the focus on its heading (after a click in the list)
+ * @param history - 'push' a new entry (from the list), 'replace' it (from the address) or 'none' (back and forward)
  */
-async function select(link: MemberLink, moveFocus = true): Promise<void> {
+async function select(link: MemberLink, moveFocus = true, history: 'push' | 'replace' | 'none' = 'push'): Promise<void> {
 	if (recordingUnsaved.value && link.token !== selectedToken.value) {
 		pendingLink.value = link
 		return
 	}
+	const changed = link.token !== selectedToken.value
 	notice.value = ''
 	selectedToken.value = link.token
 	scoreXml.value = ''
 	recordingUnsaved.value = false
-	const url = window.location.pathname + '?link=' + encodeURIComponent(link.token) + window.location.hash
-	window.history.replaceState(null, '', url)
+	if (history === 'push' && changed) {
+		window.history.pushState({ cantoriaLink: link.token }, '', linkAddress(link))
+	} else if (history !== 'none') {
+		window.history.replaceState({ cantoriaLink: link.token }, '', linkAddress(link))
+	}
 	if (moveFocus) {
 		focusAfterUpdate(excerptHeading)
 	}
@@ -388,6 +338,30 @@ function toList(): void {
 }
 
 /**
+ * Back and forward of the browser or the phone: the piece of the address,
+ * or the list. With an unsaved recording the piece stays and asks first.
+ */
+function onPopState(): void {
+	const token = new URLSearchParams(window.location.search).get('link')
+	const link = token === null ? null : links.find((entry) => entry.token === token) ?? null
+	if (recordingUnsaved.value && link?.token !== selectedToken.value) {
+		window.history.pushState({ cantoriaLink: selectedToken.value }, '', linkAddress(selected.value))
+		if (link) {
+			pendingLink.value = link
+		}
+		return
+	}
+	if (stageOn.value && link?.token !== selectedToken.value) {
+		toggleStage()
+	}
+	if (link) {
+		select(link, true, 'none')
+	} else {
+		toList()
+	}
+}
+
+/**
  * Ask the server before a practice file of the shown excerpt is made.
  *
  * @param input - voice, mode, format, tempo, repeats
@@ -401,33 +375,30 @@ function exportAudio(input: MemberPracticeAudioInput): Promise<void> {
 }
 
 onMounted(async () => {
-	if (offlineSupported()) {
-		// registers the worker, or removes it and what it kept when the module is off
-		await setUpWorker('member', offlineConfig.enabled)
-		await checkDevice()
-		window.addEventListener('online', onOnline)
-	}
+	// registers the worker, or removes it and what it kept when the module is off
+	await device.start()
+	window.addEventListener('popstate', onPopState)
 	const token = new URLSearchParams(window.location.search).get('link')
 	const linked = token === null ? null : links.find((link) => link.token === token)
 	if (linked) {
 		// from a bookmark or a message: straight to the notes, also on a phone
-		select(linked, false)
+		select(linked, false, 'replace')
 		nextTick(() => excerptHeading.value?.scrollIntoView?.({ block: 'start' }))
 	} else if (token !== null) {
 		notice.value = t('cantoria', 'This link is not available to you, or no longer: it may have expired or been revoked. Please ask the conductor or the music librarians for a new link. Everything else shared with you is listed below.')
 	} else if (links.length === 1) {
-		select(links[0], false)
+		select(links[0], false, 'replace')
 	}
 })
 
-onBeforeUnmount(() => window.removeEventListener('online', onOnline))
+onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 </script>
 
 <template>
 	<NcContent app-name="cantoria">
 		<!-- The visible heading is the page heading: no hidden second one (WCAG 2.4.6) -->
 		<NcAppContent :page-title="t('cantoria', 'Shared with me') + ' - ' + t('cantoria', 'Cantoria')">
-			<div class="member-app">
+			<div class="member-app" :class="{ 'member-app--stage': stageOn }">
 				<h1 class="member-app__title no-print">
 					{{ t('cantoria', 'Shared with me') }}
 				</h1>
@@ -474,6 +445,10 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 								{{ n('cantoria', '%n shared link', '%n shared links', links.length) }}
 							</h2>
 							<div v-if="offlineOn && !withoutNetwork && notKept.length > 1" class="member-app__keep-all">
+								<!-- the same hint as at the switch of a piece, before anything is kept (U27) -->
+								<NcNoteCard v-if="homeScreen && keptCount === 0" type="info" class="member-app__hint">
+									{{ homeScreenHint('member') }}
+								</NcNoteCard>
 								<NcButton variant="secondary"
 									:disabled="keeping !== null"
 									:aria-describedby="keepErrors.all ? `${listHeadingId}-error` : undefined"
@@ -524,12 +499,27 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 							</ul>
 						</section>
 						<section v-if="selected" class="member-app__excerpt" :aria-labelledby="excerptHeadingId">
-							<h2 :id="excerptHeadingId" ref="excerptHeading" class="member-app__excerpt-title">
-								{{ selected.title }}
-							</h2>
-							<p v-if="selected.composer" class="member-app__muted">
-								{{ selected.composer }}
-							</p>
+							<div class="member-app__excerpt-head">
+								<div>
+									<h2 :id="excerptHeadingId" ref="excerptHeading" class="member-app__excerpt-title">
+										{{ selected.title }}
+									</h2>
+									<p v-if="selected.composer" class="member-app__muted">
+										{{ selected.composer }}
+									</p>
+								</div>
+								<NcButton v-if="scoreStatus === 'ready'"
+									ref="stageButton"
+									variant="tertiary"
+									class="no-print"
+									:aria-pressed="stageOn ? 'true' : 'false'"
+									@click="toggleStage">
+									<template #icon>
+										<NcIconSvgWrapper :path="stageOn ? mdiFullscreenExit : mdiFullscreen" />
+									</template>
+									{{ t('cantoria', 'Stage view') }}
+								</NcButton>
+							</div>
 							<NcButton v-if="links.length > 1"
 								variant="tertiary"
 								class="member-app__to-list no-print"
@@ -609,7 +599,21 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 								:play-reason="selected.reason"
 								:export-audio="selected.canExportAudio ? exportAudio : null"
 								:practice-key="selected.practiceKey ?? null"
-								:offline="withoutNetwork" />
+								:offline="withoutNetwork"
+								:stage="stageOn"
+								:focus-on-ready="stageOn"
+								:printable="selected.print === true">
+								<template v-if="stageOn" #bar>
+									<NcButton variant="tertiary"
+										:aria-label="t('cantoria', 'Leave the stage view')"
+										:title="t('cantoria', 'Leave the stage view')"
+										@click="toggleStage">
+										<template #icon>
+											<NcIconSvgWrapper :path="mdiFullscreenExit" />
+										</template>
+									</NcButton>
+								</template>
+							</ExcerptViewer>
 						</section>
 						<p v-else class="member-app__muted">
 							{{ t('cantoria', 'Choose a piece from the list to see and hear it.') }}
@@ -732,6 +736,36 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 	.member-app__to-list {
 		display: none !important;
 	}
+}
+
+.member-app__excerpt-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--default-grid-baseline);
+}
+
+/* Stage view: only the piece, on the whole screen where the browser can */
+.member-app--stage .member-app__list,
+.member-app--stage .member-app__device-section,
+.member-app--stage .member-app__intro,
+.member-app--stage .member-app__title,
+.member-app--stage .member-app__to-list {
+	display: none !important;
+}
+
+.member-app--stage .member-app__layout {
+	display: block;
+}
+
+/* larger targets at the music stand */
+.member-app--stage {
+	--default-clickable-area: 48px;
+}
+
+.member-app__hint {
+	margin: 0;
 }
 
 .member-app__excerpt-title,
@@ -867,5 +901,16 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 	.member-app__muted {
 		color: #000;
 	}
+}
+</style>
+
+<style>
+/* Stage view: the header of Nextcloud goes, too */
+body:has(.member-app--stage) {
+	--header-height: 0px;
+}
+
+body:has(.member-app--stage) #header {
+	display: none;
 }
 </style>

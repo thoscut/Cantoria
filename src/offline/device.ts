@@ -16,8 +16,9 @@ import type { Catalog, Collection, CollectionName, KeptPiece, PieceForDevice } f
 
 import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
+import { t } from '../l10n.ts'
 import { preloadToolkit } from '../score/toolkit.ts'
-import { CACHE_PREFIX, COLLECTIONS, parseCatalog, PUBLIC_ACCOUNT, requestKind, SHELL_PREFIX, syncCatalog } from './rules.ts'
+import { CACHE_PREFIX, COLLECTIONS, mayStay, parseCatalog, pieceAddresses, PUBLIC_ACCOUNT, requestKind, SHELL_PREFIX, syncCatalog } from './rules.ts'
 
 /** Whether this browser can keep pieces: a service worker and Cache Storage, on HTTPS */
 export function offlineSupported(): boolean {
@@ -44,19 +45,19 @@ function appUrl(path: string): string {
 const ADDRESSES: Record<CollectionName, { page: (key: string) => string, score: ((key: string) => string) | null, scan: (key: string) => string }> = {
 	member: {
 		page: () => scopeUrl(),
-		score: (token) => appUrl(`api/member/links/${token}/score`),
-		scan: (token) => appUrl(`api/member/links/${token}/scan`),
+		score: (token) => appUrl(pieceAddresses('member', token).notes),
+		scan: (token) => appUrl(pieceAddresses('member', token).scan),
 	},
 	folder: {
 		page: () => appUrl('concert-folder'),
-		score: (id) => appUrl(`api/concert-folder/items/${id}/score`),
-		scan: (id) => appUrl(`api/concert-folder/items/${id}/scan`),
+		score: (id) => appUrl(pieceAddresses('folder', id).notes),
+		scan: (id) => appUrl(pieceAddresses('folder', id).scan),
 	},
 	public: {
 		// the page of a public link is the piece: its notes come with it
-		page: (token) => appUrl(`p/${token}`),
+		page: (token) => appUrl(pieceAddresses('public', token).notes),
 		score: null,
-		scan: (token) => appUrl(`p/${token}/scan`),
+		scan: (token) => appUrl(pieceAddresses('public', token).scan),
 	},
 }
 
@@ -143,6 +144,7 @@ async function writeCatalog(collection: Collection, catalog: Catalog): Promise<v
 
 /**
  * Fetch an address and keep the answer; throws with the server's message.
+ * Only what the server allows to stay on the device (X-Cantoria-Keep).
  *
  * @param cache - the cache
  * @param url - address, also the key in the cache
@@ -158,6 +160,9 @@ async function keep(cache: Cache, url: string, header: string | null = null): Pr
 			// no JSON
 		}
 		throw new Error(message)
+	}
+	if (!mayStay(response.headers)) {
+		throw new Error(t('cantoria', 'Not available without a network: the rights allow no copy on the device.'))
 	}
 	await cache.put(url, response.clone())
 	return response

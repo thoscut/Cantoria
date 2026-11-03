@@ -3258,6 +3258,25 @@ export const singular = {
 	'Programme: {title}, piece {position} of {count}': 'Programm: {title}, Stück {position} von {count}',
 	'Available without a network': 'Ohne Netz verfügbar',
 	'Stage view': 'Bühnenansicht',
+	'Leave the stage view': 'Bühnenansicht verlassen',
+	'{title}, piece {position} of {count}': '{title}, Stück {position} von {count}',
+	'Not available without a network:': 'Nicht ohne Netz verfügbar:',
+	'{title}: {reason}': '{title}: {reason}',
+	'the rights allow no copy on the device.': 'Die Rechte erlauben keine Kopie auf dem Gerät.',
+	'Printing is not licensed for this piece.': 'Für dieses Stück ist das Drucken nicht lizenziert.',
+	'Back to the notes': 'Zurück zu den Noten',
+	Hide: 'Ausblenden',
+	'Tones and mixer': 'Töne und Mischpult',
+	Lyrics: 'Text',
+	'Your pitch while singing': ['Deine Tonhöhe beim Singen', 'Ihre Tonhöhe beim Singen'],
+	'On an iPhone or iPad: first add this page to the home screen, open it from there and then make the piece available. Safari and the home screen keep them apart.': [
+		'Auf iPhone oder iPad: Lege diese Seite zuerst auf den Home-Bildschirm, öffne sie von dort und mach dann das Stück verfügbar. Safari und der Home-Bildschirm halten sie getrennt.',
+		'Auf iPhone oder iPad: Legen Sie diese Seite zuerst auf den Home-Bildschirm, öffnen Sie sie von dort und machen Sie dann das Stück verfügbar. Safari und der Home-Bildschirm halten sie getrennt.',
+	],
+	'On an iPhone or iPad: keep the pieces in Safari and open the concert folder there from a bookmark. From the home screen, Cantoria opens the archive, which needs a network.': [
+		'Auf iPhone oder iPad: Mach die Stücke in Safari verfügbar und öffne die Konzertmappe dort über ein Lesezeichen. Vom Home-Bildschirm aus öffnet sich das Archiv, und das braucht Netz.',
+		'Auf iPhone oder iPad: Machen Sie die Stücke in Safari verfügbar und öffnen Sie die Konzertmappe dort über ein Lesezeichen. Vom Home-Bildschirm aus öffnet sich das Archiv, und das braucht Netz.',
+	],
 	'Next': 'Nächstes',
 	'End of the programme "{title}".': 'Ende des Programms „{title}“.',
 	'Cantoria keeps them in this browser on this device; another browser does not see them.': 'Cantoria legt sie in diesem Browser auf diesem Gerät ab; ein anderer Browser sieht sie nicht.',
@@ -3633,6 +3652,10 @@ export const plural = {
 	'%n piece available without a network|All %n pieces available without a network': [
 		'%n Stück ohne Netz verfügbar',
 		'Alle %n Stücke ohne Netz verfügbar',
+	],
+	'{count} of %n piece available without a network|{count} of %n pieces available without a network': [
+		'{count} von %n Stück ohne Netz verfügbar',
+		'{count} von %n Stücken ohne Netz verfügbar',
 	],
 	'Share %n piece|Share %n pieces': [
 		'%n Stück teilen',

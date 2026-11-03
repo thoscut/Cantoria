@@ -329,6 +329,10 @@ public links stop working at once.
   scripts fetched by one of these pages, and never writing requests or the
   APIs of Nextcloud. Each page has a cache of its own; a page that answers
   without its header (another account, no role) removes only its pieces.
+  The worker stores a score, a scan or a public page only when the server
+  marks the answer with `X-Cantoria-Keep: 1` (the same rights check as the
+  lists), and removes the piece for `0`; it exists only with the module
+  `offline`.
 - A public link (module `offline`) is kept on a device only for a version
   whose public domain is confirmed: visitors have no license, and a license
   for online publication covers the showing, not a copy. Visitors have no

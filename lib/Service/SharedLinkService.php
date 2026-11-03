@@ -63,9 +63,9 @@ use OCP\Files\File;
  * @psalm-type Credit = array{role: string, name: string}
  * @psalm-type MemberLink = array{token: string, title: string, composer: string, measure_from: ?string, measure_to: ?string,
  *     voice: ?string, verse: ?int, tempo: ?int, note: ?string, expires: ?string, canPlay: bool, canExportAudio: bool, reason: ?string,
- *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, practiceKey: string, credits: list<Credit>, notices: list<string>}
+ *     scan: bool, scanSize: ?int, offline: bool, keepUntil: ?string, print: bool, practiceKey: string, credits: list<Credit>, notices: list<string>}
  * @psalm-type PublicExcerpt = array{title: string, composer: string, measureFrom: ?string, measureTo: ?string, voice: ?string,
- *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, served: string, xml: string,
+ *     verse: ?int, tempo: ?int, canPlay: bool, scan: bool, scanSize: ?int, practiceKey: string, expires: ?string, offline: bool, print: bool, served: string, xml: string,
  *     credits: list<Credit>, notices: list<string>}
  */
 class SharedLinkService {
@@ -142,6 +142,8 @@ class SharedLinkService {
 				'offline' => $saveDenial === null && $this->modules->isEnabled(Modules::OFFLINE),
 				// the last day the license allows a copy on the device; null: no end
 				'keepUntil' => $saveDenial === null ? $this->policy->releaseEnd($version, ExcerptLink::CIRCLE_MEMBERS, true, $today) : null,
+				// printing the notes is a copy, too (B21): the same rights as saving the scan
+				'print' => $saveDenial === null,
 				'practiceKey' => self::practiceKey($version),
 			] + $this->attribution($version, $today);
 		}
@@ -159,6 +161,42 @@ class SharedLinkService {
 		$xml = $this->score($link);
 		$this->links->countHit($link->getId());
 		return $xml;
+	}
+
+	/**
+	 * Whether the notes and the scan of a link for choir members may stay on
+	 * the device of the member (header X-Cantoria-Keep, which the service
+	 * worker follows; S N5): the module "offline" and the rights for a copy,
+	 * checked again with every answer, so that a license that ended
+	 * between two checks keeps nothing new on the device.
+	 */
+	public function memberMayKeep(string $token, string $uid): bool {
+		if (!$this->modules->isEnabled(Modules::OFFLINE)) {
+			return false;
+		}
+		try {
+			['copy' => $copy, 'version' => $version] = $this->memberLink($token, $uid);
+		} catch (UserFacingException) {
+			return false;
+		}
+		return $this->policy->memberScanDenial($version, $this->rights->today($uid), $copy) === null;
+	}
+
+	/**
+	 * Whether the page and the scan of a public link may stay on the device
+	 * of a visitor (header X-Cantoria-Keep): the module "offline" and
+	 * confirmed public domain, as visitors have no license.
+	 */
+	public function publicMayKeep(string $token): bool {
+		if (!$this->modules->isEnabled(Modules::OFFLINE)) {
+			return false;
+		}
+		$open = $this->publicLink($token);
+		return $open !== null && self::publicDomainConfirmed($open['version']);
+	}
+
+	private static function publicDomainConfirmed(WorkVersion $version): bool {
+		return $version->getRightsStatus() === 'public_domain' && $version->isConfirmed();
 	}
 
 	/**
@@ -249,7 +287,9 @@ class SharedLinkService {
 			'practiceKey' => self::practiceKey($version),
 			// Kept on a device (milestone 0.15): only confirmed public domain, as visitors have no license
 			'expires' => $link->getExpires(),
-			'offline' => $this->modules->isEnabled(Modules::OFFLINE) && $version->getRightsStatus() === 'public_domain' && $version->isConfirmed(),
+			'offline' => $this->modules->isEnabled(Modules::OFFLINE) && self::publicDomainConfirmed($version),
+			// printing is a copy (B21): only confirmed public domain, as for keeping it
+			'print' => self::publicDomainConfirmed($version),
 			'served' => gmdate('Y-m-d\TH:i:s\Z'),
 			'xml' => $xml,
 		] + $this->attribution($version, $today);

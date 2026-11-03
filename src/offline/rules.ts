@@ -18,6 +18,21 @@ export const CACHE_PREFIX = 'cantoria-'
 export const SHELL_PREFIX = 'cantoria-shell-'
 /** Kept pieces are locked after this many days without a check with the server */
 export const MAX_DAYS_UNCHECKED = 30
+/**
+ * The header of a score, a scan or the page of a public link with which the
+ * server says whether it may stay on the device ('1'); the worker and the
+ * pages keep nothing without it (OfflineController::KEEP_HEADER, S N5)
+ */
+export const KEEP_HEADER = 'X-Cantoria-Keep'
+
+/**
+ * Whether the server allows an answer to stay on the device.
+ *
+ * @param headers - the headers of the answer
+ */
+export function mayStay(headers: Pick<Headers, 'get'>): boolean {
+	return headers.get(KEEP_HEADER) === '1'
+}
 
 /**
  * The pages that keep pieces, each with a cache of its own: "Shared with
@@ -94,6 +109,52 @@ export interface WorkerRequest {
 	kind: RequestKind
 	collection?: CollectionName
 	key?: string
+}
+
+/**
+ * The addresses a kept piece has on the device, relative to the scope of
+ * the worker: its notes (the page of a public link) and its scan.
+ *
+ * @param name - the collection
+ * @param key - token of the link or id of the programme item
+ */
+export function pieceAddresses(name: CollectionName, key: string): { notes: string, scan: string } {
+	switch (name) {
+	case 'member':
+		return { notes: `api/member/links/${key}/score`, scan: `api/member/links/${key}/scan` }
+	case 'folder':
+		return { notes: `api/concert-folder/items/${key}/score`, scan: `api/concert-folder/items/${key}/scan` }
+	default:
+		return { notes: `p/${key}`, scan: `p/${key}/scan` }
+	}
+}
+
+/**
+ * The scripts and styles of the pages that keep pieces, from the list of
+ * the build (Vite's manifest, vite.config.ts): the files of the entries
+ * and of everything they import, also later (the notation engine).
+ *
+ * @param manifest - the manifest of the build
+ * @param entries - the source files of the entries, e.g. "src/member.ts"
+ */
+export function shellFiles(manifest: Record<string, { file: string, imports?: string[], dynamicImports?: string[], css?: string[], assets?: string[] }>, entries: string[]): string[] {
+	const files = new Set<string>()
+	const seen = new Set<string>()
+	const visit = (key: string) => {
+		const chunk = manifest[key]
+		if (!chunk || seen.has(key)) {
+			return
+		}
+		seen.add(key)
+		for (const file of [chunk.file, ...(chunk.css ?? []), ...(chunk.assets ?? [])]) {
+			files.add(file)
+		}
+		for (const next of [...(chunk.imports ?? []), ...(chunk.dynamicImports ?? [])]) {
+			visit(next)
+		}
+	}
+	entries.forEach(visit)
+	return [...files].sort()
 }
 
 /** Paths that never come from the device: login, the session, the APIs of Nextcloud, avatars */
