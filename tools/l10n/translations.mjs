@@ -2743,6 +2743,10 @@ export const singular = {
 		'Die letzte vollständige Sicherung ist älter als %s Tage. Prüfe, ob die Hintergrundjobs der Nextcloud laufen, oder lege eine Sicherung von Hand an.',
 		'Die letzte vollständige Sicherung ist älter als %s Tage. Prüfen Sie, ob die Hintergrundjobs der Nextcloud laufen, oder legen Sie eine Sicherung von Hand an.',
 	],
+	'Only an administrator can give a role to a group you manage as group admin.': [
+		'Nur die Administration kann einer Gruppe eine Rolle geben, die du als Gruppenadministration verwaltest.',
+		'Nur die Administration kann einer Gruppe eine Rolle geben, die Sie als Gruppenadministration verwalten.',
+	],
 	'Only an administrator can give a role to a group you belong to.': [
 		'Nur die Administration kann einer Gruppe, zu der du gehörst, eine Rolle geben.',
 		'Nur die Administration kann einer Gruppe, zu der Sie gehören, eine Rolle geben.',

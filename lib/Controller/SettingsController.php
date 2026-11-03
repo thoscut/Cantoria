@@ -27,9 +27,11 @@ use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\Group\ISubAdmin;
 use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,7 +42,8 @@ use Psr\Log\LoggerInterface;
  * For admins and for the groups the administration has given the page under
  * Administration privileges: Nextcloud checks #[AuthorizedAdminSetting]
  * before the app, Roles::requireSettingsAccess() checks again. Those groups
- * cannot give a role to a group they belong to, change the archive folder
+ * cannot give a role to a group they belong to or manage as group admins
+ * (sub admins), change the archive folder
  * or switch on modules that open the archive to the outside; changes of
  * roles and of the archive folder are logged. The modules
  * (ModuleController) and the repertoire thresholds (EventController) follow
@@ -68,6 +71,8 @@ class SettingsController extends Controller {
 		private IGroupManager $groupManager,
 		private IL10N $l,
 		private LoggerInterface $logger,
+		private ISubAdmin $subAdmin,
+		private IUserManager $userManager,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -100,10 +105,14 @@ class SettingsController extends Controller {
 				$wanted[$role] = array_values(array_unique(Input::stringList($roles[$role], 'Groups')));
 				if (!$admin) {
 					// Given the settings page, a group may arrange the roles of
-					// others, but not give a role to itself.
+					// others, but not give a role to itself, nor to a group
+					// whose members it manages as group admin (it could join it).
 					foreach (array_diff($wanted[$role], $this->roles->groups($role)) as $group) {
 						if ($this->groupManager->isInGroup($uid, $group)) {
 							throw new AccessDeniedException('Only an administrator can give a role to a group you belong to.');
+						}
+						if ($this->managesGroup($uid, $group)) {
+							throw new AccessDeniedException('Only an administrator can give a role to a group you manage as group admin.');
 						}
 					}
 				}
@@ -134,6 +143,28 @@ class SettingsController extends Controller {
 			}
 			return $this->data($uid);
 		});
+	}
+
+	/**
+	 * Whether the account is group admin (sub admin) of the group, so that it
+	 * could add itself. Fails closed: when it cannot be told, it counts as
+	 * managing it.
+	 */
+	private function managesGroup(string $uid, string $groupId): bool {
+		$user = $this->userManager->get($uid);
+		$group = $this->groupManager->get($groupId);
+		if ($user === null) {
+			return true;
+		}
+		if ($group === null) {
+			// A group that does not exist (yet) cannot be managed by anyone.
+			return false;
+		}
+		try {
+			return $this->subAdmin->isSubAdminOfGroup($user, $group);
+		} catch (\Throwable) {
+			return true;
+		}
 	}
 
 	/**

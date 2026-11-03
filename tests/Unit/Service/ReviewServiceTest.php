@@ -125,6 +125,24 @@ final class ReviewServiceTest extends TestCase {
 		self::assertSame([$point], $this->service($point, [Roles::READER], version: self::version(false))->forVersion(3, 'anna')['points']);
 	}
 
+	/**
+	 * One rule (RightsPolicy): a version whose copy is of the kind
+	 * "Preservation copy" counts as one, also without the mark on the
+	 * version.
+	 */
+	public function testThePointsOfAVersionWithACopyOfThePreservationKindAreOnlyForItsViewers(): void {
+		$copy = new \OCA\Cantoria\Db\Copy();
+		$copy->setId(5);
+		$copy->setVersionId(3);
+		$copy->setKind(\OCA\Cantoria\Service\RightsPolicy::PRESERVATION_COPY_KIND);
+		$copies = $this->createStub(CopyMapper::class);
+		$copies->method('findByVersion')->willReturn([$copy]);
+		$point = self::point(Roles::CONDUCTOR);
+		self::assertSame([$point], $this->service($point, [Roles::CONDUCTOR], copies: $copies, version: self::version(false))->forVersion(3, 'anna')['points']);
+		$this->expectException(AccessDeniedException::class);
+		$this->service($point, [Roles::READER], copies: $copies, version: self::version(false))->forVersion(3, 'anna');
+	}
+
 	public function testCorrectionOrdersOfAPreservationCopyAreOnlyForItsViewers(): void {
 		$point = self::point(Roles::CONDUCTOR, ReviewPoint::CORRECT);
 		self::assertSame([], $this->service($point, [Roles::READER], version: self::version(true))->orders('anna'));

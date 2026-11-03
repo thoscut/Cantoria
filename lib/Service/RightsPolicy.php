@@ -69,6 +69,26 @@ class RightsPolicy {
 	}
 
 	/**
+	 * Whether anything of a version is an internal preservation copy, for
+	 * what belongs to the version as a whole (reviews, revisions): the
+	 * version is marked as one, or one of its copies is of the kind
+	 * "Preservation copy" (isPreservationCopy).
+	 *
+	 * @param list<Copy> $copies the copies of the version
+	 */
+	public static function versionHasPreservationCopy(WorkVersion $version, array $copies): bool {
+		if (self::isPreservationCopy($version)) {
+			return true;
+		}
+		foreach ($copies as $copy) {
+			if (self::isPreservationCopy($version, $copy)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @param Copy|null $copy the copy, when the request is about one
 	 * @return string|null null when viewing is allowed, otherwise the reason
 	 */
