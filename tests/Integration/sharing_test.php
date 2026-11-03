@@ -12,7 +12,9 @@ declare(strict_types=1);
  * against a real Nextcloud instance with an imported catalog and a file
  * sync: the role "Choir members" and its routes, links for choir members
  * (allowed, refused without release, preservation copy, only the measures
- * of the excerpt, the whole piece, the scan, practice audio), public links
+ * of the excerpt, the whole piece, the scan, practice audio, sharing a
+ * programme and extending a link through the controllers, also once it has
+ * ended: T32, U40, U41, U45), public links
  * (page, whole piece, scan, unknown, expired, revoked, module off: the same
  * 404) and the public repertoire page.
  *
@@ -36,15 +38,19 @@ require __DIR__ . '/harness.php';
 	['nextcloud-root', 'uid', 'shelfmark-public-domain', 'shelfmark-preservation-copy']);
 
 use OCA\Cantoria\AppInfo\Application;
+use OCA\Cantoria\Controller\EventController;
 use OCA\Cantoria\Controller\MemberController;
 use OCA\Cantoria\Controller\PageController;
 use OCA\Cantoria\Controller\PublicLinkController;
 use OCA\Cantoria\Controller\PublicRepertoireController;
+use OCA\Cantoria\Controller\TaskController;
 use OCA\Cantoria\Db\ArchiveFile;
 use OCA\Cantoria\Db\ArchiveFileMapper;
 use OCA\Cantoria\Db\AuditEntry;
 use OCA\Cantoria\Db\AuditEntryMapper;
 use OCA\Cantoria\Db\CopyMapper;
+use OCA\Cantoria\Db\Event;
+use OCA\Cantoria\Db\EventItemMapper;
 use OCA\Cantoria\Db\ExcerptLink;
 use OCA\Cantoria\Db\ExcerptLinkMapper;
 use OCA\Cantoria\Db\WorkMapper;
@@ -52,16 +58,23 @@ use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Exception\ModuleDisabledException;
 use OCA\Cantoria\Middleware\ModuleMiddleware;
 use OCA\Cantoria\Service\CatalogService;
+use OCA\Cantoria\Service\DueService;
+use OCA\Cantoria\Service\EventService;
 use OCA\Cantoria\Service\LicenseService;
 use OCA\Cantoria\Service\LinkService;
 use OCA\Cantoria\Service\MetaService;
 use OCA\Cantoria\Service\Modules;
+use OCA\Cantoria\Service\PerformanceImportService;
 use OCA\Cantoria\Service\PracticeAudioService;
+use OCA\Cantoria\Service\ProgrammeShareService;
 use OCA\Cantoria\Service\PublicRepertoireService;
+use OCA\Cantoria\Service\RepertoireService;
 use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\SharedLinkService;
+use OCA\Cantoria\Service\TaskService;
+use OCA\Cantoria\Service\UserFiles;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\NotFoundResponse;
@@ -295,6 +308,70 @@ try {
 	$check('practice audio of the whole piece is recorded with the measures of the file', count($wholeExports) === 1);
 	$modules->change([Modules::MEMBER_PRACTICE_AUDIO => false]);
 	$check('practice audio for choir members switched off: not offered', ($shared->forMember($memberUid)[0]['canExportAudio'] ?? true) === false);
+
+	// ---- sharing a programme and extending, through the controllers (T32) ----
+	$eventService = Server::get(EventService::class);
+	$eventController = new EventController(Server::get(IRequest::class), $uid, $roles, $eventService, Server::get(EventItemMapper::class),
+		Server::get(PerformanceImportService::class), Server::get(ProgrammeShareService::class), Server::get(RepertoireService::class),
+		Server::get(UserFiles::class), $l, Server::get(LoggerInterface::class));
+	$taskController = new TaskController(Server::get(IRequest::class), $uid, $roles, Server::get(TaskService::class), $links,
+		Server::get(DueService::class), $l, Server::get(LoggerInterface::class));
+	$today = $rights->today($uid);
+	$day = fn (int $days): string => (new DateTimeImmutable($today))->modify(($days < 0 ? '' : '+') . $days . ' days')->format('Y-m-d');
+	$concert = $eventService->create(Event::CONCERT, ['title' => 'Sharing test concert', 'event_date' => $day(20)], $uid);
+	$programmeItem = $eventService->addItem($concert->getId(), $public->getId(), $uid);
+	$optionOf = function (array $options) use ($programmeItem): array {
+		/** @var list<array<string, mixed>> $items */
+		$items = is_array($options['items'] ?? null) ? $options['items'] : [];
+		return array_values(array_filter($items, fn (array $row): bool => $row['id'] === $programmeItem->getId()))[0] ?? [];
+	};
+	$optionsResponse = $eventController->shareOptions($concert->getId());
+	$options = $optionsResponse->getData();
+	$option = $optionOf($options);
+	$check('share-options: the piece can be shared, by default until two weeks after the concert', $optionsResponse->getStatus() === Http::STATUS_OK
+		&& ($option['allowed'] ?? false) === true && ($options['expires'] ?? null) === $day(34), json_encode($options) ?: '');
+	$check('share-options: the link with a voice is not taken over for the whole choir (U45)', array_key_exists('existing', $option)
+		&& $option['existing'] === null && ($option['playback'] ?? null) === true, json_encode($option) ?: '');
+	$shareResponse = $eventController->share($concert->getId(), [$programmeItem->getId()], is_string($options['expires'] ?? null) ? $options['expires'] : null,
+		'Please look at it before the rehearsal.');
+	$result = $shareResponse->getData();
+	$check('share: one new link for the choir members', $shareResponse->getStatus() === Http::STATUS_OK && ($result['created'] ?? null) === 1
+		&& ($result['failed'] ?? null) === [] && ($result['limited'] ?? null) === [], json_encode($result) ?: '');
+	$programmeLinks = array_values(array_filter($linkMapper->findByCopy($public->getId()),
+		fn (ExcerptLink $row): bool => $row->getEventId() === $concert->getId()));
+	$check('the new link knows the programme, has the note and no voice', count($programmeLinks) === 1
+		&& $programmeLinks[0]->getNote() === 'Please look at it before the rehearsal.' && $programmeLinks[0]->getVoice() === null
+		&& $programmeLinks[0]->getExpires() === $day(34));
+	$programmeLink = $programmeLinks[0] ?? $wholeLink;
+	$tokenHash = $programmeLink->getToken();
+	$check('share-options again: that link is the one to extend', ($optionOf($eventController->shareOptions($concert->getId())->getData())['existing']['id'] ?? null)
+		=== $programmeLink->getId());
+
+	$extendResponse = $taskController->extendLink($programmeLink->getId(), $day(60));
+	$check('extend: the link lasts longer and keeps its address', $extendResponse->getStatus() === Http::STATUS_OK
+		&& ($extendResponse->getData()['expires'] ?? null) === $day(60) && $linkMapper->find($programmeLink->getId())->getToken() === $tokenHash,
+		json_encode($extendResponse->getData()) ?: '');
+	$shorter = $taskController->extendLink($programmeLink->getId(), $day(40));
+	$check('extend: never shorter', $shorter->getStatus() === Http::STATUS_BAD_REQUEST
+		&& str_starts_with((string)($shorter->getData()['error'] ?? ''), 'The link is valid until'), json_encode($shorter->getData()) ?: '');
+	$check('extend: not beyond six months', $taskController->extendLink($programmeLink->getId(), $day(400))->getStatus() === Http::STATUS_BAD_REQUEST);
+
+	// a link that ended stays in the list and can be extended (U40), up to the day the server names (U41)
+	$ended = $linkMapper->find($programmeLink->getId());
+	$ended->setExpires($day(-3));
+	$linkMapper->update($ended);
+	$listed = array_values(array_filter($taskController->activeLinks()->getData(), fn (array $row): bool => $row['id'] === $programmeLink->getId()))[0] ?? [];
+	$check('the list keeps a link that ended three days ago, with the latest day to extend it', ($listed['expires'] ?? null) === $day(-3)
+		&& ($listed['extend_until'] ?? null) === LinkService::latestExpiry($today) && ($listed['extend_limit'] ?? null) === 'six_months',
+		json_encode($listed) ?: '');
+	$check('share-options: the link that ended is the one to extend (U40)', ($optionOf($eventController->shareOptions($concert->getId())->getData())['existing']['id'] ?? null)
+		=== $programmeLink->getId());
+	$revived = $taskController->extendLink($programmeLink->getId(), null);
+	$check('extend without a day: the latest the server allows, the address stays', $revived->getStatus() === Http::STATUS_OK
+		&& ($revived->getData()['expires'] ?? null) === LinkService::latestExpiry($today) && $linkMapper->find($programmeLink->getId())->getToken() === $tokenHash,
+		json_encode($revived->getData()) ?: '');
+	$revivedToken = (string)($links->view($linkMapper->find($programmeLink->getId()), $uid)['token'] ?? '');
+	$check('the choir member opens it again', $measures($shared->memberScore($revivedToken, $memberUid)) === $wholePiece);
 
 	$links->revoke($link->getId(), $uid);
 	$check('a revoked link is dead for choir members', $throws(fn () => $shared->memberScore($link->issuedToken(), $memberUid)) === 'This link has been revoked.');
