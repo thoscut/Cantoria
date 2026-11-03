@@ -74,12 +74,20 @@ vertraglich binden. Darum bewertet die App die **Fassung**, nicht das Werk.
 
 ### Volkslieder und traditionelle Melodien
 
-Eine Melodie ohne bekannte Urheberschaft ist nicht schon deshalb frei. Das
-Recht an einem anonymen Werk erlischt 70 Jahre nach seiner Veröffentlichung,
-oder nach seiner Schaffung, wenn es nicht veröffentlicht wurde (§ 66 Abs. 1
-UrhG). Eine traditionelle Melodie ist also frei, wenn ihre Entstehung oder
-erste Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist,
-zum Beispiel durch eine alte Volksliedsammlung. Viele „Volksweisen“ in
+Eine Melodie oder ein Text ohne bekannte Urheberschaft ist nicht schon
+deshalb frei. Das Recht an einem anonymen Werk erlischt 70 Jahre nach seiner
+Veröffentlichung (§ 66 Abs. 1 Satz 1 UrhG), oder 70 Jahre nach seiner
+Schaffung, wenn es nicht innerhalb dieser 70 Jahre veröffentlicht wurde
+(Satz 2). Wird die Urheberschaft innerhalb der Frist offenbart, etwa weil
+die Person sich zu erkennen gibt oder ihr Name bekannt wird, gilt wieder die
+Regel 70 Jahre nach dem Tod (§ 66 Abs. 2 in Verbindung mit § 64 UrhG). Eine
+traditionelle Melodie ist also frei, wenn ihre Entstehung oder erste
+Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist, zum
+Beispiel durch eine alte Volksliedsammlung. Die App fragt dafür kein Jahr
+ab: Notiere die Sammlung mit ihrem Jahr unter „Notizen“; die Person, die
+den Rechtestatus bestätigt, prüft den Beleg (Leitlinie 1). Dasselbe gilt
+für einen Text, der als „Traditionell (ohne bekannte Urheberschaft)“
+markiert ist. Viele „Volksweisen“ in
 Sammlungen des 20. Jahrhunderts sind in Wahrheit Kompositionen mit
 bekanntem oder ermittelbarem Urheber. Eine **unwesentliche
 Bearbeitung** eines nicht geschützten Werks der Musik ist keine eigene
@@ -89,8 +97,19 @@ Bearbeitung mit eigenem Schutz. Markiert Melodie oder Text nur mit Beleg als
 „traditionell“, zum Beispiel aus einer Volksliedsammlung, und erfasst die
 Bearbeitung trotzdem. Die App schlägt eine traditionelle Melodie nur dann
 als gemeinfrei vor, wenn die Bearbeitung erfasst ist oder die Art der
-Fassung „Original“ lautet (ein unbearbeiteter Satz); sonst lautet der
-Vorschlag „unbekannt“.
+Fassung „Original“ lautet; sonst lautet der Vorschlag „unbekannt“.
+„Original“ heißt dabei: Niemand hat das Werk bearbeitet, es ist die
+Komposition, wie sie geschrieben wurde, oder die Melodie ohne eigenen Satz.
+Die Originalausgabe eines Chorsatzes ist kein „Original“ in diesem Sinn,
+sondern eine „Bearbeitung“.
+
+Dasselbe gilt für jede Bearbeitung, nicht nur von Volksliedern: Ein
+Choralsatz oder ein Arrangement eines klassischen Werks ist nach § 3 UrhG
+eine Bearbeitung mit eigenem Schutz, auch wenn die Komposition längst
+gemeinfrei ist. Ist die Art der Fassung „Bearbeitung“ oder „Einrichtung“
+und keine Person mit der Rolle „Bearbeitung“ erfasst, lautet ein Vorschlag
+„gemeinfrei“ stattdessen „unbekannt“. Das ist vor allem nach einem Import
+wichtig, wenn die Tabelle nur eine Spalte für die Komposition hatte.
 
 ## Fotokopien von Noten
 

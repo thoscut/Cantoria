@@ -2817,16 +2817,20 @@ export const singular = {
 	],
 	'Melody': 'Melodie',
 	'Text': 'Text',
-	'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
-		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
-		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+	'Choose "Traditional" only with evidence, e.g. a folk song collection with its year, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.': [
+		'Wähle „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung mit ihrem Jahr, und notiere ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+		'Wählen Sie „Traditionell“ nur mit Beleg, z. B. einer Volksliedsammlung mit ihrem Jahr, und notieren Sie ihn unter „Notizen“. Dann braucht der Vorschlag zur Schutzfrist keine Komposition; die Bearbeitung zählt weiter, und wenn die Art der Fassung nicht „Original“ ist, muss eine Person für die Bearbeitung erfasst sein.',
+	],
+	'Choose "Original" only when no one has arranged the work: the composition as written, or a melody without a setting of its own. For an arrangement the protection proposal needs the arranger.': [
+		'Wähle „Original“ nur ohne jede Bearbeitung: die Komposition, wie sie geschrieben ist, oder eine Melodie ohne eigenen Satz. Für eine Bearbeitung braucht der Vorschlag zur Schutzfrist ihre Person.',
+		'Wählen Sie „Original“ nur ohne jede Bearbeitung: die Komposition, wie sie geschrieben ist, oder eine Melodie ohne eigenen Satz. Für eine Bearbeitung braucht der Vorschlag zur Schutzfrist ihre Person.',
 	],
 	'Choose "Traditional" only with evidence and note it under "Notes", or "Without text" for a version without words. Otherwise the protection proposal needs a lyricist.': [
 		'Wähle „Traditionell“ nur mit Beleg und notiere ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 		'Wählen Sie „Traditionell“ nur mit Beleg und notieren Sie ihn unter „Notizen“, oder „Ohne Text“ für eine Fassung ohne Worte. Sonst braucht der Vorschlag zur Schutzfrist eine Person für den Text.',
 	],
 	'Traditional (no known composer)': 'Traditionell (ohne bekannte Komposition)',
-	'Traditional (public domain)': 'Traditionell (gemeinfrei)',
+	'Traditional (no known author)': 'Traditionell (ohne bekannte Urheberschaft)',
 	'Without text': 'Ohne Text',
 	'Public domain in doubt': 'Gemeinfreiheit fraglich',
 	'To the catalog librarian, daily: a version confirmed as public domain no longer is by the protection proposal, after a person or life dates were changed.': 'An die Archivverwaltung, täglich: Eine als gemeinfrei bestätigte Fassung ist es nach dem Vorschlag zur Schutzfrist nicht mehr, nachdem eine Person oder Lebensdaten geändert wurden.',
@@ -2838,9 +2842,9 @@ export const singular = {
 		'Für diese Fassung ist kein Text erfasst. Ergänze die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markiere den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 		'Für diese Fassung ist kein Text erfasst. Ergänzen Sie die Person unter „Beteiligte Personen und Schutzfrist“ (Reiter „Rechte“) oder markieren Sie den Text als traditionell oder die Fassung als ohne Text; bis dahin heißt unbekannt geschützt.',
 	],
-	'The melody is traditional, but no arranger is recorded. Add the arranger on the tab "Rights", or choose "Original" as the kind of version; until then unknown means protected.': [
-		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänze sie im Reiter „Rechte“ oder wähle als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
-		'Die Melodie ist traditionell, aber keine Bearbeitung ist erfasst. Ergänzen Sie sie im Reiter „Rechte“ oder wählen Sie als Art der Fassung „Original“; bis dahin heißt unbekannt geschützt.',
+	'No arranger is recorded, although the version is arranged or its melody is traditional. Add the arranger on the tab "Rights"; until then unknown means protected. "Original" means: not arranged.': [
+		'Die Bearbeitung fehlt, obwohl die Fassung bearbeitet ist oder ihre Melodie traditionell. Ergänze sie im Reiter „Rechte“; bis dahin heißt unbekannt geschützt. „Original“ heißt: unbearbeitet.',
+		'Die Bearbeitung fehlt, obwohl die Fassung bearbeitet ist oder ihre Melodie traditionell. Ergänzen Sie sie im Reiter „Rechte“; bis dahin heißt unbekannt geschützt. „Original“ heißt: unbearbeitet.',
 	],
 	'Melody and text are marked as traditional and no other person is recorded: no one has rights of their own. Check that no arranger or translator is missing.': [
 		'Melodie und Text sind als traditionell markiert und keine weitere Person ist erfasst: Niemand hat eigene Rechte. Prüfe, dass keine Bearbeitung oder Übersetzung fehlt.',

@@ -100,6 +100,11 @@ final class ProtectionTerm {
 	/** Role of the arranger, and the kind of version (Fields::VERSION_KIND) that needs none */
 	public const ARRANGER_ROLE = 'arranger';
 	public const ORIGINAL_KIND = 'original';
+	/**
+	 * Kinds of version that are an arrangement of the work (§ 3 UrhG): they
+	 * need the arranger recorded, whatever the melody (R B24)
+	 */
+	public const ARRANGED_KINDS = ['arrangement', 'adaptation'];
 
 	/** Reasons why no date can be given, most serious first */
 	private const BLOCKING_ORDER = ['living', 'death_unknown', 'death_circa', 'identification_uncertain', 'year_missing'];
@@ -123,10 +128,12 @@ final class ProtectionTerm {
 			return $proposal;
 		}
 		$proposal = self::byAuthors($proposal, $persons, $cases, $roles, $melodyOrigin, $textOrigin);
-		if ($proposal['status'] === self::FREE && $melodyOrigin === self::TRADITIONAL && $versionKind !== self::ORIGINAL_KIND
-			&& !in_array(self::ARRANGER_ROLE, $roles, true)) {
-			// A traditional melody in a setting whose arranger is not recorded:
-			// the arranger may still be protected (§ 3 UrhG).
+		$arranged = in_array($versionKind, self::ARRANGED_KINDS, true)
+			|| ($melodyOrigin === self::TRADITIONAL && $versionKind !== self::ORIGINAL_KIND);
+		if ($proposal['status'] === self::FREE && $arranged && !in_array(self::ARRANGER_ROLE, $roles, true)) {
+			// An arrangement or adaptation (of any work, R B24), or a traditional
+			// melody in a setting other than the original, whose arranger is not
+			// recorded: the arranger may still be protected (§ 3 UrhG).
 			return ['status' => self::UNKNOWN, 'until' => null, 'freeSince' => null, 'reason' => 'arranger_missing', 'parameters' => [],
 				'decisivePersonId' => null, 'blocking' => []] + (isset($proposal['special']) ? ['special' => $proposal['special']] : []);
 		}

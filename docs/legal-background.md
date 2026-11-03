@@ -72,12 +72,18 @@ work.
 
 ### Folk songs and traditional melodies
 
-A melody without a known author is not free for that reason alone. The
-right in an anonymous work ends 70 years after its publication, or after
-its creation if it was not published (§ 66 (1) UrhG). A traditional melody
-is therefore free when its creation or first publication lies more than 70
-years back and that is documented, for example by an old folk song
-collection. Many "folk tunes" in collections of the 20th century are in
+A melody or a text without a known author is not free for that reason
+alone. The right in an anonymous work ends 70 years after its publication
+(§ 66 (1) sentence 1 UrhG), or 70 years after its creation if it was not
+published within these 70 years (sentence 2). If the author becomes known
+within the term, for example because they make themselves known or their
+name comes to light, the rule of 70 years after death applies again
+(§ 66 (2) with § 64 UrhG). A traditional melody is therefore free when its
+creation or first publication lies more than 70 years back and that is
+documented, for example by an old folk song collection. The app does not
+ask for a year: note the collection with its year under "Notes"; the
+person who confirms the rights status checks the evidence (guideline 1).
+The same holds for a text marked "Traditional (no known author)". Many "folk tunes" in collections of the 20th century are in
 truth compositions whose author is known or can be found. An
 **insignificant arrangement**
 of a musical work that is not protected is no arrangement of its own (§ 3
@@ -86,8 +92,19 @@ worked-out choral setting usually is an arrangement with protection of its
 own. Mark melody or text as "traditional" only with evidence, for example a
 folk song collection, and still record the arranger. The app suggests a
 traditional melody as public domain only when the arranger is recorded or
-the kind of version is "Original" (an unarranged setting); otherwise the
-suggestion is "unknown".
+the kind of version is "Original"; otherwise the suggestion is "unknown".
+"Original" means that no one has arranged the work: the composition as it
+was written, or the melody without a setting of its own. The original
+edition of a choral setting is no "Original" in this sense but an
+"Arrangement".
+
+The same holds for every arrangement, not only of folk songs: a chorale
+setting or an arrangement of a classical work is an arrangement with a
+protection of its own under § 3 UrhG, even when the composition has long
+been in the public domain. When the kind of version is "Arrangement" or
+"Adaptation" and no person with the role "Arranger" is recorded, a
+suggestion of public domain becomes "unknown". This matters most after an
+import from a spreadsheet with only one column for the composer.
 
 ## Photocopies of sheet music
 

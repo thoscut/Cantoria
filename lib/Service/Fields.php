@@ -113,7 +113,8 @@ final class Fields {
 			'scientific_edition' => 'Switch on for an edition of works that are no longer protected, made by scholarly work and clearly different from earlier editions, e.g. an urtext or critical edition (§ 70 UrhG): it is protected for 25 years after it appeared.',
 			'posthumous_work' => 'Switch on for a work whose protection had already ended when it first appeared or was first performed in public, e.g. a rediscovered manuscript (§ 71 UrhG): whoever first published or performed it has a right for 25 years after the earlier of the two.',
 			'first_published_year' => 'Year in which the edition appeared (§ 70) or in which the work first appeared or was first performed in public (§ 71), e.g. 1998. Needed for both special cases.',
-			'melody_origin' => 'Choose "Traditional" only with evidence, e.g. a folk song collection, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.',
+			'melody_origin' => 'Choose "Traditional" only with evidence, e.g. a folk song collection with its year, and note it under "Notes". Then the protection proposal needs no composer; the arranger still counts, and unless the kind of version is "Original" an arranger must be recorded.',
+			'kind' => 'Choose "Original" only when no one has arranged the work: the composition as written, or a melody without a setting of its own. For an arrangement the protection proposal needs the arranger.',
 			'society_work_no' => 'The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.',
 			'text_origin' => 'Choose "Traditional" only with evidence and note it under "Notes", or "Without text" for a version without words. Otherwise the protection proposal needs a lyricist.',
 		],
@@ -126,7 +127,7 @@ final class Fields {
 
 	/** A traditional text or none (milestone 0.11); empty: the persons recorded wrote it */
 	public const TEXT_ORIGIN = [
-		'traditional' => 'Traditional (public domain)',
+		'traditional' => 'Traditional (no known author)',
 		'none' => 'Without text',
 	];
 
