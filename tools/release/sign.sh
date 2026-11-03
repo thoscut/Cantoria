@@ -5,8 +5,9 @@
 # Signs the release archive that the CI built from the tag, for the app store:
 #   tools/release/sign.sh ARCHIVE SHA256SUMS KEY CERT OCC
 #
-# ARCHIVE and SHA256SUMS are the files of the draft release that the
-# workflow Release created for the tag (docs/release.md). KEY is the private
+# ARCHIVE (cantoria-<version>-unsigned.tar.gz) and SHA256SUMS are the files
+# of the draft release that the workflow Release created for the tag
+# (docs/release.md). KEY is the private
 # key of the app store certificate, CERT the certificate issued by
 # Nextcloud, OCC the path to `occ` of any Nextcloud instance.
 #
@@ -16,7 +17,7 @@
 # packs it again in the same reproducible way, checks with compare.sh that
 # only appinfo/signature.json was added, signs the archive (SHA-512) and
 # prints the signature for the app store upload form. The signed archive is
-# written to build/release/signed/.
+# written to build/release/signed/cantoria-<version>.tar.gz.
 set -euo pipefail
 
 if [ $# -ne 5 ]; then
@@ -54,7 +55,9 @@ if [ -e "$STAGE/$APP_ID/appinfo/signature.json" ]; then
 	exit 1
 fi
 VERSION=$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' "$STAGE/$APP_ID/appinfo/info.xml")
-if [ "$NAME" != "$APP_ID-$VERSION.tar.gz" ]; then
+# The draft release names it cantoria-<version>-unsigned.tar.gz, the CI
+# artifact cantoria-<version>.tar.gz
+if [ "$NAME" != "$APP_ID-$VERSION-unsigned.tar.gz" ] && [ "$NAME" != "$APP_ID-$VERSION.tar.gz" ]; then
 	echo "$NAME holds version $VERSION" >&2
 	exit 1
 fi
@@ -65,7 +68,7 @@ php "$OCC" integrity:sign-app --privateKey="$KEY" --certificate="$CERT" --path="
 
 OUT="$ROOT/build/release/signed"
 mkdir -p "$OUT"
-SIGNED="$OUT/$NAME"
+SIGNED="$OUT/$APP_ID-$VERSION.tar.gz"
 pack_archive "$STAGE" "$APP_ID" "$EPOCH" "$SIGNED"
 "$ROOT/tools/release/compare.sh" "$ARCHIVE" "$SIGNED"
 if ! tar -tzf "$SIGNED" | grep -x "$APP_ID/appinfo/signature.json" >/dev/null; then

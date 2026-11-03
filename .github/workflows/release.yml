@@ -99,10 +99,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
+        # The unsigned archive is named cantoria-<version>-unsigned.tar.gz;
+        # the maintainer adds the signed cantoria-<version>.tar.gz
+        # (tools/release/sign.sh) before publishing the release.
         run: |
           cd "$RUNNER_TEMP/ci"
           sha256sum -c SHA256SUMS
-          cat SHA256SUMS
+          mkdir draft
+          for archive in cantoria-*.tar.gz; do
+            cp "$archive" "draft/${archive%.tar.gz}-unsigned.tar.gz"
+          done
+          cd draft
+          sha256sum cantoria-*-unsigned.tar.gz | tee SHA256SUMS
           gh release create "$TAG" --draft --verify-tag --title "$TAG" \
-            --notes "Unsigned release archive of $TAG as built and tested by the CI (run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID). The archive in the app store differs from it only by appinfo/signature.json: tools/release/compare.sh shows this." \
-            cantoria-*.tar.gz SHA256SUMS
+            --notes "Unsigned release archive of $TAG as built and tested by the CI (run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID). The signed archive of the app store differs from it only by appinfo/signature.json: tools/release/compare.sh shows this." \
+            cantoria-*-unsigned.tar.gz SHA256SUMS

@@ -30,7 +30,21 @@ only accepts signed releases from a public repository.
    All other branches keep their history. The fork relation to the
    Orchestra Scores Manager stays visible on GitHub until GitHub support
    detaches the fork.
-2. **Key and certificate request.** Create a private key and a certificate
+2. **Trademark check of the name, before the certificate request.** The
+   certificate is issued for the app id `cantoria` and cannot be moved to
+   another id; a name that must change after the request means a new
+   certificate, a new app id and a new listing. Search the registers for
+   "Cantoria" as a word mark and for similar spellings in the Nice classes
+   9, 41 and 42, with the list of goods and services and the status of each
+   hit: [DPMAregister](https://register.dpma.de),
+   [TMview](https://www.tmdn.org/tmview),
+   [WIPO Global Brand Database](https://branddb.wipo.int) and
+   [USPTO](https://tmsearch.uspto.gov) (with TSDR for the details). Record
+   the result with its date in the
+   [name search](de/namensrecherche-cantoria.md) and, where a hit is
+   close, have it assessed by a lawyer. Request the certificate only when
+   the result is recorded and the name stays.
+3. **Key and certificate request.** Create a private key and a certificate
    signing request with the app id as common name, and request the certificate
    with a pull request to
    [nextcloud/app-certificate-requests](https://github.com/nextcloud/app-certificate-requests):
@@ -41,7 +55,7 @@ only accepts signed releases from a public repository.
 
    Keep `cantoria.key` secret and outside the repository. Nextcloud
    returns the signed certificate (`cantoria.crt`).
-3. **Register the app** on [apps.nextcloud.com](https://apps.nextcloud.com)
+4. **Register the app** on [apps.nextcloud.com](https://apps.nextcloud.com)
    (account → register app) with the certificate and the signature of the app
    id:
 
@@ -67,17 +81,33 @@ milestones of the [roadmap](../ROADMAP.md):
 
 The internal builds before 0.6.0 were numbered 0.1.x.
 
+`main` always carries the next pre-release, never the version already
+released: right after a release, raise `<version>` to the next
+`-dev.1` (after 0.16.1: `0.17.0-dev.1`), and raise `-dev.N` with every
+schema change or new route on `main`, so that a test instance that installs
+`main` runs the new migration and reloads the routes. A migration counts as
+released as soon as it is on `main`, since a test instance may have run it:
+it goes into `ReleasedMigrationsTest::RELEASED` with its checksum in the
+same pull request, and from then on it is never changed
+(`tools/release/package.sh` refuses to build a version whose migrations are
+not all listed with the right checksum).
+
 ## Every release
 
-1. Raise `<version>` in `appinfo/info.xml` (semantic versioning; a schema
-   change or a new route always needs a new version, otherwise Nextcloud does
-   not run the migration or reload the routes), and the same version in
-   `package.json` and `package-lock.json`; `tools/release/package.sh` stops
-   when `info.xml` and `package.json` differ. Check the supported Nextcloud
-   range in `<dependencies>`.
-2. Move the entries under `[Unreleased]` in `CHANGELOG.md` to the new version
+1. Raise `<version>` in `appinfo/info.xml` from the pre-release of `main`
+   to the final version (semantic versioning; a schema change or a new
+   route always needs a new version, otherwise Nextcloud does not run the
+   migration or reload the routes), and the same version in `package.json`
+   and `package-lock.json`; `tools/release/package.sh` stops when the three
+   differ. Check the supported Nextcloud range in `<dependencies>`.
+2. Check that every migration of the version is listed with its checksum in
+   `RELEASED` of `tests/Unit/Migration/ReleasedMigrationsTest.php`
+   (`sha256sum lib/Migration/<file>`). This normally happened when the
+   migration came to `main` (see above); `tools/release/package.sh` refuses
+   to build otherwise.
+3. Move the entries under `[Unreleased]` in `CHANGELOG.md` to the new version
    with its date.
-3. Run the checks: `composer test:unit`, `composer psalm`,
+4. Run the checks: `composer test:unit`, `composer psalm`,
    `composer cs:check`, `npm run lint`, `npm run stylelint`, `npm test`,
    `npm run typecheck`, `npm run l10n` (fails on
    missing translations), and the integration tests in `tests/Integration`
@@ -85,42 +115,84 @@ The internal builds before 0.6.0 were numbered 0.1.x.
    (`.github/workflows/ci.yml`) runs all of them on every push and pull
    request, the integration tests with the demo data on fresh Nextcloud 33
    and 35 instances (`tools/ci/integration-demo.sh`, see
-   [tests/README.md](../tests/README.md)); release only from a commit whose
-   CI run is green. When the supported range in `<dependencies>` changes,
-   change the Nextcloud versions of the `integration` job as well.
-4. Tag the version (`git tag -a v<version>`) and push the tag. The
-   workflow **Release** (`.github/workflows/release.yml`) builds the archive
-   twice from the tag, checks that both builds are the same bytes and keeps
-   the archive with its checksum as an artifact of the run. It does not sign
-   and does not upload.
-5. Build and sign on a machine with Node.js, PHP and a Nextcloud instance
-   (for `occ integrity:sign-app`):
+   [tests/README.md](../tests/README.md)), each on the release archive that
+   the job `archive` built (`tools/release/package.sh --unreleased`). When
+   the supported range in `<dependencies>` changes, change the Nextcloud
+   versions of the `integration` job as well.
+5. Tag the version (`git tag -a v<version>`) and push the tag. The
+   workflow **Release** (`.github/workflows/release.yml`):
+   - runs the whole CI for the tag; its job `archive` builds the archive
+     with all checks of a final version (clean checkout, the tag on `HEAD`,
+     the `CHANGELOG.md` entry, every migration in `RELEASED`, `info.xml`
+     against the app store schema pinned with its checksum, Node.js of
+     `.nvmrc`, `reuse lint` over the content of the archive), and the
+     integration tests install exactly this archive;
+   - only if all of that is green, builds the archive again in a separate
+     job on a fresh runner and checks that both are the same bytes;
+   - creates a **draft release** for the tag with
+     `cantoria-<version>-unsigned.tar.gz` and `SHA256SUMS`. Note the
+     checksum that the log of the job `archive` prints.
+
+   The archive holds only committed files (`git archive` of the commit) and
+   the build of `js/` and `css/`; npm installs the dependencies without
+   their install scripts. It holds the license texts (`LICENSES/`,
+   `REUSE.toml`), the texts of the licenses of the bundled third-party code
+   (downloaded with a fixed checksum), `js/third-party-licenses.txt` (every
+   bundled package with its license, and the fonts and C++ libraries
+   compiled into Verovio with their copyright notices) and nothing internal
+   or for development. It is reproducible: files sorted, times of the last
+   commit, no owner names.
+6. **Test the upgrade before the upload.** On a test instance that runs the
+   previous release (with data, e.g. the demo data of `tools/demo`), replace
+   `apps/cantoria` with the content of
+   `cantoria-<version>-unsigned.tar.gz` of the draft release (remove the old
+   directory first, as the app store update does), run `occ upgrade` and
+   check the update path:
+   migrations ran (`occ migrations:status cantoria`), background jobs run,
+   settings, roles and links are kept, and the pages open. (An unsigned
+   archive is fine for a test instance; Nextcloud only reports the missing
+   signature in the integrity check.) A failure here costs a new tag, not a
+   broken update for every choir.
+7. **Sign the archive of the draft release** on a machine with PHP, OpenSSL
+   and any Nextcloud instance (for `occ integrity:sign-app`); Node.js and
+   npm are not needed, nothing is built there:
 
    ```sh
-   tools/release/package.sh --sign /path/cantoria.key /path/cantoria.crt /path/to/nextcloud/occ
+   tools/release/sign.sh cantoria-<version>-unsigned.tar.gz SHA256SUMS \
+     /path/cantoria.key /path/cantoria.crt /path/to/nextcloud/occ
    ```
 
-   The script checks `appinfo/info.xml` against the app store schema (with
-   `xmllint`); for a final version (no `-dev.N`) it also needs a clean
-   working tree, the tag `v<version>` on `HEAD` and the entry in
-   `CHANGELOG.md`. It builds the frontend and the translations, copies only
-   the runtime files together with the license texts (`LICENSES/`,
-   `REUSE.toml`), adds the texts of the GPL, LGPL and SIL Open Font License
-   for the bundled Verovio and its music fonts (downloaded with a fixed
-   checksum), checks `js/third-party-licenses.txt` (every bundled package
-   with its license, written by the build), refuses to package internal or
-   development files, writes the code signature (`appinfo/signature.json`)
-   into the archive, checks the archive signature against the certificate
-   and prints it. The archive is reproducible: files sorted, times of the
-   last commit, no owner names.
-6. Attach `build/release/cantoria-<version>.tar.gz` to the release in the
-   repository (the app store downloads it from a public HTTPS URL) and upload
-   that URL with the printed signature on apps.nextcloud.com (account → upload
-   app release). Mark pre-releases as nightly or with a pre-release version
-   such as `1.0.0-rc.1`.
-7. After the app store has published the release, update a test instance
-   from the app store and check the update path (migrations, background
-   jobs, settings kept).
+   Compare the checksum in `SHA256SUMS` with the one in the log of the run
+   first. The script checks the archive against `SHA256SUMS`, writes the
+   code signature (`appinfo/signature.json`), packs the archive again in the
+   same reproducible way as `build/release/signed/cantoria-<version>.tar.gz`,
+   checks with `tools/release/compare.sh` that only
+   `appinfo/signature.json` was added, checks the archive signature against
+   the certificate and prints it.
+8. Attach `build/release/signed/cantoria-<version>.tar.gz` to the draft
+   release, publish the release (the app store downloads the archive from a
+   public HTTPS URL), and upload that URL with the printed signature on
+   apps.nextcloud.com (account → upload app release). Mark pre-releases as
+   nightly or with a pre-release version such as `1.0.0-rc.1`.
+9. After the app store has published the release, update a test instance
+   from the app store once more and check that the update arrives.
+10. Raise `<version>` on `main` to the next pre-release (e.g. `0.18.0-dev.1`).
 
-Any change to a file after signing invalidates the code signature; build and
-sign again instead of editing the archive.
+Any change to a file after signing invalidates the code signature; sign the
+archive of the draft release again instead of editing the signed archive.
+
+### Checking the archive of the app store
+
+Anyone can check that the archive in the app store is the one that the CI
+built and tested from the tag: download the signed archive and
+`cantoria-<version>-unsigned.tar.gz` from the release, check the latter
+against `SHA256SUMS`, and run
+
+```sh
+tools/release/compare.sh cantoria-<version>-unsigned.tar.gz cantoria-<version>.tar.gz
+```
+
+It reports a difference in anything but `appinfo/signature.json`. To check
+the unsigned archive against the tag itself, check out the tag and run
+`tools/release/package.sh` with Node.js of `.nvmrc` (or in the container
+image of the job `archive`): it builds the same bytes.
