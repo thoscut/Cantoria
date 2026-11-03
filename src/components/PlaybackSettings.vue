@@ -169,8 +169,9 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 						:error="rangeError !== ''"
 						:aria-describedby="describedBy" />
 				</div>
+				<!-- not only "Show": the button of "More for practising" below shows something else (D36) -->
 				<NcButton type="submit">
-					{{ t('cantoria', 'Show') }}
+					{{ t('cantoria', 'Show measures') }}
 				</NcButton>
 				<NcButton v-if="rangeActive" variant="tertiary" @click="emit('showAll')">
 					{{ t('cantoria', 'All measures') }}
@@ -229,10 +230,11 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 				<h3 :id="moreHeadingId" class="playback-settings__heading">
 					{{ t('cantoria', 'More for practising') }}
 				</h3>
+				<!-- the name says what it shows, also for voice control; it contains the visible word (WCAG 2.5.3, D36) -->
 				<NcButton variant="tertiary"
 					:aria-expanded="moreShown ? 'true' : 'false'"
 					:aria-controls="moreId"
-					:aria-describedby="moreHeadingId"
+					:aria-label="moreShown ? t('cantoria', 'Hide more for practising') : t('cantoria', 'Show more for practising')"
 					@click="moreShown = !moreShown">
 					<template #icon>
 						<NcIconSvgWrapper :path="moreShown ? mdiChevronUp : mdiChevronDown" />

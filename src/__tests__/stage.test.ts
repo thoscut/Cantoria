@@ -108,6 +108,39 @@ describe('stage view', () => {
 		expect(lock.release).toHaveBeenCalledTimes(1)
 	})
 
+	it('with a dialog open ends only the whole screen: the stage view, the dialog and the focus stay (D33)', async () => {
+		const fullscreen = fakeFullscreen()
+		const lock = fakeWakeLock()
+		const { stage, onLeave } = mountStage()
+		await stage.enter()
+		const dialog = document.createElement('div')
+		dialog.setAttribute('role', 'dialog')
+		dialog.setAttribute('aria-modal', 'true')
+		document.body.appendChild(dialog)
+		// the browser's Escape in the whole screen
+		fullscreen.end()
+		await flush()
+		expect(stage.on.value).toBe(true)
+		expect(onLeave).not.toHaveBeenCalled()
+		expect(lock.release).not.toHaveBeenCalled()
+		// the next Escape belongs to the dialog, the one after it ends the stage view
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+		expect(stage.on.value).toBe(true)
+		dialog.remove()
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+		await flush()
+		expect(stage.on.value).toBe(false)
+		expect(onLeave).toHaveBeenCalledTimes(1)
+	})
+
+	it('asks for the whole screen first, while the browser still counts the tap, then keeps the screen on (U26)', async () => {
+		const fullscreen = fakeFullscreen()
+		const lock = fakeWakeLock()
+		const { stage } = mountStage()
+		await stage.enter()
+		expect(fullscreen.request.mock.invocationCallOrder[0]).toBeLessThan(lock.request.mock.invocationCallOrder[0]!)
+	})
+
 	it('ends with Escape also without the whole screen (an iPhone), but leaves Escape to fields and dialogs', async () => {
 		Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false })
 		Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => null })

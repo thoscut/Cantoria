@@ -10,6 +10,10 @@
  * header instead of under it (e.g. when tabbing backwards through a list).
  * The header may appear later than the component (the bar of a score view
  * comes with the score); the container is the scrolling element around it.
+ * A header that sticks only within its own part of the page (the bar of a
+ * score view, inside the view) keeps the room only there (D34): its height
+ * goes to the part as STICKY_OFFSET, which the part gives its elements as
+ * scroll-margin-top, and the rest of the page scrolls as usual.
  */
 import type { Ref } from 'vue'
 
@@ -21,6 +25,9 @@ const GAP = 8
 /** The scrolling content of the app pages */
 export const APP_CONTENT = '#app-content-vue, .app-content'
 
+/** The custom property with the room below a header that sticks only within its part */
+export const STICKY_OFFSET = '--cantoria-sticky-offset'
+
 let owners = 0
 
 /**
@@ -28,15 +35,22 @@ let owners = 0
  *
  * @param header - the sticky element
  * @param containers - selector of the scrolling element around it, the nearest one counts
+ * @param options - within: the header sticks only within its parent, the room is kept only there
+ * @param options.within - the header sticks only within its parent
  */
-export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, containers: string = APP_CONTENT): void {
+export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, containers: string = APP_CONTENT, options: { within?: boolean } = {}): void {
 	let observer: ResizeObserver | null = null
 	let container: HTMLElement | null = null
 	const owner = ++owners
 
 	const update = (): void => {
 		if (container && header.value) {
-			container.style.scrollPaddingTop = `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
+			const room = `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
+			if (options.within) {
+				container.style.setProperty(STICKY_OFFSET, room)
+			} else {
+				container.style.scrollPaddingTop = room
+			}
 			container.dataset.stickyOwner = String(owner)
 		}
 	}
@@ -47,6 +61,7 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 		// Another view may already have taken over the container
 		if (container && container.dataset.stickyOwner === String(owner)) {
 			container.style.scrollPaddingTop = ''
+			container.style.removeProperty(STICKY_OFFSET)
 			delete container.dataset.stickyOwner
 		}
 		container = null
@@ -54,8 +69,9 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 
 	watch(header, (element) => {
 		release()
-		container = element?.parentElement?.closest<HTMLElement>(containers) ?? null
-		if (!container || !element) {
+		// within its part: the part is the parent of the header, inside the scrolling element
+		container = (options.within ? element?.parentElement : element?.parentElement?.closest<HTMLElement>(containers)) ?? null
+		if (!container || !element || (options.within && !container.closest(containers))) {
 			container = null
 			return
 		}

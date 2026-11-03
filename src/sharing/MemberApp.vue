@@ -114,7 +114,19 @@ const recordingUnsaved = ref(false)
 const pendingLink = ref<MemberLink | null>(null)
 useLeaveGuard(recordingUnsaved)
 const stageButton = ref<FocusTarget>(null)
-const { on: stageOn, toggle: toggleStage } = useStage(() => focusElement(stageButton.value))
+const viewer = ref<InstanceType<typeof ExcerptViewer> | null>(null)
+const { on: stageOn, toggle: toggleStage } = useStage(() => focusAfterUpdate(stageButton))
+/** In the stage view the notes are in view: the page shows only the bar and the notes (D27, U48) */
+const notesOnStage = computed(() => stageOn.value && scoreStatus.value === 'ready')
+
+/** Enter or leave the stage view; entering it, the focus goes into the notes, which come up to the bar (D27). */
+async function toggleStageView(): Promise<void> {
+	await toggleStage()
+	if (stageOn.value) {
+		await nextTick()
+		viewer.value?.focusScore()
+	}
+}
 
 // ---- available without a network (milestones 0.15 and 0.19) ----------------
 
@@ -132,13 +144,14 @@ const keeping = ref<string | null>(null)
 const keepErrors = ref<Record<string, string>>({})
 /** "3 of 12 pieces ready …" while all are kept */
 const keepProgress = ref('')
-const confirmingDelete = ref(false)
-/** The button that confirms deleting everything on this device */
-const confirmDeleteButton = ref<FocusTarget>(null)
+/** The heading "Without a network": the focus after everything is deleted (D28) */
+const deviceHeading = ref<HTMLElement | null>(null)
 const deviceStatus = ref('')
 /** Links that may be kept and are not yet */
 const notKept = computed(() => links.filter((link) => link.offline && !isKept(link)))
 const homeScreen = homeScreenAdvice()
+/** The hint for an iPhone or iPad above "Make all … available": then not again at the piece, once per page (U38) */
+const keepAllHint = computed(() => homeScreen && keptCount.value === 0 && offlineOn && !withoutNetwork.value && notKept.value.length > 1)
 
 /**
  * What the server says about keeping a link.
@@ -238,11 +251,12 @@ const sections = (() => {
 	const { programmes, others } = groupByProgramme(links)
 	const list = programmes.map((programme) => ({
 		key: 'programme-' + programme.key,
-		heading: [programme.title || t('cantoria', 'Programme'), programme.date ? formatDate(programme.date) : ''].filter(Boolean).join(' · '),
+		heading: programme.title || t('cantoria', 'Programme'),
+		date: programme.date ? formatDate(programme.date) : '',
 		links: programme.links,
 	}))
 	if (others.length > 0) {
-		list.push({ key: 'others', heading: programmes.length > 0 ? t('cantoria', 'More pieces') : '', links: others })
+		list.push({ key: 'others', heading: programmes.length > 0 ? t('cantoria', 'More pieces') : '', date: '', links: others })
 	}
 	return list
 })()
@@ -254,15 +268,11 @@ async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
 	forgetVisits()
 	newTokens.value = new Set()
-	confirmingDelete.value = false
 	deviceStatus.value = t('cantoria', 'Everything Cantoria kept on this device is deleted.')
 }
 
-/** "Remove from this device" at the top: the confirmation at the end of the page, with the focus on it (S N6). */
-function startRemoving(): void {
-	confirmingDelete.value = true
-	focusAfterUpdate(confirmDeleteButton)
-}
+/** What "Delete everything on this device" deletes besides the pieces (U43) */
+const deleteConsequence = t('cantoria', 'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages, the settings for practising and the marks "New".')
 
 /** Words of a text reference (the same texts as in the archive). */
 const WORDS = {
@@ -332,9 +342,10 @@ function linkAddress(link: MemberLink | null): string {
 
 /**
  * Show an excerpt next to or below the list; the address names it, so
- * that it can be bookmarked, and a new entry in the history lets the back
- * gesture of a phone return to the list (U29). An unsaved recording of the
- * shown piece is not lost without a question.
+ * that it can be bookmarked. The first piece opened from the list adds an
+ * entry to the history, every further one takes its place, so that the
+ * back gesture of a phone always returns to the list (U29, U39). An unsaved
+ * recording of the shown piece is not lost without a question.
  *
  * @param link - member link
  * @param moveFocus - put the focus on its heading (after a click in the list)
@@ -345,12 +356,13 @@ async function select(link: MemberLink, moveFocus = true, history: 'push' | 'rep
 		pendingLink.value = link
 		return
 	}
-	const changed = link.token !== selectedToken.value
+	// the entry of the history is the list, not yet a piece
+	const fromList = (window.history.state as { cantoriaLink?: unknown } | null)?.cantoriaLink === undefined
 	notice.value = ''
 	selectedToken.value = link.token
 	scoreXml.value = ''
 	recordingUnsaved.value = false
-	if (history === 'push' && changed) {
+	if (history === 'push' && fromList) {
 		window.history.pushState({ cantoriaLink: link.token }, '', linkAddress(link))
 	} else if (history !== 'none') {
 		window.history.replaceState({ cantoriaLink: link.token }, '', linkAddress(link))
@@ -384,14 +396,18 @@ function toList(): void {
 function onPopState(): void {
 	const token = new URLSearchParams(window.location.search).get('link')
 	const link = token === null ? null : links.find((entry) => entry.token === token) ?? null
-	if (recordingUnsaved.value && link?.token !== selectedToken.value) {
+	if (link !== null && link.token === selectedToken.value) {
+		// e.g. the back gesture closed the scan: the piece stays as it is
+		return
+	}
+	if (recordingUnsaved.value) {
 		window.history.pushState({ cantoriaLink: selectedToken.value }, '', linkAddress(selected.value))
 		if (link) {
 			pendingLink.value = link
 		}
 		return
 	}
-	if (stageOn.value && link?.token !== selectedToken.value) {
+	if (stageOn.value) {
 		toggleStage()
 	}
 	if (link) {
@@ -446,11 +462,15 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 					{{ t('cantoria', 'Pieces and excerpts that the conductor or the music librarians share with the choir members: view, listen and practise your voice. Each link is valid for a limited time.') }}
 				</p>
 				<!-- Always there, not only on the empty page (U33): what to do when something does not work -->
-				<p v-if="links.length > 0" class="member-app__help no-print">
+				<p v-if="links.length > 0 && !stageOn" class="member-app__help no-print">
 					<GuideLink :href="guideUrl" :label="t('cantoria', 'Guide for choir members')" />
 				</p>
 				<!-- Not only at the end of the page: on a shared device the way to remove them (S N6) -->
-				<RemoveFromDevice v-if="offlineOn && keptCount > 0 && !stageOn" :count="keptCount" @remove="startRemoving" />
+				<RemoveFromDevice v-if="offlineOn && keptCount > 0 && !stageOn"
+					:count="keptCount"
+					:consequence="deleteConsequence"
+					:remove="deleteDevice"
+					@removed="focusAfterUpdate(deviceHeading)" />
 
 				<NcNoteCard v-if="notice" type="warning" role="status">
 					{{ notice }}
@@ -484,11 +504,11 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 					<div class="member-app__layout">
 						<section class="member-app__list no-print" :aria-labelledby="listHeadingId">
 							<h2 :id="listHeadingId" ref="listHeading" class="member-app__list-title">
-								{{ n('cantoria', '%n shared link', '%n shared links', links.length) }}
+								{{ n('cantoria', '%n piece or excerpt', '%n pieces and excerpts', links.length) }}
 							</h2>
 							<div v-if="offlineOn && !withoutNetwork && notKept.length > 1" class="member-app__keep-all">
 								<!-- the same hint as at the switch of a piece, before anything is kept (U27) -->
-								<NcNoteCard v-if="homeScreen && keptCount === 0" type="info" class="member-app__hint">
+								<NcNoteCard v-if="keepAllHint" type="info" class="member-app__hint">
 									{{ homeScreenHint('member') }}
 								</NcNoteCard>
 								<NcButton variant="secondary"
@@ -515,8 +535,11 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								{{ n('cantoria', '%n piece added since your last visit', '%n pieces added since your last visit', newCount) }}
 							</p>
 							<template v-for="section in sections" :key="section.key">
+								<!-- A programme above its pieces: larger, with a line above and its date muted, so that it does not read like one more piece (D35) -->
 								<h3 v-if="section.heading" :id="`${listHeadingId}-${section.key}`" class="member-app__group-title">
-									{{ section.heading }}
+									{{ section.heading }}<template v-if="section.date">
+										<span class="member-app__group-date"> · {{ section.date }}</span>
+									</template>
 								</h3>
 								<ul class="member-app__items" :aria-labelledby="section.heading ? `${listHeadingId}-${section.key}` : listHeadingId">
 									<li v-for="link in section.links"
@@ -528,10 +551,10 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 												class="member-app__open"
 												:aria-current="link.token === selectedToken ? 'true' : undefined"
 												@click="select(link)">
-												{{ link.title }}
+												{{ link.title }}<span v-if="newTokens.has(link.token)" class="hidden-visually">, {{ t('cantoria', 'New') }}</span>
 											</button>
-											<!-- a word, not only a color (WCAG 1.4.1) -->
-											<span v-if="newTokens.has(link.token)" class="member-app__new">{{ t('cantoria', 'New') }}</span>
+											<!-- a word, not only a color (WCAG 1.4.1); in the name of the button for screen readers (U49, D35) -->
+											<span v-if="newTokens.has(link.token)" class="member-app__new" aria-hidden="true">{{ t('cantoria', 'New') }}</span>
 										</span>
 										<p class="member-app__muted">
 											{{ [link.composer, place(link)].filter(Boolean).join(' · ') }}
@@ -552,22 +575,26 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								</ul>
 							</template>
 						</section>
-						<section v-if="selected" class="member-app__excerpt" :aria-labelledby="excerptHeadingId">
+						<section v-if="selected"
+							class="member-app__excerpt"
+							:class="{ 'member-app__excerpt--notes-on-stage': notesOnStage }"
+							:aria-labelledby="excerptHeadingId">
+							<!-- In the stage view with the notes in view: only the title in one line and the notes; the way out is in the bar (U48) -->
 							<div class="member-app__excerpt-head">
-								<div>
+								<div class="member-app__excerpt-name">
 									<h2 :id="excerptHeadingId" ref="excerptHeading" class="member-app__excerpt-title">
 										{{ selected.title }}
 									</h2>
-									<p v-if="selected.composer" class="member-app__muted">
+									<p v-if="selected.composer" class="member-app__muted member-app__off-stage">
 										{{ selected.composer }}
 									</p>
 								</div>
 								<NcButton v-if="scoreStatus === 'ready'"
 									ref="stageButton"
 									variant="tertiary"
-									class="no-print"
+									class="no-print member-app__off-stage"
 									:aria-pressed="stageOn ? 'true' : 'false'"
-									@click="toggleStage">
+									@click="toggleStageView">
 									<template #icon>
 										<NcIconSvgWrapper :path="stageOn ? mdiFullscreenExit : mdiFullscreen" />
 									</template>
@@ -583,13 +610,13 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								</template>
 								{{ t('cantoria', 'Other pieces ({count})', { count: links.length - 1 }) }}
 							</NcButton>
-							<Attribution :credits="selected.credits ?? []" :notices="selected.notices ?? []" />
-							<NcNoteCard v-if="selected.note" type="info" class="member-app__note">
+							<Attribution class="member-app__off-stage" :credits="selected.credits ?? []" :notices="selected.notices ?? []" />
+							<NcNoteCard v-if="selected.note" type="info" class="member-app__note member-app__off-stage">
 								<p class="member-app__note-text">
 									{{ t('cantoria', 'Note: {note}', { note: selected.note }) }}
 								</p>
 							</NcNoteCard>
-							<p class="member-app__muted">
+							<p class="member-app__muted member-app__off-stage">
 								{{ place(selected) }}<template v-if="selected.expires">
 									· {{ t('cantoria', 'Valid until {date}', { date: formatDate(selected.expires) }) }}
 								</template>
@@ -597,7 +624,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 							</p>
 							<KeepOffline v-if="offlineOn"
 								:key="selected.token"
-								class="no-print"
+								class="no-print member-app__off-stage"
 								:kept="isKept(selected)"
 								:scan-kept="scanKept(selected)"
 								:scan-offered="selected.scan === true"
@@ -609,14 +636,14 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								:progress="keeping === selected.token ? t('cantoria', 'Making it available without a network …') : ''"
 								:error="keepErrors[selected.token] ?? ''"
 								:lock="isKept(selected) ? lockText(selected) : ''"
-								:first-keep="keptCount === 0"
+								:first-keep="keptCount === 0 && !keepAllHint"
 								@change="(keep: boolean, withScan: boolean) => setKept(selected!, keep, withScan)" />
-							<p v-if="selected.scan && withoutNetwork && !scanKept(selected)" class="member-app__muted no-print">
+							<p v-if="selected.scan && withoutNetwork && !scanKept(selected)" class="member-app__muted no-print member-app__off-stage">
 								{{ t('cantoria', 'The scan is not available without a network.') }}
 							</p>
 							<ScanFrame v-else-if="selected.scan"
 								:key="selected.token"
-								class="no-print"
+								class="no-print member-app__off-stage"
 								collection="member"
 								:piece-key="selected.token"
 								:title="selected.title" />
@@ -640,6 +667,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 							</NcEmptyContent>
 							<ExcerptViewer v-else-if="scoreStatus === 'ready'"
 								:key="selected.token"
+								ref="viewer"
 								v-model:unsaved-recording="recordingUnsaved"
 								:xml="scoreXml"
 								:title="selected.title"
@@ -661,7 +689,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 									<NcButton variant="tertiary"
 										:aria-label="t('cantoria', 'Leave the stage view')"
 										:title="t('cantoria', 'Leave the stage view')"
-										@click="toggleStage">
+										@click="toggleStageView">
 										<template #icon>
 											<NcIconSvgWrapper :path="mdiFullscreenExit" />
 										</template>
@@ -676,7 +704,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 				</template>
 
 				<section class="member-app__device-section no-print" :aria-labelledby="deviceHeadingId">
-					<h2 :id="deviceHeadingId" class="member-app__list-title">
+					<h2 :id="deviceHeadingId" ref="deviceHeading" class="member-app__list-title">
 						{{ t('cantoria', 'Without a network') }}
 					</h2>
 					<template v-if="offlineOn">
@@ -702,19 +730,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 						{{ t('cantoria', 'Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.') }}
 						{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
 					</p>
-					<div class="member-app__device-buttons">
-						<NcButton v-if="!confirmingDelete" variant="secondary" @click="confirmingDelete = true">
-							{{ t('cantoria', 'Delete everything on this device') }}
-						</NcButton>
-						<template v-else>
-							<NcButton ref="confirmDeleteButton" variant="error" @click="deleteDevice">
-								{{ t('cantoria', 'Delete kept pieces, passages and settings') }}
-							</NcButton>
-							<NcButton variant="tertiary" @click="confirmingDelete = false">
-								{{ t('cantoria', 'Cancel') }}
-							</NcButton>
-						</template>
-					</div>
+					<RemoveFromDevice :consequence="deleteConsequence" :remove="deleteDevice" @removed="focusAfterUpdate(deviceHeading)" />
 					<p class="hidden-visually" role="status">
 						{{ deviceStatus }}
 					</p>
@@ -814,9 +830,22 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 	display: block;
 }
 
-/* larger targets at the music stand */
-.member-app--stage {
-	--default-clickable-area: 48px;
+/* In the stage view with the notes in view: only the title in one line,
+   the bar and the notes (D27, U48) */
+.member-app__excerpt--notes-on-stage .member-app__off-stage {
+	display: none !important;
+}
+
+.member-app__excerpt--notes-on-stage .member-app__excerpt-name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.member-app__excerpt--notes-on-stage .member-app__excerpt-title {
+	overflow: hidden;
+	font-size: 1em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .member-app__hint {
@@ -859,13 +888,20 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 	border-bottom: none;
 }
 
-/* the title of a programme above its pieces */
+/* the title of a programme above its pieces: larger than their titles,
+   not underlined, with a line above it; the date muted (D35) */
 .member-app__group-title {
-	margin: calc(2 * var(--default-grid-baseline)) 0 0;
-	padding: 0 calc(2 * var(--default-grid-baseline));
-	font-size: 1em;
+	margin: calc(3 * var(--default-grid-baseline)) 0 0;
+	padding: calc(2 * var(--default-grid-baseline)) calc(2 * var(--default-grid-baseline)) 0;
+	border-top: 1px solid var(--color-border-dark, var(--color-border));
+	font-size: 1.1em;
 	font-weight: bold;
 	overflow-wrap: anywhere;
+}
+
+.member-app__group-date {
+	color: var(--color-text-maxcontrast);
+	font-weight: normal;
 }
 
 .member-app__item-head {
@@ -952,17 +988,17 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 	border-top: 1px solid var(--color-border);
 }
 
-.member-app__device-buttons {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--default-grid-baseline);
-}
-
 /* Touch: targets of at least 44 pixels */
 @media (pointer: coarse) {
 	.member-app {
 		--default-clickable-area: 44px;
 	}
+}
+
+/* larger targets at the music stand, also on touch (D32): after the rule
+   for touch, with two classes */
+.member-app.member-app--stage {
+	--default-clickable-area: 48px;
 }
 
 /* Printing: the piece only (title, composer, note, what is shared and the
