@@ -251,4 +251,25 @@ final class XlsxReaderTest extends TestCase {
 	public function testColumnIndex(string $reference, ?int $index): void {
 		self::assertSame($index, XlsxReader::columnIndex($reference));
 	}
+
+	/**
+	 * W B24: number formats that show a date, and Excel's serial numbers.
+	 */
+	public function testDateFormatsAndSerialNumbers(): void {
+		self::assertFalse(XlsxReader::dateFormat('dd/mm/yyyy'));
+		self::assertFalse(XlsxReader::dateFormat('[$-407]dddd, d. mmmm yyyy'));
+		self::assertTrue(XlsxReader::dateFormat('d.m.yy h:mm'));
+		self::assertNull(XlsxReader::dateFormat('[h]:mm'), 'a time alone');
+		self::assertNull(XlsxReader::dateFormat('General'));
+		self::assertNull(XlsxReader::dateFormat('0 "days"'), 'text in quotes does not count');
+		self::assertNull(XlsxReader::dateFormat('@'));
+		self::assertSame('2026-11-03', XlsxReader::serialDate('46329', false));
+		self::assertSame('2026-11-03 14:30', XlsxReader::serialDate('46329.6041667', true));
+		self::assertSame('2026-11-03', XlsxReader::serialDate('46329', true), 'midnight without a time');
+		self::assertSame(['1900-01-01', '1900-02-28', '1900-03-01'], [XlsxReader::serialDate('1', false), XlsxReader::serialDate('59', false),
+			XlsxReader::serialDate('61', false)], 'around the 29 February 1900 that Excel counts');
+		self::assertSame('2030-11-04', XlsxReader::serialDate('46329', false, true), 'the 1904 date system');
+		self::assertNull(XlsxReader::serialDate('-3', false));
+		self::assertNull(XlsxReader::serialDate('abc', false));
+	}
 }
