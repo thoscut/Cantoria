@@ -1005,7 +1005,7 @@ class StatisticsService {
 	 * as one, or the copy is of the kind "Preservation copy" (the rule of
 	 * RightsPolicy::isPreservationCopy on the rows of the statistics).
 	 *
-	 * @param array{kind?: ?string} $copy
+	 * @param CopyRow|CopyRef $copy
 	 */
 	private static function copyIsPreservation(?WorkVersion $version, array $copy): bool {
 		return $version?->getPreservationCopy() === true || ($copy['kind'] ?? null) === RightsPolicy::PRESERVATION_COPY_KIND;
@@ -1016,7 +1016,7 @@ class StatisticsService {
 	 * of RightsPolicy::versionHasPreservationCopy), for figures that belong to
 	 * the version as a whole (licenses, end of protection).
 	 *
-	 * @param list<array{kind?: ?string}> $copies the copies of the version
+	 * @param list<CopyRef> $copies the copies of the version
 	 */
 	private static function versionIsPreservation(WorkVersion $version, array $copies): bool {
 		if ($version->getPreservationCopy() === true) {

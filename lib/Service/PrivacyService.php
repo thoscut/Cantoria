@@ -146,8 +146,9 @@ class PrivacyService {
 		// The display names under which the account made entries also leave the values
 		$names = [$who];
 		foreach ($this->auditEntries->findByActor($who, $who) as $entry) {
-			if ($entry->getUserId() === $who && $entry->getUserName() !== null) {
-				$names[] = $entry->getUserName();
+			$name = $entry->getUserName();
+			if ($entry->getUserId() === $who && $name !== null) {
+				$names[] = $name;
 			}
 		}
 		$values = $this->eraseFromValues([...self::AUDIT_ACCOUNT_VALUES, ...self::AUDIT_NAME_VALUES], array_values(array_unique($names)));
