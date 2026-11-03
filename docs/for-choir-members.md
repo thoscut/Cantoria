@@ -35,7 +35,8 @@ with the choir. You only need a browser, no app. The details are in the
 
 Where it is switched on, switch on **Available without a network** at a
 piece while you have a network. Then open the page as usual, also on the
-train or in a church without Wi-Fi.
+train or in a church without Wi-Fi. This is new; if it does not work on
+your phone, please tell the conductor.
 
 - **iPhone or iPad:** add the page to the home screen *first* (Share →
   **Add to Home Screen**), open it from there, sign in and then switch the
@@ -44,6 +45,20 @@ train or in a church without Wi-Fi.
   are locked.
 - On a shared device: **Delete everything on this device** at the bottom.
 
+## What you may do with the scores
+
+- The pieces are for you, to practise in this choir. Do not pass on the
+  scores, the scans or the practice files, and do not upload them anywhere
+  else: the licenses of the choir usually allow that only for its own
+  members.
+- When you leave the choir, or when the conductor says so after a concert,
+  remove the pieces from your devices: **Delete everything on this device**
+  at the bottom of the page, and delete practice files and scans you saved.
+- **Show my pitch** and **Record myself** use the microphone only while you
+  use them. The pitch is recognised in your browser, and a recording stays
+  in your browser until you leave the page, unless you save it yourself.
+  Nothing of it goes to the server or to the conductor.
+
 ## If something does not work
 
 | You see … | What helps |
@@ -51,7 +66,7 @@ train or in a church without Wi-Fi.
 | Cantoria is missing in Nextcloud, or "No access yet" | Ask the conductor whether your account is in the group of choir members. |
 | "Nothing has been shared with you yet" | The conductor has not shared anything yet, or the link has expired. Ask for a new link. |
 | No sound | Tap **Play** once (browsers play only after a tap) and check the silent switch of the phone. |
-| "Locked: not checked with the server for more than 30 days" | Open the page once with a network. |
+| "Locked: not checked with the server for more than … days" | Open the page once with a network. |
 | Without a network the pieces are missing on the iPhone | You switched them on in Safari but open the home screen (or the other way round). Switch them on again where you practise. |
 | "Show my pitch" or "Record myself" does not work | Allow the browser to use the microphone for this page. |
 
@@ -62,4 +77,6 @@ train or in a church without Wi-Fi.
 > voice under "Voice, measures and practising" and practise difficult
 > passages with "Loop". If you want to practise on the train, switch on
 > "Available without a network" beforehand, with a network (on an iPhone,
-> add the page to the home screen first). Questions welcome.
+> add the page to the home screen first). The pieces are only for practising
+> in our choir: please do not pass them on, and delete them when you leave
+> the choir. The microphone is used only in your browser. Questions welcome.

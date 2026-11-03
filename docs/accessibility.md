@@ -8,7 +8,7 @@ This statement covers the Cantoria app for Nextcloud: its pages inside
 Nextcloud, the pages "Shared with me" for choir members, and the public
 pages (public links and the repertoire page). [Deutsch](de/barrierefreiheit.md)
 
-## Target and status
+## Target and checks
 
 The app aims at **WCAG 2.2 level AA**. It is **partially conformant**: the
 parts listed below do not meet it yet. The statement is a self-assessment
@@ -20,12 +20,13 @@ continuous integration does not run them. How far each part was checked:
 | Catalog, rights, concerts, sharing and settings (up to milestone 0.12) | in Nextcloud 33 with axe-core, keyboard-only operation, 320 px width, 200 % zoom and increased text spacing, in the light and the dark theme |
 | Practising in the score view: starting tones, metronome, transposing, mixer, lyrics, pitch display, remembered passages, recording yourself (0.13, 0.14) | built and tested in a test setup; not yet checked in a real Nextcloud or with a screen reader |
 | Practising without a network and the concert folder (0.15, 0.16) | in a test setup and in the browser's emulation of phones and tablets; not yet on real devices |
-| The page for choir members, sharing a programme, the choices for the choir in the settings (0.19) | in a test setup at 360 to 1280 px, with the keyboard, in the Windows contrast mode and in print; not yet in a real Nextcloud |
+| The page for choir members, sharing a programme, the choices for the choir in the settings (0.19) | by hand in a test setup at 360 to 1280 px and with the keyboard; not yet in a real Nextcloud. The Windows contrast mode and print are not yet checked with a record; [tools/screenshots](../tools/screenshots/README.md) can now take both with axe-core, but has not been run against this version |
 
 What the app does:
 
-- Every function can be used with the keyboard; the focus moves into a
-  dialog or the sidebar and back to where it came from.
+- Every function can be used with the keyboard, except where the known
+  limitations say otherwise; the focus moves into a dialog or the sidebar
+  and back to where it came from.
 - Buttons, fields and icons have labels for screen readers; lists and
   results that change are announced.
 - Contrast is sufficient in the light and the dark theme; information is
@@ -42,7 +43,7 @@ What the app does:
   printed score shows only the notes, black on white, with the focus voice
   bold instead of coloured.
 - In the Windows contrast mode the score, the pitch display and the rights
-  badges take the system colours.
+  badges are meant to take the system colours (see the known limitations).
 
 ## Known limitations
 
@@ -62,6 +63,19 @@ What the app does:
 - **Without a network**, some states (kept, locked, checked) are shown as
   text and announced, but they have not yet been tried with screen readers
   on phones.
+- The **stage view** of the concert folder fills the screen. While it does,
+  dialogs, selection lists and pop-ups of the page (for example "Discard
+  recording?" or the choice of the highlighted voice) open behind it and
+  cannot be reached with the keyboard; leave the stage view first. On an
+  iPhone the browser does not offer a full screen for the page, so the stage
+  view stays an enlarged view inside the browser.
+- The **scan** opens in a frame. On phones and tablets the frame is small,
+  and zooming and scrolling inside it depend on the browser; open the scan in
+  a tab of its own instead. Not yet checked on real devices.
+- In the **Windows contrast mode** the browser removes shadows and replaces
+  background colours. The selected copy in the card list on a phone is then
+  hard to tell from the others, and components of Nextcloud inside the app
+  take the system colours in their own way.
 - **Page numbers** in printouts depend on the browser (for example Chrome
   and Edge; Firefox prints without them).
 - **Parts of Nextcloud** (navigation, file picker, dialogs, the calendar and

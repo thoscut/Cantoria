@@ -339,7 +339,8 @@ file there in the **Files** app. Files of the archive folder have the action
   MusicXML, a click stays with that app and the action is in the menu.
 - **Scans (PDF), MuseScore, audio and the other files of a copy**: the action
   opens the copy in the sidebar of the music archive. A click on a PDF keeps
-  opening Nextcloud's own viewer.
+  opening Nextcloud's own viewer. The app does not show MuseScore files
+  itself; the score viewer reads the MusicXML exported from MuseScore.
 
 The action is there for accounts with an archive role and for
 administrators, and only for files in the archive folder with a type the

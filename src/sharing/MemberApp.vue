@@ -35,6 +35,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import GuideLink from '../components/GuideLink.vue'
 import Attribution from './Attribution.vue'
 import DiscardRecording from './DiscardRecording.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
@@ -431,6 +432,10 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 				<p class="member-app__intro no-print">
 					{{ t('cantoria', 'Pieces and excerpts that the conductor or the music librarians share with the choir members: view, listen and practise your voice. Each link is valid for a limited time.') }}
 				</p>
+				<!-- Always there, not only on the empty page (U33): what to do when something does not work -->
+				<p v-if="links.length > 0" class="member-app__help no-print">
+					<GuideLink :href="guideUrl" :label="t('cantoria', 'Guide for choir members')" />
+				</p>
 
 				<NcNoteCard v-if="notice" type="warning" role="status">
 					{{ notice }}
@@ -684,6 +689,10 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline))
 
 .member-app__intro {
 	max-width: 80ch;
+}
+
+.member-app__help {
+	margin: 0;
 }
 
 .member-app__layout {

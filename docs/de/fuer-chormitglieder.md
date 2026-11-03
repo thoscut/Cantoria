@@ -35,7 +35,8 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
 
 Wo es eingeschaltet ist, schaltest du bei einem Stück **Ohne Netz
 verfügbar** ein, solange du Netz hast. Danach öffnest du die Seite wie
-gewohnt auch im Zug oder in der Kirche ohne WLAN.
+gewohnt auch im Zug oder in der Kirche ohne WLAN. Das ist neu; wenn es auf
+deinem Handy nicht geht, sag der Chorleitung Bescheid.
 
 - **iPhone oder iPad:** Lege die Seite *zuerst* auf den Home-Bildschirm
   (Teilen → **Zum Home-Bildschirm**), öffne sie von dort, melde dich an und
@@ -45,6 +46,21 @@ gewohnt auch im Zug oder in der Kirche ohne WLAN.
   Stücke gesperrt.
 - Auf einem geteilten Gerät: unten **Alles auf diesem Gerät löschen**.
 
+## Was du mit den Noten darfst
+
+- Die Stücke sind für dich, zum Üben in diesem Chor. Gib Noten, Scans und
+  Übe-Dateien nicht weiter und lade sie nirgends sonst hoch: Die Lizenzen des
+  Chors erlauben das meist nur für die eigenen Mitglieder.
+- Wenn du den Chor verlässt, oder wenn die Chorleitung es nach einem Konzert
+  sagt, entferne die Stücke von deinen Geräten: unten auf der Seite **Alles
+  auf diesem Gerät löschen**, und lösche Übe-Dateien und Scans, die du
+  gespeichert hast.
+- **Meine Tonhöhe zeigen** und **Selbst aufnehmen** nutzen das Mikrofon nur,
+  solange du sie nutzt. Die Tonhöhe wird in deinem Browser erkannt, und eine
+  Aufnahme bleibt in deinem Browser, bis du die Seite verlässt, außer du
+  speicherst sie selbst. Nichts davon geht an den Server oder an die
+  Chorleitung.
+
 ## Wenn etwas nicht geht
 
 | Du siehst … | Das hilft |
@@ -52,7 +68,7 @@ gewohnt auch im Zug oder in der Kirche ohne WLAN.
 | Cantoria fehlt in Nextcloud, oder „Noch kein Zugang“ | Frag die Chorleitung, ob dein Konto in der Gruppe der Chormitglieder ist. |
 | „Mit dir ist noch nichts geteilt“ | Die Chorleitung hat noch nichts geteilt, oder der Link ist abgelaufen. Frag nach einem neuen Link. |
 | Kein Ton | Tippe einmal auf **Abspielen** (Browser spielen erst nach einem Tipp) und prüfe den Stummschalter des Handys. |
-| „Gesperrt: seit mehr als 30 Tagen nicht mit dem Server abgeglichen“ | Öffne die Seite einmal mit Netz. |
+| „Gesperrt: seit mehr als … Tagen nicht mit dem Server abgeglichen“ | Öffne die Seite einmal mit Netz. |
 | Ohne Netz fehlen die Stücke auf dem iPhone | Du hast sie in Safari eingeschaltet, öffnest aber den Home-Bildschirm (oder umgekehrt). Schalte sie dort noch einmal ein, wo du übst. |
 | „Meine Tonhöhe zeigen“ oder „Selbst aufnehmen“ geht nicht | Erlaube dem Browser das Mikrofon für diese Seite. |
 
@@ -63,4 +79,6 @@ gewohnt auch im Zug oder in der Kirche ohne WLAN.
 > Chor-Konto an, wählt unter „Stimme, Takte und Üben“ eure Stimme und übt
 > schwierige Stellen mit „Schleife“. Wer im Zug üben will, schaltet vorher mit
 > Netz „Ohne Netz verfügbar“ ein (auf dem iPhone zuerst die Seite auf den
-> Home-Bildschirm legen). Fragen gern an mich.
+> Home-Bildschirm legen). Die Stücke sind nur zum Üben in unserem Chor: Gebt
+> sie bitte nicht weiter und löscht sie, wenn ihr den Chor verlasst. Das
+> Mikrofon wird nur in eurem Browser genutzt. Fragen gern an mich.

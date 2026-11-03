@@ -234,30 +234,109 @@ describe('messages quoted in the guides', () => {
 		return text.replace(/\s+/g, ' ').trim()
 	}
 
+	/** "…" and the placeholders of the interface ({name}, %n, %s) stand for any text. */
+	const GAP = /…|\{[^}]*\}|%n|%s/
+
 	/**
 	 * The parts of a quoted message that must appear in a text of the
-	 * interface: without "…" and placeholders.
+	 * interface: without "…" and placeholders, at least two characters.
 	 *
 	 * @param quote - the message as quoted
 	 */
 	function parts(quote: string): string[] {
-		return spaced(quote).split(/…|\{[^}]*\}/).map((part) => part.replace(/^[\s.]+|[\s.]+$/g, '')).filter((part) => part.length > 6)
+		return spaced(quote).split(GAP).map((part) => part.replace(/^[\s.]+|[\s.]+$/g, '')).filter((part) => part.length >= 2)
 	}
 
-	// A message is quoted in italics: *„…“* in German, *"…"* in English.
+	/**
+	 * A text of the interface with every "…" and placeholder as "…": the
+	 * plural forms say "%n days", a guide "… days".
+	 *
+	 * @param text - a text of the interface
+	 */
+	function withGaps(text: string): string {
+		return text.split(GAP).join('…')
+	}
+
+	/**
+	 * Whether a quote is a text of the interface. A long part may be a piece
+	 * of a longer message; a short quote ("Loop", "Weiter") must be a whole
+	 * text, otherwise every short word would pass.
+	 *
+	 * @param quote - the message as quoted
+	 * @param texts - texts of the interface
+	 */
+	function quoted(quote: string, texts: readonly string[]): boolean {
+		const found = parts(quote)
+		if (found.length === 1 && found[0]!.length <= 6 && !GAP.test(quote)) {
+			return texts.some((text) => text.replace(/[.:]$/, '') === found[0])
+		}
+		return found.every((part) => texts.some((text) => text.includes(part) || withGaps(text).includes(part)))
+	}
+
+	// A message is quoted in italics: *„…“* in German, *"…"* in English. The
+	// guide for choir members is a table of messages: there every quote counts.
 	it.each([
 		['docs/de/benutzerhandbuch.md', /\*„([^“]+)“\*/g, german],
 		['docs/de/administrationshandbuch.md', /\*„([^“]+)“\*/g, german],
 		['docs/de/schnellstart.md', /\*„([^“]+)“\*/g, german],
+		['docs/de/fuer-chormitglieder.md', /„([^“]+)“/g, german],
 		['docs/user-guide.md', /\*"([^"]+)"\*/g, english],
 		['docs/admin-guide.md', /\*"([^"]+)"\*/g, english],
+		['docs/for-choir-members.md', /"([^"]+)"/g, english],
 	] as const)('%s quotes messages as the interface says them', (path, pattern, texts) => {
 		const missing: string[] = []
 		for (const [, quote] of doc(path).matchAll(pattern)) {
-			if (!parts(quote!).every((part) => texts.some((text) => text.includes(part)))) {
+			if (!quoted(quote!, texts)) {
 				missing.push(spaced(quote!))
 			}
 		}
 		expect(missing).toEqual([])
+	})
+
+	it('checks a quote against whole texts and plural forms', () => {
+		const texts = ['Loop', 'Locked: not checked with the server for more than %n days. Please open this page once with a network.']
+		expect(quoted('Locked: not checked with the server for more than … days', texts)).toBe(true)
+		expect(quoted('Locked: not checked for more than 30 days', texts)).toBe(false)
+		expect(quoted('Loop', texts)).toBe(true)
+		expect(quoted('Loo', texts)).toBe(false)
+		expect(quoted('days', texts)).toBe(false)
+	})
+})
+
+/**
+ * The German guides keep one word, one meaning (tools/l10n/glossary.md,
+ * table "One word, one meaning"; translations.test.mjs checks the
+ * interface). These are uses in the guides that broke the rule, each with
+ * the words the interface uses instead.
+ */
+const DOC_TERMS = [
+	{ wrong: /Fokusstimme/, instead: 'hervorgehobene Stimme' },
+	{ wrong: /hält den Bildschirm an\b/, instead: 'hält den Bildschirm wach' },
+	{ wrong: /Vortragsmodus/, instead: 'Bühnenansicht' },
+	{ wrong: /nur geteilte Ausschnitte\)/, instead: 'Chormitglieder (nur geteilte Stücke und Ausschnitte)' },
+	// "Stand" is the revision of a version, not a snapshot or a state
+	{ wrong: /\b(einen|den) Stand (des|eines) (bisherigen|Archivs|Werkverzeichnisses)/, instead: 'Schnappschuss, Zustand' },
+	{ wrong: /[Ff]riere den Stand\b/, instead: 'friere das Archiv ein' },
+	{ wrong: /Ziel und Stand/, instead: 'Ziel und Prüfungen' },
+	// "Freigabe" is the release by the rights, not a share in Nextcloud
+	{ wrong: /ordner\W+(\w+\W+){0,3}Freigabe\b|über Freigaben\)/i, instead: 'geteilter Ordner' },
+	// A piece is kept on a device, not saved there (saving is the button of a form)
+	{ wrong: /(Gespeicherte|gespeicherten) Stücke|Stücke werden auf einem Gerät gespeichert/, instead: 'Stücke auf dem Gerät, behalten' },
+]
+
+describe('the German guides', () => {
+	/** The guides of the app; the legal pages and the name research quote other texts. */
+	const GERMAN = Object.keys(DOCS).filter((path) => path.startsWith('docs/de/')
+		&& !['docs/de/rechtlicher-hintergrund.md', 'docs/de/datenschutz-vorlagen.md', 'docs/de/namensrecherche-cantoria.md'].includes(path))
+
+	it('include every German guide', () => {
+		expect(GERMAN).toContain('docs/de/benutzerhandbuch.md')
+		expect(GERMAN).toContain('docs/de/fuer-chormitglieder.md')
+	})
+
+	it.each(GERMAN)('%s uses each term in one meaning only', (path) => {
+		const wrong = DOC_TERMS.filter(({ wrong: pattern }) => pattern.test(doc(path)))
+			.map(({ wrong: pattern, instead }) => `${doc(path).match(pattern)![0]} → ${instead}`)
+		expect(wrong).toEqual([])
 	})
 })

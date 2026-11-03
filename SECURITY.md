@@ -62,7 +62,7 @@ below explain the reasons.
 | The repertoire page lists only public-domain works and links only to `cpdl.org` and `imslp.org` over https | `SharingTest::testTheRepertoirePageShowsChosenPublicDomainWorksOnly`, `testLinksToCpdlAndImslpMustBeHttpsToTheirSite` |
 | The API for agents needs its module, a role and a limit on every route, and decides nothing | CS `testEveryApiV1RouteNeedsTheInterfaceItsModuleARoleAndALimit`, `testNoApiV1RouteDecidesOrCorrects`, `testASwitchedOffApiV1RouteAnswers404WithOcsMeta`; agent run in `tools/ci/integration-demo.sh` |
 | The scan in links for choir members needs a license for copies unless public domain is confirmed; public playback of protected versions a license for online playback | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testPublicLinks`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
-| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages and the API for agents, for every role | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies` |
+| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the catalog and entry of the app's pages and the API for agents, for every role; other lists (exports, tasks, programmes) are not part of these tests | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies` |
 | Answers of the API for agents name no accounts; preservation copies only for the roles that may view them | `ApiV1ControllerTest::testACopyWithoutAccountNamesAndAPreservationCopyOnlyForItsRoles`, `testTheReviewOfACopyHasNoAccountNamesAndComesInPages`, `testPreservationCopiesOnlyForRolesThatMayViewThem` |
 | The MCP server never shows the app password and sends nothing in read-only mode | `tools/mcp/test`: "never appear in tool results" (secrets), "send nothing in read-only mode", "leaves out the writing tools in read-only mode" |
 | Files are read through the user's own view; nobody gets a file they could not open | `UserFilesTest::testRefusesAFileTheUserCannotSee`; `ScoreServiceTest::testAScoreInAnArchiveFolderThatIsNotSharedSaysWhatToDo`; `files_integration_test` |
@@ -97,9 +97,10 @@ below explain the reasons.
 
 - Every API request checks the caller's role on the server; the user
   interface only hides what the server would refuse anyway. Every route
-  needs a logged-in Nextcloud account, except the two public pages of the
-  sharing modules (a public link and the public repertoire page, see below),
-  which are off unless switched on.
+  needs a logged-in Nextcloud account, except the public pages of the
+  sharing modules (a public link with its scan and the public repertoire
+  page, see below), which are off unless switched on, and the script of the
+  offline worker, which holds no data.
 - Only instance settings (role groups, archive folder, modules, repertoire
   thresholds, the access check of the archive folder, the target folder of
   the print station and the retention period of the folder book) are restricted by
@@ -122,7 +123,7 @@ below explain the reasons.
   through their own workflow, never through a generic update. Requests that
   create tasks, links or accessions also refuse unknown fields.
 - Write requests require Nextcloud's CSRF token. Only plain GET downloads
-  skip it (app page, CSV export, full backup, song order, the CSV files of the
+  skip it (app page, CSV export, import template, full backup, song order, the CSV files of the
   statistics and the annual report, the calendar files of concerts); they do
   not change state. Adding concerts to a calendar keeps the check.
 - A unit test (`tests/Unit/Controller/ControllerSecurityTest`) checks these
@@ -222,13 +223,15 @@ public links stop working at once.
 
 **The public pages.**
 
-- Exactly three routes are public (`#[PublicPage]`), the only routes of
+- Exactly four routes are public (`#[PublicPage]`), the only routes of
   their controllers: `GET /apps/cantoria/p/{token}`, the scan of a public
-  link `GET /apps/cantoria/p/{token}/scan` and
-  `GET /apps/cantoria/repertoire`. All are plain GET requests, limited
-  per address (60 in 10 minutes, the scan 30) and per account, protected by
-  Nextcloud's brute-force protection and need their module; the unit test
-  checks this.
+  link `GET /apps/cantoria/p/{token}/scan`, `GET /apps/cantoria/repertoire`
+  and the script of the offline worker `GET /apps/cantoria/offline-worker`,
+  which holds no data (see "Practising without a network" below). All are
+  plain GET requests, limited per address (a public link 60 in 10 minutes,
+  its scan 30) and per account and protected by Nextcloud's brute-force
+  protection; the first three need their module. The unit test checks this
+  list.
 - Tokens are 32 alphanumeric characters from Nextcloud's secure random
   generator. The database holds only their SHA-256 hash, by which a link is
   found, and the token encrypted with the secret of the instance, so that
@@ -433,7 +436,11 @@ account can do; it offers a stable, documented and limited contract.
   catalog including the audit log, tasks, the register of persons and the
   folder book. The roles that read all of it in the app (catalog,
   operations, conductor, read only) and admins may download it; the role
-  "Proposals (tools)" may not, as it does not read the folder book. Backups
+  "Proposals (tools)" may not, as it does not read the folder book. Admins
+  without a role thus get the names of the folder book through the backup,
+  although the routes of the folder book refuse them (403): backup and
+  restore stay with the administration, which can read the database
+  anyway. Backups
   hold no link tokens: after a restore every link is revoked. Of the weekly
   backups the newest eight are kept.
 - Annual snapshots (module `annual_snapshot`) are kept for years and name
@@ -523,3 +530,18 @@ account can do; it offers a stable, documented and limited contract.
 - The audit log is append-only; there is no API to change or delete entries.
   The only change is the removal of personal data of the folder book after
   its retention period, done by the background job, never through a route.
+
+### Releases
+
+- The archive in the app store is built and signed by the maintainer with
+  `tools/release/package.sh --sign`; the steps are in
+  [docs/release.md](docs/release.md). The workflow **Release** builds the
+  same tag twice in the CI, checks that both builds are the same bytes and
+  keeps that archive with its checksum. Nextcloud checks the code signature
+  of every file at installation and update.
+- The signature proves who signed, not what was built. Where the signing
+  machine also builds, `npm ci` runs the install scripts of the development
+  dependencies next to the private key, and a compromised package could
+  change the build or read the key. Keep the key on a machine or token of
+  its own, and compare the files of the signed archive (without
+  `appinfo/signature.json`) with the archive of the CI before uploading.
