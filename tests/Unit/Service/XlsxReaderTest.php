@@ -209,6 +209,19 @@ final class XlsxReaderTest extends TestCase {
 		(new XlsxReader($this->tempManager()))->read($this->zip($entries));
 	}
 
+	public function testOneSharedStringCannotFillTheMemory(): void {
+		// One long shared string in many cells: a small file, but more text
+		// than a CSV file for an import may hold.
+		$entries = self::workbook();
+		$entries['xl/sharedStrings.xml'] = '<sst xmlns="' . self::MAIN . '"><si><t>' . str_repeat('x', 1024 * 1024) . '</t></si></sst>';
+		$cells = (int)ceil(XlsxReader::MAX_TEXT_BYTES / (1024 * 1024)) + 1;
+		$entries['xl/worksheets/sheet2.xml'] = '<worksheet xmlns="' . self::MAIN . '"><sheetData><row>'
+			. str_repeat('<c t="s"><v>0</v></c>', $cells) . '</row></sheetData></worksheet>';
+		$this->expectException(InvalidInputException::class);
+		$this->expectExceptionMessage('The Excel workbook is too large to import.');
+		(new XlsxReader($this->tempManager()))->read($this->zip($entries));
+	}
+
 	public function testReadsACellInTheLastColumn(): void {
 		$entries = self::workbook();
 		$entries['xl/worksheets/sheet2.xml'] = '<worksheet xmlns="' . self::MAIN . '"><sheetData>'

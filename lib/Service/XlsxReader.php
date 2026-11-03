@@ -19,7 +19,8 @@ use OCP\ITempManager;
  *
  * Uploaded workbooks are untrusted: the reader refuses document type
  * declarations (no entities, no external loading), unpacks at most a bounded
- * size per part and in total (ZIP bombs), and limits columns and cells, so
+ * size per part and in total (ZIP bombs), and limits columns, cells and the
+ * text of all cells together (one shared string can fill many cells), so
  * that a small file cannot exhaust the memory of the server.
  */
 class XlsxReader {
@@ -37,8 +38,11 @@ class XlsxReader {
 	public const MAX_COLUMNS = 16384;
 	/** Cells of all sheets together, including filled gaps; an empty row counts as one */
 	public const MAX_CELLS = 1000000;
+	/** Text of all cells together (bytes): as much as a CSV file for an import may hold */
+	public const MAX_TEXT_BYTES = UserFiles::MAX_IMPORT_BYTES;
 
 	private int $cells = 0;
+	private int $bytes = 0;
 
 	public function __construct(
 		private ITempManager $tempManager,
@@ -57,6 +61,7 @@ class XlsxReader {
 			throw new InvalidInputException('The file is not an Excel workbook (.xlsx).');
 		}
 		$this->cells = 0;
+		$this->bytes = 0;
 		$zip = BoundedZip::open($this->tempManager, $content, self::MAX_ENTRIES, self::MAX_PART_BYTES, self::MAX_TOTAL_BYTES,
 			self::tooLarge(), new InvalidInputException('The Excel workbook is damaged.'));
 		if ($zip === null) {
@@ -137,6 +142,10 @@ class XlsxReader {
 					'inlineStr' => implode('', array_map(fn (\DOMElement $is): string => self::text($sheet, $is), self::elements($sheet, 'm:is', $cell))),
 					default => self::firstText($sheet, 'm:v', $cell),
 				};
+				$this->bytes += strlen($cells[$index]);
+				if ($this->bytes > self::MAX_TEXT_BYTES) {
+					throw self::tooLarge();
+				}
 			}
 			$max = $cells === [] ? -1 : max(array_keys($cells));
 			// Counted before the gaps are filled, so that one far-away cell

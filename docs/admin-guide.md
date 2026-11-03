@@ -292,15 +292,18 @@ for everybody who may change the settings.
 
 ## 4. First import
 
-An existing catalog is imported from a CSV file (UTF-8, separated by
-semicolons) with the columns of the original catalog
-([The columns of the catalog file](#the-columns-of-the-catalog-file)).
-Upload it to Nextcloud first; an import file may be at most 20 MB. A choir
-without a catalog file can skip the import and start with the first **New
+An existing catalog is imported from a file with the columns of the
+original catalog
+([The columns of the catalog file](#the-columns-of-the-catalog-file)): an
+Excel workbook (`.xlsx`), an OpenDocument spreadsheet (`.ods`, LibreOffice
+and Nextcloud Office) or a CSV file (UTF-8, separated by semicolons).
+Upload it to Nextcloud first; an import file may be at most 20 MB, and the
+text of all cells of a workbook together no more either. A choir without a
+catalog file can skip the import and start with the first **New
 accession**.
 
 1. **Archive management** (bottom of the navigation, music librarians) →
-   **Import catalog** → **Choose CSV file …**. The app runs a **dry run**
+   **Import catalog** → **Choose file …**. The app runs a **dry run**
    right away; nothing is stored yet.
 
    ![The report of a repeated dry run: "Dry run – nothing has been changed yet", 23 rows, no new or changed copies, 7 with MusicXML, 1 internal preservation copy, the distribution of rights status, repertoire and publication, and one warning.](screenshots/import-report.png)
@@ -334,9 +337,10 @@ accession**.
 > extended export into an empty catalog takes over the decisions recorded in
 > it.
 
-A repeated import (while the CSV is still the leading source) matches copies
-by shelf mark, updates changed values and keeps decisions taken in the app.
-Copies missing from the CSV stay in the catalog; nothing is deleted.
+A repeated import (while the file is still the leading source) matches
+copies by shelf mark, updates changed values and keeps decisions taken in
+the app. Copies missing from the file stay in the catalog; nothing is
+deleted.
 
 To try the app first, [tools/demo](../tools/demo/README.md) builds the
 invented archive of a fictitious choir with step-by-step instructions.
@@ -352,11 +356,22 @@ the same in every language of the interface.
 
 - Only **Signatur** is required. A missing column is named in the report of
   the dry run; unknown columns are ignored.
-- The file is CSV: UTF-8, separated by semicolons. In Excel: **Save as** →
+- An `.xlsx` or `.ods` file is imported as it is, the filled-in ODS template
+  too. Of a file with several sheets the first one with the column
+  **Signatur** is read, the report names it; rows above the column names
+  (a title, for example) are left out. Formulas count with the value they
+  show last; numbers and dates count with their value, not with their
+  format (a date as `2026-11-03`).
+- Spreadsheet programs turn some entries into dates or numbers, `1-3` for
+  example into the 3rd of January. Format the column **Signatur** as text
+  before you type shelf marks; the dry run lists every shelf mark it cannot
+  read.
+- A CSV file is UTF-8, separated by semicolons. In Excel: **Save as** →
   **CSV UTF-8 (comma delimited)**; Excel uses the semicolon where the
   system's list separator is one, as in German. In LibreOffice: **Save as**
-  → **Text CSV**, character set **UTF-8**, field delimiter `;`. The ODS
-  template is for filling in; save it as CSV for the import.
+  → **Text CSV**, character set **UTF-8**, field delimiter `;`. The format
+  follows the extension of the file name (`.xlsx`, `.ods`, otherwise CSV);
+  an older Excel file (`.xls`) has to be saved as `.xlsx` first.
 - Values are text. An import never confirms rights and never chooses a valid
   version, whatever the columns say.
 
@@ -629,7 +644,7 @@ The `occ` commands are a convenience for self-hosted instances:
 | Command | Does |
 |---|---|
 | `occ cantoria:setup <account> [<folder>] [--role role=groups]` | sets the archive folder and the role groups; with an archive folder it names the accounts of the role groups that cannot open it |
-| `occ cantoria:import <account> <file> [--execute]` | imports the catalog CSV; a dry run unless `--execute` is given |
+| `occ cantoria:import <account> <file> [--execute]` | imports the catalog (CSV, `.xlsx` or `.ods`); a dry run unless `--execute` is given |
 | `occ cantoria:export [--extended] [--full]` | writes the catalog CSV, all fields, or the complete backup (JSON) to standard output |
 | `occ cantoria:file-sync <account>` | runs the file sync; refused (exit code 1) while another one is running |
 | `occ cantoria:restore <file> [<account>]` | restores a complete backup into an empty catalog |

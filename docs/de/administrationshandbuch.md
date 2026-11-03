@@ -318,15 +318,18 @@ alle, die die Einstellungen ändern dürfen.
 
 ## 4. Erster Import
 
-Ein vorhandenes Werkverzeichnis wird aus einer CSV-Datei (UTF-8, durch
-Semikolons getrennt) mit den Spalten des ursprünglichen Werkverzeichnisses
-importiert ([Die Spalten der Werkverzeichnis-Datei](#die-spalten-der-werkverzeichnis-datei)).
-Lade sie zuerst in die Nextcloud hoch; eine Importdatei darf höchstens 20 MB
-groß sein. Ein Chor ohne Verzeichnisdatei überspringt den Import und beginnt
-mit dem ersten **Neuzugang**.
+Ein vorhandenes Werkverzeichnis wird aus einer Datei mit den Spalten des
+ursprünglichen Werkverzeichnisses importiert
+([Die Spalten der Werkverzeichnis-Datei](#die-spalten-der-werkverzeichnis-datei)):
+aus einer Excel-Arbeitsmappe (`.xlsx`), einer OpenDocument-Tabelle (`.ods`,
+LibreOffice und Nextcloud Office) oder einer CSV-Datei (UTF-8, durch
+Semikolons getrennt). Lade sie zuerst in die Nextcloud hoch; eine
+Importdatei darf höchstens 20 MB groß sein, und der Text aller Zellen einer
+Arbeitsmappe zusammen auch nicht mehr. Ein Chor ohne Verzeichnisdatei
+überspringt den Import und beginnt mit dem ersten **Neuzugang**.
 
 1. **Archivverwaltung** (unten in der Navigation, für die Archivverwaltung)
-   → **Werkverzeichnis importieren** → **CSV-Datei wählen …**. Die App macht
+   → **Werkverzeichnis importieren** → **Datei wählen …**. Die App macht
    sofort einen **Probelauf**; noch wird nichts gespeichert.
 
    ![Der Bericht eines wiederholten Probelaufs: „Probelauf – es wurde noch nichts geändert“, 23 Zeilen, keine neuen oder geänderten Exemplare, 7 mit MusicXML, 1 interne Erhaltungskopie, die Verteilung von Rechtestatus, Repertoire und Veröffentlichung und eine Warnung.](../screenshots/de/import-report.png)
@@ -361,10 +364,10 @@ mit dem ersten **Neuzugang**.
 > Wiederherstellen eines erweiterten Exports in ein leeres Werkverzeichnis
 > übernimmt die darin festgehaltenen Entscheidungen.
 
-Ein wiederholter Import (solange die CSV-Datei die führende Quelle ist)
-ordnet Exemplare nach Signatur zu, aktualisiert geänderte Werte und behält
-Entscheidungen, die in der App getroffen wurden. Exemplare, die in der
-CSV-Datei fehlen, bleiben im Werkverzeichnis; nichts wird gelöscht.
+Ein wiederholter Import (solange die Datei die führende Quelle ist) ordnet
+Exemplare nach Signatur zu, aktualisiert geänderte Werte und behält
+Entscheidungen, die in der App getroffen wurden. Exemplare, die in der Datei
+fehlen, bleiben im Werkverzeichnis; nichts wird gelöscht.
 
 Um die App erst auszuprobieren, baut [tools/demo](../../tools/demo/README.md)
 (englisch) das erfundene Archiv eines ausgedachten Chors auf, mit einer
@@ -381,11 +384,22 @@ Format stammt, und in jeder Sprache der Oberfläche gleich.
 
 - Pflicht ist nur **Signatur**. Eine fehlende Spalte nennt der Bericht des
   Probelaufs; unbekannte Spalten werden übergangen.
-- Die Datei ist CSV: UTF-8, durch Semikolons getrennt. In Excel: **Speichern
+- Eine `.xlsx`- oder `.ods`-Datei wird importiert, wie sie ist, auch die
+  ausgefüllte ODS-Vorlage. Von einer Datei mit mehreren Tabellenblättern
+  wird das erste mit der Spalte **Signatur** gelesen, der Bericht nennt es;
+  Zeilen über den Spaltennamen (etwa ein Titel) bleiben außen vor. Formeln
+  zählen mit dem Wert, den sie zuletzt zeigten; Zahlen und Daten zählen mit
+  ihrem Wert, nicht mit ihrem Format (ein Datum als `2026-11-03`).
+- Tabellenprogramme machen aus manchen Eingaben ein Datum oder eine Zahl,
+  aus `1-3` etwa den 3. Januar. Formatiere die Spalte **Signatur** als Text,
+  bevor du Signaturen eintippst; der Probelauf nennt jede Signatur, die er
+  nicht lesen kann.
+- Eine CSV-Datei ist UTF-8, durch Semikolons getrennt. In Excel: **Speichern
   unter** → **CSV UTF-8 (durch Trennzeichen getrennt)**; ein deutsches Excel
   trennt dabei mit Semikolon. In LibreOffice: **Speichern unter** →
-  **Text CSV**, Zeichensatz **UTF-8**, Feldtrenner `;`. Die ODS-Vorlage ist
-  zum Ausfüllen; für den Import speicherst du sie als CSV.
+  **Text CSV**, Zeichensatz **UTF-8**, Feldtrenner `;`. Das Format richtet
+  sich nach der Endung des Dateinamens (`.xlsx`, `.ods`, sonst CSV); eine
+  ältere Excel-Datei (`.xls`) speicherst du zuerst als `.xlsx`.
 - Werte sind Text. Ein Import bestätigt nie Rechte und legt nie eine
   geltende Fassung fest, gleich was in den Spalten steht.
 
@@ -681,7 +695,7 @@ Die `occ`-Befehle sind eine Erleichterung für selbst betriebene Instanzen:
 | Befehl | Macht |
 |---|---|
 | `occ cantoria:setup <account> [<folder>] [--role role=groups]` | setzt den Archivordner und die Rollengruppen; mit Archivordner nennt er die Konten der Rollengruppen, die ihn nicht öffnen können |
-| `occ cantoria:import <account> <file> [--execute]` | importiert die CSV-Datei des Werkverzeichnisses; ein Probelauf, solange `--execute` fehlt |
+| `occ cantoria:import <account> <file> [--execute]` | importiert das Werkverzeichnis (CSV, `.xlsx` oder `.ods`); ein Probelauf, solange `--execute` fehlt |
 | `occ cantoria:export [--extended] [--full]` | schreibt die CSV-Datei des Werkverzeichnisses, alle Felder oder die vollständige Sicherung (JSON) auf die Standardausgabe |
 | `occ cantoria:file-sync <account>` | startet den Dateiabgleich; abgelehnt (Exit-Code 1), solange ein anderer läuft |
 | `occ cantoria:restore <file> [<account>]` | stellt eine vollständige Sicherung in ein leeres Werkverzeichnis wieder her |

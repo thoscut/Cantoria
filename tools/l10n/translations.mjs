@@ -162,7 +162,7 @@ export const singular = {
 	'Reason: {reason}': 'Begründung: {reason}',
 
 	// ---- archive management ----
-	'Choose the catalog file (CSV)': 'Werkverzeichnis-Datei (CSV) wählen',
+	'Choose the catalog file (CSV, XLSX or ODS)': 'Werkverzeichnis-Datei (CSV, XLSX oder ODS) wählen',
 	'The chosen file cannot be used.': 'Die gewählte Datei kann nicht verwendet werden.',
 	'The catalog has been imported.': 'Das Werkverzeichnis wurde importiert.',
 	'The export was stored in the archive folder.': 'Der Export wurde im Archivordner abgelegt.',
@@ -437,7 +437,7 @@ export const singular = {
 	'"%s" needs a valid date (YYYY-MM-DD).': '„%s“ braucht ein gültiges Datum (JJJJ-MM-TT).',
 	'"%s" must be text.': '„%s“ muss Text sein.',
 	'"%s" is too long.': '„%s“ ist zu lang.',
-	'The CSV has no column "Signatur". Is it the catalog?': 'Die CSV hat keine Spalte „Signatur“. Ist es das Werkverzeichnis?',
+	'The file has no column "Signatur". Is it the catalog?': 'Die Datei hat keine Spalte „Signatur“. Ist es das Werkverzeichnis?',
 	'Unknown columns are ignored: %s': 'Unbekannte Spalten werden nicht übernommen: %s',
 	'Catalog columns are missing: %s': 'Spalten des Werkverzeichnisses fehlen: %s',
 	'Row %s, column "%s": the value "%s" is not valid there and was not imported.': 'Zeile %s, Spalte „%s“: Der Wert „%s“ ist dort nicht zulässig und wurde nicht übernommen.',
@@ -2904,9 +2904,9 @@ export const singular = {
 	'When the conductor or the music librarians share a piece or an excerpt with the choir members, it appears here. Each link is valid for at most six months.': 'Sobald Chorleitung oder Archivverwaltung ein Stück oder einen Ausschnitt mit den Chormitgliedern teilen, erscheint es hier. Jeder Link gilt höchstens sechs Monate.',
 	'This piece is no longer shared with choir members.': 'Dieses Stück ist nicht mehr mit den Chormitgliedern geteilt.',
 	// ---- 0.12: Stand only for revisions, Ausgabe only for folder loans ----
-	'Imports the catalog from a CSV file in your Nextcloud. First a dry run shows what would change; only then you decide. Copies are matched by shelf mark, nothing is deleted, and before every import a snapshot of the current state is saved. The import can be repeated.': [
-		'Importiert das Werkverzeichnis aus einer CSV-Datei in deiner Nextcloud. Zuerst zeigt ein Probelauf, was sich ändern würde; erst dann entscheidest du. Exemplare werden über die Signatur zugeordnet, nichts wird gelöscht, und vor jedem Import werden die bisherigen Daten als Schnappschuss gespeichert. Der Import lässt sich wiederholen.',
-		'Importiert das Werkverzeichnis aus einer CSV-Datei in Ihrer Nextcloud. Zuerst zeigt ein Probelauf, was sich ändern würde; erst dann entscheiden Sie. Exemplare werden über die Signatur zugeordnet, nichts wird gelöscht, und vor jedem Import werden die bisherigen Daten als Schnappschuss gespeichert. Der Import lässt sich wiederholen.',
+	'Imports the catalog from a file in your Nextcloud: CSV, Excel (.xlsx) or OpenDocument (.ods). First a dry run shows what would change; only then you decide. Copies are matched by shelf mark, nothing is deleted, and before every import a snapshot of the current state is saved. The import can be repeated.': [
+		'Importiert das Werkverzeichnis aus einer Datei in deiner Nextcloud: CSV, Excel (.xlsx) oder OpenDocument (.ods). Zuerst zeigt ein Probelauf, was sich ändern würde; erst dann entscheidest du. Exemplare werden über die Signatur zugeordnet, nichts wird gelöscht, und vor jedem Import werden die bisherigen Daten als Schnappschuss gespeichert. Der Import lässt sich wiederholen.',
+		'Importiert das Werkverzeichnis aus einer Datei in Ihrer Nextcloud: CSV, Excel (.xlsx) oder OpenDocument (.ods). Zuerst zeigt ein Probelauf, was sich ändern würde; erst dann entscheiden Sie. Exemplare werden über die Signatur zugeordnet, nichts wird gelöscht, und vor jedem Import werden die bisherigen Daten als Schnappschuss gespeichert. Der Import lässt sich wiederholen.',
 	],
 	'The previous state was saved as a snapshot: {path}': 'Die bisherigen Daten wurden als Schnappschuss gespeichert: {path}',
 	'MusicXML date': 'MusicXML-Datum',
@@ -3462,13 +3462,23 @@ export const singular = {
 	'The functions you chose need a group for these roles: {roles}.': 'Die gewählten Funktionen brauchen eine Gruppe für diese Rollen: {roles}.',
 	'Functions and modules': 'Funktionen und Module',
 	'(set the same switches as the choice above, without the sharing)': '(setzen dieselben Schalter wie die Wahl darüber, ohne das Teilen)',
-	'Kept the catalog in another program so far? Fill in the template, one row per copy; only "Signatur" (shelf mark) is required. In Excel: Save as → CSV UTF-8.': [
-		'Verzeichnis bisher in einem anderen Programm geführt? Fülle die Vorlage aus, eine Zeile je Exemplar; nur „Signatur“ ist Pflicht. In Excel: Speichern unter → CSV UTF-8.',
-		'Verzeichnis bisher in einem anderen Programm geführt? Füllen Sie die Vorlage aus, eine Zeile je Exemplar; nur „Signatur“ ist Pflicht. In Excel: Speichern unter → CSV UTF-8.',
+	'Kept the catalog in another program so far? Fill in the template, one row per copy; only "Signatur" (shelf mark) is required. Import it as it is, as .xlsx, .ods or CSV.': [
+		'Verzeichnis bisher in einem anderen Programm geführt? Fülle die Vorlage aus, eine Zeile je Exemplar; nur „Signatur“ ist Pflicht. Importiere sie, wie sie ist: als .xlsx, .ods oder CSV.',
+		'Verzeichnis bisher in einem anderen Programm geführt? Füllen Sie die Vorlage aus, eine Zeile je Exemplar; nur „Signatur“ ist Pflicht. Importieren Sie sie, wie sie ist: als .xlsx, .ods oder CSV.',
 	],
 	'The columns of the import (administration guide)': 'Die Spalten des Imports (Administrationshandbuch)',
 	'Template (CSV)': 'Vorlage (CSV)',
 	'Template (ODS)': 'Vorlage (ODS)',
+	// ---- 0.20: import from .xlsx and .ods (review of 3 November 2026) ----
+	'The CSV file is not UTF-8 encoded. In Excel: "Save as" → "CSV UTF-8"; in LibreOffice: "Save as" → "Text CSV" with the character set UTF-8.': 'Die CSV-Datei ist nicht UTF-8-kodiert. In Excel: „Speichern unter“ → „CSV UTF-8“; in LibreOffice: „Speichern unter“ → „Text CSV“ mit dem Zeichensatz UTF-8.',
+	'Only the sheet "%s" was read; the other sheets of the file are left out.': 'Gelesen wurde nur das Tabellenblatt „%s“; die anderen Blätter der Datei bleiben außen vor.',
+	'The file is neither CSV nor .xlsx or .ods. Please save it in one of these formats, for example in Excel with "Save as" → "Excel workbook (.xlsx)".': [
+		'Die Datei ist weder CSV noch .xlsx oder .ods. Bitte speichere sie in einem dieser Formate, etwa in Excel mit „Speichern unter“ → „Excel-Arbeitsmappe (.xlsx)“.',
+		'Die Datei ist weder CSV noch .xlsx oder .ods. Bitte speichern Sie sie in einem dieser Formate, etwa in Excel mit „Speichern unter“ → „Excel-Arbeitsmappe (.xlsx)“.',
+	],
+	'The file is not an OpenDocument spreadsheet (.ods).': 'Die Datei ist keine OpenDocument-Tabelle (.ods).',
+	'The OpenDocument spreadsheet is damaged.': 'Die OpenDocument-Tabelle ist beschädigt.',
+	'The OpenDocument spreadsheet is too large to import.': 'Die OpenDocument-Tabelle ist zu groß für den Import.',
 }
 
 export const plural = {
@@ -3523,7 +3533,7 @@ export const plural = {
 	'%n copy has no file|%n copies have no file': ['%n Exemplar ohne Datei', '%n Exemplare ohne Datei'],
 	'%n folder was skipped|%n folders were skipped': ['%n Ordner übersprungen', '%n Ordner übersprungen'],
 	'%n warning|%n warnings': ['%n Warnung', '%n Warnungen'],
-	'%n copy is no longer in the CSV|%n copies are no longer in the CSV': ['%n Exemplar ist nicht mehr in der CSV', '%n Exemplare sind nicht mehr in der CSV'],
+	'%n copy is no longer in the import file|%n copies are no longer in the import file': ['%n Exemplar ist nicht mehr in der Importdatei', '%n Exemplare sind nicht mehr in der Importdatei'],
 	'%n sharp|%n sharps': ['%n Kreuz', '%n Kreuze'],
 	'%n flat|%n flats': ['%n B', '%n Be'],
 	'%n voice|%n voices': ['%n Stimme', '%n Stimmen'],

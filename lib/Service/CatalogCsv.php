@@ -175,7 +175,8 @@ final class CatalogCsv {
 			$content = substr($content, 3);
 		}
 		if (!mb_check_encoding($content, 'UTF-8')) {
-			throw new InvalidInputException('The CSV file is not UTF-8 encoded. Was it saved with Excel?');
+			// the way out in the message (U32): Excel saves CSV in the code page of the system unless told otherwise
+			throw new InvalidInputException('The CSV file is not UTF-8 encoded. In Excel: "Save as" → "CSV UTF-8"; in LibreOffice: "Save as" → "Text CSV" with the character set UTF-8.');
 		}
 		$stream = fopen('php://temp', 'r+');
 		if ($stream === false) {

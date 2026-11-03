@@ -227,7 +227,12 @@ than `active` requires `status_reason` in the same request.
 
 ## Archive management (role librarian)
 
-`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report:
+`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report.
+The file may be CSV, an Excel workbook (`.xlsx`) or an OpenDocument
+spreadsheet (`.ods`, milestone 0.20), with the same columns; the extension
+of the file name says which. Of a workbook the first sheet with the column
+`Signatur` is read (a warning names it when there are more), at most 20 MB
+of file and of cell text, as for a CSV file:
 
 ```json
 { "dryRun": true, "source": "…csv", "sha256": "…", "operation": null, "restore": true,

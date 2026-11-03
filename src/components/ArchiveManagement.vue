@@ -5,7 +5,8 @@
 <script setup lang="ts">
 /**
  * Archive management for the librarian role: import the catalog from a CSV
- * file (always a dry run first), import performances and song lists and the
+ * file, an Excel workbook or an OpenDocument spreadsheet (always a dry run
+ * first), import performances and song lists and the
  * list of persons, sync files with the archive folder, export, backup and
  * restore.
  */
@@ -77,12 +78,15 @@ const syncSection = useTemplateRef<HTMLElement>('syncSection')
 const storeButton = useTemplateRef('storeButton')
 const backupButton = useTemplateRef('backupButton')
 
-async function chooseCsv(): Promise<void> {
+/** The formats the import reads (U32): CSV, Excel workbook, OpenDocument spreadsheet */
+const IMPORT_TYPES = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.oasis.opendocument.spreadsheet']
+
+async function chooseFile(): Promise<void> {
 	let nodes
 	try {
-		nodes = await getFilePickerBuilder(t('cantoria', 'Choose the catalog file (CSV)'))
+		nodes = await getFilePickerBuilder(t('cantoria', 'Choose the catalog file (CSV, XLSX or ODS)'))
 			.setMultiSelect(false)
-			.setMimeTypeFilter(['text/csv'])
+			.setMimeTypeFilter(IMPORT_TYPES)
 			.setType(FilePickerType.Choose)
 			.build()
 			.pickNodes()
@@ -254,10 +258,10 @@ function onUpdateOpen(open: boolean): void {
 				{{ t('cantoria', 'Import catalog') }}
 			</h3>
 			<p>
-				{{ t('cantoria', 'Imports the catalog from a CSV file in your Nextcloud. First a dry run shows what would change; only then you decide. Copies are matched by shelf mark, nothing is deleted, and before every import a snapshot of the current state is saved. The import can be repeated.') }}
+				{{ t('cantoria', 'Imports the catalog from a file in your Nextcloud: CSV, Excel (.xlsx) or OpenDocument (.ods). First a dry run shows what would change; only then you decide. Copies are matched by shelf mark, nothing is deleted, and before every import a snapshot of the current state is saved. The import can be repeated.') }}
 			</p>
 			<p>
-				{{ t('cantoria', 'Kept the catalog in another program so far? Fill in the template, one row per copy; only "Signatur" (shelf mark) is required. In Excel: Save as → CSV UTF-8.') }}
+				{{ t('cantoria', 'Kept the catalog in another program so far? Fill in the template, one row per copy; only "Signatur" (shelf mark) is required. Import it as it is, as .xlsx, .ods or CSV.') }}
 				<GuideLink :href="adminGuideUrl(ADMIN_GUIDE.importColumns)" :label="t('cantoria', 'The columns of the import (administration guide)')" />
 			</p>
 			<div class="archive-management__actions">
@@ -276,11 +280,11 @@ function onUpdateOpen(open: boolean): void {
 			</div>
 
 			<div class="archive-management__actions">
-				<NcButton ref="importButton" :disabled="importBusy" @click="chooseCsv">
+				<NcButton ref="importButton" :disabled="importBusy" @click="chooseFile">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFileTableOutline" />
 					</template>
-					{{ importFile ? t('cantoria', 'Choose another file …') : t('cantoria', 'Choose CSV file …') }}
+					{{ importFile ? t('cantoria', 'Choose another file …') : t('cantoria', 'Choose file …') }}
 				</NcButton>
 				<NcButton v-if="importFile && importReport?.dryRun"
 					variant="primary"

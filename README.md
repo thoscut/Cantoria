@@ -241,8 +241,9 @@ figures to expect.
    groups of the roles (reading is enough); **Access to the archive folder**
    on the same page shows who cannot open it. File names start with the
    shelf mark, e.g. `5-01_Title_Composer.pdf`.
-4. A music librarian imports the existing catalog from CSV (always a dry run
-   first; **Archive management** offers a template with the columns) and
+4. A music librarian imports the existing catalog from an Excel workbook,
+   an OpenDocument spreadsheet or CSV (always a dry run first; **Archive
+   management** offers a template with the columns) and
    runs the file sync. Without a catalog, start with the first new accession.
 
 The [administration guide](docs/admin-guide.md) explains each step; self-hosted
