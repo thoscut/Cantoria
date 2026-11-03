@@ -43,18 +43,19 @@ describe('the job "CI result"', () => {
 	})
 
 	it('runs the jobs for code only when code changed, the others always', () => {
-		for (const [name, job] of jobs()) {
-			const gated = job.includes("if: needs.changes.outputs.code == 'true'")
-			if (['changes', 'reuse', 'docs', 'ci-ok'].includes(name)) {
-				expect(gated, name).toBe(false)
-			} else if (name === 'integration') {
-				// skipped with the archive it needs
-				expect(job).toMatch(/needs: archive\b/)
-			} else {
-				expect(gated, name).toBe(true)
-				expect(job, name).toMatch(/needs: changes\b/)
-			}
+		const all = jobs()
+		/** @return {string[]} the jobs a job needs */
+		const needsOf = (job) => {
+			const line = /^ {4}needs: (.*)$/m.exec(job)?.[1] ?? ''
+			return line.replace(/[[\]]/g, '').split(',').map((name) => name.trim()).filter((name) => name !== '')
 		}
+		const direct = (job) => job.includes("if: needs.changes.outputs.code == 'true'") && needsOf(job).includes('changes')
+		// a job without a condition of its own is skipped with a job it needs (e.g. the integration tests with the archive)
+		const gated = (name) => direct(all.get(name) ?? '') || (!/^ {4}if:/m.test(all.get(name) ?? '') && needsOf(all.get(name) ?? '').some((need) => need !== 'changes' && gated(need)))
+		for (const name of all.keys()) {
+			expect(gated(name), name).toBe(!['changes', 'reuse', 'docs', 'ci-ok'].includes(name))
+		}
+		expect(gated('integration'), 'skipped with the archive').toBe(true)
 	})
 
 	it('is green when all passed, or when documentation alone skipped the jobs for code', () => {
