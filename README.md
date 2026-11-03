@@ -151,8 +151,9 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
 The app suggests, people decide: a rights status is confirmed by a music
 librarian, the valid version is chosen by the conductor, and no import or
 automatic job sets either. Rights belong to the version, and an excerpt counts
-as much as the whole sheet. Nothing is deleted, every change is logged, and
-files in the archive folder are only read. Roles are bound to groups, not to
+as much as the whole sheet. Nothing in the catalog is deleted, every change is
+logged (with names only for a retention period), and files in the archive
+folder are only read. Roles are bound to groups, not to
 persons. There is always a way back without the developer, paper stays the
 fallback, and no external server is involved. The rights helpers model German
 copyright law; they support a decision and are no legal advice. The interface

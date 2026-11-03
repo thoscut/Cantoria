@@ -213,7 +213,9 @@ who uses it, so everybody only sees files they may see anyway. Background
 jobs (weekly backup, checksums) read through the account that chose the
 folder. The app never changes, moves or deletes files; it only writes into
 its own subfolder `_cantoria-app`, for exports of the catalog, and into
-the backup folder outside the archive folder (section 5). Only an
+the backup folder outside the archive folder (section 5). Everyone who can
+open the archive folder can read `_cantoria-app`, so its exports contain no
+accounts and no internal preservation copies. Only an
 administrator sets or changes the archive folder: background jobs and
 backups run as the account that set it.
 The one exception is a small correction of a MusicXML in the score view
@@ -302,7 +304,9 @@ Nextcloud first; an import file may be at most 20 MB.
    internal preservation copies, the distribution of rights status,
    repertoire and publication, and warnings.
 3. **Import now**. Before an import into a catalog that already holds data,
-   the app stores a snapshot of the previous state in `_cantoria-app`.
+   the app stores a snapshot of the previous state: in `_cantoria-app`
+   without accounts and internal preservation copies, and complete in the
+   backup folder (section 5).
 4. **File sync** → **Run file sync** links the files of the archive folder to
    the copies.
 
@@ -335,7 +339,13 @@ therefore writes, every week, into the **backup folder**: a folder
 "Music archive backups" (in German "Notenarchiv-Sicherungen") in the files
 of the account that set the archive folder, **outside the archive folder**.
 The role groups do not see it unless that account shares it with them; the
-settings page shows its path. The app writes:
+settings page shows its path. The app writes into it only while it is
+private to that account: if the folder is shared, or belongs to another
+account after a move, the backup stops with a message that names the
+folder. Stop sharing it, or move it away so that the app creates a new one.
+A folder of that name that is shared or lies inside the archive folder is
+not reused; the app creates "Music archive backups (2)" next to it. The
+app writes:
 
 - `…_catalog_weekly.csv`: the catalog in the legacy column layout plus all
   fields, readable in any spreadsheet program
@@ -345,16 +355,21 @@ settings page shows its path. The app writes:
   versions, copies, files, licenses, proposals, tasks, links, concerts and
   song lists with their programme lines, persons, contributions, merges,
   transcription reports and review points, the revisions of the versions,
-  the folder book with its loans, audit log) for a lossless restore. Links
-  are kept **without their tokens**: after a restore they are revoked and
-  have to be shared again.
+  the folder book with its loans, the files of the mirror folder of the
+  print station, audit log) for a lossless restore. Links are kept
+  **without their tokens**: after a restore they are revoked and have to be
+  shared again. The tables carry their names in the app (format 2, for
+  example `works`), not those of the database; backups of older versions
+  are still read.
 
 ![The backup sections of the archive management: storing a complete backup now, downloading the complete backup as JSON, and restoring a backup into an empty catalog.](screenshots/backup-restore.png)
 
 In **Archive management**, **Store a complete backup now** writes the same
 three files at once, for example before larger changes, and **Download
-complete backup (JSON)** saves the backup on your computer. The backup is
-written piece by piece and is never held in memory as a whole.
+complete backup (JSON)** saves the backup on your computer; the audit log
+records who downloaded it when, as such a copy is out of the app's reach.
+The backup is written piece by piece and is never held in memory as a
+whole.
 
 > [!WARNING]
 > The backups hold the complete catalog including the audit log (who changed
@@ -370,7 +385,13 @@ the account, and Nextcloud keeps older **versions** of changed files: both
 can still hold names after the retention period of the folder book. Set
 `trashbin_retention_obligation` and `versions_retention_obligation` in
 `config.php` (for example `auto, 30`) so that Nextcloud removes them, and
-keep your server backups no longer than you need them.
+keep your server backups no longer than you need them. A restore brings
+back data erased since the backup: after a restore, run the recorded
+erasures (`occ cantoria:privacy-erase`) again.
+
+**Exports.** The catalog export of the app (CSV) names no accounts, and it
+contains internal preservation copies only for the catalog role and the
+conductor. The complete catalog with accounts is in the backups.
 
 **Missing backups.** The daily check notifies the catalog role when the last
 complete backup is older than eight days, for example because the background
@@ -551,7 +572,9 @@ What the app stores about people:
 
 - **Function holders.** The audit log records who changed what, as a
   snapshot of the display name with the account. That is the record of the
-  catalog (legitimate interest, Art. 6 (1) f GDPR).
+  catalog (legitimate interest, Art. 6 (1) f GDPR). Tasks, proposals,
+  review points, links, concerts, confirmations and checks of persons keep
+  who created or decided them.
 - **Register of persons.** Names, life dates and roles of composers,
   arrangers, lyricists and other persons involved, from public sources
   (prints, publisher catalogues), kept for the rights assessment (Art. 6 (1)
@@ -566,7 +589,14 @@ What the app stores about people:
   Nextcloud account of the person who has a choir folder and notes about
   the loan. Practice audio files of choir members are recorded with the role
   only, without account or name (since 0.11; older entries were anonymised on
-  the update). Excerpt links count calls without recording who opened them.
+  the update), and with the day instead of the time. In a small voice group
+  such an entry may still point to one person. Excerpt links count calls
+  without recording who opened them.
+- **On the devices.** Practice settings and pieces kept "available without
+  a network" are stored only in the browser of the device (`localStorage`,
+  Cache Storage); microphone and recordings stay in the browser. The
+  [legal background](legal-background.md#microphone-recordings-and-browser-storage)
+  explains § 25 TDDDG.
 - **Reports and review points.** Transcription reports are kept as received
   (as evidence, with their checksum); their rights section may name the
   persons involved in a work. Review points record who decided them and
@@ -582,15 +612,28 @@ personal data; an open loan keeps the name of the holder (the folder is
 still out), but no longer the account; audit entries lose the account and
 keep the display name of who made a change.
 
+**Retention of the audit log.** The daily check removes account and name
+from audit entries older than **ten years** and keeps their roles; the
+audit log records how many entries it changed. Ten years is the longest
+time in which claims of rights holders become time-barred (§ 102 UrhG with
+§ 199 BGB); until then the entries are evidence (Art. 17 (3) e GDPR). Set
+another period with `occ config:app:set cantoria audit_retention_years
+--value=<years> --type=integer`; `0` switches it off. Enter the period in
+the register of processing activities.
+
 **Access and erasure.** On self-hosted instances `occ
 cantoria:privacy-report <account or name>` lists the loans, the audit
-entries made by the person and persons of the same name in the register of
-persons (JSON). `occ cantoria:privacy-erase <account or name> --execute`
+entries made by the person, the records in which the account or the name
+is recorded as who created, decided, confirmed or checked something
+(tasks, proposals, review points, links, concerts, versions and their
+revisions, persons, merges, transcription reports) and persons of the same
+name in the register of persons (JSON). `occ cantoria:privacy-erase <account or name> --execute`
 removes the personal data of the loans (also from their audit entries; an
 open loan stays recorded as out, without the holder) and the account and
 name from the audit entries made by the person; the erasure itself is
 recorded without the name. Without `--execute` it only shows what would be
-erased. Persons of the register are only reported. On managed hosting ask
+erased. Persons of the register and the records are only reported: they
+stay as evidence of who decided. On managed hosting ask
 the provider to run the commands, or remove the data by hand: the folder
 book in the app, the register of persons in the app.
 
@@ -598,7 +641,8 @@ book in the app, the register of persons in the app.
 everyone. Nextcloud records the IP addresses of their visitors: in the web
 server log (with the address of the link), in the brute-force protection
 and the rate limit, and in `nextcloud.log` on errors. The app sets no cookies
-for visitors without an account and loads nothing from third parties.
+of its own and loads nothing from third parties; practice settings and pieces
+kept on a tap stay in the visitor's browser.
 Before you switch these modules on, enter the addresses of the **imprint**
 and the **privacy policy** under *Administration → Theming*: the public pages
 show both in their footer, and the module settings warn while one is

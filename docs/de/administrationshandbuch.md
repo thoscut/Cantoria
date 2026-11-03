@@ -235,7 +235,9 @@ ohnehin sehen darf. Hintergrundjobs (wöchentliche Sicherung, Prüfsummen)
 lesen über das Konto, das den Ordner gewählt hat. Die App ändert, verschiebt
 oder löscht nie Dateien; sie schreibt nur in ihren eigenen Unterordner
 `_cantoria-app`, für Exporte des Werkverzeichnisses, und in den
-Sicherungsordner außerhalb des Archivordners (Abschnitt 5). Nur die
+Sicherungsordner außerhalb des Archivordners (Abschnitt 5). Wer den
+Archivordner öffnen kann, kann auch `_cantoria-app` lesen; seine Exporte
+enthalten darum keine Konten und keine internen Erhaltungskopien. Nur die
 Administration legt den Archivordner fest oder ändert ihn: Hintergrundjobs
 und Sicherungen laufen mit dem Konto, das ihn festgelegt hat. Die einzige
 Ausnahme ist eine kleine Korrektur einer MusicXML-Datei in der Notenansicht
@@ -329,8 +331,9 @@ höchstens 20 MB groß sein.
    MusicXML, interne Erhaltungskopien, die Verteilung von Rechtestatus,
    Repertoire und Veröffentlichung sowie Warnungen.
 3. **Jetzt importieren**. Vor einem Import in ein Werkverzeichnis, das schon
-   Daten enthält, legt die App einen Stand des bisherigen Zustands in
-   `_cantoria-app` ab.
+   Daten enthält, legt die App einen Stand des bisherigen Zustands ab: in
+   `_cantoria-app` ohne Konten und interne Erhaltungskopien, vollständig im
+   Sicherungsordner (Abschnitt 5).
 4. **Dateiabgleich** → **Dateiabgleich starten** verknüpft die Dateien des
    Archivordners mit den Exemplaren.
 
@@ -366,7 +369,13 @@ Löschungen. Die App schreibt deshalb jede Woche in den **Sicherungsordner**:
 einen Ordner „Notenarchiv-Sicherungen“ in den Dateien des Kontos, das den
 Archivordner festgelegt hat, **außerhalb des Archivordners**. Die
 Rollengruppen sehen ihn nicht, solange dieses Konto ihn nicht mit ihnen
-teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt:
+teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt nur
+hinein, solange er diesem Konto allein gehört: Ist der Ordner geteilt oder
+gehört er nach einem Verschieben einem anderen Konto, bricht die Sicherung
+mit einer Meldung ab, die den Ordner nennt. Teile ihn nicht mehr, oder
+verschiebe ihn, damit die App einen neuen anlegt. Einen Ordner dieses
+Namens, der geteilt ist oder im Archivordner liegt, nimmt die App nicht; sie
+legt daneben „Notenarchiv-Sicherungen (2)“ an. Die App schreibt:
 
 - `…_catalog_weekly.csv`: das Werkverzeichnis im bisherigen Spaltenaufbau
   plus alle Felder, lesbar in jeder Tabellenkalkulation
@@ -377,17 +386,21 @@ teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt:
   Links, Konzerte und Notenlisten mit ihren Programmpunkten, Personen,
   Beteiligungen, Zusammenführungen, Berichte von Übertragungen und
   Prüfpunkte, die Stände der Fassungen, das Mappenbuch mit seinen Ausgaben,
-  Protokoll) für eine verlustfreie Wiederherstellung. Links stehen **ohne
-  ihre Token** darin: Nach einer Wiederherstellung sind sie widerrufen und
-  müssen neu geteilt werden.
+  die Dateien des Spiegelordners der Druckstation, Protokoll) für eine
+  verlustfreie Wiederherstellung. Links stehen **ohne ihre Token** darin:
+  Nach einer Wiederherstellung sind sie widerrufen und müssen neu geteilt
+  werden. Die Tabellen tragen ihre Namen in der App (Format 2, zum Beispiel
+  `works`), nicht die der Datenbank; Sicherungen älterer Versionen werden
+  weiter gelesen.
 
 ![Die Bereiche zur Sicherung in der Archivverwaltung: eine vollständige Sicherung jetzt ablegen, die vollständige Sicherung als JSON herunterladen und eine Sicherung in ein leeres Werkverzeichnis wiederherstellen.](../screenshots/de/backup-restore.png)
 
 In der **Archivverwaltung** schreibt **Vollständige Sicherung jetzt ablegen**
 dieselben drei Dateien sofort, zum Beispiel vor größeren Änderungen, und
 **Vollständige Sicherung herunterladen (JSON)** speichert die Sicherung auf
-deinem Computer. Die Sicherung entsteht Stück für Stück und liegt nie ganz
-im Speicher.
+deinem Computer; das Protokoll hält fest, wer sie wann heruntergeladen hat,
+denn eine solche Kopie liegt außerhalb der Reichweite der App. Die Sicherung
+entsteht Stück für Stück und liegt nie ganz im Speicher.
 
 > [!WARNING]
 > Die Sicherungen enthalten das vollständige Werkverzeichnis einschließlich
@@ -405,7 +418,14 @@ landen im **Papierkorb** des Kontos, und die Nextcloud bewahrt ältere
 des Mappenbuchs noch Namen enthalten. Setze `trashbin_retention_obligation`
 und `versions_retention_obligation` in der `config.php` (zum Beispiel
 `auto, 30`), damit die Nextcloud sie entfernt, und bewahre deine
-Server-Sicherungen nicht länger auf als nötig.
+Server-Sicherungen nicht länger auf als nötig. Eine Wiederherstellung
+bringt Daten zurück, die seit der Sicherung gelöscht wurden: Führe danach
+die vermerkten Löschungen (`occ cantoria:privacy-erase`) erneut aus.
+
+**Exporte.** Der Export des Werkverzeichnisses in der App (CSV) nennt keine
+Konten und enthält interne Erhaltungskopien nur für die Rolle „Bestand“ und
+die Chorleitung. Das vollständige Werkverzeichnis mit Konten steht in den
+Sicherungen.
 
 **Fehlende Sicherungen.** Die tägliche Prüfung benachrichtigt die Rolle
 „Bestand“, wenn die letzte vollständige Sicherung älter als acht Tage ist,
@@ -606,6 +626,8 @@ Was die App über Menschen speichert:
 - **Funktionsträger.** Das Protokoll hält fest, wer was geändert hat, als
   Momentaufnahme des Anzeigenamens mit dem Konto. Das ist der Nachweis des
   Werkverzeichnisses (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO).
+  Aufgaben, Vorschläge, Prüfpunkte, Links, Konzerte, Bestätigungen und
+  Prüfungen von Personen halten fest, wer sie angelegt oder entschieden hat.
 - **Personenregister.** Namen, Lebensdaten und Rollen der Personen aus
   Komposition, Bearbeitung, Text und weiterer Beteiligter, aus öffentlichen
   Quellen (Drucke, Verlagsverzeichnisse), aufbewahrt für die Einschätzung der
@@ -621,8 +643,14 @@ Was die App über Menschen speichert:
   das Nextcloud-Konto der Person, die eine Chormappe hat, und Notizen zur
   Ausgabe. Übe-Dateien von Chormitgliedern werden nur mit der Rolle
   protokolliert, ohne Konto und Namen (seit 0.11; ältere Einträge wurden beim
-  Update anonymisiert). Ausschnitt-Links zählen Aufrufe, ohne festzuhalten,
-  wer sie geöffnet hat.
+  Update anonymisiert), und mit dem Tag statt der Uhrzeit. In einer kleinen
+  Stimmgruppe kann ein solcher Eintrag trotzdem auf eine Person deuten.
+  Ausschnitt-Links zählen Aufrufe, ohne festzuhalten, wer sie geöffnet hat.
+- **Auf den Geräten.** Übe-Einstellungen und Stücke, die „ohne Netz
+  verfügbar“ sind, liegen nur im Browser des Geräts (`localStorage`, Cache
+  Storage); Mikrofon und Aufnahmen bleiben im Browser. Der
+  [rechtliche Hintergrund](rechtlicher-hintergrund.md#mikrofon-aufnahmen-und-speicher-im-browser)
+  erklärt § 25 TDDDG.
 - **Berichte und Prüfpunkte.** Berichte von Übertragungen werden so
   aufbewahrt, wie sie eingegangen sind (als Beleg, mit ihrer Prüfsumme); ihr
   Abschnitt zu den Rechten kann die an einem Werk beteiligten Personen
@@ -640,15 +668,29 @@ Mappe ist noch draußen), aber nicht mehr das Konto; Protokolleinträge
 verlieren das Konto und behalten den Anzeigenamen dessen, der etwas geändert
 hat.
 
+**Löschfrist des Protokolls.** Die tägliche Prüfung entfernt Konto und
+Namen aus Protokolleinträgen, die älter als **zehn Jahre** sind, und behält
+ihre Rollen; das Protokoll hält fest, wie viele Einträge sie geändert hat.
+Zehn Jahre sind die längste Frist, in der Ansprüche von Rechteinhabern
+verjähren (§ 102 UrhG i. V. m. § 199 BGB); bis dahin sind die Einträge
+Nachweis (Art. 17 Abs. 3 lit. e DSGVO). Eine andere Frist setzt du mit
+`occ config:app:set cantoria audit_retention_years --value=<Jahre>
+--type=integer`; `0` schaltet sie ab. Trage die Frist in das Verzeichnis
+von Verarbeitungstätigkeiten ein.
+
 **Auskunft und Löschung.** Auf selbst betriebenen Instanzen listet `occ
 cantoria:privacy-report <Konto oder Name>` die Ausgaben, die
-Protokolleinträge der Person und Personen gleichen Namens im
-Personenregister (JSON). `occ cantoria:privacy-erase <Konto oder Name>
+Protokolleinträge der Person, die Einträge, in denen Konto oder Name als
+die Person steht, die etwas angelegt, entschieden, bestätigt oder geprüft
+hat (Aufgaben, Vorschläge, Prüfpunkte, Links, Konzerte, Fassungen und ihre
+Stände, Personen, Zusammenführungen, Berichte von Übertragungen), und
+Personen gleichen Namens im Personenregister (JSON). `occ cantoria:privacy-erase <Konto oder Name>
 --execute` entfernt die personenbezogenen Daten der Ausgaben (auch aus ihren
 Protokolleinträgen; eine offene Ausgabe bleibt als ausgegeben vermerkt, ohne
 Person) und Konto und Namen aus den Protokolleinträgen der Person; die
 Löschung selbst wird ohne Namen protokolliert. Ohne `--execute` zeigt der
-Befehl nur, was gelöscht würde. Personen des Registers werden nur genannt.
+Befehl nur, was gelöscht würde. Personen des Registers und die Einträge
+werden nur genannt: Sie bleiben als Nachweis, wer entschieden hat.
 Beim verwalteten Hosting bitte den Anbieter, die Befehle auszuführen, oder
 entferne die Daten von Hand: das Mappenbuch und das Personenregister in der
 App.
@@ -657,8 +699,9 @@ App.
 Repertoireseite sind Seiten für alle. Die Nextcloud verarbeitet dabei die
 IP-Adressen der Besucher: im Log des Webservers (mit der Adresse des Links),
 im Schutz gegen Brute-Force-Angriffe und in der Begrenzung der Aufrufe, bei
-Fehlern in `nextcloud.log`. Die App setzt für Besucher ohne Konto keine
-Cookies und lädt nichts von Dritten. Bevor du diese Module einschaltest,
+Fehlern in `nextcloud.log`. Die App setzt keine eigenen Cookies und lädt
+nichts von Dritten; Übe-Einstellungen und auf Tippen gespeicherte Stücke
+bleiben im Browser der Besucher. Bevor du diese Module einschaltest,
 trage unter *Verwaltung → Design* die Adressen des **Impressums** und der
 **Datenschutzerklärung** ein: Die öffentlichen Seiten zeigen beide in ihrer
 Fußzeile, und die Moduleinstellungen warnen, solange eines fehlt. Die
