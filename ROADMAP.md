@@ -35,7 +35,7 @@ und nutzerfreundlich** (Leitlinien 11, 13, 14 und 15).
 4. **Dateien werden nur gelesen.** Die App ändert, verschiebt und benennt
    keine Datei um. Sie schreibt nur in ihren eigenen Unterordner
    `_cantoria-app` (Exporte und Stände des Werkverzeichnisses) und in den
-   Sicherungsordner außerhalb des Archivordners. Es gibt zwei Ausnahmen:
+   Sicherungsordner außerhalb des Archivordners. Es gibt drei Ausnahmen:
    - Eine kleine Korrektur einer MusicXML (Tonhöhe, Vorzeichen, Silbe)
      speichert die App als neue Datei neben der alten. Die alte bleibt
      unverändert, die Änderung steht im Protokoll.
@@ -144,10 +144,10 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | im Review bis auf Markenprüfung, Signaturzertifikat, Branch-Schutz und Klärung der Schriftlizenz Liberation (Sache des Maintainers) | PR #14, #15, #16 |
-| 0.18 Rechte auf allen neuen Wegen | im Review bis auf zwei Entscheidungen des Maintainers (R B9, S N2) | PR #14, #16 |
-| 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
-| 0.20 Einführen und umsteigen | im Review bis auf Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
+| 0.17 Bereit zur ersten Veröffentlichung | im Review; offen sind die Punkte der zweiten Runde vom 3. November (Probelauf der Release-Kette, kleine Fehler im neuen Code, Texte) und beim Maintainer Markenprüfung, Signaturzertifikat, Branch-Schutz, Schriftlizenz Liberation und die Angaben des Repositorys | PR #14, #15, #16 |
+| 0.18 Rechte auf allen neuen Wegen | im Review; offen sind die Punkte der zweiten Runde (eine Regel für Behalten und Drucken, Ordner räumen, MusicXML auf Links, Protokollwerte) und zwei Entscheidungen des Maintainers (R B9, S N2) | PR #14, #16 |
+| 0.19 Üben und Vortragen am Gerät | im Review; offen sind die Punkte der zweiten Runde (Bühnenansicht beginnt bei den Noten, Fokus, Zurück), `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
+| 0.20 Einführen und umsteigen | im Review; offen sind die Punkte der zweiten Runde (abgelaufene Links, Nachricht an den Chor, Import, Texte), Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
 | 1.0 Stabil | geplant | – |
 
 Die aktuelle Version ist 0.16.1: Die App heißt jetzt Cantoria, vorher
@@ -167,6 +167,17 @@ kritische Befunde. Seine Punkte sind unten als *Ergänzt am 3. November
 Befundnummern der Berichte vom 3. November (z. B. U22, D18, S N12, R B19,
 W B14); die älteren Kürzel wie „U 7“ zählen anders und bleiben, wie sie
 sind.
+
+Am Nachmittag des 3. November 2026 hat eine zweite Runde mit denselben
+sieben Fächern den Stand von PR #16 (Commit `a2073a5`, `0.17.0-dev.2`)
+nach den Korrekturen geprüft. Sicherheit hat keinen offenen Befund vom
+Vormittag mehr, UX und Design zählen drei Viertel ihrer früheren Punkte
+als erledigt. Neu hoch sind nur das Pedal, das beim Laden ein Stück
+überspringt (U37), die Angaben des Repositorys auf GitHub (W B22) und die
+fehlende Angabe, dass Cantoria in Nextcloud All-in-One nicht läuft
+(W B23). Ihre Punkte stehen als *Ergänzt am 3. November 2026, zweite
+Runde* in den Meilensteinen; die Nummern setzen die Berichte vom
+Vormittag fort (z. B. U37, D27, A22, S N16, R B24, T24, W B22).
 
 ### 0.1 Fundament
 
@@ -711,6 +722,56 @@ ersten Tag.*
   vorhandenen Bestand, neben dem Chorsystem; README verlinkt
   `alongside-a-choir-system.md` und `for-choir-members.md` (W B13, W B14).
 
+*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+
+- **Kleine Fehler im neuen Code, vor der nächsten Version:** Das Pedal
+  überspringt kein Stück mehr, wenn man während des Ladens drückt
+  (`offerNext` beim Stückwechsel zurücksetzen), und ein Aufruf mit
+  `?item=` setzt den Fokus in die Noten (U37). Eine öffentliche Seite mit
+  einem Stück, das nicht behalten werden darf, löscht nicht mehr alle
+  offline behaltenen öffentlichen Stücke (A24). Das Screenshot-Werkzeug
+  bricht nicht mehr beim ersten Bild ab (`this.look = null` im
+  Konstruktor verdeckt die Methode `look()`, D31). „Not available.“ ist
+  übersetzt (A27).
+- **Probelauf der Release-Kette:** `release.yml` ist noch nie gelaufen.
+  Nach dem Merge einmal per Dispatch, den finalen Weg mit Tag in einem
+  Fork, dazu Build-Provenance; die Concurrency-Gruppe enthält
+  `github.workflow`, damit ein manueller Lauf den Lauf des Pushs nicht
+  abbricht (T25, T28, A26).
+- **Branch-Schutz möglich machen:** ein Sammel-Check `ci-ok` und die
+  Entscheidung über die Pfade im Workflow statt `paths-ignore`, damit
+  Pflicht-Checks reine Doku-PRs nicht blockieren; danach `main` schützen
+  (T26).
+- **Worker-Test in der CI echt:** Der Test des Service Workers läuft heute
+  nur mit gebautem `js/` und prüft im Unit-Job nichts. Das Einsetzen in
+  den Worker als reine Funktion testen oder vor den Unit-Tests bauen,
+  übersprungene Tests als Fehler werten (T24).
+- **Migrationsliste:** ein Unit-Test „jede Migration steht in
+  `RELEASED`“ schon im PR, der Vergleich mit dem vorigen Tag, und nur
+  `-dev.N` gilt als nicht final, sonst liefe ein `1.0.0-rc.1` ohne die
+  Prüfungen auf Tag und CHANGELOG (T27, T30, A26).
+- **Pinnen wie zugesagt:** das Image der REUSE-Action (`fsfe/reuse:6`)
+  oder `reuse` selbst in fester Version mit `--require-hashes`,
+  `curl --retry`; signieren mit `occ` aus einem nicht installierten
+  Server-Archiv (T29, S N21).
+- **Texte zur Release-Kette:** `SECURITY.md` (Abschnitt „Releases“ nennt
+  noch `package.sh --sign`), die Unterlage für den App Store, CHANGELOG
+  (`0.17.0-dev.2`) und `tests/README.md` auf `sign.sh` und `compare.sh`
+  umschreiben; „four routes“ bei `MemberController`, ODS in
+  `SECURITY.md` (S N20, T31, T3, N5).
+- **Repository herrichten (Maintainer):** Auf GitHub ist das Repository als
+  Fork von `Bibo-Joshi/orchestrascoresmanager` geführt, mit dessen
+  Beschreibung und Homepage, ohne Topics und ohne Release. Fork lösen
+  (über den GitHub-Support) oder neu anlegen, Beschreibung, Homepage und
+  Topics setzen (W B22).
+- **Store-Text und README nennen die Grenzen:** nur MySQL und MariaDB,
+  damit nicht in Nextcloud All-in-One (PostgreSQL); Chormitglieder
+  brauchen ein Nextcloud-Konto oder einen öffentlichen Link; Abgrenzung
+  zum Orchestra Scores Manager 2.0.0 (W B23, W B32, W B26).
+- **Schriftlizenz Liberation:** bis zur Klärung als GPL-2.0 mit
+  Font-Ausnahme ausweisen, mit Lizenztext und Quellverweis; bestätigt sich
+  GPL-2.0, ist der Punkt hoch (R B25).
+
 ### 0.18 Rechte auf allen neuen Wegen
 
 *Geplant (Review 29. Oktober 2026); der erste Punkt ist auf `main`
@@ -801,6 +862,52 @@ dieses Kontos, sonst hält die Sicherung an).*
 - **Bestätigungsdialog** um die neuen Wege ergänzen, Bestätigung beim
   Abspielen nach außen prüfen (R B14, B15, M4).
 
+*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+
+- **Eine Regel für Behalten und Drucken:** heute steht sie an fünf
+  Stellen, und öffentliche Links prüfen bei einem Rechtekonflikt nur
+  `isConfirmed()`. Eine gemeinsame `deviceDenial` und `printDenial` in
+  `RightsPolicy` für Mitglieder, öffentliche Links, Konzertmappe und die
+  Hinweise im Frontend, die Liste der Nutzungsarten an einer Stelle, ein
+  Matrixtest (A23, R B30).
+- **Ordner räumen, wenn Rechte wegfallen:** Übergabe- und Spiegelordner
+  entfernen Dateien, die die Rechte inzwischen verbieten; eine Datei gilt
+  erst nach der Prüfung als behalten (A22).
+- **MusicXML auf Links:** entscheiden und dokumentieren, ob eine Lizenz
+  zur Online-Veröffentlichung die vollständige MusicXML deckt; heute geht
+  sie an alle Besucher. Das Handbuch nennt das „als Notenbild“ (R B26).
+- **Liedfolge und Statistik ohne Erhaltungskopien:** die CSV der
+  Liedfolge und die Statistik prüfen `isPreservationCopy` und Rolle, der
+  Paritätstest deckt beide ab (S N17).
+- **Löschfrist auch für Protokollwerte:** Aufbewahrungsfrist und Löschung
+  entfernen Konten auch aus den alten und neuen Werten (bei Bestätigungen
+  steht das Konto dort); die Auskunft umfasst diese Werte (R B27, R B9).
+- **Bearbeiter-Regel für alle Bearbeitungen,** nicht nur bei
+  traditionellen Melodien; „Original“ in der Meldung eindeutig erklären;
+  „Traditionell (gemeinfrei)“ umbenennen, Präzisierungen zu § 66 UrhG
+  (R B24, R B33).
+- **§ 25 TDDDG vollständig:** Neu-Markierung, Hash des Kontos und
+  Registrierung des Workers in die Vorlagen; die Ausnahme nach § 25
+  Abs. 2 Nr. 2 nicht ohne Vorbehalt zusagen; Speicherungen ohne Zutun
+  verringern (R B28).
+- **Konzertmappe an das Lizenzende:** `keepUntil` auch für die Mappe, der
+  CHANGELOG sagt das schon (R B29).
+- **Freigaben im Sicherungsordner:** auch geteilte Dateien und Unterordner
+  (`annual-snapshots`) erkennen, mit `getSharesInFolder` rekursiv und
+  Test (S N16).
+- **Gemeinsames Gerät:** die Listen-Seite nur ohne Netz vom Gerät
+  beantworten oder vorher das Konto prüfen; `SECURITY.md` dazu genauer
+  fassen, Test für den Worker (S N19).
+- **Upgrade-Job jetzt:** vom Basiszweig aus, nicht erst mit dem ersten
+  Tag; die neue Migration aus PR #16 ist der erste Fall (M1, A15).
+- **Testlücken der neuen Wege:** Integrationstests für
+  `AccountRecordFinder`, `pseudonymizeBefore`, Programm teilen und
+  Verlängern; Tests für `ProgrammeShareDialog.vue` und `ModulesCommand`;
+  eine Rollen-Hilfe in den Tests statt zwei (T32).
+- **Kleinigkeiten:** kein Konto im Log von `ReviewService`, HMAC für
+  Programmschlüssel und `practiceKey`, unbekannte Gruppen-IDs ablehnen
+  (S N20, S N21).
+
 ### 0.19 Üben und Vortragen am Gerät
 
 *Auf `main` (PR #14). Umgesetzt:* Sängeransicht mit einem Übe-Bereich in
@@ -877,6 +984,33 @@ den Weg über Lesezeichen). Auf echten Geräten geprüft ist nichts davon.*
 - **Die Abnahme auf Geräten** umfasst Bühnenansicht, Pedal, Querformat und
   Scan (D2, D8, D19).
 
+*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+
+- **Bühnenansicht beginnt bei den Noten:** Kopf, Scan-Knopf, Textverweis,
+  Notiz und Anleitungslink im Modus einklappen; heute beginnen die Noten
+  bei 37 % der Höhe (iPad quer) und bei 52 % in „Mit mir geteilt“, am
+  Handy quer bleiben 28 px. Zielgrößen 48 px auch außerhalb der Leiste;
+  Escape mit offenem Dialog schließt nur den Dialog (D27, D32, D33, U48).
+- **Fokus nie verlieren:** nach dem Schließen der Scan-Ansicht am Handy
+  und nach der Löschbestätigung zurück auf den auslösenden Knopf, mit
+  Komponententests (D28).
+- **Zurück schließt den Scan:** Die Zurück-Geste schließt den Scan im
+  Vollbild; die Einträge im Verlauf je Stück führen vorhersehbar zurück
+  (U39).
+- **„Aufnahme verwerfen?“ lesbar:** die Antworten nicht abschneiden
+  (D29).
+- **Ein Name fürs Aufräumen:** „Von diesem Gerät entfernen“ sagt, dass
+  auch die Übedaten gehen, und heißt überall gleich; zwei Knöpfe mit
+  derselben Bestätigung zusammenlegen; zwei Knöpfe „Anzeigen“
+  unterscheiden (U43, D36).
+- **iPad-Hinweis einheitlich** in der App und in den Handbüchern (U38).
+- **„Mit mir geteilt“:** Programmüberschriften sehen anders aus als
+  Stücktitel, „Neu“ gehört zum zugänglichen Namen; die Scroll-Polsterung
+  gilt nur, wo eine Leiste haftet (D35, U49, D34).
+- **Geräteabnahme ergänzen:** PDF im Rahmen, Escape im Vollbild, Lage der
+  Noten in der Bühnenansicht, Pedal während des Ladens (D8, D33, D27,
+  U37).
+
 ### 0.20 Einführen und umsteigen
 
 *Teilweise auf `main` (PR #14). Umgesetzt:* Einrichtung nach Szenarien als
@@ -948,6 +1082,37 @@ Demodaten.*
 - **Doku für Hoster:** Datenbankprüfung und MusicSheet Viewer ergänzen
   (W B11).
 
+*Ergänzt am 3. November 2026, zweite Runde (Stand PR #16); geplant.*
+
+- **Abgelaufene Links zeigen:** Sie erscheinen heute nirgends, also lässt
+  sich ein Link nach dem Ablauf nicht mehr verlängern (U40).
+- **Datum vom Server:** Der Dialog zum Verlängern schlägt das späteste
+  Datum vor, das der Server erlaubt, statt heute plus 183 Tage; die
+  Vorschau in „Programm teilen“ nennt den richtigen Grund (U41).
+- **Programm teilen** verwendet keine vorhandenen Links mit Stimme oder
+  Tempo wieder (U45).
+- **Nachricht an den Chor:** bearbeitbar, mit Datum, Anmeldung, Anleitung
+  und einem Hinweis, was die Sänger mit den Noten dürfen (U42, R B32,
+  W B29).
+- **Import:** Die Beispielzeile der Vorlage wird nicht importiert und
+  verdrängt kein echtes „1-1“; die Signaturspalte ist als Text
+  formatiert; Datumszellen aus Excel werden umgerechnet statt als
+  Seriennummer gespeichert; die Regel für Signaturen (Zahl-Zahl)
+  dokumentieren oder lockern; CSV auch mit Komma (U44, W B24, W B25,
+  W B28, W B30).
+- **Texte auf den Stand des Codes:** Die Erklärung zur Barrierefreiheit
+  nennt noch behobene Mängel, die Handbücher alte Knöpfe und
+  „Gespeicherte Stücke“, die Sie-Fassung hat zwei Stellen mit „du“;
+  Szenario, Modultexte, `info.xml`, README und Bestätigungsdialog nennen
+  die neuen Nutzungsarten. Der Abgleich wird ein Schritt in
+  `docs/release.md` (D30, U46, U47, R B31, T31).
+- **Bilder mit den Szenen der Positionierung:** Übergabe an das
+  Chorsystem, Einrichtung nach Szenarien, Import mit Vorlage, Programme
+  unter „Mit mir geteilt“, auch auf Deutsch; zuerst das Werkzeug
+  reparieren (W B27, D31).
+- **Versionshinweis im Store** zu dem, was sich seit 0.16 geändert hat
+  (W).
+
 ### 1.0 Stabil
 
 *Geplant.*
@@ -970,9 +1135,20 @@ Demodaten.*
 - Nutzertest mit Sängern und Chorleitung und ein Durchgang mit
   Screenreader (U, R3, R4 im UX-Bericht)
 - Tests für Service Worker, Bühnenansicht, Verlassen-Schutz und die neuen
-  Komponenten; mindestens ein Test, der Vue-Komponenten einbindet (T21)
+  Komponenten (T21); der erste Test, der Vue-Komponenten einbindet, kam
+  mit PR #16
 - `tools/outreach` im Audit der CI oder aus Dependabot nehmen,
-  `persist-credentials: false` in allen Checkouts (S N15, T22)
+  `persist-credentials: false` in allen Checkouts (S N15, T22) –
+  *mit PR #16 umgesetzt; `tools/outreach` meldet noch drei hohe Befunde in
+  Entwicklungsabhängigkeiten (S N21)*
+- *Ergänzt am 3. November 2026, zweite Runde:* ODS und XLSX mit
+  `XMLReader` lesen oder die Zahl der Elemente vor `loadXML` begrenzen,
+  weil `memory_limit` beim DOM nicht greift (S N18); Abfragen je Link
+  bündeln (heute etwa 14), die Rollenprüfung an einer Stelle, toter Code
+  in `RightsPolicy`, im Lasttest messen (A25); Auskunft und Löschung ohne
+  `occ` (R B34); die Entscheidung zu PostgreSQL direkt nach 0.20, weil
+  Nextcloud All-in-One PostgreSQL nutzt (W B23); eine Anleitung in der App
+  und der Nutzertest mit Chorleitung und Sängern (U)
 
 ### Nach 1.0
 
@@ -986,9 +1162,10 @@ Demodaten.*
   Notenansicht (D11, D13–D17)
 - Offene Lizenzen (CC, CPDL) und Hinweis auf das anwendbare Recht
   (R B16, B17)
-- Feinschliff aus dem Review vom 3. November 2026: App-Icon bei 16 px,
-  ein Icon für die Konzertmappe, ein „Weiter“ je Stück, `aria-haspopup`
-  (D24, D26); ein Satz in der Doku zu Partituren, die MuseScore aus Scans
+- Feinschliff aus dem Review vom 3. November 2026: die Sperrseite weist
+  auf den neuen Tab hin, Szenario-Namen als Überschrift statt `strong`
+  (Rest von D26; App-Icon, Icon der Konzertmappe, ein „Nächstes“ und
+  `aria-haspopup` sind mit PR #16 erledigt); ein Satz in der Doku zu Partituren, die MuseScore aus Scans
   erkennt, und warum die Prüfung der Übertragung dann zählt (W B19)
 
 ## Bewusst nicht vorgesehen
