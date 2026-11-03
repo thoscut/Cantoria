@@ -45,7 +45,7 @@ below explain the reasons.
 
 | Promise | Tested by |
 |---|---|
-| Every route needs a logged-in account, except the public pages of the sharing modules | CS `testOnlyTheSharingPagesArePublic` |
+| Every route needs a logged-in account, except the public pages of the sharing modules and the service worker of the core | CS `testOnlyTheSharingPagesArePublic` |
 | Every route belongs to the core or names its module; a switched-off module answers 404 | CS `testEveryRouteIsCoreOrBelongsToAModule`, `testRoutesOfASwitchedOffModuleAnswer404`, `testASwitchedOffPartOfAnActionAnswers404` |
 | Only the settings are restricted to administrators, and only they can be delegated | CS `testOnlyTheSettingsLackNoAdminRequired`, `testTheSettingsCanBeDelegatedAndNothingElse`, `testTheSettingsRefuseWhomTheyWereNotGiven`; `settings_access_test` |
 | Delegated settings give no role to an own group, do not move the archive folder and switch on no module that opens the archive; such changes are logged | CS `testDelegatedSettingsCannotGrantRolesOrMoveTheArchiveFolder`; `ModuleSettingsTest::testOnlyAdministratorsSwitchOnWhatOpensTheArchive`, `testEveryChangedSwitchIsRecorded` |
@@ -74,7 +74,7 @@ below explain the reasons.
 | Files are read through the user's own view; nobody gets a file they could not open | `UserFilesTest::testRefusesAFileTheUserCannotSee`; `ScoreServiceTest::testAScoreInAnArchiveFolderThatIsNotSharedSaysWhatToDo`; `files_integration_test` |
 | Size limits are enforced while reading, not only by the size in the file cache | `UserFilesTest::testRefusesContentAboveTheLimitWhenTheRecordedSizeIsWrong`; `ScoreServiceTest::testReadsNoMoreThanTheLimitWhenTheRecordedSizeIsWrong`, `testRefusesACompressedScoreThatUnpacksTooLarge` |
 | Score files reach the browser only as real MusicXML, as an attachment with `nosniff` | CS `testScoreFilesAreNeverShownInline`; `ScoreServiceTest::testRefusesAFileThatOnlyPretendsToBeMusicXml`, `testRightsPolicyComesFirst` |
-| Spreadsheets are read without document type declarations and with limits against ZIP bombs | `XlsxReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testAFarCellCannotInflateTheWorkbook` |
+| Spreadsheets (XLSX and ODS) are read without document type declarations and with limits against ZIP bombs; repeated cells and rows of an ODS file count against the limits before they are filled in | `XlsxReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testAFarCellCannotInflateTheWorkbook`; `OdsReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testRepeatsCannotInflateTheSpreadsheet` |
 | A rights notice in a MusicXML file never sets a rights status | `RightsNoticeServiceTest::testANoticeBecomesAtMostAProposal`, `testTheDoctypeOfMusicXmlIsAcceptedButNoInternalSubset`; `archive_extras_test` |
 | The print station never writes into the archive folder and replaces only files it wrote itself | `print_mirror_test`; CS `testThePrintStationIsSyncedByTheCatalogLibrarianAndAdministrators` |
 | The hand-over to a choir system never writes into the archive folder or the folder of the print station and hands over only what choir members may have; MusicXML only cleaned and with a license for digital score files, recordings only with a license for passing them on | `handover_test`; CS `testTheHandOverIsSyncedByTheCatalogLibrarianAndAdministrators`; `HandoverContentTest::testMusicXmlGoesInCleaned`, `testAFileThatIsNoScoreStaysOut`; `RightsPolicyTest::testTheHandOverNeedsUsesForDigitalScoresAndRecordings` |
@@ -96,9 +96,10 @@ below explain the reasons.
 | CSV files for people neutralise formulas; the catalog CSV keeps its cells for the round trip | `CatalogCsvTest::testWriteForPeopleNeutralizesHeaderAndCells`, `testCatalogCsvKeepsFormulaLikeCellsForTheRoundTrip`; `StatisticsCsvTest::testCellsThatLookLikeFormulasAreNeutralized` |
 | Clients and notifications get no internal error texts | `NotifierTest::testExportFailureShowsNoInternalDetails`, `testLinksStayInsideTheApp`; `ApiV1ControllerTest::testErrorsBecomeOcsExceptions` |
 | The app page allows WebAssembly and nothing else beyond Nextcloud's policy | CS `testTheAppPageAllowsWebAssemblyButNoScriptEval` |
-| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
+| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testTheOfflineWorkerGetsOnlyAPlainPathOfThisServer`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
 | After signing out, or when another account uses the app in the same browser, the pieces of an account kept on the device are removed before anything of them is shown; a public link opened without signing in removes only what was kept before signing out | `offline.test.ts` (a shared device), `sharedDevice.test.ts`; on devices not tested |
 | The audit log has no route to change or delete entries | review: the route list of CS `testEveryRouteIsCoreOrBelongsToAModule` names every route |
+| The signed archive of the app store differs from the archive that the CI built from the tag and tested only by `appinfo/signature.json` | review: the job `rebuild` of `.github/workflows/release.yml` builds the tag again and compares the bytes; `tools/release/sign.sh` signs that archive without a build and checks the result with `tools/release/compare.sh`, which anyone can run against the draft release |
 
 ## Design notes
 
@@ -162,10 +163,12 @@ navigation leaves them out.
   account without a role. The navigation entry and the app page appear for
   choir members only while `member_links` is on, and show only "Shared with
   me".
-- A choir member reaches exactly the app page and the three routes of
+- A choir member reaches exactly the app page and the four routes of
   `MemberController` (the score of a link, its scan, permission for a
-  practice file); the unit test keeps that list and checks that no other
-  controller serves choir members. An account with an archive role always
+  practice file, and with the module `offline` the list of their links,
+  against which the page checks what is kept on the device); the unit test
+  keeps that list and checks that no other controller serves choir
+  members. An account with an archive role always
   gets the archive.
 - They see title and composer of the work, the measures (or "whole
   piece"), voice, verse, tempo, note and expiry of each link and whether it
@@ -330,7 +333,11 @@ public links stop working at once.
   under "A shared device" below. The worker
   (`GET /offline-worker`) is a script of the app without data, served from
   the app's path with `connect-src 'self'` to everybody (a public page
-  registers it, too, so it is a public route of the core); the pages allow
+  registers it, too, so it is a public route of the core). The server puts
+  only the version of the app and the path of its files into it, and a
+  path that is not a plain path of this server goes in empty
+  (`OfflineController::fillWorker`, tested without a build of `js/`); the
+  pages allow
   `worker-src 'self'` only on "Shared with me", the concert folder and a
   public link, and frames only from `blob:`, for a kept scan shown from the
   browser's memory. It caches nothing for the pages of the archive, only
@@ -500,10 +507,13 @@ account can do; it offers a stable, documented and limited contract.
 - Uploaded files for imports are limited to 20 MB, backups for a restore to
   64 MB, score files to 32 MB; the content is read with that limit, not only
   checked against the size in the file cache.
-- Spreadsheets (`.xlsx`) are parsed without document type declarations
-  (no entities, no external loading, no network) and with limits against ZIP
-  bombs: at most 10,000 entries, 16 MB unpacked per part, 48 MB in total,
-  16,384 columns and one million cells.
+- Spreadsheets (`.xlsx` and `.ods`) are parsed without document type
+  declarations (no entities, no external loading, no network) and with
+  limits against ZIP bombs: at most 10,000 entries, 16 MB unpacked per part,
+  48 MB in total, 16,384 columns, one million cells and 20 MB of cell text,
+  as much as a CSV file may hold. An ODS file writes runs of equal cells and
+  rows once with a repeat count; the runs are counted against these limits
+  before they are filled in (`OdsReaderTest`).
 
 ### Backups
 
@@ -633,15 +643,34 @@ account can do; it offers a stable, documented and limited contract.
 
 ### Releases
 
-- The archive in the app store is built and signed by the maintainer with
-  `tools/release/package.sh --sign`; the steps are in
-  [docs/release.md](docs/release.md). The workflow **Release** builds the
-  same tag twice in the CI, checks that both builds are the same bytes and
-  keeps that archive with its checksum. Nextcloud checks the code signature
-  of every file at installation and update.
-- The signature proves who signed, not what was built. Where the signing
-  machine also builds, `npm ci` runs the install scripts of the development
-  dependencies next to the private key, and a compromised package could
-  change the build or read the key. Keep the key on a machine or token of
-  its own, and compare the files of the signed archive (without
-  `appinfo/signature.json`) with the archive of the CI before uploading.
+The steps are in [docs/release.md](docs/release.md).
+
+- The archive is built by the CI, never on the machine with the key. For a
+  tag `v<version>`, the workflow **Release** runs the whole CI: its job
+  `archive` builds the archive with `tools/release/package.sh` from the
+  committed files of the tag (with all checks of a final version: tag,
+  `CHANGELOG.md` entry, clean checkout, frozen migrations, the app store
+  schema, `reuse lint`), and the integration tests install exactly that
+  archive. The job `rebuild` builds it again on a fresh runner and compares
+  the bytes; only then the job `draft` creates a draft release with
+  `cantoria-<version>-unsigned.tar.gz` and `SHA256SUMS`. npm installs the
+  dependencies without their install scripts (`--ignore-scripts`) in every
+  build, and reuse comes with pinned hashes of all its dependencies.
+- The maintainer signs the archive of the draft release with
+  `tools/release/sign.sh`, which builds nothing and runs no npm package: it
+  checks the archive against `SHA256SUMS`, writes the code signature with
+  `occ integrity:sign-app`, packs it again in the same reproducible way,
+  checks with `tools/release/compare.sh` that only `appinfo/signature.json`
+  was added, and checks the signature of the archive against the
+  certificate. `occ` comes from an unpacked Nextcloud server archive that
+  is not installed, so no app runs next to the key (the script warns about
+  `occ` of an installed instance). Keep the key on a machine or token of its
+  own.
+- The signature proves who signed, not what was built. That the signed
+  archive is the one the CI built and tested from the tag can be checked by
+  anyone: `tools/release/compare.sh` with the unsigned archive of the
+  release (checked against `SHA256SUMS`) and the archive of the app store
+  reports any difference apart from `appinfo/signature.json`, and
+  `tools/release/package.sh` on a checkout of the tag builds the same bytes
+  as the unsigned archive. Nextcloud checks the code signature of every file
+  at installation and update.
