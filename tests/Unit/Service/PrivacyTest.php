@@ -22,9 +22,9 @@ use OCA\Cantoria\Service\AuditLog;
 use OCA\Cantoria\Service\FolderBookService;
 use OCA\Cantoria\Service\LifeDates;
 use OCA\Cantoria\Service\PrivacyService;
-use PHPUnit\Framework\Attributes\CoversClass;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**

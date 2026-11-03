@@ -9,13 +9,13 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Service;
 
+use OCA\Cantoria\AppInfo\Application;
 use OCA\Cantoria\Db\AccountRecordFinder;
 use OCA\Cantoria\Db\AuditEntryMapper;
 use OCA\Cantoria\Db\FolderLoan;
 use OCA\Cantoria\Db\FolderLoanMapper;
 use OCA\Cantoria\Db\FolderMapper;
 use OCA\Cantoria\Db\PersonMapper;
-use OCA\Cantoria\AppInfo\Application;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 
