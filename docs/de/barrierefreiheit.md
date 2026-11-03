@@ -69,20 +69,20 @@ Was die App tut:
 - **Ohne Netz** stehen manche Zustände (verfügbar, gesperrt, abgeglichen)
   als Text da und werden angesagt, sie sind aber noch nicht mit
   Screenreadern auf Handys ausprobiert.
-- Die **Bühnenansicht** der Konzertmappe füllt den Bildschirm. Solange sie
-  das tut, öffnen sich Dialoge, Auswahllisten und Einblendungen der Seite
-  (etwa „Aufnahme verwerfen?“ oder die Wahl der hervorgehobenen Stimme)
-  dahinter und sind mit der Tastatur nicht zu erreichen; verlasse zuerst die
-  Bühnenansicht. Auf dem iPhone bietet der Browser der Seite keinen
-  Vollbildmodus, die Bühnenansicht bleibt dort eine vergrößerte Ansicht im
-  Browser.
-- Der **Scan** öffnet sich in einem Rahmen. Auf Handys und Tablets ist der
-  Rahmen klein, und Zoomen und Blättern darin hängen vom Browser ab; öffne den
-  Scan besser in einem eigenen Tab. Noch nicht auf echten Geräten geprüft.
+- Die **Bühnenansicht** (in der Konzertmappe und unter „Mit mir geteilt“)
+  füllt den Bildschirm; Dialoge und Auswahllisten der Seite öffnen sich
+  darüber und behalten den Fokus. Auf dem iPhone bietet der Browser der
+  Seite keinen Vollbildmodus, die Bühnenansicht bleibt dort eine vergrößerte
+  Ansicht im Browser.
+- Der **Scan** öffnet sich am Handy in einer eigenen Ansicht. Auf dem Tablet
+  und auf größeren Bildschirmen öffnet er sich in einem Rahmen, in dem
+  Zoomen und Blättern vom Browser abhängen; öffne den Scan dann besser in
+  einem eigenen Tab. Wie die Browser unter Android ein PDF im Rahmen zeigen,
+  ist noch nicht auf echten Geräten geprüft.
 - Im **Kontrastmodus von Windows** entfernt der Browser Schatten und ersetzt
-  Hintergrundfarben. Das gewählte Exemplar in der Kartenliste am Handy ist
-  dann schwer von den anderen zu unterscheiden, und Bausteine von Nextcloud
-  in der App übernehmen die Systemfarben auf ihre eigene Art.
+  Hintergrundfarben. Die App markiert die gewählte Zeile und Karte mit einem
+  Rahmen in der Systemfarbe; Bausteine von Nextcloud in der App (Knöpfe,
+  Schalter, Dialoge) übernehmen die Systemfarben auf ihre eigene Art.
 - **Seitenzahlen** in Ausdrucken hängen vom Browser ab (zum Beispiel Chrome
   und Edge; Firefox druckt ohne).
 - **Teile von Nextcloud** (Navigation, Dateiauswahl, Dialoge, der Kalender

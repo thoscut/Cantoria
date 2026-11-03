@@ -6,7 +6,8 @@
 /**
  * All active excerpt links, for review by the board and the auditors: who
  * can open them, where they point, until when they are valid, how often
- * they were opened (a count only, never who).
+ * they were opened (a count only, never who). Below them the links that
+ * ended in the last 30 days, which can still be extended (U40).
  */
 import type { ExcerptLink } from '../types.ts'
 
@@ -21,7 +22,9 @@ import LinkList from './LinkList.vue'
 import ViewHeader from './ViewHeader.vue'
 import { errorMessage, fetchLinks } from '../api.ts'
 import { canonicalShelfmark } from '../catalog.ts'
+import { toIsoDate } from '../format.ts'
 import { navigate } from '../navigation.ts'
+import { hasEnded } from '../sharing/linkDates.ts'
 import { entriesById, isModuleActive } from '../store.ts'
 
 const links = ref<ExcerptLink[]>([])
@@ -46,6 +49,9 @@ onMounted(load)
 
 /** Links for choir members or the public can exist (modules of milestone 0.7). */
 const sharingOn = computed(() => isModuleActive('member_links') || isModuleActive('public_links'))
+
+/** The links that have not ended (the others follow in a section of their own) */
+const activeCount = computed(() => links.value.filter((link) => !hasEnded(link.expires, toIsoDate(new Date()))).length)
 
 const collator = new Intl.Collator(undefined, { numeric: true })
 
@@ -100,7 +106,7 @@ const sorted = computed(() => [...links.value].sort((a, b) => collator.compare(
 			</NcEmptyContent>
 			<template v-else>
 				<p class="links-view__count">
-					{{ n('cantoria', '%n active link', '%n active links', links.length) }}
+					{{ n('cantoria', '%n active link', '%n active links', activeCount) }}
 				</p>
 				<LinkList :links="sorted" show-copy @changed="load" />
 			</template>

@@ -69,6 +69,10 @@ final class CatalogCsv {
 	/**
 	 * The example row of the import template (template()): an invented copy
 	 * of a public domain work, header => value. Every other column stays empty.
+	 * Its note says how a shelf mark is formed (W B25). The import leaves the
+	 * row out while title, composer and note are those of the example
+	 * (isTemplateExample(), W B28), so that a forgotten example neither
+	 * enters the catalog nor pushes out a real copy 1-1.
 	 */
 	public const TEMPLATE_EXAMPLE = [
 		'Mappe' => '1',
@@ -77,7 +81,7 @@ final class CatalogCsv {
 		'Titel' => 'Abendlied',
 		'Komponist' => 'Josef Rheinberger',
 		'Bearbeiter/Text' => 'Text: Lukas 24,29',
-		'Anmerkung' => 'Beispielzeile: vor dem Import ersetzen oder löschen',
+		'Anmerkung' => 'Beispielzeile, wird nicht importiert. Signatur immer Mappe-Nummer, z. B. 12-3',
 		'Rechte-Ersteinschätzung' => 'Komponist gestorben 1901',
 		'Rechtestatus' => 'gemeinfrei',
 		'Seiten' => '4',
@@ -140,6 +144,20 @@ final class CatalogCsv {
 	}
 
 	/**
+	 * Whether a row is the example row of the template (TEMPLATE_EXAMPLE),
+	 * of this version or an earlier one: title and composer of the example,
+	 * and a note that starts like its note.
+	 *
+	 * @param array<string, string> $cells header => cell of the row
+	 */
+	public static function isTemplateExample(array $cells): bool {
+		$cell = fn (string $header): string => trim($cells[$header] ?? '');
+		return $cell('Titel') === self::TEMPLATE_EXAMPLE['Titel']
+			&& $cell('Komponist') === self::TEMPLATE_EXAMPLE['Komponist']
+			&& str_starts_with($cell('Anmerkung'), 'Beispielzeile');
+	}
+
+	/**
 	 * The current name of a header (FORMER_HEADERS), or the header itself.
 	 */
 	public static function currentHeader(string $header): string {
@@ -168,7 +186,13 @@ final class CatalogCsv {
 	}
 
 	/**
-	 * @return array{header: list<string>, rows: list<list<string>>}
+	 * Reads a CSV file, UTF-8 with or without BOM. The separator is the
+	 * semicolon of the catalog format; a file whose first line has no
+	 * semicolon but commas or tabs is read with those (W B30), as Excel
+	 * saves CSV outside the German-speaking countries. `separator` says
+	 * which one was used.
+	 *
+	 * @return array{header: list<string>, rows: list<list<string>>, separator: string}
 	 */
 	public static function parse(string $content): array {
 		while (str_starts_with($content, self::BOM)) {
@@ -184,10 +208,11 @@ final class CatalogCsv {
 		}
 		fwrite($stream, $content);
 		rewind($stream);
+		$separator = self::separator($content);
 
 		$header = null;
 		$rows = [];
-		while (is_array($fields = fgetcsv($stream, null, ';', '"', ''))) {
+		while (is_array($fields = fgetcsv($stream, null, $separator, '"', ''))) {
 			if ($fields === [null]) {
 				continue;
 			}
@@ -203,7 +228,22 @@ final class CatalogCsv {
 		if ($header === null) {
 			throw new InvalidInputException('The CSV file is empty.');
 		}
-		return ['header' => $header, 'rows' => $rows];
+		return ['header' => $header, 'rows' => $rows, 'separator' => $separator];
+	}
+
+	/**
+	 * The separator of a CSV file: `;` unless the first line (after empty
+	 * ones) has none, then the comma or the tab, whichever occurs more.
+	 */
+	private static function separator(string $content): string {
+		$start = strspn($content, "\r\n");
+		$line = substr($content, $start, strcspn($content, "\r\n", $start));
+		if (str_contains($line, ';')) {
+			return ';';
+		}
+		$commas = substr_count($line, ',');
+		$tabs = substr_count($line, "\t");
+		return $commas === 0 && $tabs === 0 ? ';' : ($tabs > $commas ? "\t" : ',');
 	}
 
 	/**

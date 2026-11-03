@@ -352,23 +352,34 @@ invented archive of a fictitious choir with step-by-step instructions.
 **Archive management → Import catalog** offers a template to download:
 **Template (CSV)** in the format of the import and **Template (ODS)** for
 LibreOffice, Nextcloud Office or Excel. Both have the columns below and one
-example row; replace or delete the example row before the import. The
+example row (Abendlied by Josef Rheinberger, with a note starting with
+"Beispielzeile"); the import recognises it, leaves it out and says so in the
+report, so you can add your rows below it. In the ODS template, on the sheet
+"Werkverzeichnis", the column **Signatur** is formatted as text. The
 column names are German, as in the catalog the format comes from; they are
 the same in every language of the interface.
 
 - Only **Signatur** is required. A missing column is named in the report of
   the dry run; unknown columns are ignored.
+- A shelf mark is the number of the binder and the number in it, joined by a
+  hyphen: `12-3` is the third piece in binder 12. A row without a shelf mark
+  but with **Mappe** and **Nr** gets one from them (`12` and `3` give
+  `12-3`). The dry run lists every shelf mark it cannot read, with this
+  rule.
 - An `.xlsx` or `.ods` file is imported as it is, the filled-in ODS template
   too. Of a file with several sheets the first one with the column
   **Signatur** is read, the report names it; rows above the column names
   (a title, for example) are left out. Formulas count with the value they
-  show last; numbers and dates count with their value, not with their
-  format (a date as `2026-11-03`).
+  show last; numbers count with their value, and a cell formatted as a date
+  in Excel or LibreOffice becomes a date such as `2026-11-03`.
 - Spreadsheet programs turn some entries into dates or numbers, `1-3` for
   example into the 3rd of January. Format the column **Signatur** as text
-  before you type shelf marks; the dry run lists every shelf mark it cannot
-  read.
-- A CSV file is UTF-8, separated by semicolons. In Excel: **Save as** →
+  before you type shelf marks (the ODS template already does). A shelf mark
+  that has become a date is skipped, and the dry run names the row: format
+  the column as text and type the shelf mark again.
+- A CSV file is UTF-8, separated by semicolons. A file whose first line has
+  no semicolon is read with commas or tabs, and the report says so. In
+  Excel: **Save as** →
   **CSV UTF-8 (comma delimited)**; Excel uses the semicolon where the
   system's list separator is one, as in German. In LibreOffice: **Save as**
   → **Text CSV**, character set **UTF-8**, field delimiter `;`. The format

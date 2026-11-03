@@ -109,7 +109,9 @@ final class ExportServiceTest extends TestCase {
 
 		self::assertSame(CatalogCsv::write($template['header'], $template['rows']), $service->importTemplate('csv'));
 		self::assertSame('ods', $service->importTemplate('ods'));
-		self::assertSame([['name' => 'Catalog', 'rows' => [$template['header'], ...$template['rows']]]], $sheets);
+		self::assertSame([['name' => 'Werkverzeichnis', 'rows' => [$template['header'], ...$template['rows']], 'text' => [2]]], $sheets,
+			'the sheet named like the format, the column "Signatur" (third) formatted as text (U44)');
+		self::assertSame('Signatur', $template['header'][2]);
 	}
 
 	public function testABackupHoldsNoLinkTokensAndASnapshotNoAccounts(): void {

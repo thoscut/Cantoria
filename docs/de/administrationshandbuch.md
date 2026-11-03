@@ -379,23 +379,36 @@ Anleitung Schritt für Schritt.
 **Archivverwaltung → Werkverzeichnis importieren** bietet eine Vorlage zum
 Herunterladen: **Vorlage (CSV)** im Format des Imports und **Vorlage (ODS)**
 für LibreOffice, Nextcloud Office oder Excel. Beide haben die Spalten unten
-und eine Beispielzeile; ersetze oder lösche die Beispielzeile vor dem
-Import. Die Spaltennamen sind deutsch, wie im Werkverzeichnis, aus dem das
+und eine Beispielzeile (Abendlied von Josef Rheinberger, mit einer Anmerkung,
+die mit „Beispielzeile“ beginnt); der Import erkennt sie, lässt sie aus und
+sagt es im Bericht, du kannst deine Zeilen also darunter anfügen. In der
+ODS-Vorlage, auf dem Tabellenblatt „Werkverzeichnis“, ist die Spalte
+**Signatur** als Text formatiert. Die Spaltennamen sind deutsch, wie im Werkverzeichnis, aus dem das
 Format stammt, und in jeder Sprache der Oberfläche gleich.
 
 - Pflicht ist nur **Signatur**. Eine fehlende Spalte nennt der Bericht des
   Probelaufs; unbekannte Spalten werden übergangen.
+- Eine Signatur ist die Nummer der Mappe und die Nummer darin, verbunden
+  durch einen Bindestrich: `12-3` ist das dritte Stück in Mappe 12. Eine
+  Zeile ohne Signatur, aber mit **Mappe** und **Nr** bekommt sie daraus
+  (`12` und `3` ergeben `12-3`). Der Probelauf nennt jede Signatur, die er
+  nicht lesen kann, mit dieser Regel.
 - Eine `.xlsx`- oder `.ods`-Datei wird importiert, wie sie ist, auch die
   ausgefüllte ODS-Vorlage. Von einer Datei mit mehreren Tabellenblättern
   wird das erste mit der Spalte **Signatur** gelesen, der Bericht nennt es;
   Zeilen über den Spaltennamen (etwa ein Titel) bleiben außen vor. Formeln
-  zählen mit dem Wert, den sie zuletzt zeigten; Zahlen und Daten zählen mit
-  ihrem Wert, nicht mit ihrem Format (ein Datum als `2026-11-03`).
+  zählen mit dem Wert, den sie zuletzt zeigten; Zahlen zählen mit ihrem
+  Wert, und eine Zelle, die in Excel oder LibreOffice als Datum formatiert
+  ist, wird ein Datum wie `2026-11-03`.
 - Tabellenprogramme machen aus manchen Eingaben ein Datum oder eine Zahl,
   aus `1-3` etwa den 3. Januar. Formatiere die Spalte **Signatur** als Text,
-  bevor du Signaturen eintippst; der Probelauf nennt jede Signatur, die er
-  nicht lesen kann.
-- Eine CSV-Datei ist UTF-8, durch Semikolons getrennt. In Excel: **Speichern
+  bevor du Signaturen eintippst (die ODS-Vorlage tut das schon). Eine
+  Signatur, die zum Datum geworden ist, wird übersprungen, und der Probelauf
+  nennt die Zeile: Formatiere die Spalte als Text und tippe die Signatur
+  neu ein.
+- Eine CSV-Datei ist UTF-8, durch Semikolons getrennt. Eine Datei, deren
+  erste Zeile kein Semikolon hat, wird mit Kommas oder Tabulatoren gelesen,
+  und der Bericht sagt es. In Excel: **Speichern
   unter** → **CSV UTF-8 (durch Trennzeichen getrennt)**; ein deutsches Excel
   trennt dabei mit Semikolon. In LibreOffice: **Speichern unter** →
   **Text CSV**, Zeichensatz **UTF-8**, Feldtrenner `;`. Das Format richtet
@@ -994,7 +1007,7 @@ können (siehe Abschnitt 16).
 | Import von Aufführungslisten | Konzerte und Notenlisten | ein | Kein Import, keine Liste unklarer Programmpunkte. |
 | Repertoirezahlen | Konzerte und Notenlisten | ein | Das Werkverzeichnis zeigt die Repertoirewerte des importierten Werkverzeichnisses; keine Grenzen in den Einstellungen. |
 | Konzerte im Kalender | Konzerte und Notenlisten | ein | Keine Kalenderdateien und -einträge. Einträge in Kalendern bleiben dort. |
-| Konzertmappe | Konzerte und Notenlisten, Notenansicht | aus (in keiner Voreinstellung) | Keine Seite „Konzertmappe“ und kein Eintrag in der Navigation; ihre Routen antworten mit 404. Was die Chorleitung auf ihren Geräten gespeichert hat, wird beim nächsten Besuch mit Netz entfernt. |
+| Konzertmappe | Konzerte und Notenlisten, Notenansicht | aus (in keiner Voreinstellung) | Keine Seite „Konzertmappe“ und kein Eintrag in der Navigation; ihre Routen antworten mit 404. Was die Chorleitung auf ihren Geräten behalten hat, wird beim nächsten Besuch mit Netz entfernt. |
 | Neuzugänge und Etiketten | – | ein | Kein Assistent für Neuzugänge und keine Etiketten. Der Import legt weiterhin Exemplare an. |
 | Werke zusammenführen | – | ein | Keine Vorschläge zum Zusammenführen, kein Zusammenführen und kein Rückgängigmachen. Erfolgte Zusammenführungen bleiben. |
 | Inventur | – | ein | Keine Inventurlisten und keine Liste der Signaturlücken. Erfasste Zählungen bleiben im Werkverzeichnis. |
@@ -1010,7 +1023,7 @@ können (siehe Abschnitt 16).
 | Übe-Audio für Chormitglieder | Links für Chormitglieder, Übe-Audio-Dateien | aus (in keiner Voreinstellung) | Chormitglieder erstellen keine Übe-Dateien; der Server lehnt jede Anfrage ab. |
 | Öffentliche Links | Ausschnitt-Links, Wiedergabe, Veröffentlichung | aus (in keiner Voreinstellung) | Jeder öffentliche Link antwortet mit derselben 404-Seite; keine neuen öffentlichen Links. Vorhandene Links bleiben erhalten und laufen ab wie bisher. |
 | Öffentliche Repertoireseite | Rechtebestätigung und Lizenzen | aus (in keiner Voreinstellung) | `/apps/cantoria/repertoire` antwortet mit 404; die Werkfelder für die Seite sind ausgeblendet. |
-| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“, von öffentlichen Links und aus der Konzertmappe lässt sich nichts auf einem Gerät speichern; der nächste Besuch mit Netz entfernt, was dort gespeichert war. Wirkt nur zusammen mit **Links für Chormitglieder**, **Öffentliche Links** oder **Konzertmappe**. |
+| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“, von öffentlichen Links und aus der Konzertmappe lässt sich nichts auf einem Gerät behalten; der nächste Besuch mit Netz entfernt, was dort lag. Wirkt nur zusammen mit **Links für Chormitglieder**, **Öffentliche Links** oder **Konzertmappe**. |
 | Schnittstelle für Agenten | – | aus (in keiner Voreinstellung) | Die API für Agenten (`/ocs/v2.php/apps/cantoria/api/v1/…`) antwortet mit 404; der MCP-Server meldet die Schnittstelle als abgeschaltet. Sonst ändert sich nichts. |
 
 ### Kommandozeile
@@ -1273,7 +1286,7 @@ alles.
 | „Die Noten dieses Links sind gerade nicht verfügbar.“ oder „Der Scan dieses Links ist gerade nicht verfügbar.“ | Das Konto, das den Archivordner gewählt hat (Einstellungen → Archivordner), muss noch vorhanden sein und den Ordner sehen. Die MusicXML-Datei oder der PDF-Scan muss noch darin liegen und mit dem Exemplar verknüpft sein. |
 | Ein öffentlicher Scan zeigt „nicht gefunden“ | Dieselben Gründe wie bei der Seite, oder die PDF-Datei liegt nicht mehr im Archivordner; verknüpfe den Scan erneut und erstelle einen neuen Link. |
 | Ein öffentlicher Link zeigt „nicht gefunden“ | Er ist abgelaufen, wurde widerrufen, die Fassung ist nicht mehr freigegeben, oder das Modul ist ausgeschaltet; die Seite sagt nicht, was davon. Erstelle bei Bedarf einen neuen Link. |
-| **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke speichern (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
+| **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke behalten (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
 | Stücke, die ohne Netz verfügbar waren, sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und mach die Stücke erneut ohne Netz verfügbar. |
 
 ## 15. Mappenbuch: Löschfrist

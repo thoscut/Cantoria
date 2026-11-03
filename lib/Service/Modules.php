@@ -162,7 +162,7 @@ class Modules {
 				self::PUBLIC_LINKS => true, self::PUBLIC_REPERTOIRE => true],
 			'label' => 'Also public pages',
 			'description' => 'Adds public links without login and a public page with the repertoire. Everyone with a public link can download the scan it offers.',
-			'rights' => 'Only for confirmed public domain or a license for online publication. Enter the imprint and the privacy policy under Administration → Theming first.'],
+			'rights' => 'Only for confirmed public domain or a license for online publication, the scan also for its download. Enter the imprint and the privacy policy under Administration → Theming first.'],
 	];
 
 	/**
@@ -199,7 +199,7 @@ class Modules {
 			'description' => 'Copies the PDF scans of the versions on the list of the print station into a target folder of its own, daily and on request, and removes those no longer released. Writes only into this folder, never into the archive folder, and removes only files it wrote itself. Not part of any preset.'],
 		self::CHOIR_HANDOVER => ['group' => 'releases', 'requires' => ['portal'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Hand-over to the choir system',
-			'description' => 'Puts the scans (PDF), MusicXML and practice audio files of the versions released for the singers\' portal into a hand-over folder of its own, with a list (version line and license notice per file) and the notes of the conductor per passage as text, daily and on request. Someone of the choir uploads them to the choir system; the app uploads nothing to a provider. Writes only into this folder and removes only files it wrote itself. Not part of any preset.'],
+			'description' => 'Puts the scans (PDF), MusicXML and practice audio files of the versions released for the singers\' portal into a hand-over folder of its own (MusicXML only with confirmed public domain or a license for digital score files, audio files as recordings only with a license for passing them on), with a list (version line and license notice per file) and the notes of the conductor per passage as text, daily and on request. Someone of the choir uploads them to the choir system; the app uploads nothing to a provider. Writes only into this folder and removes only files it wrote itself. Not part of any preset.'],
 		'publication' => ['group' => 'releases', 'requires' => ['releases'], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Publication',
 			'description' => 'Publication status of a version with its reasoning.'],
@@ -331,7 +331,7 @@ class Modules {
 			'description' => 'Pieces are kept on a device and viewed, played and practised without a network: by choir members (with the sharing with choir members), by visitors of a public link to a piece whose public domain is confirmed (with public links) and in the concert folder. Only where the rights allow a copy. Kept pieces are checked at every start with a network and locked after 30 days without one. Without this module nothing is kept on a device. Not part of any preset.'],
 		self::PUBLIC_LINKS => ['group' => 'sharing', 'requires' => ['excerpt_links', 'playback', 'publication'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public links',
-			'description' => 'Links that show and play a whole piece or an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls, and name no accounts. What a browser shows can be saved, and everyone with the link can download a scan it offers: add the scan only where the rights allow that. Not part of any preset.'],
+			'description' => 'Links that show and play a whole piece or an excerpt without login, for versions released for publication that are confirmed public domain or licensed for online publication. They expire, can be revoked and count their calls, and name no accounts. What a browser shows can be saved, and everyone with the link can download a scan it offers: the scan needs confirmed public domain or a license for the download of the scan on public links. Not part of any preset.'],
 		self::PUBLIC_REPERTOIRE => ['group' => 'sharing', 'requires' => ['rights'], 'simple' => false, 'standard' => false, 'planned' => false,
 			'label' => 'Public repertoire page',
 			'description' => 'A public page with the works the catalog librarian chooses among those with a version confirmed as public domain: title, composer and lyricist, life dates, scoring and links to CPDL and IMSLP. Not part of any preset.'],

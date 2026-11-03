@@ -210,12 +210,33 @@ final class ImportServiceTest extends TestCase {
 		self::assertSame([], $this->snapshots);
 	}
 
-	public function testTheTemplateImportsWithoutWarnings(): void {
+	/**
+	 * W B28: the example row of the template is left out with a note, so
+	 * that a forgotten one neither enters the catalog nor pushes out the
+	 * real copy 1-1; the rest imports without warnings.
+	 */
+	public function testTheTemplateImportsWithoutItsExampleRow(): void {
 		$template = CatalogCsv::template();
-		$report = $this->service->import(CatalogCsv::write($template['header'], $template['rows']), 'template.csv', self::UID, true);
+		$real = array_map(fn (string $column): string => ['Mappe' => '1', 'Nr' => '1', 'Signatur' => '1-1', 'Titel' => 'Ave verum corpus'][$column] ?? '',
+			$template['header']);
+		$report = $this->service->import(CatalogCsv::write($template['header'], [...$template['rows'], $real]), 'template.csv', self::UID, true);
 
-		self::assertSame(1, $report['created']);
-		self::assertSame([], $report['warnings'], 'no missing columns and no invalid value');
+		self::assertSame([1, 1], [$report['created'], $report['rows']]);
+		self::assertSame('Ave verum corpus', $this->insertedOf(Work::class)[0]->getTitle(), 'the real 1-1, not the example');
+		self::assertSame(['Row 1 is the example row of the template and was not imported.'], self::warnings($report),
+			'no missing columns, no invalid value, no duplicate 1-1');
+	}
+
+	public function testTheExampleRowOfAnEarlierTemplateIsLeftOutToo(): void {
+		$this->service->import(self::csv(['Signatur', 'Titel', 'Komponist', 'Anmerkung'],
+			['1-1', 'Abendlied', 'Josef Rheinberger', 'Beispielzeile: vor dem Import ersetzen oder löschen'],
+			['1-2', 'Abendlied', 'Josef Rheinberger', 'Unsere Ausgabe von 1998']), 'catalog.csv', self::UID, true);
+		self::assertSame(['1-2'], array_map(fn (Copy $c): string => $c->getShelfmark(), $this->insertedOf(Copy::class)),
+			'a real copy of the same piece stays');
+	}
+
+	public function testTheExampleRowSaysHowAShelfMarkIsFormed(): void {
+		self::assertStringContainsString('Mappe-Nummer', CatalogCsv::TEMPLATE_EXAMPLE['Anmerkung'], 'W B25');
 	}
 
 	public function testDryRunOfANonEmptyCatalogTakesNoSnapshot(): void {
@@ -403,10 +424,36 @@ final class ImportServiceTest extends TestCase {
 		self::assertSame(5, $report['rows']);
 		self::assertSame(1, $report['created']);
 		$warnings = self::warnings($report);
-		self::assertContains('Row 1: shelf mark "X-1" is invalid and was skipped.', $warnings);
+		self::assertContains('Row 1: shelf mark "X-1" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
 		self::assertContains('Row 3: shelf mark 7-1 occurs twice and was skipped.', $warnings);
-		self::assertContains('Row 4: shelf mark "8" is invalid and was skipped.', $warnings);
-		self::assertContains('Row 5: shelf mark "" is invalid and was skipped.', $warnings);
+		self::assertContains('Row 4: shelf mark "8" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
+		self::assertContains('Row 5: shelf mark "" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
+	}
+
+	/**
+	 * W B25: an empty "Signatur" is formed from "Mappe" and "Nr"; a shelf
+	 * mark that a spreadsheet program turned into a date says so.
+	 */
+	public function testAnEmptyShelfMarkIsFormedFromBinderAndNumber(): void {
+		$report = $this->service->import(self::csv(['Mappe', 'Nr', 'Signatur', 'Titel'], ['12', '3', '', 'A'], ['', '', '2026-01-03', 'B']),
+			'catalog.csv', self::UID, false);
+		self::assertSame(['12-3'], array_map(fn (Copy $c): string => $c->getShelfmark(), $this->insertedOf(Copy::class)));
+		self::assertContains('Row 2: shelf mark "2026-01-03" is a date, not binder and number, and was skipped. Please format the column "Signatur" as text and type the shelf mark again.',
+			self::warnings($report));
+	}
+
+	/**
+	 * W B30: a CSV file separated by commas or tabs is read, and the report
+	 * says so.
+	 */
+	public function testACsvFileWithCommasOrTabsIsRead(): void {
+		foreach ([',' => 'commas', "\t" => 'tabs'] as $separator => $name) {
+			$this->inserted = [];
+			$report = $this->service->import("Signatur{$separator}Titel{$separator}Komponist\r\n5-1{$separator}\"Ave; verum\"{$separator}Mozart\r\n",
+				'catalog.csv', self::UID, true);
+			self::assertSame(['Ave; verum'], array_map(fn (Work $work): ?string => $work->getTitle(), $this->insertedOf(Work::class)), $name);
+			self::assertContains('The CSV file is separated by ' . $name . '; it was read that way.', self::warnings($report));
+		}
 	}
 
 	public function testAnExistingCopyIsFoundByItsNormalizedShelfMark(): void {
@@ -519,12 +566,45 @@ final class ImportServiceTest extends TestCase {
 
 	public function testTheOdsTemplateImportsAsItIs(): void {
 		$template = CatalogCsv::template();
-		$ods = (new OdsWriter($this->tempManager()))->write([['name' => 'Werkverzeichnis', 'rows' => [$template['header'], ...$template['rows']]]]);
+		$real = $template['rows'][0];
+		$real[2] = '2-1';
+		$real[(int)array_search('Anmerkung', $template['header'], true)] = '';
+		$ods = (new OdsWriter($this->tempManager()))->write([['name' => 'Werkverzeichnis', 'rows' => [$template['header'], ...$template['rows'], $real], 'text' => [2]]]);
 		$report = $this->service->import($ods, 'cantoria_import_template.ods', self::UID, true);
 
 		self::assertSame(1, $report['created']);
-		self::assertSame([], $report['warnings'], 'the same columns as the CSV template, one sheet');
+		self::assertSame(['Row 1 is the example row of the template and was not imported.'], self::warnings($report), 'the same columns as the CSV template, one sheet');
 		self::assertSame('Abendlied', $this->insertedOf(Work::class)[0]->getTitle());
+		self::assertSame('2-1', $this->insertedOf(Copy::class)[0]->getShelfmark());
+	}
+
+	/**
+	 * W B24: a date in a workbook is a serial number with a date format;
+	 * it comes back as ISO date, as from an OpenDocument file. A number
+	 * without a date format stays a number.
+	 */
+	public function testDatesOfAWorkbookComeAsIsoDates(): void {
+		$main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+		$rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+		$cell = fn (string $ref, string $value, ?int $style = null): string => '<c r="' . $ref . '"' . ($style === null ? '' : ' s="' . $style . '"') . '><v>' . $value . '</v></c>';
+		$text = fn (string $ref, string $value): string => '<c r="' . $ref . '" t="inlineStr"><is><t>' . $value . '</t></is></c>';
+		$sheet = '<worksheet xmlns="' . $main . '"><sheetData>'
+			. '<row r="1">' . $text('A1', 'Signatur') . $text('B1', 'Im Chorportal seit') . $text('C1', 'Zuletzt aufgeführt') . $text('D1', 'Seiten') . '</row>'
+			. '<row r="2">' . $text('A2', '5-1') . $cell('B2', '46329', 1) . $cell('C2', '46329.5', 2) . $cell('D2', '12', 0) . '</row>'
+			. '</sheetData></worksheet>';
+		$styles = '<styleSheet xmlns="' . $main . '"><numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy\\ hh:mm"/></numFmts>'
+			. '<cellXfs count="3"><xf numFmtId="0"/><xf numFmtId="14"/><xf numFmtId="164"/></cellXfs></styleSheet>';
+		$workbook = $this->zip([
+			'xl/workbook.xml' => '<workbook xmlns="' . $main . '" xmlns:r="' . $rel . '"><sheets><sheet name="Tabelle1" sheetId="1" r:id="rId1"/></sheets></workbook>',
+			'xl/_rels/workbook.xml.rels' => '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="' . $rel . '/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
+			'xl/worksheets/sheet1.xml' => $sheet,
+			'xl/styles.xml' => $styles,
+		]);
+		$this->service->import($workbook, 'catalog.xlsx', self::UID, true);
+
+		self::assertSame('2026-11-03', $this->insertedOf(WorkVersion::class)[0]->getPortalSince());
+		self::assertSame('2026-11-03 12:00', $this->insertedOf(Work::class)[0]->getValue('last_performed_import'));
+		self::assertSame('12', (string)$this->insertedOf(Copy::class)[0]->getValue('pages'));
 	}
 
 	public function testASpreadsheetWithoutShelfMarkColumnIsRejected(): void {

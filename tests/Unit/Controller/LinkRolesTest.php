@@ -45,18 +45,16 @@ use OCA\Cantoria\Service\TaskService;
 use OCA\Cantoria\Service\UserFiles;
 use OCA\Cantoria\Tests\Unit\Support\FakeCrypto;
 use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
+use OCA\Cantoria\Tests\Unit\Support\RealRoles;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use OCP\IDBConnection;
-use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\Security\ISecureRandom;
-use OCP\Settings\IManager as ISettingsManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -83,6 +81,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(\OCA\Cantoria\Service\MusicXmlExcerpt::class)]
 final class LinkRolesTest extends TestCase {
 	use ModuleSwitches;
+	use RealRoles;
 
 	private const TODAY = '2026-11-03';
 	/** Copy 31: protected, licensed for the portal until 2027-03-31; copy 32: a preservation copy; copy 33: public link, rights withdrawn */
@@ -113,12 +112,7 @@ final class LinkRolesTest extends TestCase {
 	 * administrator without a role.
 	 */
 	private function roles(): Roles {
-		$config = $this->createStub(IAppConfig::class);
-		$config->method('getValueArray')->willReturnCallback(fn (string $app, string $key): array => [substr($key, strlen('groups_'))]);
-		$groups = $this->createStub(IGroupManager::class);
-		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === $group);
-		$groups->method('isAdmin')->willReturnCallback(fn (string $uid): bool => $uid === 'admin');
-		return new Roles($config, $groups, $this->createStub(IUserManager::class), $this->createStub(ISettingsManager::class), $this->createStub(LoggerInterface::class));
+		return $this->realRoles(fn (string $uid, string $role): bool => $uid === $role, fn (string $uid): bool => $uid === 'admin');
 	}
 
 	private function l10n(): IL10N {
@@ -233,7 +227,7 @@ final class LinkRolesTest extends TestCase {
 
 	public function testSharingAProgrammeKeepsTheLicenseEnd(): void {
 		$data = $this->controllers(Roles::CONDUCTOR)[0]->share(4, [1], '2027-04-30')->getData();
-		self::assertSame([1, [['id' => 1, 'title' => 'Werk 131', 'expires' => '2027-03-31']]], [$data['created'] ?? null, $data['limited'] ?? null],
+		self::assertSame([1, [['id' => 1, 'title' => 'Werk 131', 'expires' => '2027-03-31', 'reason' => 'license']]], [$data['created'] ?? null, $data['limited'] ?? null],
 			'the link lasts until the license for the portal ends');
 	}
 

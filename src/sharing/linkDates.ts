@@ -57,14 +57,28 @@ export function deviceUntil(expires: string | null, keepUntil: string | null | u
 }
 
 /**
+ * Whether a link has ended: its last day lies before today (U40).
+ *
+ * @param expires - last valid day
+ * @param today - today
+ */
+export function hasEnded(expires: string | null, today: string): boolean {
+	const days = daysLeft(expires, today)
+	return days !== null && days < 0
+}
+
+/**
  * The last day sharing a programme gives a piece: the chosen day, at most
- * until its license ends, and never earlier than a link it has already.
+ * until its license ends and, for a link it has already, at most until the
+ * age of that link allows (U41), but never earlier than that link lasts.
  *
  * @param chosen - the day chosen in the dialog
  * @param until - last day of the license, null without end
  * @param existing - last day of the link it has already, null for none
+ * @param limit - last day the age of that link allows, null for none
  */
-export function sharedUntil(chosen: string, until: string | null | undefined, existing: string | null | undefined): string {
-	const limited = until && until < chosen ? until : chosen
+export function sharedUntil(chosen: string, until: string | null | undefined, existing: string | null | undefined, limit?: string | null): string {
+	let limited = until && until < chosen ? until : chosen
+	limited = limit && limit < limited ? limit : limited
 	return existing && existing > limited ? existing : limited
 }

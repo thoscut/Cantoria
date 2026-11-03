@@ -87,8 +87,8 @@ for (const f of files(join(root, 'lib'), ['.php'])) {
 		const block = src.match(/public const LABELS = \[([\s\S]*?)\];/)
 		for (const m of block[1].matchAll(new RegExp('=>\\s*(' + STR + ')', 'g'))) add(unq(m[1]), 'concert deadline')
 	}
-	// Reasons of the dialog for links beyond the archive roles (translated by the controller)
-	if (base.endsWith('Service/LinkService.php')) {
+	// Reasons of the dialog for links beyond the archive roles, and of sharing a programme (translated by the controllers)
+	if (base.endsWith('Service/LinkService.php') || base.endsWith('Service/ProgrammeShareService.php')) {
 		for (const m of src.matchAll(new RegExp('public const [A-Z_]+ = (' + STR + ');', 'g'))) add(unq(m[1]), 'link reason')
 	}
 	// Warnings about copies and files not covered by a license (translated by the controllers)

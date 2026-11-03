@@ -36,13 +36,23 @@ MusicXML and MuseScore files that already live in your Nextcloud. It is made
 for the people who look after the music: the music librarians, the
 conductor, the board and the auditors. If you switch it on, choir members get
 pieces and excerpts to view, play and practise; the catalog itself is never
-shown to them.
+shown to them. For that each choir member needs an account in your
+Nextcloud. Without accounts, a public link shows a piece where the rights
+allow publishing it, and the hand-over folder brings the released pieces to
+the choir system.
 
 Cantoria does not replace the choir system your members use for dates,
 news and attendance. It is the archive behind it: it hands over what is
 released for the singers in a folder and compares the choir system's export
 with that list. [Cantoria alongside a choir system](docs/alongside-a-choir-system.md)
 explains who keeps what.
+
+Cantoria and the [Orchestra Scores Manager](https://apps.nextcloud.com/apps/orchestrascoresmanager)
+are two different Nextcloud apps. This repository started as a fork of the
+Orchestra Scores Manager, a score archive for orchestras with folders, score
+books and setlists; thanks to its authors. Cantoria is made for choirs: it
+keeps the rights and licenses of each version, works with the voices of a
+score for playback and practising, and releases pieces for the singers.
 
 The screenshots show the invented demo archive from [tools/demo](tools/demo/README.md).
 
@@ -70,7 +80,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/practice-audio-dialog.png"><img src="docs/screenshots/practice-audio-dialog.png" width="280" alt="The practice files dialog: one file or a ZIP archive with every voice, the voice, how the other voices sound, WAV or MIDI, mono or stereo, the file name and the expected size."></a>
       <h3>Practice audio</h3>
-      <p>Music librarians and the conductor make practice files per voice from the bars, tempo and repeats chosen in the score viewer: WAV that sounds like the playback, or MIDI with one track per voice; one file or a ZIP archive with every voice plus a tutti. The server allows each export only for confirmed public domain versions or a license for practice audio, never for preservation copies, and records it. The files go to the choir system by hand or through the hand-over folder; choir members with a shared link make a practice file of their voice themselves, where the rights allow it.</p>
+      <p>Music librarians and the conductor make practice files per voice from the bars, tempo and repeats chosen in the score viewer: WAV that sounds like the playback, or MIDI with one track per voice; one file or a ZIP archive with every voice plus a tutti. The server allows each export only for confirmed public domain versions or a license for practice audio, never for preservation copies, and records it. The files go to the choir system by hand or through the hand-over folder. The hand-over folder takes only audio files from the archive folder and treats each as a recording, also one the app made: besides the rights for practice audio it needs a license for passing on recordings, which the choir enters itself as its own consent for a file it made. Choir members with a shared link make a practice file of their voice themselves, where the rights allow it.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/task-question.png"><img src="docs/screenshots/task-question.png" width="280" alt="A question about bars 5 to 8 of Tenor II, addressed to the conductor, and an internal link to the same place."></a>
@@ -122,7 +132,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/shared-with-me.png"><img src="docs/screenshots/shared-with-me.png" width="280" alt="The page Shared with me of a choir member: a whole piece with the note of the conductor, the link to the scan, the playback controls with count-in and loop, and the score with the alto highlighted."></a>
       <h3>Sharing with choir members and the public</h3>
-      <p>If the administration switches it on, the conductor or the music librarians share a whole piece, an excerpt or a whole concert programme: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars and checks the release and the rights on every call. Choir members get the scan only with confirmed public domain or a license for download or self-printing; a scan added to a public link can be downloaded by everyone who has the link, and what arrives in a browser can be saved there. These modules are off until switched on. The [guide for choir members](docs/for-choir-members.md) is a page to pass on.</p>
+      <p>If the administration switches it on, the conductor or the music librarians share a whole piece, an excerpt or a whole concert programme: choir members see it under "Shared with me", play it with their voice emphasised and make a practice file; a public link shows it without signing in; a public repertoire page lists the works in the public domain with links to CPDL and IMSLP. The dialog says beforehand what the recipients will see. The server cuts the score to the shared bars and checks the release and the rights on every call. Choir members get the scan only with confirmed public domain or a license for download or self-printing; a scan added to a public link can be downloaded by everyone who has the link, so it needs confirmed public domain or a license for the download of the scan on public links; what arrives in a browser can be saved there. These modules are off until switched on. The [guide for choir members](docs/for-choir-members.md) is a page to pass on.</p>
     </td>
     <td width="33%" valign="top">
       <a href="docs/screenshots/revisions.png"><img src="docs/screenshots/revisions.png" width="280" alt="The revisions of a version: revision 2, a correction in the app, current since today, revision 1 as first recorded, and their comparison with one changed note and a note for choir members."></a>
@@ -222,6 +232,8 @@ figures to expect.
   refuses to install it on SQLite or Oracle, which are not tested
 - the archive files in a folder the music librarians can read, typically a
   group folder
+- for sharing with choir members: an account in your Nextcloud for each
+  member, in the group of the role "Choir members"
 - recommended: the Notifications app and a background job runner (system
   cron) for the weekly backups, deadline reminders and checksum checks
 

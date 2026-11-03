@@ -109,13 +109,18 @@ class ExportService {
 	/**
 	 * The import template (CatalogCsv::template()) as CSV in the format of
 	 * the import (UTF-8 with BOM, `;`) or as ODS for LibreOffice and Excel.
+	 * The sheet of the ODS template is called "Werkverzeichnis" like the
+	 * format, in every language (its columns are German, too), and the
+	 * column "Signatur" is formatted as text, so that `1-3` stays a shelf
+	 * mark (U44).
 	 *
 	 * @param string $format 'csv' or 'ods'
 	 */
 	public function importTemplate(string $format): string {
 		['header' => $header, 'rows' => $rows] = CatalogCsv::template();
 		if ($format === 'ods') {
-			return $this->odsWriter->write([['name' => 'Catalog', 'rows' => array_merge([$header], $rows)]]);
+			return $this->odsWriter->write([['name' => 'Werkverzeichnis', 'rows' => array_merge([$header], $rows),
+				'text' => [(int)array_search('Signatur', $header, true)]]]);
 		}
 		return CatalogCsv::write($header, $rows);
 	}

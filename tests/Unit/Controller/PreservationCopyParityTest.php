@@ -50,6 +50,7 @@ use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\TaskService;
 use OCA\Cantoria\Service\UserFiles;
 use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
+use OCA\Cantoria\Tests\Unit\Support\RealRoles;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -58,11 +59,9 @@ use OCP\Files\Folder;
 use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use OCP\IDBConnection;
-use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
-use OCP\Settings\IManager as ISettingsManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -85,6 +84,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(TaskService::class)]
 final class PreservationCopyParityTest extends TestCase {
 	use ModuleSwitches;
+	use RealRoles;
 
 	private WorkMapper $workMapper;
 	private WorkVersionMapper $versionMapper;
@@ -121,13 +121,7 @@ final class PreservationCopyParityTest extends TestCase {
 	 * @param list<string> $roles
 	 */
 	private function roleStub(array $roles, bool $admin = false): Roles {
-		$config = $this->createStub(IAppConfig::class);
-		$config->method('getValueArray')->willReturnCallback(fn (string $app, string $key): array => ['g-' . substr($key, strlen('groups_'))]);
-		$groups = $this->createStub(IGroupManager::class);
-		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => in_array(substr($group, 2), $roles, true));
-		$groups->method('isAdmin')->willReturn($admin);
-		return new Roles($config, $groups, $this->createStub(IUserManager::class), $this->createStub(ISettingsManager::class),
-			$this->createStub(LoggerInterface::class));
+		return $this->realRoles(fn (string $uid, string $role): bool => in_array($role, $roles, true), fn (string $uid): bool => $admin);
 	}
 
 	/**
@@ -230,7 +224,7 @@ final class PreservationCopyParityTest extends TestCase {
 			$this->createStub(\OCA\Cantoria\Service\AuditLog::class), $roles, $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
 			$this->createStub(\OCA\Cantoria\Db\ContributionMapper::class), $this->createStub(\OCA\Cantoria\Db\PersonMapper::class));
 		$links = $this->createStub(LinkService::class);
-		$links->method('circleOptions')->willReturn(['members' => ['allowed' => false, 'reason' => 'x', 'scan' => false, 'offline' => null], 'public' => [], 'scans' => []]);
+		$links->method('circleOptions')->willReturn(['members' => ['allowed' => false, 'reason' => 'x', 'scan' => false, 'offline' => null, 'playback' => false], 'public' => [], 'scans' => []]);
 		$share = new ProgrammeShareService($events, $items, new ProgrammeCopies($copies, $files), $versions, $works, $this->createStub(ExcerptLinkMapper::class),
 			$links, $rights, $roles);
 		$internal = new EventController($this->createStub(IRequest::class), 'account', $roles, $service, $items,

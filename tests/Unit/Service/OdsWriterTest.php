@@ -72,6 +72,30 @@ final class OdsWriterTest extends TestCase {
 		self::assertStringContainsString('<table:table-cell/>', $content, 'empty cells stay empty');
 	}
 
+	/**
+	 * U44: a column named in `text` is formatted as text, so that a
+	 * spreadsheet program keeps 1-3 as typed.
+	 */
+	public function testATextColumnIsFormattedAsText(): void {
+		$ods = (new OdsWriter($this->tempManager()))->write([['name' => 'Werkverzeichnis', 'rows' => [['Mappe', 'Nr', 'Signatur'], ['1', '1', '1-1']], 'text' => [2]]]);
+		$zip = new \ZipArchive();
+		self::assertTrue($zip->open($this->tempFile($ods)));
+		$content = (string)$zip->getFromName('content.xml');
+		$document = new \DOMDocument();
+		self::assertTrue($document->loadXML($content));
+		$xpath = new \DOMXPath($document);
+		$xpath->registerNamespace('table', self::NS_TABLE);
+		$xpath->registerNamespace('style', 'urn:oasis:names:tc:opendocument:xmlns:style:1.0');
+		$xpath->registerNamespace('number', 'urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0');
+		$format = $xpath->evaluate('string(//number:text-style[number:text-content]/@style:name)');
+		$style = $xpath->evaluate('string(//style:style[@style:data-style-name="' . $format . '"]/@style:name)');
+		self::assertNotSame('', $style, 'a cell style with the text format');
+		self::assertSame(['2', $style], [$xpath->evaluate('string(//table:table-column[1]/@table:number-columns-repeated)'),
+			$xpath->evaluate('string(//table:table-column[2]/@table:default-cell-style-name)')], 'the third column');
+		self::assertSame($style, $xpath->evaluate('string(//table:table-row[2]/table:table-cell[3]/@table:style-name)'));
+		self::assertSame('', $xpath->evaluate('string(//table:table-row[2]/table:table-cell[1]/@table:style-name)'));
+	}
+
 	public function testRemovesItsTemporaryFile(): void {
 		$created = [];
 		$manager = $this->createStub(\OCP\ITempManager::class);

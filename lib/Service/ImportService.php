@@ -24,7 +24,12 @@ use OCP\IDBConnection;
  * OpenDocument spreadsheet (.ods), with the same columns (U32, W B15). Each
  * row is a shelf mark; a new row creates one work, one version and one copy.
  * Of a workbook, the first sheet with the column "Signatur" in its first
- * rows is read; rows above that header are left out.
+ * rows is read; rows above that header are left out. A CSV file may be
+ * separated by commas or tabs instead of semicolons (W B30).
+ *
+ * A shelf mark is binder and number, `12-3` (W B25); a row with an empty
+ * "Signatur" takes it from "Mappe" and "Nr". The example row of the
+ * template is left out with a note in the report (W B28).
  *
  * A repeated import matches rows by shelf mark and takes over changed values
  * while the file is still the leading source. Nothing is deleted: shelf marks
@@ -105,6 +110,11 @@ class ImportService {
 		if ($csv['sheet'] !== null) {
 			$warnings[] = ['Only the sheet "%s" was read; the other sheets of the file are left out.', [$csv['sheet']]];
 		}
+		if (($csv['separator'] ?? ';') === ',') {
+			$warnings[] = ['The CSV file is separated by commas; it was read that way.', []];
+		} elseif (($csv['separator'] ?? ';') === "\t") {
+			$warnings[] = ['The CSV file is separated by tabs; it was read that way.', []];
+		}
 		if ($unknown !== []) {
 			$warnings[] = ['Unknown columns are ignored: %s', [implode(', ', $unknown)]];
 		}
@@ -137,6 +147,14 @@ class ImportService {
 					continue;
 				}
 				$row++;
+				$cells = [];
+				foreach ($csv['header'] as $i => $name) {
+					$cells[$name] ??= $fields[$i] ?? '';
+				}
+				if (CatalogCsv::isTemplateExample($cells)) {
+					$warnings[] = ['Row %s is the example row of the template and was not imported.', [$row]];
+					continue;
+				}
 				$counts['rows']++;
 				/** @var array<string, array<string, string|int|bool|null>> $values */
 				$values = [Fields::WORK => [], Fields::VERSION => [], Fields::COPY => []];
@@ -158,8 +176,19 @@ class ImportService {
 				}
 
 				$rawShelfmark = trim((string)($values[Fields::COPY]['shelfmark'] ?? ''));
+				$binder = $values[Fields::COPY]['binder'] ?? null;
+				$number = $values[Fields::COPY]['number'] ?? null;
+				if ($rawShelfmark === '' && is_int($binder) && is_int($number)) {
+					// from "Mappe" and "Nr" (W B25)
+					$rawShelfmark = $binder . '-' . $number;
+				}
 				if (!preg_match('/^0*(\d+)-0*(\d+)$/', $rawShelfmark, $parts)) {
-					$warnings[] = ['Row %s: shelf mark "%s" is invalid and was skipped.', [$row, $rawShelfmark]];
+					if (FieldValue::isDate($rawShelfmark)) {
+						// a spreadsheet program made a date of 1-3
+						$warnings[] = ['Row %s: shelf mark "%s" is a date, not binder and number, and was skipped. Please format the column "Signatur" as text and type the shelf mark again.', [$row, $rawShelfmark]];
+					} else {
+						$warnings[] = ['Row %s: shelf mark "%s" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', [$row, $rawShelfmark]];
+					}
 					continue;
 				}
 				$shelfmark = (int)$parts[1] . '-' . (int)$parts[2];
@@ -333,12 +362,12 @@ class ImportService {
 	/**
 	 * The header and the rows of the import file, by the extension of its
 	 * name: an Excel workbook (.xlsx), an OpenDocument spreadsheet (.ods) or
-	 * CSV (UTF-8, semicolons). Of a workbook the first sheet whose first rows
+	 * CSV (UTF-8, semicolons, commas or tabs). Of a workbook the first sheet whose first rows
 	 * hold a column "Signatur", from that row on, otherwise the first row of
 	 * the first sheet; `sheet` names the sheet read when the file has more
 	 * than one.
 	 *
-	 * @return array{header: list<string>, rows: list<list<string>>, sheet: ?string}
+	 * @return array{header: list<string>, rows: list<list<string>>, sheet: ?string, separator?: string}
 	 * @throws InvalidInputException
 	 */
 	private function table(string $content, string $source): array {

@@ -20,7 +20,10 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
    deinem letzten Besuch in diesem Browser dazugekommen ist. Wähle eines;
    die Noten erscheinen darunter (auf dem Handy) oder daneben (auf einem
    großen Bildschirm).
-3. **Andere Stücke** unter dem Titel führt zurück zur Liste.
+3. **Alle Stücke** unter dem Titel führt zurück zur Liste.
+4. **Bühnenansicht** zeigt nur die Noten, wo der Browser es kann auf dem
+   ganzen Bildschirm, für die Probe; **Bühnenansicht verlassen** oder die
+   Escape-Taste beendet sie.
 
 ## Deine Stimme üben
 
@@ -83,6 +86,10 @@ deinem Handy nicht geht, sag der Chorleitung Bescheid.
 | „Meine Tonhöhe zeigen“ oder „Selbst aufnehmen“ geht nicht | Erlaube dem Browser das Mikrofon für diese Seite. |
 
 ## Textbaustein für die Chorleitung
+
+Nach **Mit dem Chor teilen …** schreibt die App selbst eine Nachricht mit
+dem letzten Tag und den Links, die du vor dem Kopieren ändern kannst. Dieser
+Text ist ausführlicher:
 
 > Hallo zusammen, die Stücke für das nächste Konzert findet ihr
 > in Cantoria unter „Mit mir geteilt“: [Link]. Meldet euch mit eurem
