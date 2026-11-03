@@ -96,7 +96,7 @@ class ImportService {
 
 		$snapshot = null;
 		if (!$dryRun && !$restore) {
-			$snapshot = $this->export->store('before-import', $uid);
+			$snapshot = $this->export->snapshot('before-import', $uid);
 		}
 
 		$operation = $this->audit->newOperation();

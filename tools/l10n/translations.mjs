@@ -712,6 +712,7 @@ export const singular = {
 		'Bitte beschreiben Sie die Rückfrage oder Aufgabe.',
 	],
 	'Only the addressed role can answer this task.': 'Nur die angesprochene Rolle kann diese Aufgabe beantworten.',
+	'A task about an internal preservation copy goes to the catalog librarian or the conductor.': 'Eine Aufgabe zu einer internen Erhaltungskopie geht an die Archivverwaltung oder die Chorleitung.',
 	'This task is not open any more.': 'Diese Aufgabe ist nicht mehr offen.',
 	'Please enter an answer.': ['Bitte gib eine Antwort ein.', 'Bitte geben Sie eine Antwort ein.'],
 	'Only the catalog librarian can close this task.': 'Nur die Rolle „Bestand“ kann diese Aufgabe abschließen.',

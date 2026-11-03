@@ -72,7 +72,7 @@ class TaskController extends Controller {
 	public function tasks(int $closed = 0): JSONResponse {
 		return $this->run(function (string $uid) use ($closed) {
 			$this->roles->requireAccess($uid);
-			return $this->tasks->all($closed === 1);
+			return $this->tasks->all($closed === 1, $uid);
 		});
 	}
 

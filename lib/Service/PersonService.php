@@ -358,11 +358,13 @@ class PersonService {
 	 * All persons as a table with their contributions ("shelf mark: role"),
 	 * for backups and snapshots that are readable without the app.
 	 *
+	 * @param bool $withAccounts with the account that checked a person (not
+	 *                           for the export folder, which every role group reads)
 	 * @return array{0: list<string>, 1: list<list<string>>}
 	 */
-	public function table(): array {
+	public function table(bool $withAccounts = true): array {
 		$header = ['id', 'name', 'gnd', 'wikidata', 'born', 'born_precision', 'died', 'died_precision', 'life_dates_text', 'source',
-			'identification', 'checked_by', 'checked_at', 'notes', 'contributions'];
+			'identification', ...($withAccounts ? ['checked_by'] : []), 'checked_at', 'notes', 'contributions'];
 		$context = $this->versionContext();
 		$byPerson = [];
 		foreach ($this->contributions->findAllByVersion() as $versionId => $list) {

@@ -85,7 +85,7 @@ final class ImportServiceTest extends TestCase {
 		$copies->method('update')->willReturnCallback($this->update(...));
 
 		$export = $this->createStub(ExportService::class);
-		$export->method('store')->willReturnCallback(function (string $occasion, string $uid): string {
+		$export->method('snapshot')->willReturnCallback(function (string $occasion, string $uid): string {
 			$this->snapshots[] = [$occasion, $uid];
 			return self::SNAPSHOT;
 		});

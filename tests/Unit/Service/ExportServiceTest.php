@@ -18,6 +18,7 @@ use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\FullBackupService;
 use OCA\Cantoria\Service\OdsWriter;
 use OCA\Cantoria\Service\PersonService;
+use OCA\Cantoria\Service\Roles;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -25,6 +26,7 @@ use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * The complete backup goes into the backup folder (outside the archive
@@ -73,7 +75,8 @@ final class ExportServiceTest extends TestCase {
 		$person->method('table')->willReturn([['name'], []]);
 		$service = new ExportService($this->createStub(WorkMapper::class), $this->createStub(WorkVersionMapper::class),
 			$this->createStub(CopyMapper::class), $settings, $time, $this->createStub(IDateTimeZone::class),
-			$this->createStub(AuditEntryMapper::class), $this->createStub(OdsWriter::class), $person, $backup, $config);
+			$this->createStub(AuditEntryMapper::class), $this->createStub(OdsWriter::class), $person, $backup, $config,
+			$this->createStub(Roles::class), $this->createStub(LoggerInterface::class));
 
 		$result = $service->storeBackup('weekly', 'lena');
 

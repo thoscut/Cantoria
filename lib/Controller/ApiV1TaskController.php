@@ -117,8 +117,8 @@ class ApiV1TaskController extends OCSController {
 		return new DataResponse($this->ocs(function (string $uid) use ($scope, $copy_id, $limit, $cursor): array {
 			$this->roles->requireAccess($uid);
 			$rows = match (TaskView::scope($scope)) {
-				'open' => $this->tasks->all(false),
-				'all' => $this->tasks->all(true),
+				'open' => $this->tasks->all(false, $uid),
+				'all' => $this->tasks->all(true, $uid),
 				default => $this->tasks->forUser($uid),
 			};
 			if ($copy_id !== null) {
@@ -198,7 +198,7 @@ class ApiV1TaskController extends OCSController {
 	public function answer(int $id, string $answer = ''): DataResponse {
 		return new DataResponse($this->ocs(function (string $uid) use ($id, $answer): array {
 			$this->tasks->answer($id, $answer, $uid);
-			return TaskView::task($this->tasks->withContext([$this->tasks->find($id)])[0], $uid);
+			return TaskView::task($this->tasks->withContext([$this->tasks->find($id, $uid)])[0], $uid);
 		}));
 	}
 }

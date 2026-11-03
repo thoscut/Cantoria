@@ -21,12 +21,21 @@ use OCP\Files\Folder;
 use OCP\Files\NotPermittedException;
 use OCP\IAppConfig;
 use OCP\IDateTimeZone;
+use Psr\Log\LoggerInterface;
 
 /**
  * Exports the catalog as CSV.
  *
  * The extended format appends all app fields to the legacy columns; it is the
  * backup from which the catalog can be restored without the developer.
+ *
+ * What people download (csvFor) and what lies in the export folder inside
+ * the archive folder (store), which every role group reads, holds no
+ * accounts (FullBackupService::ACCOUNT_COLUMNS); internal preservation
+ * copies are only in the download of the roles that may view them
+ * (RightsPolicy::PRESERVATION_COPY_VIEWERS) and never in the archive
+ * folder. The complete CSV with both goes into the backup folder only
+ * (storeBackup, snapshot) and to `occ cantoria:export`.
  */
 class ExportService {
 	/** App config: time of the last complete backup that was stored */
@@ -50,15 +59,29 @@ class ExportService {
 		private PersonService $persons,
 		private FullBackupService $fullBackup,
 		private IAppConfig $appConfig,
+		private Roles $roles,
+		private LoggerInterface $logger,
 	) {
 	}
 
 	/**
+	 * The complete catalog, for the backup folder and `occ`.
+	 *
 	 * @param bool $snapshot for an annual snapshot: without the columns that
 	 *                       hold accounts (FullBackupService::ACCOUNT_COLUMNS)
 	 */
 	public function csv(bool $extended = false, bool $snapshot = false): string {
 		[$header, $rows] = $this->table($extended, $snapshot);
+		return CatalogCsv::write($header, $rows);
+	}
+
+	/**
+	 * The catalog as an account downloads it: without the columns that hold
+	 * accounts, and internal preservation copies only for the roles that may
+	 * view them (as in the catalog list, CatalogService::entriesFor).
+	 */
+	public function csvFor(string $uid, bool $extended = false): string {
+		[$header, $rows] = $this->table($extended, true, $this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS));
 		return CatalogCsv::write($header, $rows);
 	}
 
@@ -165,11 +188,13 @@ class ExportService {
 	}
 
 	/**
+	 * @param bool $withoutAccounts without the columns that hold accounts (FullBackupService::ACCOUNT_COLUMNS)
+	 * @param bool $withPreservationCopies with the rows of internal preservation copies (RightsPolicy::isPreservationCopy)
 	 * @return array{0: list<string>, 1: list<list<string>>}
 	 */
-	private function table(bool $extended, bool $snapshot = false): array {
+	private function table(bool $extended, bool $withoutAccounts = false, bool $withPreservationCopies = true): array {
 		$columns = CatalogCsv::columns($extended);
-		if ($snapshot) {
+		if ($withoutAccounts) {
 			$columns = array_filter($columns, fn (array $column): bool => !in_array($column[1], FullBackupService::ACCOUNT_COLUMNS, true));
 		}
 		$works = $this->works->findAllById();
@@ -178,6 +203,9 @@ class ExportService {
 		$rows = [];
 		foreach ($this->copies->findAll() as $copy) {
 			$version = $versions[$copy->getVersionId()] ?? null;
+			if (!$withPreservationCopies && ($version === null || RightsPolicy::isPreservationCopy($version, $copy))) {
+				continue;
+			}
 			$work = $version === null ? null : ($works[$version->getWorkId()] ?? null);
 			$objects = [Fields::COPY => $copy, Fields::VERSION => $version, Fields::WORK => $work];
 			$row = [];
@@ -192,22 +220,53 @@ class ExportService {
 
 	/**
 	 * Stores a dated export in the export folder and returns its path relative
-	 * to the archive folder. Existing files are never overwritten.
+	 * to the archive folder. Existing files are never overwritten. Every role
+	 * group reads the archive folder: the file holds no accounts and no
+	 * internal preservation copies.
 	 */
 	public function store(string $occasion, string $uid, bool $extended = true): string {
 		$folder = $this->settings->exportFolder($uid);
-		$occasion = trim(preg_replace('/[^A-Za-z0-9_-]+/', '-', $occasion) ?? 'export', '-');
-		$now = $this->time->getDateTime('now', $this->timeZone->getTimeZone(false, $uid));
-		$base = $now->format('Ymd-His') . '_catalog_' . $occasion;
-		$name = $base . '.csv';
-		for ($i = 2; $folder->nodeExists($name); $i++) {
-			$name = $base . '-' . $i . '.csv';
-		}
+		$name = $this->freeName($folder, $this->baseName($occasion, $uid, 'export'));
+		[$header, $rows] = $this->table($extended, true, false);
 		try {
-			$folder->newFile($name, $this->csv($extended));
+			$folder->newFile($name, CatalogCsv::write($header, $rows));
 		} catch (NotPermittedException) {
 			throw new InvalidInputException('No write permission for exports in the archive folder.');
 		}
 		return AppSettings::EXPORT_FOLDER . '/' . $name;
+	}
+
+	/**
+	 * The state before an import: the export of store() in the archive
+	 * folder, and the complete CSV (with accounts and internal preservation
+	 * copies) in the backup folder. The second is a convenience beside the
+	 * backups; when the backup folder cannot be written, the import goes on
+	 * and the log says why.
+	 *
+	 * @return string the path of the export in the archive folder
+	 */
+	public function snapshot(string $occasion, string $uid): string {
+		$path = $this->store($occasion, $uid);
+		try {
+			$folder = $this->settings->backupFolder();
+			$folder->newFile($this->freeName($folder, $this->baseName($occasion, $uid, 'snapshot')), $this->csv(true));
+		} catch (InvalidInputException|NotPermittedException $e) {
+			$this->logger->warning('Cantoria: the complete catalog before the import could not be stored in the backup folder: ' . $e->getMessage());
+		}
+		return $path;
+	}
+
+	private function baseName(string $occasion, string $uid, string $fallback): string {
+		$occasion = trim(preg_replace('/[^A-Za-z0-9_-]+/', '-', $occasion) ?? $fallback, '-');
+		$now = $this->time->getDateTime('now', $this->timeZone->getTimeZone(false, $uid));
+		return $now->format('Ymd-His') . '_catalog_' . $occasion;
+	}
+
+	private function freeName(Folder $folder, string $base): string {
+		$name = $base . '.csv';
+		for ($i = 2; $folder->nodeExists($name); $i++) {
+			$name = $base . '-' . $i . '.csv';
+		}
+		return $name;
 	}
 }

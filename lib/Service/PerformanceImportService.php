@@ -106,7 +106,7 @@ class PerformanceImportService {
 			'counted' => 0, 'ownChoir' => null, 'unknownShelfmarks' => [], 'sheets' => $sheetNames];
 
 		if (!$dryRun) {
-			$report['snapshot'] = $this->export->store('before-performance-import', $uid);
+			$report['snapshot'] = $this->export->snapshot('before-performance-import', $uid);
 		}
 		$operation = $this->audit->newOperation();
 		$now = $this->time->getTime();

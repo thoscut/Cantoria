@@ -15,15 +15,22 @@ use OCA\Cantoria\Db\ArchiveFileMapper;
 use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\LicenseMapper;
+use OCA\Cantoria\Db\Task;
+use OCA\Cantoria\Db\TaskMapper;
 use OCA\Cantoria\Db\Work;
 use OCA\Cantoria\Db\WorkMapper;
 use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
+use OCA\Cantoria\Service\AppSettings;
+use OCA\Cantoria\Service\CatalogCsv;
 use OCA\Cantoria\Service\CatalogService;
 use OCA\Cantoria\Service\ExportService;
+use OCA\Cantoria\Service\FullBackupService;
 use OCA\Cantoria\Service\FileSyncService;
 use OCA\Cantoria\Service\ImportService;
 use OCA\Cantoria\Service\MetaService;
+use OCA\Cantoria\Service\OdsWriter;
+use OCA\Cantoria\Service\PersonService;
 use OCA\Cantoria\Service\RepertoireService;
 use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\RightsService;
@@ -35,11 +42,16 @@ use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\Files\File;
+use OCP\Files\Folder;
+use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
+use OCP\Settings\IManager as ISettingsManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -50,12 +62,20 @@ use Psr\Log\LoggerInterface;
  * and refuse the same internal preservation copies for every role: a
  * version marked as one, and a copy of the kind "Preservation copy". Both
  * ask RightsPolicy; the catalog and the policy are real, the mappers are
- * test doubles.
+ * test doubles. The same holds for the CSV export, the files the app
+ * stores in the archive folder and the task lists, for every role group,
+ * administrators without a role and choir members.
  */
 #[CoversClass(CatalogService::class)]
 #[CoversClass(RightsPolicy::class)]
+#[CoversClass(ExportService::class)]
+#[CoversClass(TaskService::class)]
 final class PreservationCopyParityTest extends TestCase {
 	use ModuleSwitches;
+
+	private WorkMapper $workMapper;
+	private WorkVersionMapper $versionMapper;
+	private CopyMapper $copyMapper;
 
 	/** Copy 1: ordinary, copy 2: version marked, copy 3: copy of the kind preservation copy */
 	private const ORDINARY = 1;
@@ -63,29 +83,54 @@ final class PreservationCopyParityTest extends TestCase {
 	private const PRESERVATION_KIND = 3;
 
 	/**
-	 * @return array<string, array{string, bool}>
+	 * Every role group, an administrator without a role and a choir member
+	 * (no archive role): roles, admin, may view preservation copies.
+	 *
+	 * @return array<string, array{list<string>, bool, bool}>
 	 */
 	public static function roles(): array {
 		return [
-			'catalog librarian' => [Roles::LIBRARIAN, true],
-			'conductor' => [Roles::CONDUCTOR, true],
-			'operations' => [Roles::OPERATIONS, false],
-			'contributor' => [Roles::CONTRIBUTOR, false],
+			'catalog librarian' => [[Roles::LIBRARIAN], false, true],
+			'conductor' => [[Roles::CONDUCTOR], false, true],
+			'operations' => [[Roles::OPERATIONS], false, false],
+			'contributor' => [[Roles::CONTRIBUTOR], false, false],
+			'reader' => [[Roles::READER], false, false],
+			'choir member' => [[Roles::MEMBER], false, false],
+			'administrator without a role' => [[], true, false],
+			'administrator and conductor' => [[Roles::CONDUCTOR], true, true],
 		];
 	}
 
-	private function roleStub(string $role): Roles {
-		$roles = $this->createStub(Roles::class);
-		$roles->method('rolesOf')->willReturn([$role]);
-		$roles->method('hasAccess')->willReturn(true);
-		$roles->method('hasAnyRole')->willReturnCallback(fn (string $uid, array $allowed): bool => in_array($role, $allowed, true));
-		return $roles;
+	/**
+	 * The real role check, with one group per role and the account in the
+	 * groups of $roles.
+	 *
+	 * @param list<string> $roles
+	 */
+	private function roleStub(array $roles, bool $admin = false): Roles {
+		$config = $this->createStub(IAppConfig::class);
+		$config->method('getValueArray')->willReturnCallback(fn (string $app, string $key): array => ['g-' . substr($key, strlen('groups_'))]);
+		$groups = $this->createStub(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => in_array(substr($group, 2), $roles, true));
+		$groups->method('isAdmin')->willReturn($admin);
+		return new Roles($config, $groups, $this->createStub(IUserManager::class), $this->createStub(ISettingsManager::class),
+			$this->createStub(LoggerInterface::class));
 	}
 
 	/**
+	 * Whether the account may use the archive at all (choir members may not).
+	 *
+	 * @param list<string> $roles
+	 */
+	private static function hasAccess(array $roles, bool $admin): bool {
+		return $admin || array_diff($roles, [Roles::MEMBER]) !== [];
+	}
+
+	/**
+	 * @param list<string> $roles
 	 * @return array{CatalogService, RightsPolicy, Roles}
 	 */
-	private function services(string $role): array {
+	private function services(array $roles, bool $admin = false): array {
 		$works = [];
 		$versions = [];
 		$copies = [];
@@ -129,7 +174,10 @@ final class PreservationCopyParityTest extends TestCase {
 		$rights = $this->createStub(RightsService::class);
 		$rights->method('today')->willReturn('2026-10-27');
 
-		$roles = $this->roleStub($role);
+		$this->workMapper = $workMapper;
+		$this->versionMapper = $versionMapper;
+		$this->copyMapper = $copyMapper;
+		$roles = $this->roleStub($roles, $admin);
 		$modules = $this->modules(array_fill_keys(\OCA\Cantoria\Service\Modules::switchable(), false));
 		$catalog = new CatalogService($this->createStub(IDBConnection::class), $workMapper, $versionMapper, $copyMapper, $fileMapper,
 			$this->createStub(\OCA\Cantoria\Db\AuditEntryMapper::class), $this->createStub(\OCA\Cantoria\Service\AuditLog::class), $roles,
@@ -147,11 +195,65 @@ final class PreservationCopyParityTest extends TestCase {
 		return $l;
 	}
 
-	private function internal(CatalogService $catalog, Roles $roles): ApiController {
+	private function internal(CatalogService $catalog, Roles $roles, ?ExportService $export = null): ApiController {
 		return new ApiController($this->createStub(IRequest::class), 'account', $roles, $this->createStub(MetaService::class), $catalog,
-			$this->createStub(ImportService::class), $this->createStub(ExportService::class), $this->createStub(FileSyncService::class),
-			$this->createStub(\OCA\Cantoria\Db\AuditEntryMapper::class), $this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class),
+			$this->createStub(ImportService::class), $export ?? $this->createStub(ExportService::class), $this->createStub(FileSyncService::class),
+			$this->createStub(\OCA\Cantoria\Db\AuditEntryMapper::class), $this->createStub(UserFiles::class), $this->time(),
 			$this->createStub(IDateTimeZone::class), $this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+	}
+
+	private function time(): ITimeFactory {
+		$time = $this->createStub(ITimeFactory::class);
+		$time->method('getDateTime')->willReturn(new \DateTime('2026-11-03 12:00:00'));
+		return $time;
+	}
+
+	/**
+	 * The real export with the mappers of services(); the export folder
+	 * (inside the archive folder) and the backup folder record what is
+	 * written into them.
+	 *
+	 * @param array<string, string> $written file name => content
+	 * @param array<string, string> $backups file name => content
+	 */
+	private function export(Roles $roles, array &$written, array &$backups = []): ExportService {
+		$settings = $this->createStub(AppSettings::class);
+		$settings->method('exportFolder')->willReturn($this->recordingFolder($written));
+		$settings->method('backupFolder')->willReturn($this->recordingFolder($backups));
+		return new ExportService($this->workMapper, $this->versionMapper, $this->copyMapper, $settings, $this->time(),
+			$this->createStub(IDateTimeZone::class), $this->createStub(\OCA\Cantoria\Db\AuditEntryMapper::class), $this->createStub(OdsWriter::class),
+			$this->createStub(PersonService::class), $this->createStub(FullBackupService::class), $this->createStub(IAppConfig::class), $roles,
+			$this->createStub(LoggerInterface::class));
+	}
+
+	/**
+	 * @param array<string, string> $written file name => content
+	 */
+	private function recordingFolder(array &$written): Folder {
+		$folder = $this->createStub(Folder::class);
+		$folder->method('nodeExists')->willReturn(false);
+		$folder->method('newFile')->willReturnCallback(function (string $name, mixed $content = null) use (&$written): File {
+			$written[$name] = is_string($content) ? $content : '';
+			return $this->createStub(File::class);
+		});
+		return $folder;
+	}
+
+	/**
+	 * Shelf marks of a catalog CSV, and whether a column holds accounts.
+	 *
+	 * @return array{list<string>, bool}
+	 */
+	private static function shelfmarks(string $csv): array {
+		$parsed = CatalogCsv::parse($csv);
+		$column = array_search('Signatur', $parsed['header'], true);
+		self::assertIsInt($column);
+		$accounts = false;
+		foreach ($parsed['header'] as $header) {
+			$field = substr((string)strrchr('.' . $header, '.'), 1);
+			$accounts = $accounts || in_array($field, FullBackupService::ACCOUNT_COLUMNS, true);
+		}
+		return [array_map(fn (array $row): string => $row[$column], $parsed['rows']), $accounts];
 	}
 
 	private function agents(CatalogService $catalog, RightsPolicy $policy, Roles $roles): ApiV1CatalogController {
@@ -159,9 +261,17 @@ final class PreservationCopyParityTest extends TestCase {
 			$this->createStub(LoggerInterface::class));
 	}
 
+	/**
+	 * @param list<string> $role
+	 */
 	#[DataProvider('roles')]
-	public function testBothInterfacesListTheSameCopies(string $role, bool $mayView): void {
-		[$catalog, $policy, $roles] = $this->services($role);
+	public function testBothInterfacesListTheSameCopies(array $role, bool $admin, bool $mayView): void {
+		[$catalog, $policy, $roles] = $this->services($role, $admin);
+		if (!self::hasAccess($role, $admin)) {
+			self::assertSame(Http::STATUS_FORBIDDEN, $this->internal($catalog, $roles)->entries()->getStatus(), 'internal API');
+			$this->expectException(OCSForbiddenException::class);
+			$this->agents($catalog, $policy, $roles)->search();
+		}
 
 		$internal = $this->internal($catalog, $roles)->entries()->getData();
 		self::assertIsArray($internal);
@@ -176,9 +286,12 @@ final class PreservationCopyParityTest extends TestCase {
 		self::assertSame($expected, $v1Ids, 'API for agents');
 	}
 
+	/**
+	 * @param list<string> $role
+	 */
 	#[DataProvider('roles')]
-	public function testBothInterfacesRefuseTheSameCopies(string $role, bool $mayView): void {
-		[$catalog, $policy, $roles] = $this->services($role);
+	public function testBothInterfacesRefuseTheSameCopies(array $role, bool $admin, bool $mayView): void {
+		[$catalog, $policy, $roles] = $this->services($role, $admin);
 		foreach ([self::ORDINARY, self::MARKED_VERSION, self::PRESERVATION_KIND] as $id) {
 			$internal = $this->internal($catalog, $roles)->entry($id);
 			try {
@@ -187,10 +300,112 @@ final class PreservationCopyParityTest extends TestCase {
 			} catch (OCSForbiddenException) {
 				$v1Refused = true;
 			}
-			$refused = !$mayView && $id !== self::ORDINARY;
+			$refused = !self::hasAccess($role, $admin) || (!$mayView && $id !== self::ORDINARY);
 			self::assertSame($refused ? Http::STATUS_FORBIDDEN : Http::STATUS_OK, $internal->getStatus(), 'internal API, copy ' . $id);
 			self::assertSame($refused, $v1Refused, 'API for agents, copy ' . $id);
 			self::assertSame($refused, $policy->viewDenial($catalog->copyWithContext($id)['version'], 'account', $catalog->copyWithContext($id)['copy']) !== null);
 		}
+	}
+
+	/**
+	 * GET /api/export in both formats (ExportService::csvFor; the download
+	 * response itself needs a Nextcloud server) lists the copies of the
+	 * catalog list and never the accounts of who confirmed or set something.
+	 * Choir members get no export.
+	 *
+	 * @param list<string> $role
+	 */
+	#[DataProvider('roles')]
+	public function testTheExportHoldsTheCopiesOfTheListAndNoAccounts(array $role, bool $admin, bool $mayView): void {
+		[$catalog, , $roles] = $this->services($role, $admin);
+		$written = [];
+		$export = $this->export($roles, $written);
+		if (!self::hasAccess($role, $admin)) {
+			self::assertSame(Http::STATUS_FORBIDDEN, $this->internal($catalog, $roles, $export)->export(1)->getStatus());
+			return;
+		}
+		foreach ([false, true] as $extended) {
+			[$marks, $accounts] = self::shelfmarks($export->csvFor('account', $extended));
+			self::assertSame($mayView ? ['1-1', '1-2', '1-3'] : ['1-1'], $marks, 'extended ' . ($extended ? 'yes' : 'no'));
+			self::assertFalse($accounts, 'extended ' . ($extended ? 'yes' : 'no'));
+		}
+	}
+
+	/**
+	 * Every role group reads the archive folder: what the app stores in its
+	 * export folder (exports, the state before an import) holds no internal
+	 * preservation copies and no accounts, whoever stores it. The complete
+	 * state before an import goes into the backup folder.
+	 */
+	public function testTheExportFolderHoldsNoPreservationCopiesAndNoAccounts(): void {
+		$this->services([Roles::LIBRARIAN]);
+		$written = [];
+		$backups = [];
+		$export = $this->export($this->roleStub([Roles::LIBRARIAN]), $written, $backups);
+		$export->store('export', 'account');
+		$export->snapshot('before-import', 'account');
+		self::assertCount(2, $written);
+		foreach ($written as $name => $csv) {
+			self::assertSame([['1-1'], false], self::shelfmarks($csv), $name);
+		}
+		self::assertCount(1, $backups);
+		self::assertSame([['1-1', '1-2', '1-3'], true], self::shelfmarks((string)reset($backups)));
+	}
+
+	/**
+	 * Tasks about internal preservation copies reach only the roles that may
+	 * view them, in every list (the app, the API for agents, the dashboard).
+	 *
+	 * @param list<string> $role
+	 */
+	#[DataProvider('roles')]
+	public function testTaskListsHoldTheSameCopies(array $role, bool $admin, bool $mayView): void {
+		[, , $roles] = $this->services($role, $admin);
+		$tasks = [];
+		foreach ([self::ORDINARY, self::MARKED_VERSION, self::PRESERVATION_KIND] as $id) {
+			$task = new Task();
+			$task->setId(300 + $id);
+			$task->setCopyId($id);
+			$task->setStatus(Task::OPEN);
+			$task->setAddressee($role[0] ?? Roles::LIBRARIAN);
+			$tasks[] = $task;
+		}
+		$mapper = $this->createStub(TaskMapper::class);
+		$mapper->method('findByStatus')->willReturn($tasks);
+		$service = new TaskService($mapper, $this->copyMapper, $this->versionMapper, $this->workMapper,
+			$this->createStub(\OCA\Cantoria\Service\AuditLog::class), $roles, $this->createStub(\OCA\Cantoria\Service\NotificationService::class),
+			$this->createStub(IUserManager::class), $this->createStub(ITimeFactory::class));
+		$expected = $mayView ? [self::ORDINARY, self::MARKED_VERSION, self::PRESERVATION_KIND] : [self::ORDINARY];
+		$copyIds = fn (array $rows): array => array_map(fn (array $row): mixed => $row['copy_id'], $rows);
+		self::assertSame($expected, $copyIds($service->all(true, 'account')), 'all tasks');
+		self::assertSame($expected, $copyIds($service->all(false, 'account')), 'open tasks');
+		// The mapper double returns the tasks of every addressee.
+		self::assertSame($expected, $copyIds($service->forUser('account')), 'tasks of the account');
+	}
+
+	/**
+	 * A task about an internal preservation copy is addressed to a role
+	 * that may view it, and the other roles cannot open or answer it.
+	 */
+	public function testATaskAboutAPreservationCopyStaysWithTheRolesThatMayViewIt(): void {
+		[, , $librarian] = $this->services([Roles::LIBRARIAN]);
+		$mapper = $this->createStub(TaskMapper::class);
+		$mapper->method('insert')->willReturnArgument(0);
+		$service = fn (Roles $roles): TaskService => new TaskService($mapper, $this->copyMapper, $this->versionMapper, $this->workMapper,
+			$this->createStub(\OCA\Cantoria\Service\AuditLog::class), $roles, $this->createStub(\OCA\Cantoria\Service\NotificationService::class),
+			$this->createStub(IUserManager::class), $this->createStub(ITimeFactory::class));
+		try {
+			$service($librarian)->create(self::PRESERVATION_KIND, ['addressee' => Roles::READER, 'question' => 'Page 3?'], 'account');
+			self::fail('a reader was addressed');
+		} catch (\OCA\Cantoria\Exception\InvalidInputException) {
+		}
+		$task = $service($librarian)->create(self::PRESERVATION_KIND, ['addressee' => Roles::CONDUCTOR, 'question' => 'Page 3?'], 'account');
+		self::assertSame(Roles::CONDUCTOR, $task->getAddressee());
+
+		$task->setId(9);
+		$mapper->method('find')->willReturn($task);
+		self::assertSame($task, $service($librarian)->find(9, 'account'));
+		$this->expectException(\OCA\Cantoria\Exception\AccessDeniedException::class);
+		$service($this->roleStub([Roles::READER]))->find(9, 'account');
 	}
 }
