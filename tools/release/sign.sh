@@ -68,7 +68,7 @@ mkdir -p "$OUT"
 SIGNED="$OUT/$NAME"
 pack_archive "$STAGE" "$APP_ID" "$EPOCH" "$SIGNED"
 "$ROOT/tools/release/compare.sh" "$ARCHIVE" "$SIGNED"
-if ! tar -tzf "$SIGNED" | grep -qx "$APP_ID/appinfo/signature.json"; then
+if ! tar -tzf "$SIGNED" | grep -x "$APP_ID/appinfo/signature.json" >/dev/null; then
 	echo "occ wrote no appinfo/signature.json" >&2
 	exit 1
 fi
