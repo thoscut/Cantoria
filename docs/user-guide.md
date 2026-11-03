@@ -736,7 +736,11 @@ A protected version plays on a public link only with a license with the use
 covers the use inside the choir, not a sound version for everyone. Public
 domain versions play as in the archive.
 
-The scan (PDF) can be included under the same conditions. The page shows
+The scan (PDF) can be included under the same conditions and, unless
+public domain is confirmed, a valid license with the use "Download of the
+scan on public links": everyone who opens the link can save and print it,
+which a license for online publication does not cover. A link lasts at most
+until the license that releases it ends. The page shows
 title, composer, the whole piece or the measures, the focus voice and a text
 description, plays it with the voice emphasised and, if included, links to
 the scan. When the link expires, is revoked or the version is no longer

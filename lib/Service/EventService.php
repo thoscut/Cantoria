@@ -314,11 +314,18 @@ class EventService {
 	 * none; `revision_valid_since` the day since when it is the current one,
 	 * `revision_sung` whether it is the revision kept as sung.
 	 *
+	 * An internal preservation copy in a programme (milestone 0.18, S N13):
+	 * the roles that may not view it get the title of the line, but neither
+	 * its shelf mark nor the ids of its copy and version, nor details of its
+	 * version; its warnings say only "Not available.". The API for agents
+	 * shows the same (ApiV1\ConcertView).
+	 *
 	 * @return array{event: Event, items: list<array<string, string|int|bool|null|list<string>>>, totalDuration: int, missingDurations: int}
 	 */
 	public function detail(int $eventId, string $uid): array {
 		['event' => $event, 'lines' => $lines] = $this->lines($eventId, $uid);
 		$revisions = $this->states->forItems(array_map(fn (array $line): EventItem => $line['item'], $lines));
+		$mayViewPreservation = $this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
 		$items = [];
 		$total = 0;
 		$missingDurations = 0;
@@ -342,6 +349,12 @@ class EventService {
 				'revision_valid_since' => $revisions[$item->getId()]['valid_since'] ?? null,
 				'revision_sung' => $revisions[$item->getId()]['sung'] ?? false,
 			];
+			if (!$mayViewPreservation && $version !== null && RightsPolicy::isPreservationCopy($version, $copy)) {
+				$items[array_key_last($items)] = [
+					'copy_id' => null, 'version_id' => null, 'shelfmark' => null, 'arranger_text' => null, 'publisher' => null,
+					'warnings' => [ProgrammeShareService::NOT_AVAILABLE], 'revision' => null, 'revision_valid_since' => null, 'revision_sung' => false,
+				] + $items[array_key_last($items)];
+			}
 		}
 		return ['event' => $event, 'items' => $items, 'totalDuration' => $total, 'missingDurations' => $missingDurations];
 	}
@@ -383,7 +396,7 @@ class EventService {
 			$copy = $copyId === null ? null : ($copies[$copyId] ?? null);
 			$warnings = [];
 			if ($version !== null && $event->getImported() !== true) {
-				if ($version->getPreservationCopy() === true) {
+				if (RightsPolicy::isPreservationCopy($version, $copy)) {
 					$warnings[] = 'Internal preservation copy: not a singing copy.';
 				}
 				$versionLicenses = $licenses[$version->getId()] ?? [];

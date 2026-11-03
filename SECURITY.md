@@ -63,6 +63,11 @@ below explain the reasons.
 | The API for agents needs its module, a role and a limit on every route, and decides nothing | CS `testEveryApiV1RouteNeedsTheInterfaceItsModuleARoleAndALimit`, `testNoApiV1RouteDecidesOrCorrects`, `testASwitchedOffApiV1RouteAnswers404WithOcsMeta`; agent run in `tools/ci/integration-demo.sh` |
 | The scan in links for choir members needs a license for copies unless public domain is confirmed; public playback of protected versions a license for online playback | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testPublicLinks`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
 | Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages and the API for agents, for every role | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies` |
+| In a programme (concert detail, API for agents, options for sharing it) an internal preservation copy shows shelf mark, ids and warnings only to the roles that may view it | `PreservationCopyParityTest::testProgrammesShowPreservationCopiesOnlyToTheRolesThatMayViewThem`; `ProgrammeShareTest::testAPreservationCopyShowsNeitherShelfMarkNorCopyToOtherRoles`; `LinkRolesTest::testTheOptionsHideAPreservationCopyFromTheOperationsRole` |
+| Sharing a programme and extending links only by the roles that make links, with the rights of today, rate limited | `LinkRolesTest::testOnlyTheRolesThatMakeLinksShareAProgrammeAndExtendLinks`, `testExtendingChecksTheRightsOfTodayForEveryCircleAndTheScan`; CS `testExpensiveEndpointsAreRateLimited` |
+| A link lasts at most 183 days from the day it is made or extended, at most a year after it was made and never beyond the license that releases it; extending never shortens a link, and an expired public link gets a new token | `SharingTest::testALinkIsExtendedOnlyByItsCreatorOrTheLibrarianAndWithTheRightsOfToday`, `testALinkLastsAtMostUntilTheLicenseEnds`, `testAnExpiredPublicLinkGetsANewTokenWhenExtended`; `ProgrammeShareTest::testALinkIsNeverShortened`, `testAPieceLastsAtMostUntilItsLicenseEnds`; `RightsPolicyTest::testALinkLastsAtMostAsLongAsItsLicense` |
+| The scan of a public link needs a license for its download unless public domain is confirmed; online publication alone is not enough | `RightsPolicyTest::testTheScanOfAPublicLinkNeedsItsOwnLicense`; `SharingTest::testThePublicScanNeedsItsOwnLicense`, `testAPublicLinkShowsTheWholePieceAndItsScanUnderTheSameRules` |
+| A rights conflict (confirmed public domain, but the persons recorded now say protected) closes public links that no license carries | `RightsPolicyTest::testARightsConflictClosesPublicLinksWithoutALicense` |
 | Answers of the API for agents name no accounts; preservation copies only for the roles that may view them | `ApiV1ControllerTest::testACopyWithoutAccountNamesAndAPreservationCopyOnlyForItsRoles`, `testTheReviewOfACopyHasNoAccountNamesAndComesInPages`, `testPreservationCopiesOnlyForRolesThatMayViewThem` |
 | The MCP server never shows the app password and sends nothing in read-only mode | `tools/mcp/test`: "never appear in tool results" (secrets), "send nothing in read-only mode", "leaves out the writing tools in read-only mode" |
 | Files are read through the user's own view; nobody gets a file they could not open | `UserFilesTest::testRefusesAFileTheUserCannotSee`; `ScoreServiceTest::testAScoreInAnArchiveFolderThatIsNotSharedSaysWhatToDo`; `files_integration_test` |
@@ -194,14 +199,21 @@ made and on every call the server checks:
   portal);
 - for the public the release for publication (publication status "free",
   set by the catalog librarian) and confirmed public domain or a valid
-  license with the use "online publication";
+  license with the use "online publication"; a version confirmed as public
+  domain whose protection proposal says protected by the persons recorded
+  now (a rights conflict) is published only with such a license until the
+  catalog librarian has checked it (milestone 0.18);
 - never an internal preservation copy;
 - the same for the whole piece, an excerpt and the scan: legally an excerpt
   counts as much as the whole piece and a scan as much as the notes
   (guideline 2), so none of them has a release of its own; the scan in a
   link for choir members, which they can save and print, additionally needs
   confirmed public domain or a license for download and printing by
-  members (or self-printing);
+  members (or self-printing); the scan of a public link, which everyone can
+  save and print, confirmed public domain or a license with the use
+  "Download of the scan on public links" (`online_download`, milestone
+  0.18): a license for online publication covers showing the notes, not
+  handing out the sheet;
 - on public links, playback of a protected version needs a license for
   online playback (audio); a license for practice audio covers the choir;
 - playback and practice audio as in the archive (public domain or a license
@@ -267,6 +279,21 @@ public links stop working at once.
 - Links can be passed on. They expire after at most 183 days and can be
   revoked at any time by their creator or the catalog librarian; calls are
   counted without recording who made them.
+- **Extending a link** (milestone 0.19, bounded in 0.18) is for its creator
+  and the catalog librarian, with the rights of today, as when it was made,
+  including the scan it offers. The new last day lies at most 183 days
+  ahead, at most a year after the link was made, however often it is
+  extended, and never after the last day of the license that releases the
+  piece for its circle (`RightsPolicy::releaseEnd`; the audit log records
+  that day with the extension). Extending never shortens a link. An expired
+  public link gets a new token when it is extended: the old address from a
+  message or a log stays closed. The route is rate limited per account.
+  Sharing a programme (`POST /api/events/{id}/share`) goes through the same
+  checks per piece; a link that lasts longer already stays as it is.
+- Choir members learn until when a kept piece may stay on their device
+  (`keepUntil`: the end of the license for download and printing); the
+  device treats the piece as expired from then on, even while the link
+  lasts longer.
 - The token is part of the address (`/p/{token}`). The access log of the
   web server records addresses, and so does Nextcloud's log when a request
   fails with an internal error. Whoever reads these logs can open the
@@ -497,8 +524,8 @@ account can do; it offers a stable, documented and limited contract.
   brute-force protection.
 - Expensive endpoints (imports, file sync, exports, backups, restore, practice
   audio, statistics, calendar files and entries, the preview and sync of the
-  print station) and the writing routes of the folder book are rate limited
-  per user;
+  print station, sharing a programme and extending a link) and the writing
+  routes of the folder book are rate limited per user;
   Nextcloud answers with HTTP 429 when a limit is reached.
 - Clients only see translated messages meant for users; internal errors are
   answered with a generic message and logged by Nextcloud. Notifications

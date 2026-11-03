@@ -8,6 +8,7 @@ import type { CircleOption } from '../types.ts'
 
 import { describe, expect, it } from 'vitest'
 import { excerptTempo, voiceForServer, voiceOfLink } from '../sharing/excerpt.ts'
+import { daysLeft, deviceUntil, endsSoon, sharedUntil } from '../sharing/linkDates.ts'
 import { canOfferScan, initialScope, linkMeasures, measureProblem, previewRows, scopeText } from '../sharing/linkScope.ts'
 
 const voice = (key: string, name: string | null, part: string, number = 1): Voice => ({
@@ -168,5 +169,34 @@ describe('what the recipients see', () => {
 		expect(rows.find((row) => row.label === 'Tempo')?.value).toBe('80 %')
 		expect(rows.find((row) => row.label === 'Playback')?.value).toBe('No')
 		expect(previewRows({ ...input, scan: false }, previewWords).find((row) => row.label === 'Scan (PDF)')?.value).toBe('No')
+	})
+})
+
+describe('the days of links (milestone 0.18)', () => {
+	it('counts the days a link has left and says when it ends within a week', () => {
+		expect(daysLeft('2026-11-10', '2026-11-03')).toBe(7)
+		expect(daysLeft('2026-11-03', '2026-11-03')).toBe(0)
+		expect(daysLeft('2026-11-01', '2026-11-03')).toBe(-2)
+		expect(daysLeft(null, '2026-11-03')).toBeNull()
+		expect(daysLeft('2027-03-28', '2027-03-27')).toBe(1)
+		expect(endsSoon('2026-11-10', '2026-11-03')).toBe(true)
+		expect(endsSoon('2026-11-11', '2026-11-03')).toBe(false)
+		expect(endsSoon('2026-11-01', '2026-11-03')).toBe(false)
+		expect(endsSoon(null, '2026-11-03')).toBe(false)
+	})
+
+	it('keeps a piece on the device until the link or the license ends, whichever comes first', () => {
+		expect(deviceUntil('2027-01-31', '2026-12-15')).toBe('2026-12-15')
+		expect(deviceUntil('2026-12-01', '2026-12-15')).toBe('2026-12-01')
+		expect(deviceUntil(null, '2026-12-15')).toBe('2026-12-15')
+		expect(deviceUntil('2027-01-31', null)).toBe('2027-01-31')
+		expect(deviceUntil('2027-01-31', undefined)).toBe('2027-01-31')
+	})
+
+	it('shares a programme until the chosen day, within the license, and never shortens a link', () => {
+		expect(sharedUntil('2026-12-27', null, null)).toBe('2026-12-27')
+		expect(sharedUntil('2026-12-27', '2026-12-20', null)).toBe('2026-12-20')
+		expect(sharedUntil('2026-12-27', null, '2027-04-01')).toBe('2027-04-01')
+		expect(sharedUntil('2026-12-27', '2026-12-20', '2026-11-20')).toBe('2026-12-20')
 	})
 })

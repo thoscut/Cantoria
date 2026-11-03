@@ -14,6 +14,8 @@ use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Service\AuditLog;
+use OCA\Cantoria\Service\PersonService;
+use OCA\Cantoria\Service\ProtectionTerm;
 use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
@@ -373,5 +375,90 @@ final class RightsPolicyTest extends TestCase {
 	public function testACopyOnTheDeviceOfTheConductorNeedsTheRightsForIt(array $values, array $licenseSpecs, ?string $denial): void {
 		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
 		self::assertSame($denial, $this->practicePolicy([Roles::CONDUCTOR], $licenses)->deviceCopyDenial(self::version($values), self::UID));
+	}
+
+	// ---- milestone 0.18: the scan of public links, the end and the number of licenses, rights conflicts ----
+
+	private const PUBLIC_NO_DOWNLOAD = 'Everyone can save the scan of a public link: it needs confirmed public domain or a license for the download of the scan on public links. The catalog librarian records it on the tab "Rights".';
+
+	/**
+	 * @return iterable<string, array{0: array<string, mixed>, 1: list<array{0: string, 1?: ?string, 2?: ?string}>, 2: ?string}>
+	 */
+	public static function publicScanCases(): iterable {
+		$free = ['publication_status' => 'free'];
+		$confirmed = ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'];
+		// version values, licenses, expected denial of the scan of a public link
+		yield 'confirmed public domain' => [$confirmed + $free, [], null];
+		yield 'protected, online publication only: showing, no download (R B2)' => [['rights_status' => 'protected'] + $free, [['online_publication']], self::PUBLIC_NO_DOWNLOAD];
+		yield 'protected, online publication and download of the scan' => [['rights_status' => 'protected'] + $free, [['online_publication,' . RightsPolicy::PUBLIC_SCAN_USE]], null];
+		yield 'protected, download by choir members is no download for everyone' => [['rights_status' => 'protected'] + $free,
+			[['online_publication,member_download']], self::PUBLIC_NO_DOWNLOAD];
+		yield 'protected, download license ended' => [['rights_status' => 'protected'] + $free,
+			[['online_publication'], [RightsPolicy::PUBLIC_SCAN_USE, null, '2026-10-21']], self::PUBLIC_NO_DOWNLOAD];
+		yield 'not released for publication' => [['rights_status' => 'protected'], [['online_publication,' . RightsPolicy::PUBLIC_SCAN_USE]], self::PUBLIC_NOT_RELEASED];
+	}
+
+	/**
+	 * @param array<string, mixed> $values
+	 * @param list<array{0: string, 1?: ?string, 2?: ?string}> $licenseSpecs
+	 */
+	#[DataProvider('publicScanCases')]
+	public function testTheScanOfAPublicLinkNeedsItsOwnLicense(array $values, array $licenseSpecs, ?string $denial): void {
+		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		self::assertSame($denial, $this->practicePolicy([], $licenses)->publicScanDenial(self::version($values), self::TODAY));
+	}
+
+	public function testALinkLastsAtMostAsLongAsItsLicense(): void {
+		$protected = self::version(['rights_status' => 'protected', 'publication_status' => 'free']);
+		$policy = $this->practicePolicy([], [self::license('portal', null, '2027-03-31'), self::license('portal', null, '2027-01-31'),
+			self::license('member_download', null, '2026-12-15'), self::license('online_publication', null, '2027-06-30'), self::license('portal', null, '2026-10-01')]);
+		self::assertSame('2027-03-31', $policy->releaseEnd($protected, 'members', false, self::TODAY), 'the license for the portal that lasts longest');
+		self::assertSame('2026-12-15', $policy->releaseEnd($protected, 'members', true, self::TODAY), 'with the scan: the earlier end of the license for download');
+		self::assertSame('2027-06-30', $policy->releaseEnd($protected, 'public', true, self::TODAY), 'no license for the download: the scan is refused anyway');
+		self::assertNull($policy->releaseEnd($protected, 'internal', false, self::TODAY), 'the archive roles need no license');
+		self::assertNull($this->practicePolicy([], [self::license('portal', null, '2027-03-31'), self::license('portal')])
+			->releaseEnd($protected, 'members', false, self::TODAY), 'a license without end');
+		self::assertNull($policy->releaseEnd(self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']), 'members', true, self::TODAY),
+			'confirmed public domain does not end');
+	}
+
+	public function testTheNumberOfLicensesIsKnownOnlyWhenEveryLicenseHasOne(): void {
+		$protected = self::version(['rights_status' => 'protected']);
+		$license = function (string $uses, ?int $quantity, ?string $until = null): License {
+			$license = self::license($uses, null, $until);
+			$license->setQuantity($quantity);
+			return $license;
+		};
+		self::assertSame(30, $this->practicePolicy([], [$license('portal', 20), $license('portal', 10), $license('portal', 50, '2026-10-01')])
+			->licensedQuantity($protected, 'members', self::TODAY), 'the licenses valid today, added up');
+		self::assertSame(12, $this->practicePolicy([], [$license('portal', 40), $license('member_download', 12)])
+			->licensedQuantity($protected, 'members', self::TODAY), 'the smaller number: notes or scan');
+		self::assertNull($this->practicePolicy([], [$license('portal', 20), $license('portal', null)])->licensedQuantity($protected, 'members', self::TODAY));
+		self::assertNull($this->practicePolicy([], [$license('portal', 20)])
+			->licensedQuantity(self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']), 'members', self::TODAY));
+	}
+
+	public function testARightsConflictClosesPublicLinksWithoutALicense(): void {
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'publication_status' => 'free']);
+		$roles = $this->createStub(Roles::class);
+		$time = $this->createStub(ITimeFactory::class);
+		$time->method('getDateTime')->willReturn(new \DateTime(self::TODAY . ' 12:00:00'));
+		$build = function (string $proposal, array $licenses) use ($roles, $time): RightsPolicy {
+			$mapper = $this->createStub(LicenseMapper::class);
+			$mapper->method('findByVersion')->willReturn($licenses);
+			$rights = new RightsService($this->createStub(IDBConnection::class), $this->createStub(WorkVersionMapper::class), $mapper,
+				$this->createStub(AuditLog::class), $roles, $this->createStub(IUserManager::class), $time, $this->createStub(IDateTimeZone::class));
+			$persons = $this->createStub(PersonService::class);
+			$persons->method('protection')->willReturn(['status' => $proposal]);
+			return new RightsPolicy($roles, $rights, $mapper, $persons);
+		};
+		$conflict = 'Rights conflict: confirmed as public domain, but protected by the persons recorded now. Public links stay closed until the catalog librarian checks the tab "Rights".';
+		self::assertSame($conflict, $build(ProtectionTerm::PROTECTED, [])->publicViewDenial($confirmed, self::TODAY), 'R M4');
+		self::assertSame($conflict, $build(ProtectionTerm::PROTECTED, [])->publicScanDenial($confirmed, self::TODAY));
+		self::assertNull($build(ProtectionTerm::FREE, [])->publicViewDenial($confirmed, self::TODAY));
+		self::assertNull($build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicViewDenial($confirmed, self::TODAY), 'a license carries it');
+		self::assertSame(self::PUBLIC_NO_DOWNLOAD, $build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicScanDenial($confirmed, self::TODAY),
+			'the scan then needs its own license');
+		self::assertNull($build(ProtectionTerm::PROTECTED, [])->memberViewDenial($confirmed, self::TODAY), 'choir members are not concerned');
 	}
 }

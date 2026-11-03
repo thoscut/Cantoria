@@ -789,7 +789,12 @@ Lizenz für die Nutzung „Online-Wiedergabe (Audio auf öffentlichen Links)“
 abspielen: Eine Lizenz für Übe-Audio deckt die Nutzung im Chor, nicht eine
 Klangfassung für alle. Gemeinfreie Fassungen spielen wie im Archiv.
 
-Unter denselben Bedingungen lässt sich der Scan (PDF) mitgeben. Die Seite
+Unter denselben Bedingungen und, wenn die Gemeinfreiheit nicht bestätigt
+ist, mit einer gültigen Lizenz für die Nutzung „Download des Scans auf
+öffentlichen Links“ lässt sich der Scan (PDF) mitgeben: Alle, die den Link
+öffnen, können ihn speichern und drucken, und das deckt eine Lizenz zur
+Online-Veröffentlichung nicht. Ein Link gilt höchstens, bis die Lizenz
+endet, die ihn trägt. Die Seite
 zeigt Titel, Komposition, das ganze Stück oder die Takte, die hervorgehobene
 Stimme und eine Textbeschreibung, spielt es mit betonter Stimme ab und
 verlinkt, falls mitgegeben, den Scan. Läuft der Link ab, wird er widerrufen
@@ -1229,7 +1234,8 @@ vorhandene Bestätigung auf.
 Beleg und Notizen. Jede Nutzung zählt für sich: Kopien für die Chormappen,
 Chorportal, Selbstausdruck durch Chormitglieder, Druckstation, Übe-Audio,
 Aufnahme, Veröffentlichung, Online-Veröffentlichung (öffentliche Links),
-Online-Wiedergabe (Audio auf öffentlichen Links), Download und Ausdruck
+Online-Wiedergabe (Audio auf öffentlichen Links), Download des Scans auf
+öffentlichen Links, Download und Ausdruck
 durch Chormitglieder (Scan in Links), Digitalisierung (Scans,
 MusicXML-Übertragungen) und **Weitergabe an die Rechtsnachfolge**. Die letzte hält fest, dass die Lizenz
 mit dem Archiv an eine Rechtsnachfolge übergehen darf, zum Beispiel wenn

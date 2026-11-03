@@ -401,6 +401,10 @@ export interface CircleOption {
 	practiceAudio: boolean
 	/** the recipients can keep it on their device (milestone 0.19); null while the module "offline" is off */
 	offline?: boolean | null
+	/** last day of the license that releases it (YYYY-MM-DD): a link lasts until then at most; null without end */
+	until?: string | null
+	/** more choir members than the licenses were bought for (a hint, no barrier) */
+	quantity?: { licensed: number, members: number } | null
 }
 
 /** A piece of a programme in the dialog "Share the programme with the choir" (milestone 0.19). */
@@ -417,8 +421,12 @@ export interface ProgrammeShareItem {
 	scan: boolean
 	/** the singers can keep it on their device; null while the module "offline" is off */
 	offline: boolean | null
-	/** an active link to the whole piece that is extended instead of making a second one */
-	existing: { id: number, expires: string | null } | null
+	/** an active link to the whole piece that is extended instead of making a second one; never shortened */
+	existing: { id: number, expires: string | null, scan?: boolean } | null
+	/** last day of the license that releases it: the piece is shared until then at most; null without end */
+	until?: string | null
+	/** more choir members than the licenses were bought for (a hint, no barrier) */
+	quantity?: { licensed: number, members: number } | null
 }
 
 export interface ProgrammeShareOptions {
@@ -431,8 +439,13 @@ export interface ProgrammeShareOptions {
 
 export interface ProgrammeShareResult {
 	created: number
+	/** links that last longer now */
 	extended: number
+	/** links that lasted longer already and keep their last day (note and scan apply to them, too) */
+	kept?: number
 	failed: { id: number, title: string, reason: string }[]
+	/** pieces whose license ends before the chosen day, with the day they last */
+	limited?: { id: number, title: string, expires: string }[]
 }
 
 export interface LinkOptions {
@@ -472,6 +485,8 @@ export interface MemberLink {
 	scanSize?: number | null
 	/** the rights allow keeping the piece on the device (module "offline", milestone 0.15) */
 	offline?: boolean
+	/** last day the license allows a copy on the device (milestone 0.18); null without end */
+	keepUntil?: string | null
 	/** key of the piece for what is remembered in the browser while practising (milestone 0.15) */
 	practiceKey?: string
 	credits: Credit[]

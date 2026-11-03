@@ -10,11 +10,14 @@
  * only, no names). The creator and the catalog role can revoke a link,
  * extend it (its address stays, and so does what choir members keep on
  * their devices) and copy a link for choir members or a public link; the
- * server sends its token only to them.
+ * server sends its token only to them. A link that ends within a week says
+ * so in words (milestone 0.18, U30); "Extend" is a labelled button.
+ * Extending never shortens a link; an expired public link gets a new
+ * address.
  */
 import type { ExcerptLink } from '../types.ts'
 
-import { mdiCalendarRefresh, mdiContentCopy, mdiLinkOff } from '@mdi/js'
+import { mdiCalendarRefresh, mdiClockAlertOutline, mdiContentCopy, mdiLinkOff } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
 import { n, t } from '../l10n.ts'
 import { ref } from 'vue'
@@ -26,6 +29,7 @@ import { errorMessage, extendLink, linkUrl, revokeLink } from '../api.ts'
 import { copyText } from '../clipboard.ts'
 import { formatDate, formatDateTime, toIsoDate } from '../format.ts'
 import { referenceWords } from '../labels.ts'
+import { daysLeft, endsSoon } from '../sharing/linkDates.ts'
 import { scopeText } from '../sharing/linkScope.ts'
 import { entriesById, isLibrarian, openEntry } from '../store.ts'
 import { showError } from '../toasts.ts'
@@ -125,6 +129,29 @@ const latest = (() => {
 })()
 
 /**
+ * The earliest day a link can be extended to: never before its current
+ * last day.
+ *
+ * @param link - excerpt link
+ */
+function earliest(link: ExcerptLink): string {
+	return link.expires !== null && link.expires > today ? link.expires : today
+}
+
+/**
+ * How soon a link ends, in words, when within a week; null otherwise.
+ *
+ * @param link - excerpt link
+ */
+function endingText(link: ExcerptLink): string | null {
+	if (!endsSoon(link.expires, today)) {
+		return null
+	}
+	const days = daysLeft(link.expires, today) ?? 0
+	return days === 0 ? t('cantoria', 'Ends today') : n('cantoria', 'Ends in %n day', 'Ends in %n days', days)
+}
+
+/**
  * @param link - excerpt link
  */
 function startExtending(link: ExcerptLink): void {
@@ -137,15 +164,20 @@ async function extend(): Promise<void> {
 	if (!extending.value) {
 		return
 	}
-	if (newExpiry.value === '' || newExpiry.value < today || newExpiry.value > latest) {
-		error.value = t('cantoria', 'Please choose a day between today and {date}.', { date: formatDate(latest) })
+	const from = earliest(extending.value)
+	if (newExpiry.value === '' || newExpiry.value < from || newExpiry.value > latest) {
+		error.value = t('cantoria', 'Please choose a day between {from} and {date}.', { from: formatDate(from), date: formatDate(latest) })
 		return
 	}
 	busy.value = true
 	error.value = ''
 	try {
-		await extendLink(extending.value.id, newExpiry.value)
-		showSuccess(t('cantoria', 'The link is valid until {date}.', { date: formatDate(newExpiry.value) }))
+		const extended = await extendLink(extending.value.id, newExpiry.value)
+		showSuccess(t('cantoria', 'The link is valid until {date}.', { date: formatDate(extended.expires ?? newExpiry.value) }))
+		if (extended.token !== null && extending.value.token !== null && extended.token !== extending.value.token) {
+			// an expired public link: the old address stays closed
+			showSuccess(t('cantoria', 'The link has a new address. Please copy it and pass it on again.'))
+		}
 		extending.value = null
 		emit('changed')
 	} catch (caught) {
@@ -162,7 +194,10 @@ async function extend(): Promise<void> {
 			{{ t('cantoria', 'No active links.') }}
 		</p>
 		<ul v-else class="link-list__items">
-			<li v-for="link in links" :key="link.id" class="link-list__item">
+			<li v-for="link in links"
+				:key="link.id"
+				class="link-list__item"
+				:class="{ 'link-list__item--ending': endingText(link) !== null }">
 				<div class="link-list__body">
 					<p class="link-list__title">
 						<template v-if="showCopy">
@@ -175,6 +210,10 @@ async function extend(): Promise<void> {
 					</p>
 					<p v-if="link.note" class="link-list__note">
 						{{ link.note }}
+					</p>
+					<p v-if="endingText(link) !== null" class="link-list__ending">
+						<NcIconSvgWrapper :path="mdiClockAlertOutline" :size="16" />
+						{{ endingText(link) }}
 					</p>
 					<p class="link-list__meta">
 						<span class="link-list__circle">{{ circleLabel(link) }}</span>
@@ -199,13 +238,12 @@ async function extend(): Promise<void> {
 						</template>
 					</NcButton>
 					<NcButton v-if="canRevoke(link)"
-						variant="tertiary"
-						:aria-label="t('cantoria', 'Extend link')"
-						:title="t('cantoria', 'Extend link')"
+						:variant="endingText(link) !== null ? 'secondary' : 'tertiary'"
 						@click="startExtending(link)">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiCalendarRefresh" />
 						</template>
+						{{ t('cantoria', 'Extend') }}
 					</NcButton>
 					<NcButton v-if="canRevoke(link)"
 						variant="tertiary"
@@ -244,8 +282,11 @@ async function extend(): Promise<void> {
 				{{ place(extending) }}
 			</p>
 			<p>{{ t('cantoria', 'The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.') }}</p>
+			<p class="action-dialog__hint">
+				{{ t('cantoria', 'A link lasts at most a year after it was made and never beyond the end of the license that releases the piece.') }}
+			</p>
 			<DateField v-model="newExpiry"
-				:min="today"
+				:min="earliest(extending)"
 				:max="latest"
 				required
 				:label="t('cantoria', 'Valid until (at most six months)')" />
@@ -269,6 +310,19 @@ async function extend(): Promise<void> {
 
 .link-list__item:last-child {
 	border-bottom: none;
+}
+
+/* ends within a week: said in words, the line only underlines it */
+.link-list__item--ending {
+	padding-inline-start: var(--default-grid-baseline);
+	border-inline-start: 4px solid var(--color-warning);
+}
+
+.link-list__ending {
+	display: flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
+	font-weight: bold;
 }
 
 .link-list__body {

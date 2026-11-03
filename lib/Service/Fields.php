@@ -96,6 +96,7 @@ final class Fields {
 		'publication' => 'Publication',
 		'online_publication' => 'Online publication (public links)',
 		'online_audio' => 'Online playback (audio on public links)',
+		'online_download' => 'Download of the scan on public links',
 		'member_download' => 'Download and printing by choir members (scan in links)',
 		'digitisation' => 'Digitisation (scans, MusicXML transcriptions)',
 		'successor' => 'Transfer to a legal successor',
