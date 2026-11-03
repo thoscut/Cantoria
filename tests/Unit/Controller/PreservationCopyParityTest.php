@@ -210,7 +210,7 @@ final class PreservationCopyParityTest extends TestCase {
 	 * The internal API of programmes, the API for agents and the options for
 	 * sharing a programme, over a concert with one line per copy (S N13).
 	 *
-	 * @return array{EventController, ApiV1ConcertController}
+	 * @return array{EventController, ApiV1ConcertController, EventService}
 	 */
 	private function concerts(string $role): array {
 		$this->services([$role]);
@@ -237,7 +237,7 @@ final class PreservationCopyParityTest extends TestCase {
 			$this->createStub(\OCA\Cantoria\Service\PerformanceImportService::class), $share, $this->createStub(RepertoireService::class),
 			$this->createStub(UserFiles::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 		$agents = new ApiV1ConcertController($this->createStub(IRequest::class), 'account', $roles, $service, $this->l10n(), $this->createStub(LoggerInterface::class));
-		return [$internal, $agents];
+		return [$internal, $agents, $service];
 	}
 
 	/**
@@ -277,6 +277,39 @@ final class PreservationCopyParityTest extends TestCase {
 				self::assertSame($shelfmark, $options['items'][$index]['shelfmark'] ?? null, 'share-options, copy ' . $id);
 				self::assertSame($hidden ? null : $id, $options['items'][$index]['copyId'] ?? null, 'share-options, copy ' . $id);
 			}
+		}
+	}
+
+	/**
+	 * The song order as CSV (GET /api/events/{id}/song-order, which hands
+	 * on what EventService::songOrderCsv writes) follows the
+	 * programme detail: the title of an internal preservation copy, but
+	 * neither shelf mark, arranger, publisher, work number nor rights status
+	 * for the roles that may not view it (S N17).
+	 */
+	#[DataProvider('programmeRoles')]
+	public function testTheSongOrderShowsPreservationCopiesOnlyToTheRolesThatMayViewThem(string $role, bool $mayView): void {
+		[, , $service] = $this->concerts($role);
+		self::assertNotNull($this->programme);
+		foreach ($this->programme[1]->findAllById() as $version) {
+			$version->setArrangerText('Bearbeitung ' . $version->getId());
+			$version->setPublisher('Verlag ' . $version->getId());
+			$version->setSocietyWorkNo('W' . $version->getId());
+		}
+		$csv = $service->songOrderCsv(4, 'account', $this->l10n());
+		$lines = array_values(array_filter(explode("\r\n", substr($csv, strlen(CatalogCsv::BOM))), fn (string $line): bool => $line !== ''));
+		$rows = array_map(fn (string $line): array => str_getcsv($line, ';', '"', ''), $lines);
+		$header = array_search('Position', array_column($rows, 0), true);
+		self::assertIsInt($header);
+		$pieces = array_slice($rows, $header + 1);
+		self::assertCount(3, $pieces);
+		foreach ([self::ORDINARY, self::MARKED_VERSION, self::PRESERVATION_KIND] as $index => $id) {
+			$hidden = !$mayView && $id !== self::ORDINARY;
+			$row = $pieces[$index];
+			self::assertSame('Werk ' . $id, $row[2], 'the title stays, copy ' . $id);
+			self::assertSame($hidden ? ['', '', '', ''] : ['1-' . $id, 'Bearbeitung ' . (200 + $id), 'Verlag ' . (200 + $id), 'W' . (200 + $id)],
+				[$row[1], $row[5], $row[6], $row[7]], 'shelf mark, arranger, publisher and work number, copy ' . $id);
+			self::assertSame($hidden ? 'Not available.' : 'Public domain', $row[8], 'rights status, copy ' . $id);
 		}
 	}
 
