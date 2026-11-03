@@ -371,7 +371,7 @@ try {
 		&& ($revived->getData()['expires'] ?? null) === LinkService::latestExpiry($today) && $linkMapper->find($programmeLink->getId())->getToken() === $tokenHash,
 		json_encode($revived->getData()) ?: '');
 	$revivedToken = (string)($links->view($linkMapper->find($programmeLink->getId()), $uid)['token'] ?? '');
-	$check('the choir member opens it again', $measures($shared->memberScore($revivedToken, $memberUid)) === $wholePiece);
+	$check('the choir member opens it again', $measures($shared->memberScore($revivedToken, $memberUid)['xml']) === $wholePiece);
 
 	$links->revoke($link->getId(), $uid);
 	$check('a revoked link is dead for choir members', $throws(fn () => $shared->memberScore($link->issuedToken(), $memberUid)) === 'This link has been revoked.');
