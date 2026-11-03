@@ -29,17 +29,22 @@
 # version; info.xml has a <bugs> URL and matches the app store schema
 # (check-appinfo.sh); every migration in lib/Migration is listed with its
 # checksum in ReleasedMigrationsTest::RELEASED, so that it is frozen once an
-# instance has run it. A final version (no "-dev.N") also needs a clean
-# working tree (untracked files included), the tag v<version> on HEAD, its
-# entry in CHANGELOG.md, Node.js of .nvmrc, xmllint and reuse.
+# instance has run it (a listed migration that changed always stops the
+# build). A version that is handed out, i.e. every version but the internal
+# test builds "-dev.N" (also a release candidate such as 1.0.0-rc.1), also
+# needs a clean working tree (untracked files included), the tag v<version>
+# on HEAD, its entry in CHANGELOG.md, Node.js of .nvmrc, xmllint and reuse,
+# and every migration listed in RELEASED.
 #
 # --unreleased (CI of every push and pull request): builds the archive of
 # the current commit for the integration tests without the checks that only
-# make sense for a version that is handed out (tag, CHANGELOG, migrations in
-# RELEASED, clean tree).
+# make sense for a version that is handed out (tag, CHANGELOG, clean tree);
+# a migration missing in RELEASED is only reported (the unit test
+# ReleasedMigrationsTest fails for it in the pull request).
 #
-# After packaging, `reuse lint` checks the unpacked archive (every file with
-# its copyright and license), when reuse is installed.
+# After packaging, `reuse lint` checks an unpacked copy of the finished
+# archive (every file with its copyright and license), when reuse is
+# installed; the archive itself is checked to be unchanged afterwards.
 #
 # The archive is not signed here: the maintainer signs the archive that the
 # CI built and published as a draft release, with tools/release/sign.sh
@@ -63,8 +68,11 @@ case "${1:-}" in
 		exit 2
 		;;
 esac
+# Only the internal test builds (-dev.N) are not handed out; a release
+# candidate (-rc.N) or a beta (-beta.N) goes to the app store and gets all
+# checks of a final version.
 FINAL=0
-if [[ "$VERSION" != *-* ]] && [ "$UNRELEASED" = 0 ]; then
+if [[ "$VERSION" != *-dev.* ]] && [ "$UNRELEASED" = 0 ]; then
 	FINAL=1
 fi
 
@@ -114,26 +122,29 @@ if [ "$NODE_MAJOR" != "$NODE_WANTED" ]; then
 	require "Node.js $NODE_MAJOR is running, .nvmrc names $NODE_WANTED; the archive may differ from the CI build"
 fi
 
-if [ "$UNRELEASED" = 0 ]; then
-	# Every migration is frozen in ReleasedMigrationsTest::RELEASED with its
-	# checksum before a build of it reaches an instance: a migration that an
-	# instance ran is never run there again, so a later change would reach
-	# new installations only.
-	RELEASED_TEST=tests/Unit/Migration/ReleasedMigrationsTest.php
-	for migration in lib/Migration/Version*.php; do
-		[ -e "$migration" ] || continue
-		file=$(basename "$migration")
-		listed=$(sed -n "s/^[[:space:]]*'$file' => '\([0-9a-f]\{64\}\)',.*/\1/p" "$RELEASED_TEST")
-		if [ -z "$listed" ]; then
-			echo "$file is not listed in RELEASED of $RELEASED_TEST; add it with its checksum ($(sha256sum "$migration" | cut -d' ' -f1)) before this version reaches an instance" >&2
+# Every migration is frozen in ReleasedMigrationsTest::RELEASED with its
+# checksum before a build of it reaches an instance: a migration that an
+# instance ran is never run there again, so a later change would reach new
+# installations only. A listed migration that changed stops every build; a
+# migration that is not listed yet stops a release (and the unit test of
+# every pull request), other builds report it.
+RELEASED_TEST=tests/Unit/Migration/ReleasedMigrationsTest.php
+for migration in lib/Migration/Version*.php; do
+	[ -e "$migration" ] || continue
+	file=$(basename "$migration")
+	sum=$(sha256sum "$migration" | cut -d' ' -f1)
+	listed=$(sed -n "s/^[[:space:]]*'$file' => '\([0-9a-f]\{64\}\)',.*/\1/p" "$RELEASED_TEST")
+	if [ -z "$listed" ]; then
+		if [ "$UNRELEASED" = 0 ]; then
+			echo "$file is not listed in RELEASED of $RELEASED_TEST; add it with its checksum ($sum) before this version reaches an instance" >&2
 			exit 1
 		fi
-		if [ "$listed" != "$(sha256sum "$migration" | cut -d' ' -f1)" ]; then
-			echo "$file differs from its checksum in $RELEASED_TEST: a released migration must not change" >&2
-			exit 1
-		fi
-	done
-fi
+		echo "warning: $file is not listed in RELEASED of $RELEASED_TEST; add it with its checksum ($sum) in the pull request that adds it" >&2
+	elif [ "$listed" != "$sum" ]; then
+		echo "$file differs from its checksum in $RELEASED_TEST: a released migration must not change; undo the change and add a new migration" >&2
+		exit 1
+	fi
+done
 
 # A final version is built from its tag only, with its CHANGELOG entry.
 if [ "$FINAL" = 1 ]; then
@@ -187,11 +198,14 @@ find "$STAGE/$APP_ID/js" -name '*.map' -delete
 # uses: SPDX license list 3.27.0
 SPDX=https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text
 while read -r sum license; do
-	curl -fsSL -o "$STAGE/$APP_ID/LICENSES/$license.txt" "$SPDX/$license.txt"
+	# A short network failure is retried; the checksum decides
+	curl -fsSL --retry 3 --retry-all-errors -o "$STAGE/$APP_ID/LICENSES/$license.txt" "$SPDX/$license.txt"
 	echo "$sum  $STAGE/$APP_ID/LICENSES/$license.txt" | sha256sum -c --quiet -
 done <<'LICENSES'
 074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff Apache-2.0
 f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df BSD-2-Clause
+000c7fc2d306b8f74db81d1b44ce9a96da4c1674185714cbe4e9d6b82db45aa7 Font-exception-2.0
+aaf135472f81c5b4a0dca9367e5bb5e9750032b5bebe5442b36e4c0a47430df3 GPL-2.0-only
 fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0 GPL-3.0-or-later
 f2ec607f67bb0dd3053b49835b02110d5cd0f8eb6da3aac4dc0b142a6b299be9 ISC
 996af0513df21f7496288951c41428a03c174e9e4a9d63665c57d670f845ccb1 LGPL-3.0-or-later
@@ -230,12 +244,13 @@ Compiled into the Verovio module (js/third-party-licenses.txt):
 SPDX-License-Identifier: OFL-1.1
 SPDX-License-Identifier: BSD-2-Clause
 SPDX-License-Identifier: Unlicense
+SPDX-License-Identifier: GPL-2.0-only WITH Font-exception-2.0
 SPDX-FileCopyrightText: 2021 Steinberg Media Technologies GmbH (Bravura)
 SPDX-FileCopyrightText: 2018 Steinberg Media Technologies GmbH (Petaluma)
 SPDX-FileCopyrightText: 2014 Etienne Darbellay, Jean-Francois Marti and Laurent Pugin (Leipzig)
 SPDX-FileCopyrightText: 2025 MuseScore BVBA (Leland)
 SPDX-FileCopyrightText: Grzegorz Pruchniakowski (Gootville)
-SPDX-FileCopyrightText: 2007 Ascender Corporation (Liberation)
+SPDX-FileCopyrightText: 2007 Ascender Corporation (Liberation Serif 1.04, Red Hat, Inc.)
 SPDX-FileCopyrightText: 2006-2026 Arseny Kapoulkine (pugixml)
 SPDX-FileCopyrightText: 2010 Hong Jiang (jsonxx)
 SPDX-FileCopyrightText: 2019-2020 Paul Walker (tuning-library)
@@ -253,18 +268,31 @@ for forbidden in _intern node_modules tests src tools vendor-bin docs .github; d
 	fi
 done
 
-# Every file of the archive with its copyright and license (REUSE)
+ARCHIVE="$OUT/$APP_ID-$VERSION.tar.gz"
+pack_archive "$STAGE" "$APP_ID" "$SOURCE_DATE_EPOCH" "$ARCHIVE"
+SUM=$(sha256sum "$ARCHIVE" | cut -d' ' -f1)
+
+# Every file of the archive with its copyright and license (REUSE). reuse
+# reads an unpacked copy of the finished archive, never the files that were
+# packed, and the archive must be the same bytes afterwards.
 if command -v reuse >/dev/null; then
-	reuse --root "$STAGE/$APP_ID" lint --quiet || {
-		reuse --root "$STAGE/$APP_ID" lint >&2 || true
+	CHECK="$STAGE/reuse"
+	mkdir "$CHECK"
+	unpack_archive "$ARCHIVE" "$CHECK" "$APP_ID"
+	reuse --root "$CHECK/$APP_ID" lint --quiet || {
+		reuse --root "$CHECK/$APP_ID" lint >&2 || true
+		rm -f "$ARCHIVE"
 		echo "reuse lint fails for the content of the archive" >&2
 		exit 1
 	}
+	if [ "$(sha256sum "$ARCHIVE" | cut -d' ' -f1)" != "$SUM" ]; then
+		rm -f "$ARCHIVE"
+		echo "the archive changed during reuse lint" >&2
+		exit 1
+	fi
 else
 	require "reuse not found, the content of the archive was not checked with reuse lint"
 fi
 
-ARCHIVE="$OUT/$APP_ID-$VERSION.tar.gz"
-pack_archive "$STAGE" "$APP_ID" "$SOURCE_DATE_EPOCH" "$ARCHIVE"
 echo "archive: $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
 sha256sum "$ARCHIVE"

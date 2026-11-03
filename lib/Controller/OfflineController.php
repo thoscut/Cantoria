@@ -84,14 +84,7 @@ class OfflineController extends Controller {
 			if ($built === false) {
 				return new JSONResponse(['error' => $this->l->t('The app is not built.')], Http::STATUS_NOT_FOUND);
 			}
-			// A new version of the app gives a new worker, which drops the old cache of the pages;
-			// the path of the app's files (/apps/cantoria/ or /custom_apps/cantoria/) for its scripts
-			$path = $this->urls->linkTo(Application::APP_ID, '');
-			$script = str_replace(
-				['__CANTORIA_VERSION__', '__CANTORIA_APP_PATH__'],
-				[$this->apps->getAppVersion(Application::APP_ID), preg_match('#^/[A-Za-z0-9/._~%-]*$#', $path) === 1 ? $path : ''],
-				$built,
-			);
+			$script = self::fillWorker($built, $this->apps->getAppVersion(Application::APP_ID), $this->urls->linkTo(Application::APP_ID, ''));
 		}
 		$response = new DataDisplayResponse($script, Http::STATUS_OK, ['Content-Type' => 'text/javascript; charset=utf-8']);
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
@@ -99,6 +92,28 @@ class OfflineController extends Controller {
 		// The policy of the worker itself: requests to this server only
 		$response->setContentSecurityPolicy(new ContentSecurityPolicy());
 		return $response;
+	}
+
+	/**
+	 * The built worker with the version of the app and the path of its files.
+	 * A new version of the app gives a new worker, which drops the old cache
+	 * of the pages; the path of the app's files (/apps/cantoria/ or
+	 * /custom_apps/cantoria/) is where it loads its scripts from. A path that
+	 * is not a plain path of this server (a script, another server, a line
+	 * break) goes in as an empty path, a version that is not one as an empty
+	 * version. A function of its own, so that the unit tests check it
+	 * without a build of js/.
+	 */
+	public static function fillWorker(string $built, string $version, string $path): string {
+		return str_replace(
+			['__CANTORIA_VERSION__', '__CANTORIA_APP_PATH__'],
+			[
+				preg_match('#^[0-9A-Za-z.+-]+$#D', $version) === 1 ? $version : '',
+				// one slash at the start: "//host/" would be another server
+				preg_match('#^/(?!/)[A-Za-z0-9/._~%-]*$#D', $path) === 1 ? $path : '',
+			],
+			$built,
+		);
 	}
 
 	/** The worker while the module is off: it removes what the app kept on the device. */

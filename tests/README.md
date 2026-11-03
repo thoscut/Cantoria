@@ -25,7 +25,7 @@ real.
 
 Requirements: PHP 8.2 or newer with the extensions `ctype`, `dom`, `json`,
 `mbstring`, `tokenizer`, `xml` and `zip` (without `zip` the spreadsheet tests
-are skipped), and Composer.
+are skipped, and a skipped test fails the suite), and Composer.
 
 ```sh
 composer install                 # app dev dependencies and the tools in vendor-bin/
@@ -34,7 +34,10 @@ vendor/bin/phpunit -c tests/phpunit.xml --filter ImportServiceTest
 vendor/bin/phpunit -c tests/phpunit.xml --testdox
 ```
 
-The suite fails on warnings, notices, deprecations and risky tests.
+The suite fails on warnings, notices, deprecations, risky, skipped and
+incomplete tests (`tests/phpunit.xml`), so a check that depends on something
+the CI job lacks cannot pass unnoticed: what needs a build of `js/` is tested
+on a fixed text instead (`OfflineController::fillWorker`).
 
 What is covered:
 
@@ -54,14 +57,17 @@ What is covered:
 | `Service/ProtectionTermTest` | protection proposal: 70 years after the end of the year of death, the last person decides, "unknown means protected" |
 | `Service/FullBackupServiceTest` | format check of the complete backup before a restore |
 | `Service/XlsxReaderTest` | reading a synthetic .xlsx: shared and rich text, inline strings, gaps, sheet order, damaged files |
+| `Service/OdsReaderTest` | reading a synthetic .ods as LibreOffice writes it (runs of repeated cells and rows, typed values, paragraphs, groups), what `OdsWriter` writes; refused: no spreadsheet, damaged XML, document type declarations, a part that unpacks too large, repeats that would inflate the sheet |
 | `Service/OdsWriterTest` | the written .ods: package structure, sheets, escaping |
 | `Service/PerformanceImportServiceTest` | counting rule for documented performances, detection of the own choir |
 | `Service/CatalogServiceTest` | repertoire figures (documented or imported), works after merges |
 | `Service/StatisticsServiceTest` | aggregation of the statistics without a database: period, copies per binder, new copies per year (audit log or creation date, time zone of the user), rights states, valid versions, license groups, concerts and pieces per year, most performed works and composers, repertoire classes, works not sung for a long time, tasks by age, protection terms, open rights questions, licenses and accessions of the annual report; 2,000 copies aggregated in well under a second |
 | `Service/StatisticsCsvTest` | CSV of the statistics and the annual report: every table under its heading, translated labels, formula cells neutralized |
 | `Service/InputTest`, `Service/SortTest`, `Db/MergeTest` | request data checks, typed sorting, what a merge recorded |
-| `Controller/ControllerSecurityTest` | route attributes of every controller (no public page, CSRF skipped only for plain downloads, the settings only for admins and the groups given the settings page, restore not delegable, brute-force and rate limits), headers of the score file response and of the scan beside the score (PDF viewer only, framed by the app only), `reason: not_shared`, the app page's content security policy; every route of the API for agents is an OCS route under `/api/v1/` with `agent_api` plus the module of the same function in the UI, `NoAdminRequired`, a rate limit, no `NoCSRFRequired` and no CORS, and answers 404 with OCS meta when switched off |
-| `Controller/ControllerSecurityTest` | route attributes of every controller (no public page, CSRF skipped only for plain downloads, admin-only settings, brute-force and rate limits), headers of the score file response and of the scan beside the score (PDF viewer only, framed by the app only), the app page's content security policy; every route of the API for agents is an OCS route under `/api/v1/` with `agent_api` plus the module of the same function in the UI, `NoAdminRequired`, a rate limit, no `NoCSRFRequired` and no CORS, and answers 404 with OCS meta when switched off; the folder book (read by librarians, operations, conductor and readers, maintained by librarians and operations, never by contributors or unknown roles such as choir members; its audit entries hidden from contributors) and the print station (sync only by the catalog librarian and administrators, the target folder only by administrators) with real role checks |
+| `Controller/ControllerSecurityTest` | route attributes of every controller (public only the pages of the sharing modules and the service worker, CSRF skipped only for plain downloads, the settings only for admins and the groups given the settings page, restore not delegable, brute-force and rate limits), headers of the score file response and of the scan beside the score (PDF viewer only, framed by the app only), `reason: not_shared`, the app page's content security policy, the service worker (version and only a plain path of this server in it, checked without a build); every route of the API for agents is an OCS route under `/api/v1/` with `agent_api` plus the module of the same function in the UI, `NoAdminRequired`, a rate limit, no `NoCSRFRequired` and no CORS, and answers 404 with OCS meta when switched off; the routes of choir members; the folder book (read by librarians, operations, conductor and readers, maintained by librarians and operations, never by contributors or unknown roles such as choir members; its audit entries hidden from contributors) and the print station (sync only by the catalog librarian and administrators, the target folder only by administrators) with real role checks |
+| `Controller/LinkRolesTest` | sharing a programme and extending links through their routes with the real roles, link service and rights policy (only the mappers are test doubles): only the roles that make links, the rights of today for every circle and the scan, the license end kept |
+| `Controller/PreservationCopyParityTest` | the app's pages and the API for agents list and refuse the same internal preservation copies for every role; the same for the CSV export, the files in the archive folder, the task lists and programmes |
+| `Controller/FullBackupDownloadTest` | every download of the complete backup is in the audit log, a refused one is not |
 | `Controller/ApiV1ControllerTest` | the API for agents with the services as test doubles: search with filters and cursor pages in shelf order, the fixed fields, preservation copies only for the roles that may view them, no account names, errors as OCS exceptions (400, 403, 404, 500 without internal details), tasks and proposals answer 201, own proposals, concerts by date, module status and permissions |
 | `Service/ApiV1ViewsTest`, `Service/TextReferenceTest` | cursors (opaque, checked, stable when entries are added), snake_case statistics, values without JSON; the server's text reference follows the rules and examples of the UI (`src/__tests__/references.test.ts`) |
 | `Settings/AdminTest`, `Settings/AdminSectionTest` | the page Administration → Cantoria: delegable setting without generic app config, its section, template and registration in `appinfo/info.xml` |
@@ -82,6 +88,27 @@ What is covered:
 | `Service/FilesIntegrationServiceTest`, `Listener/FilesScriptListenerTest` | opening from the Files app: the copy of a Nextcloud file only for files the account sees (the same 404 for unlisted and foreign files), the archive folder as the account sees it; the script only for accounts with a role or admins, while the module is on |
 | `Service/FolderBookServiceTest` | the folder book: one loan per folder at a time, account or name, days not in the future and not before the issue, condition and missing sheets taken over on the return, no retiring while out, contents as copies with a number, the hint for a retired copy or another valid version, the retention period in months (end of shorter months) and the anonymisation of the loan and its audit entries |
 | `Service/PrintMirrorServiceTest` | file names in the target folder of the print station: shelf mark and title, without characters Windows or Nextcloud refuse, shortened without cutting a character |
+| `Service/HandoverContentTest` | the hand-over folder: MusicXML cleaned like the score of a link, a file that is no score left out, scans and recordings as they are |
+| `Service/ChoirSystemCompareServiceTest` | the export of a choir system against the list of the singers' portal: differences become proposals, dry run, no proposal twice, separator of the first line |
+| `Service/SharingTest` | links for choir members and the public: making, opening, extending (creator or librarian, rights of today, license end, a new token for an expired public link), practice audio of choir members, the public repertoire page and its links to CPDL and IMSLP |
+| `Service/ProgrammeShareTest` | sharing a whole programme: one link per piece through the same checks, an existing link extended instead of a second one, never shortened, a reason for every piece left out |
+| `Service/LinkTokensTest` | link tokens only as hash and encrypted, read back only with the secret of the instance, shown only to the creator and the catalog librarian |
+| `Service/MusicXmlExcerptTest` | the measures of a link in every part with the attributes and tempo valid at its start, repeats and endings, nothing outside the excerpt (demo scores of `tools/demo`) |
+| `Service/RightsNoticeServiceTest` | the rights notice of a MusicXML file: read from the header only, no internal DTD subset, cut when long, at most a proposal |
+| `Service/LicenseCoverageTest` | warnings for photocopies, scans and transcriptions without a license that covers them |
+| `Service/ConcertFolderTest` | the concert folder: programmes still to be sung in their order, the rights of the score view, kept on a device only with the module `offline` and the rights for a copy, no preservation copy, only conductor and librarian |
+| `Service/PrivacyTest` | access and erasure for one person, a deleted account, the retention period of the audit log, the year of birth of persons without a known death, every field with an account in the report |
+| `Service/PersonTableTest` | the register of persons in the export folder without the account that checked a person |
+| `Service/ExportServiceTest` | the complete backup in the backup folder, the newest eight weekly backups kept, no link tokens, no accounts in an annual snapshot, the import template |
+| `Service/AnnualSnapshotServiceTest` | comparing two annual snapshots: copies, rights, licenses and files |
+| `Service/AppSettingsTest` | the backup folder is taken over only while only the archive account can open it; a shared folder stops the backup |
+| `Service/ModulesTest`, `Service/ModuleSettingsTest` | the module register (dependencies, presets, scenarios, a switch per notification) and changing modules from the settings and the command line, recorded in the audit log, only administrators switch on what opens the archive, the switches on installation and update |
+| `Service/NotificationServiceTest`, `BackgroundJob/JobsTest` | a switched-off occasion sends nothing, withdrawing always works; the background jobs leave out what is switched off (backup reminder, concert deadlines, protection terms, annual snapshot in January, folder book) |
+| `Service/RunLockTest` | a run never runs twice at the same time, the lock is given back when it fails, the status names who started it |
+| `Service/StateServiceTest` | revisions of a version: changed measures, the current revision, the revision of a concert, what a correction records |
+| `Service/ShelfmarkGapsTest`, `Service/SongOrderTest`, `Service/PersonalViewTest` | gaps in the shelf marks as ranges; the song order for the music report (event, composer, lyricist and arranger, work number); the personal view per account |
+| `Search/CatalogSearchProviderTest` | the search of Nextcloud: only catalog roles, preservation copies only for the roles that may view them, nothing with the module off, results in pages |
+| `Migration/ReleasedMigrationsTest` | every migration in `lib/Migration` is listed in `RELEASED` with its checksum and unchanged, and a new one sorts after the released ones |
 
 `Support/MigratedSchema` runs all migrations in `lib/Migration` against an
 in-memory Doctrine schema. `EntitySchemaTest` discovers the mappers in
@@ -92,6 +119,23 @@ changing the tests; a new column of a work, version or copy needs a field in
 `tests/stubs/` holds stubs of private server classes that the public API refers
 to, and of the Files app event the app listens to (used by the unit tests and
 by Psalm).
+
+`src/__tests__/testsReadme.test.ts` checks that this table names every test
+class in `tests/Unit` and no class that does not exist.
+
+## Frontend tests
+
+`npm test` runs Vitest (`src/**/*.test.ts`, `tools/l10n/*.test.mjs`,
+`.github/scripts/*.test.mjs`): the
+logic of the score view, catalog, links, devices and translations in Node;
+files that start with `@vitest-environment jsdom` run in a simulated
+browser, and some of them mount Vue components with `@vue/test-utils`
+(`screen.test.ts`, `stage.test.ts`, `concertFolder.test.ts`,
+`keepOffline.test.ts`, `playbackSettings.test.ts`, `sharedDevice.test.ts`).
+`docs.test.ts` and `security.test.ts` check the documentation and the table
+of promises in `SECURITY.md`, `testsReadme.test.ts` this file;
+`.github/scripts/ci-scripts.test.mjs` runs the two scripts of the CI that
+decide which jobs run and whether the CI as a whole passed.
 
 ## Integration tests
 
@@ -118,6 +162,7 @@ sudo -u www-data php tests/Integration/modules_test.php       /var/www/nextcloud
 sudo -u www-data php tests/Integration/api_v1_test.php        /var/www/nextcloud <uid> <shelfmark> <shelfmark-preservation-copy>
 sudo -u www-data php tests/Integration/review_test.php        /var/www/nextcloud <uid> <shelfmark-with-musicxml>
 sudo -u www-data php tests/Integration/files_integration_test.php /var/www/nextcloud <uid>
+sudo -u www-data php tests/Integration/sharing_test.php       /var/www/nextcloud <uid> <shelfmark-public-domain> <shelfmark-preservation-copy>
 sudo -u www-data php tests/Integration/settings_access_test.php /var/www/nextcloud <uid>
 sudo -u www-data php tests/Integration/folder_book_test.php   /var/www/nextcloud <uid> <shelfmark>
 sudo -u www-data php tests/Integration/print_mirror_test.php  /var/www/nextcloud <uid> <shelfmark-with-pdf>
@@ -267,8 +312,7 @@ missing arguments end with exit code 2.
 
 ### Integration tests in CI (demo data)
 
-The CI job `integration` runs all fifteen scripts against a freshly installed
-The CI job `integration` runs all fourteen scripts against a freshly installed
+The CI job `integration` runs all twenty scripts against a freshly installed
 Nextcloud 33 and 35 (release archives from download.nextcloud.com, checked
 against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17, and PHP 8.3. The job
 installs the app with its built frontend, builds the public demo data
@@ -314,6 +358,10 @@ it runs the tests with these shelf marks of the demo catalog:
 | `files_integration_test.php` | – | finds a MusicXML file and a PDF of copies itself; `LIESMICH.txt` is the unlisted file; creates and deletes a second account |
 | `archive_extras_test.php` | – | finds a copy with MusicXML and the preservation copy itself; writes two annual snapshots into the archive folder and deletes them again |
 | `backup_test.php` | – | |
+| `sharing_test.php` | `1-3 3-1` | 1-3 is public domain with MusicXML (16 measures) and a PDF scan, not confirmed yet; 3-1 the internal preservation copy; creates and deletes a group and an account "member" |
+| `folder_book_test.php` | `2-1` | issuing, taking back, the retention period with a staged day, the roles |
+| `print_mirror_test.php` | `2-3` | the scan of 2-3, confirmed as public domain inside the test; the target folder is deleted |
+| `handover_test.php` | `1-3` | public domain with MusicXML and a PDF scan, confirmed inside the test; both target folders are deleted |
 | `settings_access_test.php` | – | creates and removes its own accounts, groups, share and delegation |
 
 Finally (step 7) an **agent without a language model** uses the MCP server
@@ -377,7 +425,12 @@ tests on PHP 8.2, 8.3 and 8.4, the frontend checks, the REUSE check, the
 check that `openapi.json` is current (`composer run openapi`, then
 `git diff --exit-code`), the build and tests of the MCP server and the
 integration tests with the demo data and the agent run on Nextcloud 33 and
-35.
+35. Its first job, `changes`, skips build and tests when only
+documentation changed (`docs/`, Markdown, `tools/screenshots/`, the GitHub
+templates); the checks of the documentation and REUSE always run. Its last
+job, **CI result** (`ci-ok`), is the required check of `main`: green only
+when every job passed or was skipped for documentation alone
+(`docs/release.md`).
 
 ## Licensing (REUSE)
 
@@ -404,7 +457,10 @@ generated `l10n/`) are listed in `REUSE.toml` instead; a new file in a folder
 listed there needs nothing. Check with
 
 ```sh
-pipx run reuse lint   # or: pip install reuse && reuse lint
+pipx run reuse==6.3.0 lint   # or: pip install reuse==6.3.0 && reuse lint
 ```
 
-The CI job `reuse` runs the same check.
+The CI job `reuse` runs the same check with reuse 6.3.0, installed with the
+hashes of all its dependencies (`tools/release/install-reuse.sh`,
+`tools/release/reuse-requirements.txt`); the job `archive` checks the
+content of the release archive with the same version.

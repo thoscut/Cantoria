@@ -9,7 +9,13 @@
 # of the draft release that the workflow Release created for the tag
 # (docs/release.md). KEY is the private
 # key of the app store certificate, CERT the certificate issued by
-# Nextcloud, OCC the path to `occ` of any Nextcloud instance.
+# Nextcloud, OCC the path to `occ` of a Nextcloud server archive that is
+# unpacked but not installed (nextcloud/occ of nextcloud-<version>.tar.bz2
+# from download.nextcloud.com, checked against its .sha512 and .asc). Not
+# installed, occ registers its own commands such as integrity:sign-app
+# but loads no apps, so no code of an app runs next to the key; an
+# installed instance would start all its enabled apps first. The script
+# warns when OCC belongs to an installed instance.
 #
 # Nothing is built here and no npm package runs on the machine with the
 # key: the script checks the archive against SHA256SUMS, unpacks it, writes
@@ -63,6 +69,14 @@ if [ "$NAME" != "$APP_ID-$VERSION-unsigned.tar.gz" ] && [ "$NAME" != "$APP_ID-$V
 fi
 # All files of the archive carry the time of the tagged commit
 EPOCH=$(stat -c %Y "$STAGE/$APP_ID/appinfo/info.xml")
+
+# occ of an installed instance loads the apps of that instance before it
+# signs; the unpacked server archive has no config/config.php with
+# 'installed' => true
+OCC_CONFIG="$(dirname "$OCC")/config/config.php"
+if [ -f "$OCC_CONFIG" ] && grep -Eq "'installed'[[:space:]]*=>[[:space:]]*true" "$OCC_CONFIG"; then
+	echo "warning: $OCC belongs to an installed Nextcloud, whose apps run while occ signs with the key; better use occ of an unpacked server archive that is not installed (docs/release.md)" >&2
+fi
 
 php "$OCC" integrity:sign-app --privateKey="$KEY" --certificate="$CERT" --path="$STAGE/$APP_ID"
 

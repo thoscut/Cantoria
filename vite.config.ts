@@ -11,12 +11,13 @@ import { build } from 'vite'
 import { shellFiles } from './src/offline/rules.ts'
 
 // Unit tests (npm test) run the pure logic in Node, without the build plugins;
-// tools/l10n checks the translations. Tests of components compile them with
-// the Vue plugin and choose jsdom in their file (@vitest-environment jsdom).
+// tools/l10n checks the translations, .github/scripts the scripts of the CI.
+// Tests of components compile them with the Vue plugin and choose jsdom in
+// their file (@vitest-environment jsdom).
 const testConfig = {
 	plugins: [vue()],
 	test: {
-		include: ['src/**/*.test.ts', 'tools/l10n/*.test.mjs'],
+		include: ['src/**/*.test.ts', 'tools/l10n/*.test.mjs', '.github/scripts/*.test.mjs'],
 		environment: 'node',
 		// the components of Nextcloud import their styles: through Vite, not Node
 		server: { deps: { inline: [/@nextcloud\/vue/] } },
@@ -104,7 +105,7 @@ const thirdPartyLicenses = {
 					head.push(`Source: ${entry.source}`)
 				}
 				if (entry.name === 'verovio') {
-					head.push('Verovio embeds the SMuFL music fonts Bravura, Gootville, Leipzig, Leland and Petaluma under the SIL Open Font License 1.1 (LICENSES/OFL-1.1.txt). The texts of the LGPL and GPL are in LICENSES/LGPL-3.0-or-later.txt and LICENSES/GPL-3.0-or-later.txt.')
+					head.push('Verovio embeds the SMuFL music fonts Bravura, Gootville, Leipzig, Leland and Petaluma under the SIL Open Font License 1.1 (LICENSES/OFL-1.1.txt) and the text font Liberation Serif 1.04 under the GPL version 2 with the font exception (LICENSES/GPL-2.0-only.txt, LICENSES/Font-exception-2.0.txt; see the notices at the end). The texts of the LGPL and GPL are in LICENSES/LGPL-3.0-or-later.txt and LICENSES/GPL-3.0-or-later.txt.')
 				}
 				const texts = entry.texts.length > 0 ? entry.texts : ['The package ships no license file; the text of the license named above is in LICENSES/ or at https://spdx.org/licenses/.']
 				return [head.join('\n'), ...texts].join('\n\n')

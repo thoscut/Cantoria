@@ -14,7 +14,7 @@ Verovio 6.3.0: music fonts and libraries compiled into the module
 The scripts of Verovio (verovio-module) contain the following fonts and
 libraries. Their copyright notices and licenses follow.
 
-Music and text fonts, under the SIL Open Font License 1.1
+Music fonts, under the SIL Open Font License 1.1
 (full text: LICENSES/OFL-1.1.txt)
 
 - Bravura: Copyright © 2021, Steinberg Media Technologies GmbH
@@ -29,10 +29,32 @@ Music and text fonts, under the SIL Open Font License 1.1
 - Gootville: designed by Grzegorz Pruchniakowski, based on SMuFL and
   Bravura by Daniel Spreadbury at Steinberg; licensed under the SIL Open
   Font License.
-- Liberation (text font): originally designed by Steve Matteson. The
-  embedded font names "Digitized data © 2007 Ascender Corporation" and
-  version 1.04; Verovio states the SIL Open Font License for all fonts it
-  includes (fonts/README.md of Verovio).
+
+Text font Liberation Serif 1.04, under the GNU General Public License
+version 2 with the font exception
+(full texts: LICENSES/GPL-2.0-only.txt and LICENSES/Font-exception-2.0.txt)
+
+- Liberation Serif (regular, bold, italic, bold italic), version 1.04,
+  originally designed by Steve Matteson: Digitized data © 2007 Ascender
+  Corporation. All rights reserved. Liberation is a trademark of Red Hat,
+  Inc. The license field of the font refers to the license agreement of
+  the Liberation font software; Red Hat released the versions 1.x of
+  Liberation under the GNU General Public License version 2 with the font
+  exception (a document that uses or embeds the font is not covered by the
+  GPL because of it) and with the condition that modified versions are not
+  distributed under the trademark "Liberation". Only the versions 2.x of
+  Liberation are under the SIL Open Font License.
+- Verovio states the SIL Open Font License for all the fonts it includes
+  (fonts/README.md of Verovio 6.3.0). Until Verovio confirms the license of
+  the embedded version 1.04, Cantoria lists it under the license of that
+  version, the GPL version 2 with the font exception.
+- Source: the font files as Verovio embeds them (WOFF2 in
+  data/Liberation.css of Verovio at the tag version-6.3.0,
+  https://github.com/rism-digital/verovio/blob/version-6.3.0/data/Liberation.css),
+  and Red Hat's release liberation-fonts 1.04 (2007), the TrueType files
+  from which they were made (the project:
+  https://github.com/liberationfonts/liberation-fonts). Cantoria does not
+  change the font.
 
 pugixml 1.16 (MIT)
 

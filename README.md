@@ -370,8 +370,11 @@ licenses:
 - [Verovio](https://www.verovio.org) renders the notation (LGPL-3.0-or-later);
   its WebAssembly binary and music fonts are part of the app bundle. The
   music fonts (Bravura, Petaluma, Leipzig, Leland, Gootville) are under the
-  SIL Open Font License 1.1; their copyright notices and those of the
-  libraries compiled into Verovio are in `js/third-party-licenses.txt`.
+  SIL Open Font License 1.1. The text font Liberation Serif 1.04 in Verovio
+  is listed under the GNU GPL version 2 with the font exception, the
+  license of that version (Verovio states the OFL for all its fonts; this
+  is being clarified). Their copyright notices and those of the libraries
+  compiled into Verovio are in `js/third-party-licenses.txt`.
 - [@nextcloud/vue](https://github.com/nextcloud-libraries/nextcloud-vue) and
   the other Nextcloud libraries provide the components and the integration
   with Nextcloud (AGPL-3.0-or-later and others).
