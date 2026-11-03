@@ -182,27 +182,65 @@ cp -r js css "$STAGE/$APP_ID/"
 # third-party code (*.license) stay.
 find "$STAGE/$APP_ID/js" -name '*.map' -delete
 
-# License texts of bundled third-party code (js/third-party-licenses.txt)
-# that no file of the repository uses: SPDX license list 3.27.0
+# License texts of bundled third-party code (js/third-party-licenses.txt
+# and the js/*.license files of the build) that no file of the repository
+# uses: SPDX license list 3.27.0
 SPDX=https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text
 while read -r sum license; do
 	curl -fsSL -o "$STAGE/$APP_ID/LICENSES/$license.txt" "$SPDX/$license.txt"
 	echo "$sum  $STAGE/$APP_ID/LICENSES/$license.txt" | sha256sum -c --quiet -
 done <<'LICENSES'
+074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff Apache-2.0
+f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df BSD-2-Clause
 fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0 GPL-3.0-or-later
+f2ec607f67bb0dd3053b49835b02110d5cd0f8eb6da3aac4dc0b142a6b299be9 ISC
 996af0513df21f7496288951c41428a03c174e9e4a9d63665c57d670f845ccb1 LGPL-3.0-or-later
+b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5 MIT
+66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172 MPL-2.0
 8eea8287e5876b539670cadb82e99f9a7afddec6f6730811be1daf25d2e9bcfd OFL-1.1
+0bdebfeda07d45dada625ae1317c6f833186e798b171d0db640bcf32e92a8240 Unlicense
 LICENSES
+# Texts that only files outside the archive use (AGPL-3.0-only: a test
+# stub; CC0-1.0: configuration and manifests, and REUSE.toml itself, which
+# reuse does not count). A file of the archive that needs one of them
+# again makes `reuse lint` below fail.
+rm "$STAGE/$APP_ID/LICENSES/AGPL-3.0-only.txt" "$STAGE/$APP_ID/LICENSES/CC0-1.0.txt"
 if [ ! -s "$STAGE/$APP_ID/js/third-party-licenses.txt" ]; then
 	echo "js/third-party-licenses.txt is missing; the build writes it (vite.config.ts)" >&2
 	exit 1
 fi
 # The fonts and C++ libraries inside the Verovio module, which the build
-# sees as one npm package (everything below the header of the file)
+# sees as one npm package: their notices (everything below the header of
+# tools/release/verovio-notices.txt) go into js/third-party-licenses.txt,
+# their licenses and holders into the .license file of the chunk.
 {
 	printf '\n%s\n\n' "$(printf -- '-%.0s' $(seq 72))"
 	sed '1,/^$/d' tools/release/verovio-notices.txt
 } >> "$STAGE/$APP_ID/js/third-party-licenses.txt"
+VEROVIO_LICENSE=("$STAGE/$APP_ID"/js/verovio-module-*.chunk.mjs.license)
+if [ "${#VEROVIO_LICENSE[@]}" != 1 ] || [ ! -f "${VEROVIO_LICENSE[0]}" ]; then
+	echo "expected one js/verovio-module-*.chunk.mjs.license in the build" >&2
+	exit 1
+fi
+cat >> "${VEROVIO_LICENSE[0]}" <<'VEROVIO'
+
+Compiled into the Verovio module (js/third-party-licenses.txt):
+SPDX-License-Identifier: OFL-1.1
+SPDX-License-Identifier: BSD-2-Clause
+SPDX-License-Identifier: Unlicense
+SPDX-FileCopyrightText: 2021 Steinberg Media Technologies GmbH (Bravura)
+SPDX-FileCopyrightText: 2018 Steinberg Media Technologies GmbH (Petaluma)
+SPDX-FileCopyrightText: 2014 Etienne Darbellay, Jean-Francois Marti and Laurent Pugin (Leipzig)
+SPDX-FileCopyrightText: 2025 MuseScore BVBA (Leland)
+SPDX-FileCopyrightText: Grzegorz Pruchniakowski (Gootville)
+SPDX-FileCopyrightText: 2007 Ascender Corporation (Liberation)
+SPDX-FileCopyrightText: 2006-2026 Arseny Kapoulkine (pugixml)
+SPDX-FileCopyrightText: 2010 Hong Jiang (jsonxx)
+SPDX-FileCopyrightText: 2019-2020 Paul Walker (tuning-library)
+SPDX-FileCopyrightText: 2014-2017 Thomas Fussell (miniz-cpp)
+SPDX-FileCopyrightText: 1999-2018 Craig Stuart Sapp (midifile)
+SPDX-FileCopyrightText: 2000 Michael Barr (CRC, public domain)
+VEROVIO
 
 # Refuse to package anything internal or development-only.
 for forbidden in _intern node_modules tests src tools vendor-bin docs .github; do

@@ -27,6 +27,27 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Thomas Scheel and Cantoria contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
+# Built files of the release archive without a .license file of their own
+# (tools/release/package.sh runs `reuse lint` over the archive; the
+# repository ignores js/ and css/): the styles of the app and of the
+# Nextcloud components with the styles of the third-party packages they
+# bundle (listed in js/third-party-licenses.txt), the service worker of the
+# app, and the generated list of bundled packages with their licenses
+[[annotations]]
+path = ["css/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+	"2026 Thomas Scheel and Cantoria contributors",
+	"Nextcloud GmbH and Nextcloud contributors",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later AND MIT"
+
+[[annotations]]
+path = ["js/cantoria-offline-worker.js", "js/third-party-licenses.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Thomas Scheel and Cantoria contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
 # Package manifests, lock files and trivial configuration (as in nextcloud/deck)
 [[annotations]]
 path = [
