@@ -44,7 +44,7 @@ For all entries:
 | Register of persons | protection terms and rights of the works | living composers, lyricists, arrangers, translators, editors (the dead are not covered) | name, role, year of birth (no full date), source, GND/Wikidata | Art. 6 (1) f; no individual information (Art. 14 (5) b) | while a version needs the person; life dates at once on objection |
 | Folder book (module) | getting the choir folders back | choir members with a folder | name or account, days of issue and return, notes | Art. 6 (1) b or f | [12] months after the return; 36 months after the issue if the folder never comes back; at once when the account is deleted (open loan: only the account); backups: see above |
 | Sharing with choir members (modules) | practising with shared excerpts | choir members | calls counted without who; practice files with the role and the day only, **no account, name or time of day**; in the web server log, as for every call of Nextcloud, IP address, time and address called (with the address of the link) | Art. 6 (1) b; for the log f | practice file entries stay as evidence, without account or name and with the day only; in small voice groups they may point to a person together with other knowledge (pseudonymous); web server log [7 days] |
-| Storage on the device (practice settings; with the modules "Practising without a network" and "Concert folder" also pieces) | practising and performing, also without a network | choir members, conductor, archive roles; on a public link also visitors | only in the browser of the device, not with the choir: size of the notes, count-in, passages, practice settings such as tempo and mixer (`localStorage`); pieces kept on a tap, with notes and, if chosen, the scan (Cache Storage); a hash of the signed-in account, so that the pieces of another account or kept before signing out are removed (IndexedDB). Microphone ("Show my pitch", "Record myself") only after a tap and the browser's permission; voice and recording stay in the browser | § 25 (2) no. 2 TDDDG (strictly necessary for the function asked for); remembering practice settings [check: borderline case] | "Delete everything on this device" (pages for choir members, concert folder), switching off "Available without a network" (public link) or clearing the site data in the browser; signing out of Nextcloud usually deletes it too (in some browsers at the next start of a page of Cantoria); pieces no longer shared or allowed at the next start with a network; locked after 30 days without one |
+| Storage on the device (practice settings, "New" marks, hash of the account; with the modules "Practising without a network" and "Concert folder" also pieces) | practising and performing, also without a network | choir members, conductor, archive roles; on a public link also visitors | only in the browser of the device, not with the choir. **While using it:** size of the notes, count-in, passages, practice settings such as tempo and mixer (`localStorage`). **On a tap on "Available without a network":** pieces with notes and, if chosen, the scan (Cache Storage). **Without any action, on every call:** a hash of the signed-in account on every page of the app, also in the archive and without the module "Practising without a network", so that pieces and practice settings of another account or kept before signing out are removed (IndexedDB); on "Shared with me" marks of the links seen and the time of the visit, per account as a hash, for the mark "New" (`localStorage`). **On opening a page with the module "Practising without a network"** (on a public link once the piece may be kept) a service worker registers in the browser; it keeps content only once someone has saved something. Microphone ("Show my pitch", "Record myself") only after a tap and the browser's permission; voice and recording stay in the browser | for kept pieces and the hash of the account that protects them § 25 (2) no. 2 TDDDG (strictly necessary for the function asked for) [check]; for practice settings, the "New" marks, the hash on pages without kept pieces and the service worker before the first save [check: borderline case; on a strict reading consent] | "Delete everything on this device" (pages for choir members, concert folder), switching off "Available without a network" (public link) or clearing the site data in the browser; signing out of Nextcloud usually deletes it too (in some browsers at the next start of a page of Cantoria); pieces no longer shared or allowed at the next start with a network; locked after 30 days without one |
 | Public pages (modules) | showing excerpts and the repertoire; protection against abuse | visitors without an account | IP address, time, address called, user agent in the web server log, brute-force protection, rate limit, `nextcloud.log` on errors | Art. 6 (1) f | web server log [7 days]; brute-force protection [48 hours]; no cookies of the app, nothing from third parties; browser storage see the row above |
 | Agents (module) | [proposals, reviewing transcriptions] | as catalog and register (role "Proposals (tools)": no folder book) | what the agent reads | Art. 6 (1) f | provider of the model as processor (Art. 28), [third country and safeguard, Art. 44 ff.] |
 
@@ -66,8 +66,14 @@ For all entries:
 >
 > Practice settings such as tempo and mixer, and pieces you make "Available
 > without a network", are stored only in the browser of your device; they
-> do not reach us (§ 25 (2) no. 2 TDDDG). "Delete everything on this
-> device" removes them. "Show my pitch" and "Record myself" use the
+> do not reach us. Without any action of yours the browser also remembers a
+> hash of your account, so that no one else sees your pieces on a shared
+> device, which links you have seen on "Shared with me" (for the mark
+> "New"), and with the module "Practising without a network" a service
+> worker that keeps pieces only after your tap. Legal basis: [§ 25 (2)
+> no. 2 TDDDG where this is strictly necessary for the function; for
+> settings and the mark "New": check]. "Delete everything on this device"
+> removes them. "Show my pitch" and "Record myself" use the
 > microphone only when you allow it; your voice and your recording stay in
 > your browser. The pieces are for practising in the choir only: do not pass
 > them or recordings with them on, and delete them when you leave the choir.
@@ -88,8 +94,12 @@ For all entries:
 > no cookies of its own [Nextcloud sets technically necessary session
 > cookies: check]. Playback happens in your browser. Practice settings such
 > as the tempo and, if you choose "Available without a network", the piece
-> are stored only in your browser and not sent to us; this is necessary for
-> the function you use (§ 25 (2) no. 2 TDDDG). You delete the piece by
+> are stored only in your browser and not sent to us. When a piece may be
+> kept, the page registers a service worker in your browser on opening,
+> which keeps it only after your tap. Legal basis: [§ 25 (2) no. 2 TDDDG
+> where this is strictly necessary for the function you use; for practice
+> settings and the service worker before the first save: check]. You
+> delete the piece by
 > switching "Available without a network" off again, and everything with
 > the site data in your browser. [Controller, contact, rights as in
 > section 2.]

@@ -242,10 +242,25 @@ device.
   a shared device it remembers a hash of the signed-in account in
   IndexedDB, so that pieces of another account, or kept before signing out,
   are removed (a security measure; [SECURITY.md](../SECURITY.md)).
+  Three kinds of storage happen without any action of the person: every
+  page of the app writes the hash of the account on every call, also in
+  the archive and without the module "Practising without a network";
+  "Shared with me" remembers on every call the marks of the links seen and
+  the time, per account as a hash, for the mark "New" (`localStorage`);
+  and with the module "Practising without a network" every page registers
+  a service worker in the browser on opening (on a public link once the
+  piece may be kept), which keeps content only once someone has saved
+  something.
   Storing on a device needs consent unless it is strictly necessary for a
-  service the person explicitly asked for (§ 25 (2) no. 2 TDDDG). Keeping a
-  piece on a tap clearly is; remembering practice settings for the next
-  visit is a borderline case. Nothing of it reaches the server or third
+  service the person explicitly asked for (§ 25 (2) no. 2 TDDDG; this
+  applies whether or not the data are personal). Keeping a piece on a tap,
+  and the hash of the account that protects such pieces, usually are.
+  Practice settings for the next visit, the "New" marks, the hash on pages
+  without kept pieces and the service worker before the first save are
+  convenience or preparation and, on the strict reading of the supervisory
+  authorities, need consent: a borderline case. The practical risk is low,
+  since nothing leaves the device; the text blocks therefore name the
+  exception only with a reservation. Nothing of it reaches the server or third
   parties; "Delete everything on this device" removes it (on a public link:
   switching off "Available without a network" and clearing the site data in
   the browser), and signing out of Nextcloud usually does, too. Name it in

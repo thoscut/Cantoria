@@ -84,14 +84,14 @@ Allgemeine Angaben für alle Einträge:
 | Empfänger | die Rollen des Notenarchivs mit Zugriff auf das Protokoll; Betreiber des Servers [Anbieter] für das Log des Webservers |
 | Löschfrist | Die Einträge der Übe-Dateien bleiben als Nachweis; sie enthalten weder Konto noch Namen und nur den Tag. In kleinen Stimmgruppen kann man sie mit anderem Wissen unter Umständen einer Person zuordnen (pseudonym). Log des Webservers: [z. B. 7 Tage]. |
 
-**1.5 Speicher auf dem Gerät (Übe-Einstellungen; mit den Modulen „Üben ohne Netz“ und „Konzertmappe“ auch Stücke)**
+**1.5 Speicher auf dem Gerät (Übe-Einstellungen, Neu-Markierung, Hash des Kontos; mit den Modulen „Üben ohne Netz“ und „Konzertmappe“ auch Stücke)**
 
 | Feld | Eintrag |
 |---|---|
 | Zweck | Üben und Vortragen, auch ohne Netz: Einstellungen für den nächsten Besuch, auf Wunsch Stücke auf dem eigenen Gerät |
 | Betroffene | Chormitglieder, Chorleitung, Rollen des Notenarchivs; auf einem öffentlichen Link auch Besucherinnen und Besucher |
-| Daten | nur im Browser des Geräts, nicht beim Verein: Größe der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult (`localStorage`); auf Tippen gespeicherte Stücke mit Noten und auf Wunsch Scan (Cache Storage); ein Hash des angemeldeten Kontos, damit Stücke eines anderen Kontos oder von vor dem Abmelden entfernt werden (IndexedDB). Mikrofon („Meine Tonhöhe zeigen“, „Selbst aufnehmen“) nur nach Tippen und Erlaubnis des Browsers; Stimme und Aufnahme bleiben im Browser. |
-| Rechtsgrundlage | § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich für die gewünschte Funktion); für das Merken der Übe-Einstellungen [prüfen: Grenzfall] |
+| Daten | nur im Browser des Geräts, nicht beim Verein. **Beim Benutzen:** Größe der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult (`localStorage`). **Beim Tippen auf „Ohne Netz verfügbar“:** Stücke mit Noten und auf Wunsch Scan (Cache Storage). **Ohne Zutun, bei jedem Aufruf:** ein Hash des angemeldeten Kontos auf jeder Seite der App, auch im Archiv und ohne das Modul „Üben ohne Netz“, damit Stücke und Übe-Einstellungen eines anderen Kontos oder von vor dem Abmelden entfernt werden (IndexedDB); auf „Mit mir geteilt“ Kennungen der gesehenen Links und die Zeit des Besuchs, je Konto als Hash, für die Markierung „Neu“ (`localStorage`). **Beim Öffnen einer Seite mit dem Modul „Üben ohne Netz“** (auf einem öffentlichen Link, sobald das Stück behalten werden darf) meldet sich ein Service Worker im Browser an; Inhalte legt er erst ab, wenn jemand etwas gespeichert hat. Mikrofon („Meine Tonhöhe zeigen“, „Selbst aufnehmen“) nur nach Tippen und Erlaubnis des Browsers; Stimme und Aufnahme bleiben im Browser. |
+| Rechtsgrundlage | für gespeicherte Stücke und den Hash des Kontos als ihr Schutz § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich für die gewünschte Funktion) [prüfen]; für Übe-Einstellungen, die Neu-Markierung, den Hash auf Seiten ohne gespeicherte Stücke und den Service Worker vor dem ersten Speichern [prüfen: Grenzfall; nach strenger Lesart Einwilligung] |
 | Empfänger | niemand; nichts davon wird an den Server übertragen |
 | Löschfrist | „Alles auf diesem Gerät löschen“ (Seiten für Chormitglieder, Konzertmappe), „Ohne Netz verfügbar“ ausschalten (öffentlicher Link) oder die Websitedaten im Browser löschen; das Abmelden bei Nextcloud löscht es meist auch (in manchen Browsern beim nächsten Start einer Seite von Cantoria); Stücke, die nicht mehr geteilt sind oder nicht mehr behalten werden dürfen, beim nächsten Start mit Netz; nach 30 Tagen ohne Netz gesperrt |
 
@@ -140,8 +140,14 @@ Baustein für die Datenschutzhinweise des Vereins, zum Beispiel als Abschnitt
 >
 > Übe-Einstellungen wie Tempo und Mischpult und Stücke, die du „Ohne Netz
 > verfügbar“ machst, speichert die App nur im Browser deines Geräts; sie
-> gehen nicht an uns (§ 25 Abs. 2 Nr. 2 TDDDG). Mit „Alles auf diesem Gerät
-> löschen“ entfernst du sie. „Meine Tonhöhe zeigen“ und „Selbst aufnehmen“
+> gehen nicht an uns. Außerdem merkt sich der Browser ohne dein Zutun einen
+> Hash deines Kontos, damit auf einem geteilten Gerät niemand deine Stücke
+> sieht, auf „Mit mir geteilt“, welche Links du schon gesehen hast (für die
+> Markierung „Neu“), und mit dem Modul „Üben ohne Netz“ einen Service
+> Worker, der Stücke erst nach deinem Tippen ablegt. Rechtsgrundlage:
+> [§ 25 Abs. 2 Nr. 2 TDDDG, soweit das für die Funktion unbedingt
+> erforderlich ist; für Einstellungen und die Markierung „Neu“: prüfen].
+> Mit „Alles auf diesem Gerät löschen“ entfernst du sie. „Meine Tonhöhe zeigen“ und „Selbst aufnehmen“
 > nutzen das Mikrofon erst, wenn du es erlaubst; deine Stimme und deine
 > Aufnahme bleiben in deinem Browser. Die Stücke sind nur zum Üben im Chor:
 > Gib sie und Aufnahmen damit nicht weiter, und lösche sie, wenn du den Chor
@@ -170,10 +176,14 @@ erscheint:
 > setzt technisch notwendige Sitzungs-Cookies: prüfen]. Das Abspielen
 > geschieht in deinem Browser. Übe-Einstellungen wie das Tempo und, wenn du
 > „Ohne Netz verfügbar“ wählst, das Stück liegen nur im Speicher deines
-> Browsers und werden nicht an uns übertragen; das ist für die Funktion
-> erforderlich, die du nutzt (§ 25 Abs. 2 Nr. 2 TDDDG). Du löschst das
-> Stück, indem du „Ohne Netz verfügbar“ wieder ausschaltest, und alles mit
-> den Websitedaten in deinem Browser.
+> Browsers und werden nicht an uns übertragen. Darf ein Stück behalten
+> werden, meldet die Seite beim Öffnen einen Service Worker im Browser an,
+> der es erst nach deinem Tippen ablegt. Rechtsgrundlage: [§ 25 Abs. 2
+> Nr. 2 TDDDG, soweit das für die Funktion, die du nutzt, unbedingt
+> erforderlich ist; für Übe-Einstellungen und den Service Worker vor dem
+> ersten Speichern: prüfen]. Du löschst das Stück, indem du „Ohne Netz
+> verfügbar“ wieder ausschaltest, und alles mit den Websitedaten in deinem
+> Browser.
 > [Verantwortlicher, Kontakt, Rechte wie in Abschnitt 2.]
 
 Vor dem Einschalten der öffentlichen Module prüfst du:

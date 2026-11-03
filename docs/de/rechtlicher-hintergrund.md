@@ -260,11 +260,25 @@ Interne Erhaltungskopien kommen nie auf ein Gerät.
   IndexedDB, damit Stücke eines anderen Kontos oder von vor dem Abmelden
   entfernt werden (eine Sicherheitsmaßnahme;
   [SECURITY.md](../../SECURITY.md), englisch).
+  Drei Speicherungen geschehen ohne Zutun der Person: Den Hash des Kontos
+  schreibt jede Seite der App bei jedem Aufruf, auch im Archiv und ohne das
+  Modul „Üben ohne Netz“; „Mit mir geteilt“ merkt sich bei jedem Aufruf die
+  Kennungen der gesehenen Links und die Zeit, je Konto als Hash, für die
+  Markierung „Neu“ (`localStorage`); und mit dem Modul „Üben ohne Netz“
+  meldet jede Seite beim Öffnen einen Service Worker im Browser an (auf
+  einem öffentlichen Link, sobald das Stück behalten werden darf), der
+  Inhalte erst ablegt, wenn jemand etwas gespeichert hat.
   Speichern auf einem Gerät braucht eine Einwilligung, außer es ist
   unbedingt erforderlich für einen Dienst, den die Person ausdrücklich
-  gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG). Ein Stück auf Tippen zu behalten,
-  ist das klar; Übe-Einstellungen für den nächsten Besuch zu merken, ist ein
-  Grenzfall. Nichts davon erreicht den Server oder Dritte; „Alles auf
+  gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG; die Vorschrift gilt unabhängig
+  davon, ob Daten personenbezogen sind). Ein Stück auf Tippen zu behalten
+  und der Hash des Kontos als Schutz dieser Stücke sind das in der Regel.
+  Übe-Einstellungen für den nächsten Besuch, die Neu-Markierung, der Hash
+  auf Seiten ohne gespeicherte Stücke und der Service Worker vor dem ersten
+  Speichern sind Komfort oder Vorbereitung und nach strenger Lesart der
+  Aufsichtsbehörden einwilligungsbedürftig, also ein Grenzfall. Das
+  praktische Risiko ist gering, weil nichts das Gerät verlässt; die
+  Textbausteine nennen die Ausnahme darum nur mit Vorbehalt. Nichts davon erreicht den Server oder Dritte; „Alles auf
   diesem Gerät löschen“ entfernt es (auf einem öffentlichen Link: „Ohne Netz
   verfügbar“ ausschalten und die Websitedaten im Browser löschen), und das
   Abmelden bei Nextcloud meist auch. Nennt es in den Datenschutzhinweisen,
