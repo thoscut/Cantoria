@@ -112,8 +112,7 @@ final class ConcertFolderTest extends TestCase {
 			: [self::file(1, $copyId, 'musicxml', 'a.musicxml'), self::file(3, $copyId, 'score_pdf', 'z.pdf'), self::file(4, $copyId, 'score_pdf', 'a.pdf')]);
 		$policy = $this->createStub(RightsPolicy::class);
 		$policy->method('viewDenial')->willReturnCallback(fn (WorkVersion $version): ?string => $viewDenials[$version->getId()] ?? null);
-		$policy->method('deviceDenial')->willReturnCallback(function (string $circle, WorkVersion $version, string $day, ?Copy $copy, bool $withScore)
-			use ($deviceDenials): ?string {
+		$policy->method('deviceDenial')->willReturnCallback(function (string $circle, WorkVersion $version, string $day, ?Copy $copy, bool $withScore) use ($deviceDenials): ?string {
 			$this->deviceQuestions[] = [$circle, $version->getId(), $day, $withScore];
 			return $deviceDenials[$version->getId()] ?? null;
 		});

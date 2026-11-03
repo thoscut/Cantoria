@@ -114,17 +114,14 @@ final class MirrorRightsTest extends TestCase {
 			$source->setId(10 + $index);
 			$entries[] = ['name' => $entry['name'], 'shelfmark' => '1-03', 'copyId' => 35, 'archiveFile' => $source, 'node' => null, 'skip' => $entry['skip']];
 		}
-		return new class($entries, $config, $root, $settings, $this->createStub(ReleaseListService::class), $this->createStub(ArchiveFileMapper::class),
-			$this->createStub(CopyMapper::class), $mirrorFiles, $this->createStub(AuditLog::class), $this->createStub(Roles::class),
-			$this->createStub(Modules::class), $this->createStub(NotificationService::class), $this->createStub(IFilenameValidator::class),
-			$this->createStub(IUserManager::class), $this->createStub(IFactory::class), $this->createStub(ITimeFactory::class),
-			$this->createStub(IDateTimeZone::class), $this->createStub(LoggerInterface::class), $runLock, $this->createStub(WorkVersionMapper::class),
-			$this->createStub(RightsPolicy::class), $this->createStub(RightsService::class), $this->createStub(LicenseMapper::class),
-			$this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class), $this->createStub(ScoreService::class)) extends HandoverService {
+		return new class($entries, $config, $root, $settings, $this->createStub(ReleaseListService::class), $this->createStub(ArchiveFileMapper::class), $this->createStub(CopyMapper::class), $mirrorFiles, $this->createStub(AuditLog::class), $this->createStub(Roles::class), $this->createStub(Modules::class), $this->createStub(NotificationService::class), $this->createStub(IFilenameValidator::class), $this->createStub(IUserManager::class), $this->createStub(IFactory::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class), $this->createStub(LoggerInterface::class), $runLock, $this->createStub(WorkVersionMapper::class), $this->createStub(RightsPolicy::class), $this->createStub(RightsService::class), $this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class), $this->createStub(ScoreService::class)) extends HandoverService {
 			/**
 			 * @param list<array{name: string, shelfmark: string, copyId: int, archiveFile: ArchiveFile, node: ?File, skip: ?string}> $entries
 			 */
-			public function __construct(private array $entries, mixed ...$dependencies) {
+			public function __construct(
+				private array $entries,
+				mixed ...$dependencies,
+			) {
 				parent::__construct(...$dependencies);
 			}
 
