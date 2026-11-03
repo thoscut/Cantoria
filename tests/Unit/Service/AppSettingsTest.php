@@ -80,7 +80,7 @@ final class AppSettingsTest extends TestCase {
 		$shares = $this->createStub(IShareManager::class);
 		$shares->method('getAccessList')->willReturnCallback(fn (Folder $folder): array => $access[$folder->getId()] ?? ['users' => ['lena'], 'public' => false, 'remote' => false]);
 		$shares->method('getSharesInFolder')->willReturnCallback(fn (string $user, Folder $folder, bool $reshares, bool $shallow): array
-			=> $user === 'lena' && $reshares && !$shallow ? ($inside[$folder->getId()] ?? []) : []);
+			=> $user === 'lena' && $reshares && $shallow ? ($inside[$folder->getId()] ?? []) : []);
 		return new AppSettings($appConfig, $root, $factory, $this->createStub(IUserManager::class), $shares);
 	}
 
@@ -99,6 +99,7 @@ final class AppSettingsTest extends TestCase {
 		$folder->method('isMounted')->willReturn($mounted);
 		$folder->method('nodeExists')->willReturnCallback(fn (string $name): bool => isset($children[$name]));
 		$folder->method('get')->willReturnCallback(fn (string $name): Folder => $children[$name]);
+		$folder->method('getDirectoryListing')->willReturn(array_values($children));
 		return $folder;
 	}
 
@@ -159,6 +160,18 @@ final class AppSettingsTest extends TestCase {
 		$this->created = [];
 		self::assertSame(22, $this->settings(['Music archive backups' => $this->folder(22, '/lena/files/Music archive backups', 'lena')], [], 0,
 			[22 => [43 => []]])->backupFolder()->getId(), 'no share below it: private');
+	}
+
+	/**
+	 * Nextcloud lists shares only for the direct children of a folder: a
+	 * share two levels down is found by walking the subfolders.
+	 */
+	public function testAShareDeepInsideTheFolderStopsTheBackup(): void {
+		$deep = $this->folder(31, '/lena/files/Music archive backups/annual-snapshots/2026', 'lena');
+		$snapshots = $this->folder(30, '/lena/files/Music archive backups/annual-snapshots', 'lena', false, ['2026' => $deep]);
+		$stored = $this->folder(20, '/lena/files/Music archive backups', 'lena', false, ['annual-snapshots' => $snapshots]);
+		$this->expectException(InvalidInputException::class);
+		$this->settings(['Music archive backups' => $stored], [], 20, [31 => [44 => [$this->createStub(IShare::class)]]])->backupFolder();
 	}
 
 	/**

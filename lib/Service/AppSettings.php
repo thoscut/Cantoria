@@ -188,11 +188,11 @@ class AppSettings {
 				return false;
 			}
 			$access = $this->shareManager->getAccessList($folder);
-			// getAccessList looks upwards; the shares below the folder, of every depth
-			foreach ($this->shareManager->getSharesInFolder($account, $folder, true, false) as $shares) {
-				if ($shares !== []) {
-					return false;
-				}
+			// getAccessList looks upwards; the shares below the folder, of every
+			// depth. Nextcloud answers getSharesInFolder only for the direct
+			// children (non-shallow is no longer supported), so walk the folders.
+			if ($this->sharedBelow($folder, $account)) {
+				return false;
 			}
 			if ($folder->nodeExists(AnnualSnapshotService::FOLDER)) {
 				$snapshots = $folder->get(AnnualSnapshotService::FOLDER);
@@ -206,6 +206,24 @@ class AppSettings {
 		$users = array_diff(array_map('strval', $access['users'] ?? []), [$account]);
 		return $users === [] && ($access['public'] ?? false) !== true && ($access['remote'] ?? false) === false
 			&& ($access['mail'] ?? []) === [];
+	}
+
+	/**
+	 * Whether anything below the folder is shared: a file or a folder at any
+	 * depth, also by others re-sharing it.
+	 */
+	private function sharedBelow(Folder $folder, string $account): bool {
+		foreach ($this->shareManager->getSharesInFolder($account, $folder, true, true) as $shares) {
+			if ($shares !== []) {
+				return true;
+			}
+		}
+		foreach ($folder->getDirectoryListing() as $node) {
+			if ($node instanceof Folder && $this->sharedBelow($node, $account)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
