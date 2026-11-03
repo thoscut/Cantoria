@@ -94,8 +94,9 @@ tests.
    upload the folder in the Files app.
 5. Roles, archive folder and the modules of the newer pictures (sharing,
    folder book, mirror folder of the print station, annual snapshots,
-   proposals, statistics, practising without a network and the concert
-   folder; they are part of no preset or not of Standard):
+   proposals, statistics, practising without a network, the concert
+   folder and the hand-over to the choir system; they are part of no preset
+   or not of Standard):
 
    ```sh
    php occ cantoria:setup demo-librarian Cantoria-Demo \
@@ -104,7 +105,7 @@ tests.
      -r member=demo-members
    php occ cantoria:modules enable member_links member_practice_audio public_links \
      public_repertoire folder_book print_mirror annual_snapshot proposals statistics \
-     offline concert_folder
+     offline concert_folder choir_handover
    ```
 
 6. Import the catalog and link the files:
@@ -131,7 +132,11 @@ book (one out with an invented name), chooses the folder "Print station" of
 the administrator as mirror folder (with a file of the same name as a scan,
 which the sync skips), corrects one note of 2-2 so that it has a second
 revision, marks 1-6 as a scientific edition and writes two annual snapshots
-with a confirmation and a license between them. It skips what is done
+with a confirmation and a license between them. As the conductor it shares
+the concert as a programme with the choir members, for the pictures of
+"Shared with me" by programme and of the message to the choir (0.20). The
+scenes of 0.20 (hand-over, setup by scenarios, import template, programmes
+under "Shared with me", message to the choir) have a German twin each. It skips what is done
 already, so it can run again.
 
 ## Running

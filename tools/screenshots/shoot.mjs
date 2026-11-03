@@ -120,7 +120,9 @@ class Session {
 		this.page = null
 		this.lang = null
 		this.theme = null
-		this.look = null
+		// the window and media last set by look(); not named "look", which would hide the method (D31)
+		this.lookKey = null
+		this.cdp = null
 	}
 
 	async open() {
@@ -213,18 +215,24 @@ class Session {
 		const width = viewport?.width ?? WIDTH
 		const height = viewport?.height ?? HEIGHT
 		const key = JSON.stringify([theme, width, height, forcedColors, media])
-		if (key === this.look) {
+		if (key === this.lookKey) {
 			return
 		}
 		const small = width < 1000
 		await this.page.setViewport({ width, height, deviceScaleFactor: small ? 2 : 1, isMobile: small, hasTouch: small })
-		await this.page.emulateMediaFeatures([
-			{ name: 'prefers-color-scheme', value: theme },
-			{ name: 'prefers-reduced-motion', value: 'reduce' },
-			{ name: 'forced-colors', value: forcedColors ? 'active' : 'none' },
-		])
-		await this.page.emulateMediaType(media)
-		this.look = key
+		// Straight through the DevTools protocol: Puppeteer's emulateMediaFeatures()
+		// refuses "forced-colors", and one call sets the media type and the
+		// features together, so that neither resets the other
+		this.cdp ??= await this.page.createCDPSession()
+		await this.cdp.send('Emulation.setEmulatedMedia', {
+			media: media ?? '',
+			features: [
+				{ name: 'prefers-color-scheme', value: theme },
+				{ name: 'prefers-reduced-motion', value: 'reduce' },
+				{ name: 'forced-colors', value: forcedColors ? 'active' : 'none' },
+			],
+		})
+		this.lookKey = key
 	}
 }
 
@@ -512,11 +520,14 @@ try {
 		if (only && !only.includes(shot.name) && !only.includes(shot.file)) {
 			continue
 		}
-		const s = await session(shot.account, shot.lang)
-		await s.use(shot)
-		await s.look(shot)
-		const h = helpers(s)
+		let s = null
+		let h = null
 		try {
+			// inside the try: a shot that cannot even start fails alone (D31)
+			s = await session(shot.account, shot.lang)
+			await s.use(shot)
+			await s.look(shot)
+			h = helpers(s)
 			const clip = await shot.run(h, state)
 			if (!h.keepOpen) {
 				await h.calm()
@@ -537,7 +548,7 @@ try {
 			failures++
 			console.error(`${shot.file}: FAILED ${error.message}`)
 		}
-		if (shot.after) {
+		if (shot.after && h !== null) {
 			await shot.after(h, state).catch(() => {})
 		}
 	}

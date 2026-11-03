@@ -719,6 +719,75 @@ SHOTS.push(
 )
 
 /**
+ * The scenes the store text starts with (milestone 0.20, W B27): the
+ * hand-over to the choir system and the comparison with its export, the
+ * setup by scenarios, the import with the template, the pieces under their
+ * programme in "Shared with me" and the message to the choir after sharing
+ * a programme. Each of them also in German (POSITIONING_TWINS). The module
+ * choir_handover has to be on (README.md); --prepare shares the concert of
+ * the demo as a programme.
+ */
+SHOTS.push(
+	{
+		name: 'choir-handover', file: 'choir-handover.png', account: 'librarian', ...en,
+		run: async (h) => {
+			await h.app('?view=portal')
+			await h.page.waitForSelector('#release-choir-handover', { visible: true, timeout: 30000 })
+			await h.page.evaluate(() => document.querySelector('#release-choir-handover')?.scrollIntoView({ block: 'start' }))
+			await h.settle(800)
+			return h.rect(['section[aria-labelledby="release-choir-handover"]', 'section[aria-labelledby="release-choir-compare"]'], { pad: 12 })
+		},
+	},
+	{
+		name: 'setup-scenarios', file: 'setup-scenarios.png', account: 'admin', ...en,
+		run: async (h) => {
+			await h.goto('/settings/admin/cantoria#cantoria-modules')
+			await h.page.waitForSelector('#module-settings-scenarios', { visible: true, timeout: 30000 })
+			await h.page.evaluate(() => document.querySelector('#module-settings-scenarios')?.scrollIntoView({ block: 'start' }))
+			await h.settle(1200)
+			return h.rect(['section[aria-labelledby="module-settings-scenarios"]'], { pad: 12 })
+		},
+	},
+	{
+		name: 'import-template', file: 'import-template.png', account: 'librarian', ...en,
+		run: async (h) => {
+			await archiveManagement(h)
+			await h.page.evaluate(() => document.querySelector('#archive-import')?.scrollIntoView({ block: 'start' }))
+			await h.settle(500)
+			return h.rect(['section[aria-labelledby="archive-import"]'], { pad: 12 })
+		},
+		after: escape,
+	},
+	{
+		name: 'shared-with-me-programmes', file: 'shared-with-me-programmes.png', account: 'member', ...en,
+		run: async (h) => {
+			await h.goto('/apps/cantoria/')
+			await h.page.waitForSelector('.member-app__group-title', { visible: true, timeout: 60000 })
+			await h.settle(1500)
+		},
+	},
+	{
+		name: 'programme-share-message', file: 'programme-share-message.png', account: 'conductor', ...en,
+		run: async (h) => {
+			await h.app(`?event=${await h.eventId(CONCERT)}`)
+			await h.click('button', h.t('Share with the choir …'))
+			await h.page.waitForSelector('.modal-container button[type=submit]:not([disabled])', { visible: true, timeout: 60000 })
+			await h.settle(800)
+			// shares again: links that exist already are extended or stay, the address stays
+			await h.page.click('.modal-container button[type=submit]')
+			await h.page.waitForSelector('.programme-share__message', { visible: true, timeout: 60000 })
+			await h.settle(800)
+			return dialogClip(h)
+		},
+		after: escape,
+	},
+)
+for (const name of ['choir-handover', 'setup-scenarios', 'import-template', 'shared-with-me-programmes', 'programme-share-message']) {
+	const shot = SHOTS.find((candidate) => candidate.name === name)
+	SHOTS.push({ ...shot, name: `de-${name}`, file: `de/${shot.file}`, ...de })
+}
+
+/**
  * Pictures of the English guides that the German guides show in the German
  * interface: the same recipe as de/<file>. The German guides link only
  * pictures in de/ (src/__tests__/docs.test.ts).
