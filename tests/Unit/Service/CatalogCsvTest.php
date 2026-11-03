@@ -325,4 +325,20 @@ final class CatalogCsvTest extends TestCase {
 	public function testIsLegacyPreservationCopy(?string $note, bool $expected): void {
 		self::assertSame($expected, CatalogCsv::isLegacyPreservationCopy($note));
 	}
+
+	public function testTheTemplateHasTheCatalogColumnsAndOneExampleRow(): void {
+		$template = CatalogCsv::template();
+		self::assertSame(array_keys(CatalogCsv::LEGACY_COLUMNS), $template['header']);
+		self::assertCount(1, $template['rows']);
+		self::assertCount(count($template['header']), $template['rows'][0]);
+		$row = array_combine($template['header'], $template['rows'][0]);
+		self::assertSame('1-01', $row['Signatur']);
+		self::assertSame('gemeinfrei', $row['Rechtestatus'], 'a value the import knows');
+		self::assertSame([], array_diff(array_keys(CatalogCsv::TEMPLATE_EXAMPLE), $template['header']), 'every example value has its column');
+
+		// Written as the import reads it
+		$parsed = CatalogCsv::parse(CatalogCsv::write($template['header'], $template['rows']));
+		self::assertSame($template['header'], $parsed['header']);
+		self::assertSame($template['rows'], $parsed['rows']);
+	}
 }

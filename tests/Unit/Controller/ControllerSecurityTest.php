@@ -181,7 +181,7 @@ final class ControllerSecurityTest extends TestCase {
 	private const CORE = [
 		'PageController::index',
 		'ApiController::meta', 'ApiController::entries', 'ApiController::entry', 'ApiController::update',
-		'ApiController::import', 'ApiController::fileSync', 'ApiController::fileSyncStatus', 'ApiController::export',
+		'ApiController::import', 'ApiController::importTemplate', 'ApiController::fileSync', 'ApiController::fileSyncStatus', 'ApiController::export',
 		'ApiController::exportStore', 'ApiController::audit',
 		'SettingsController::index', 'SettingsController::update', 'SettingsController::groups', 'SettingsController::access',
 		'WorkflowController::backup', 'WorkflowController::fullBackup', 'WorkflowController::restore',
@@ -201,6 +201,8 @@ final class ControllerSecurityTest extends TestCase {
 	 */
 	private const WITHOUT_CSRF = [
 		'PageController::index', 'ApiController::export', 'WorkflowController::fullBackup', 'EventController::songOrder',
+		// The import template: no data, only the columns and an example row
+		'ApiController::importTemplate',
 		'StatisticsController::csv', 'StatisticsController::reportCsv',
 		'CalendarController::concertFile', 'CalendarController::upcomingFile',
 		// The scan beside the score is opened by the browser itself (frame or window).
@@ -1403,6 +1405,19 @@ final class ControllerSecurityTest extends TestCase {
 		}
 		self::assertSame([FolderBookService::OBJECT_TYPES, []], $excluded, 'contributors do not see the names of the folder book');
 	}
+	public function testTheImportTemplateIsForTheCatalogRole(): void {
+		$export = $this->createStub(ExportService::class);
+		$export->method('importTemplate')->willReturnCallback(fn (string $format): string => 'template.' . $format);
+		foreach (['librarian' => Http::STATUS_OK, 'reader' => Http::STATUS_FORBIDDEN, 'member' => Http::STATUS_FORBIDDEN, 'nobody' => Http::STATUS_FORBIDDEN] as $uid => $status) {
+			$controller = new ApiController($this->createStub(IRequest::class), $uid, $this->rolesByName(), $this->createStub(MetaService::class),
+				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $export,
+				$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
+				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
+				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+			self::assertSame($status, $controller->importTemplate('ods')->getStatus(), $uid);
+		}
+	}
+
 	private function stateController(string $uid): StateController {
 		$roles = $this->rolesByName();
 		$mapper = $this->createStub(VersionStateMapper::class);

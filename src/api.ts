@@ -387,6 +387,15 @@ export function exportUrl(extended: boolean): string {
 	return apiUrl('/export') + '?extended=' + (extended ? '1' : '0')
 }
 
+/**
+ * Download URL of the import template: the catalog columns with one example row.
+ *
+ * @param format - 'csv' (the format of the import) or 'ods' (for a spreadsheet program)
+ */
+export function importTemplateUrl(format: 'csv' | 'ods'): string {
+	return apiUrl('/import/template') + '?format=' + format
+}
+
 export async function storeExport(): Promise<string> {
 	const { data } = await axios.post<{ path: string }>(apiUrl('/export/store'))
 	return data.path

@@ -42,22 +42,28 @@ Link an die Stelle, wo er erledigt wird.
 1. **Archivordner** – wähle den Ordner mit den Notendateien
    ([Abschnitt 3](#3-archivordner)). Gleich nach der Wahl, vor dem Speichern,
    zeigt die Seite, welche Konten der Rollengruppen ihn nicht öffnen können.
-2. **Rollen und Gruppen** – gib jeder Rolle ihre Gruppen, mindestens der
-   Rolle „Bestand“ (Archivverwaltung) ([Abschnitt 2](#2-rollen-und-gruppen)).
-   Vor dem Speichern listet die Seite, welche Gruppen eine Rolle bekommen
-   oder verlieren.
-3. **Zugriff auf den Archivordner** – teile den Ordner mit den Gruppen der
-   Rollen (Lesen genügt) und wähle **Zugriff prüfen**, bis niemand mehr
-   aufgeführt ist ([Den Archivordner teilen](#den-archivordner-teilen)).
-4. **Funktionen für euren Chor** – wähle unter **Was soll Cantoria für euren
-   Chor tun?**, wofür ihr die App nutzt: das Archiv ordnen, Konzerte planen,
-   Üben für den Chor oder öffentliche Seiten
+2. **Funktionen für euren Chor** – wähle im Abschnitt **Funktionen und
+   Module** unter **Was soll Cantoria für euren Chor tun?**, wofür ihr die App
+   nutzt: das Archiv ordnen, Konzerte planen, Üben für den Chor oder
+   öffentliche Seiten
    ([Was soll Cantoria für euren Chor tun?](#was-soll-cantoria-für-euren-chor-tun)).
    Erledigt ist der Schritt, sobald die Administration hier etwas gewählt
-   oder einen Schalter geändert hat.
+   oder einen Schalter geändert hat. Er steht vor den Rollen, weil er
+   entscheidet, welche Rollen eine Gruppe brauchen.
+3. **Rollen und Gruppen** – gib jeder Rolle ihre Gruppen
+   ([Abschnitt 2](#2-rollen-und-gruppen)). Der Schritt prüft die Rollen, die
+   die gewählten Funktionen brauchen: immer die Rolle „Bestand“
+   (Archivverwaltung), mit der Konzertmappe auch die Chorleitung und mit dem
+   Teilen mit Chormitgliedern auch die Rolle „Chormitglieder“; ohne Gruppe
+   dafür sieht niemand, was geteilt wird. Vor dem Speichern listet die Seite,
+   welche Gruppen eine Rolle bekommen oder verlieren.
+4. **Zugriff auf den Archivordner** – teile den Ordner mit den Gruppen der
+   Rollen (Lesen genügt) und wähle **Zugriff prüfen**, bis niemand mehr
+   aufgeführt ist ([Den Archivordner teilen](#den-archivordner-teilen)).
 5. **Werkverzeichnis importieren** – die Archivverwaltung, in der App:
    **Archivverwaltung → Werkverzeichnis importieren**, zuerst ein Probelauf
-   ([Abschnitt 4](#4-erster-import)).
+   ([Abschnitt 4](#4-erster-import)). Ein Chor ohne Verzeichnisdatei beginnt
+   stattdessen mit dem ersten **Neuzugang**.
 6. **Dateiabgleich** – die Archivverwaltung, in der App: **Archivverwaltung →
    Dateiabgleich starten**; er verknüpft die Dateien des Archivordners mit den
    Exemplaren.
@@ -137,7 +143,7 @@ ist ein Wechsel der Gruppenmitgliedschaft.
 4. Prüfe den Zugriff auf den Archivordner: Auch Konten, die neu eine Rolle
    haben, brauchen ihn ([Abschnitt 3](#prüfen-wer-den-archivordner-öffnen-kann)).
 
-![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/de/settings-roles.png)
+![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Stücke und Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/de/settings-roles.png)
 
 Die Seite **Verwaltungseinstellungen → Cantoria** enthält alle
 Einstellungen der App: Archivordner, Rollen und Gruppen, Zugriff auf den
@@ -154,7 +160,7 @@ sieht (**Ansicht anpassen**), bleibt in der App.
 | Chorleitung | Chorleitung und Vertretung | geltende Fassung festlegen; Tonart, Besetzung, Sprache, Dauer und Prüfung einer Übertragung; Rückfragen beantworten; Konzerte und Notenlisten planen |
 | Vorschläge (Werkzeuge) | Übertragungsrunden, Skripte | nur Änderungen vorschlagen, die die Archivverwaltung annimmt; Rückfragen stellen |
 | Lesen (Vorstand, Revision) | Vorstand, Revision | alles lesen, auch das Protokoll |
-| Chormitglieder (nur geteilte Ausschnitte) | die Chormitglieder | keine Archivrolle: nur die Seite „Mit mir geteilt“ mit den für Chormitglieder geteilten Ausschnitten, und nur, solange das Modul „Links für Chormitglieder“ eingeschaltet ist (siehe [Abschnitt 14](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)) |
+| Chormitglieder (nur geteilte Stücke und Ausschnitte) | die Chormitglieder | keine Archivrolle: nur die Seite „Mit mir geteilt“ mit den für Chormitglieder geteilten Stücken und Ausschnitten, und nur, solange das Modul „Links für Chormitglieder“ eingeschaltet ist (siehe [Abschnitt 14](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)) |
 
 Konzerte und Notenlisten planen die Chorleitung und die Rolle „Bestand“
 gemeinsam. Übe-Dateien erstellen die Rolle „Bestand“ und die Chorleitung;
@@ -228,7 +234,7 @@ Archivmappe.
    nicht öffnen können; teile ihn mit ihren Gruppen (siehe unten).
 3. **Archivordner speichern**.
 
-Es sollte ein Gruppenordner oder eine Freigabe sein, die alle Konten mit
+Es sollte ein Gruppenordner oder ein geteilter Ordner sein, den alle Konten mit
 einer Rolle in ihrer eigenen Nextcloud öffnen können. Die App liest Dateien über das
 Konto der Person, die sie benutzt; so sieht jede Person nur Dateien, die sie
 ohnehin sehen darf. Hintergrundjobs (wöchentliche Sicherung, Prüfsummen)
@@ -312,8 +318,10 @@ alle, die die Einstellungen ändern dürfen.
 
 Ein vorhandenes Werkverzeichnis wird aus einer CSV-Datei (UTF-8, durch
 Semikolons getrennt) mit den Spalten des ursprünglichen Werkverzeichnisses
-importiert. Lade sie zuerst in die Nextcloud hoch; eine Importdatei darf
-höchstens 20 MB groß sein.
+importiert ([Die Spalten der Werkverzeichnis-Datei](#die-spalten-der-werkverzeichnis-datei)).
+Lade sie zuerst in die Nextcloud hoch; eine Importdatei darf höchstens 20 MB
+groß sein. Ein Chor ohne Verzeichnisdatei überspringt den Import und beginnt
+mit dem ersten **Neuzugang**.
 
 1. **Archivverwaltung** (unten in der Navigation, für die Archivverwaltung)
    → **Werkverzeichnis importieren** → **CSV-Datei wählen …**. Die App macht
@@ -329,8 +337,8 @@ höchstens 20 MB groß sein.
    MusicXML, interne Erhaltungskopien, die Verteilung von Rechtestatus,
    Repertoire und Veröffentlichung sowie Warnungen.
 3. **Jetzt importieren**. Vor einem Import in ein Werkverzeichnis, das schon
-   Daten enthält, legt die App einen Stand des bisherigen Zustands in
-   `_cantoria-app` ab.
+   Daten enthält, legt die App einen Schnappschuss des bisherigen Zustands
+   in `_cantoria-app` ab.
 4. **Dateiabgleich** → **Dateiabgleich starten** verknüpft die Dateien des
    Archivordners mit den Exemplaren.
 
@@ -358,6 +366,56 @@ CSV-Datei fehlen, bleiben im Werkverzeichnis; nichts wird gelöscht.
 Um die App erst auszuprobieren, baut [tools/demo](../../tools/demo/README.md)
 (englisch) das erfundene Archiv eines ausgedachten Chors auf, mit einer
 Anleitung Schritt für Schritt.
+
+### Die Spalten der Werkverzeichnis-Datei
+
+**Archivverwaltung → Werkverzeichnis importieren** bietet eine Vorlage zum
+Herunterladen: **Vorlage (CSV)** im Format des Imports und **Vorlage (ODS)**
+für LibreOffice, Nextcloud Office oder Excel. Beide haben die Spalten unten
+und eine Beispielzeile; ersetze oder lösche die Beispielzeile vor dem
+Import. Die Spaltennamen sind deutsch, wie im Werkverzeichnis, aus dem das
+Format stammt, und in jeder Sprache der Oberfläche gleich.
+
+- Pflicht ist nur **Signatur**. Eine fehlende Spalte nennt der Bericht des
+  Probelaufs; unbekannte Spalten werden übergangen.
+- Die Datei ist CSV: UTF-8, durch Semikolons getrennt. In Excel: **Speichern
+  unter** → **CSV UTF-8 (durch Trennzeichen getrennt)**; ein deutsches Excel
+  trennt dabei mit Semikolon. In LibreOffice: **Speichern unter** →
+  **Text CSV**, Zeichensatz **UTF-8**, Feldtrenner `;`. Die ODS-Vorlage ist
+  zum Ausfüllen; für den Import speicherst du sie als CSV.
+- Werte sind Text. Ein Import bestätigt nie Rechte und legt nie eine
+  geltende Fassung fest, gleich was in den Spalten steht.
+
+| Spalte | Bedeutung | Beispiel |
+|---|---|---|
+| Mappe | Nummer der Mappe; aus der Signatur, wenn leer | `1` |
+| Nr | Nummer in der Mappe; aus der Signatur, wenn leer | `1` |
+| Signatur | Signatur des Exemplars, **Pflicht**; ein wiederholter Import ordnet Exemplare danach zu | `1-01` |
+| Titel | Titel des Werks | `Abendlied` |
+| Komponist | Komposition | `Josef Rheinberger` |
+| Bearbeiter/Text | Bearbeitung und Text der Fassung | `Text: Lukas 24,29` |
+| Anmerkung | Anmerkung zur Fassung | |
+| Rechte-Ersteinschätzung | Die erste Einschätzung der Rechte in Worten | `Komponist gestorben 1901` |
+| Rechtestatus | `gemeinfrei`, `geschützt` oder `offen`: eine Empfehlung, bis die Archivverwaltung ihn in der App bestätigt | `gemeinfrei` |
+| Rechte bestätigt | Ein Vermerk über eine frühere Bestätigung, als Text | |
+| Auf Singste seit | Seit wann die Fassung im Chorportal ist, als Text (der Name stammt aus dem ursprünglichen Werkverzeichnis) | |
+| Verlag / Bestellnummer | Verlag und Bestellnummer | |
+| Lizenz | Die Lizenz in Worten; Lizenzen mit ihren Nutzungen werden in der App erfasst | |
+| Erwerbsbeleg | Wo der Erwerbsbeleg liegt | |
+| Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Vermerke des ursprünglichen Werkverzeichnisses zum Exemplar: Fassungen, PDF-Dateien, Quelle des Titels, Seiten, Formate und Dateien der Scans | `4` (Seiten) |
+| MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | Die MusicXML-Datei, die geltende, ihr Datum, ihre Herkunft und ihre Prüfung, als Text | |
+| Veröffentlichung | Vermerk zur Veröffentlichung; einer, der mit `frei`, `gesperrt` oder `zu klären` beginnt, setzt den Veröffentlichungsstatus, `nein … Erhaltungskopie` kennzeichnet eine interne Erhaltungskopie | |
+| Veröffentlichung-Begründung | Begründung des Vermerks | |
+| Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Zahlen des ursprünglichen Werkverzeichnisses, als Text; Repertoire und „zuletzt gesungen“ leitet die App aus den Konzerten ab, die sie festhält | |
+
+Der vollständige Export (**Herunterladen (vollständig)**) hängt jedes weitere Feld
+als Spalte `Ebene.Feld` an, z. B. `version.key_signature`; er ist für eine
+Wiederherstellung gedacht und wird genauso gelesen.
+
+MusicXML aus einer Notenerkennung, etwa eine Partitur, die MuseScore aus
+einem PDF oder Foto erkannt hat, enthält meist falsche Noten. Halte ihre
+Herkunft in **MusicXML-Herkunft** fest und prüfe sie mit der Prüfung Punkt für
+Punkt und den Ständen (Benutzerhandbuch), bevor sie geteilt wird.
 
 ## 5. Sicherung und Wiederherstellung
 
@@ -585,8 +643,20 @@ eine Schwachstelle meldest.
 
 Auf Instanzen ohne Shell-Zugang geht alles über die Weboberfläche:
 Installation aus dem App Store, Einstellungen (Verwaltungseinstellungen →
-Cantoria), Importe und Wiederherstellung. Die `occ`-Befehle sind eine
-Erleichterung für selbst betriebene Instanzen:
+Cantoria), Importe und Wiederherstellung.
+
+- **Zuerst die Datenbank prüfen.** Die App läuft nur mit MySQL oder MariaDB;
+  auf PostgreSQL, SQLite oder Oracle verweigert Nextcloud die Installation.
+  Viele verwaltete Angebote nutzen PostgreSQL. **Verwaltungseinstellungen →
+  System** (die App *System*, `serverinfo`) zeigt die Datenbank, oder frag
+  den Anbieter, bevor ihr das Archiv um die App herum plant.
+- **MuseScore-Dateien** (`.mscz`) werden ihrem Exemplar zugeordnet, aber die
+  App zeigt sie nicht: Die Notenansicht liest MusicXML. Exportiere MusicXML
+  aus MuseScore für die Notenansicht. Um `.mscz`-Dateien in Nextcloud selbst
+  anzusehen, kann eine Viewer-App aus dem App Store wie *MusicSheet Viewer*
+  helfen, wenn der Anbieter sie anbietet; die App hängt nicht davon ab.
+
+Die `occ`-Befehle sind eine Erleichterung für selbst betriebene Instanzen:
 
 | Befehl | Macht |
 |---|---|
@@ -695,7 +765,7 @@ nicht barrierefrei ist und wie man ein Problem meldet, steht in der
 
 Nicht jeder Chor braucht jede Funktion. Alles außerhalb des Kerns ist ein
 **Modul**, das die Administration unter **Verwaltungseinstellungen →
-Cantoria → Module** ein- und ausschaltet (auch die Gruppen, denen die
+Cantoria → Funktionen und Module** ein- und ausschaltet (auch die Gruppen, denen die
 Einstellungsseite übertragen wurde). Der Kern ist immer eingeschaltet: das
 Werkverzeichnis (Werke, Fassungen, Exemplare, Felder, Suche, Status), die
 Startseite, der Dateiabgleich mit dem Archivordner, Rollen, das Protokoll,
@@ -753,9 +823,10 @@ Benachrichtigungen sind eingeklappt.
 Die Chormitglieder sehen nur Fassungen, die für das Chorportal freigegeben
 sind; auf einem Gerät behalten lässt sich ein Stück nur mit bestätigter
 Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck, und die
-Rolle „Chormitglieder“ braucht eine Gruppe. Öffentliche Seiten gehen nur
-mit bestätigter Gemeinfreiheit oder einer Lizenz für die
-Online-Veröffentlichung; trage vorher Impressum und Datenschutzerklärung
+Rolle „Chormitglieder“ braucht eine Gruppe (die Einrichtung prüft das).
+Öffentliche Seiten gehen nur mit bestätigter Gemeinfreiheit oder einer Lizenz
+für die Online-Veröffentlichung, und den Scan eines öffentlichen Links kann
+jede Person mit dem Link herunterladen; trage vorher Impressum und Datenschutzerklärung
 unter **Verwaltungseinstellungen → Design** ein.
 
 ### Voreinstellungen
@@ -767,7 +838,9 @@ unter **Verwaltungseinstellungen → Design** ein.
 | **Vollständig** | alles außer der Schnittstelle für Agenten, den Modulen zum Teilen und für das Üben ohne Netz, der Konzertmappe, dem Spiegelordner für die Druckstation und dem Übergabeordner für ein Chorsystem |
 
 Eine Voreinstellung setzt alle Schalter auf einmal; die Einstellungen fragen
-vorher nach und listen, was sich ändert.
+vorher nach und listen, was sich ändert. Die Voreinstellungen sind unter den
+Wahlen darüber eingeklappt: Sie setzen dieselben Schalter, aber keine schaltet
+das Teilen ein.
 
 **Neue Installationen** beginnen mit der Voreinstellung **Standard**. Sie ist
 für kleine Chöre mit einer ehrenamtlichen Archivverwaltung gedacht:
@@ -1048,9 +1121,9 @@ offline`):
   (dieselbe Regel wie für den Scan und den Übergabeordner): Eine Lizenz für
   das Chorportal allein deckt das Ansehen, keine Kopie auf dem Gerät.
 - **Ablauf und Widerruf.** Bei jedem Start mit Netz gleicht die Seite die
-  gespeicherten Stücke mit dem Server ab; abgelaufene, widerrufene und
+  Stücke auf dem Gerät mit dem Server ab; abgelaufene, widerrufene und
   nicht mehr erlaubte werden entfernt. Nach 30 Tagen ohne Abgleich sind die
-  gespeicherten Stücke gesperrt, und ein abgelaufener Link wird nie
+  Stücke auf dem Gerät gesperrt, und ein abgelaufener Link wird nie
   gezeigt, auch ohne Netz. Ein Stück, das vom Gerät kommt, zählt nicht als
   Aufruf des Links.
 - **Geräte.** Es braucht HTTPS und einen aktuellen Browser. Die Stücke
@@ -1105,7 +1178,7 @@ entfernt der nächste Besuch alles.
 | Ein öffentlicher Scan zeigt „nicht gefunden“ | Dieselben Gründe wie bei der Seite, oder die PDF-Datei liegt nicht mehr im Archivordner; verknüpfe den Scan erneut und erstelle einen neuen Link. |
 | Ein öffentlicher Link zeigt „nicht gefunden“ | Er ist abgelaufen, wurde widerrufen, die Fassung ist nicht mehr freigegeben, oder das Modul ist ausgeschaltet; die Seite sagt nicht, was davon. Erstelle bei Bedarf einen neuen Link. |
 | **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke speichern (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
-| Gespeicherte Stücke sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und speichere die Stücke erneut. |
+| Stücke, die ohne Netz verfügbar waren, sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und mach die Stücke erneut ohne Netz verfügbar. |
 
 ## 15. Mappenbuch: Löschfrist
 
@@ -1180,7 +1253,7 @@ So richtest du es ein:
    Zielordner Dateien anlegen, ändern und löschen können.
 3. **Einstellungen → Druckstation: Spiegelordner → Ordner wählen …**. Die
    App prüft den Ordner sofort: nicht der Archivordner, nicht darin (auch
-   nicht über Freigaben), Schreibrecht. Dann **Zielordner speichern**.
+   nicht über geteilte Ordner), Schreibrecht. Dann **Zielordner speichern**.
 4. Sieh dir die Vorschau an und starte den ersten Abgleich (in den
    Einstellungen oder in der Liste **Druckstation**). Der tägliche Abgleich
    beginnt erst nach diesem ersten Abgleich von Hand.

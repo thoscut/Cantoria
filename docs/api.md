@@ -19,7 +19,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 |---|---|
 | `POST /api/import`, `POST /api/persons/import`, `POST /api/performances/import` | 30 in 10 minutes |
 | `POST /api/file-sync` | 10 in 10 minutes |
-| `GET /api/export` | 30 in 10 minutes |
+| `GET /api/export`, `GET /api/import/template` | 30 in 10 minutes |
 | `POST /api/export/store`, `POST /api/backup` | 10 in 10 minutes |
 | `GET /api/backup/full` | 10 in 10 minutes |
 | `POST /api/backup/restore` | 5 in 10 minutes |
@@ -269,6 +269,12 @@ the catalog. Paths are relative to the archive folder without a leading slash.
 exactly as stored (also cells starting with `=`, `+`, `-` or `@`), because it
 must survive an import followed by an export byte for byte; see SECURITY.md.
 
+`GET /api/import/template?format=csv|ods` downloads the import template
+(role `librarian`, otherwise 403): the columns of the legacy catalog format in
+their order and one invented example row, as CSV in the format of the import
+or as ODS. It holds no data of the catalog. The columns are described in the
+administration guide ("The columns of the catalog file").
+
 Performance imports (`.xlsx`) are refused with 400
 `The Excel workbook is too large to import.` above 10,000 archive entries,
 16 MB unpacked per part, 48 MB unpacked in total, column XFD or one million
@@ -316,6 +322,8 @@ config API (`getAuthorizedAppConfig()` is empty).
   "repertoire": { "current": 3, "dormant": 10 },
   "catalog": { "copies": 23, "files": 30 },
   "modulesChosen": true,
+  "concertFolder": true,
+  "memberLinks": false,
   "admin": true,
   "catalogEmpty": false }
 ```
@@ -330,6 +338,9 @@ check, the page derives the setup steps from it (nothing of it is stored).
 `modulesChosen` (milestone 0.19): the modules were changed once from the
 settings or the command line (a scenario, a preset or a switch; app config
 `modules_chosen`), the step "Functions for your choir" of the setup.
+`concertFolder` and `memberLinks` tell whether these modules are active: then
+the step "Roles and groups" also needs a group for the role `conductor` or
+`member`.
 `admin` tells whether the caller is an admin; only then does the page offer
 the complete backup and restore, and only then is `catalogEmpty` (whether a
 restore is possible: every table of the app is empty) a boolean, otherwise

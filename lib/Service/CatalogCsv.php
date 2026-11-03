@@ -65,6 +65,23 @@ final class CatalogCsv {
 		'Notenliste' => [Fields::WORK, 'song_lists_import'],
 	];
 
+	/**
+	 * The example row of the import template (template()): an invented copy
+	 * of a public domain work, header => value. Every other column stays empty.
+	 */
+	public const TEMPLATE_EXAMPLE = [
+		'Mappe' => '1',
+		'Nr' => '1',
+		'Signatur' => '1-01',
+		'Titel' => 'Abendlied',
+		'Komponist' => 'Josef Rheinberger',
+		'Bearbeiter/Text' => 'Text: Lukas 24,29',
+		'Anmerkung' => 'Beispielzeile: vor dem Import ersetzen oder löschen',
+		'Rechte-Ersteinschätzung' => 'Komponist gestorben 1901',
+		'Rechtestatus' => 'gemeinfrei',
+		'Seiten' => '4',
+	];
+
 	/** Legacy values of the rights status column => choice key */
 	public const LEGACY_RIGHTS_STATUS = [
 		'gemeinfrei' => 'public_domain',
@@ -95,6 +112,22 @@ final class CatalogCsv {
 			}
 		}
 		return $columns;
+	}
+
+	/**
+	 * The import template: the columns of the catalog in their order and one
+	 * example row (TEMPLATE_EXAMPLE), for a catalog kept in another program
+	 * so far. An import needs only the column "Signatur"; missing columns are
+	 * named in the report of the dry run.
+	 *
+	 * @return array{header: list<string>, rows: list<list<string>>}
+	 */
+	public static function template(): array {
+		$header = array_keys(self::LEGACY_COLUMNS);
+		return [
+			'header' => $header,
+			'rows' => [array_map(fn (string $column): string => self::TEMPLATE_EXAMPLE[$column] ?? '', $header)],
+		];
 	}
 
 	public static function isLegacyColumn(string $header): bool {

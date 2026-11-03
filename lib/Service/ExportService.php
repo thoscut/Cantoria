@@ -84,6 +84,20 @@ class ExportService {
 	}
 
 	/**
+	 * The import template (CatalogCsv::template()) as CSV in the format of
+	 * the import (UTF-8 with BOM, `;`) or as ODS for LibreOffice and Excel.
+	 *
+	 * @param string $format 'csv' or 'ods'
+	 */
+	public function importTemplate(string $format): string {
+		['header' => $header, 'rows' => $rows] = CatalogCsv::template();
+		if ($format === 'ods') {
+			return $this->odsWriter->write([['name' => 'Catalog', 'rows' => array_merge([$header], $rows)]]);
+		}
+		return CatalogCsv::write($header, $rows);
+	}
+
+	/**
 	 * Stores the full backup (extended CSV, ODS with the audit log and the
 	 * complete JSON backup) in the backup folder, outside the archive folder
 	 * (AppSettings::backupFolder()). Of the weekly backups the newest

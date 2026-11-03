@@ -37,21 +37,27 @@ it is done.
 1. **Archive folder** – choose the folder with the score files
    ([section 3](#3-archive-folder)). Right after choosing, before you save,
    the page shows which accounts of the role groups cannot open it.
-2. **Roles and groups** – give each role its groups, at least the catalog
-   role (music librarians) ([section 2](#2-roles-and-groups)). Before you
-   save, the page lists which groups get or lose a role.
-3. **Access to the archive folder** – share the folder with the groups of the
-   roles (reading is enough) and **Check access** until nobody is listed
-   ([Sharing the archive folder](#sharing-the-archive-folder)).
-4. **Functions for your choir** – under **What should Cantoria do for your
-   choir?**, choose what you use the app for: keeping the archive in order,
-   planning concerts, practising for the singers or public pages
+2. **Functions for your choir** – under **What should Cantoria do for your
+   choir?** in the section **Functions and modules**, choose what you use the
+   app for: keeping the archive in order, planning concerts, practising for
+   the singers or public pages
    ([What should Cantoria do for your choir?](#what-should-cantoria-do-for-your-choir)).
    The step is done once the administration has chosen something here or
-   changed a switch.
+   changed a switch. It comes before the roles, because it decides which
+   roles need a group.
+3. **Roles and groups** – give each role its groups
+   ([section 2](#2-roles-and-groups)). The step checks the roles the chosen
+   functions need: always the catalog role (music librarians), with the
+   concert folder also the conductor, and with the sharing with choir members
+   also the role "Choir members"; without a group for it nobody sees what is
+   shared. Before you save, the page lists which groups get or lose a role.
+4. **Access to the archive folder** – share the folder with the groups of the
+   roles (reading is enough) and **Check access** until nobody is listed
+   ([Sharing the archive folder](#sharing-the-archive-folder)).
 5. **Import the catalog** – a music librarian, in the app: **Archive
    management → Import catalog**, a dry run first
-   ([section 4](#4-first-import)).
+   ([section 4](#4-first-import)). A choir without a catalog file starts with
+   the first **New accession** instead.
 6. **File sync** – a music librarian, in the app: **Archive management →
    Run file sync**; it links the files of the archive folder to the copies.
 
@@ -139,7 +145,7 @@ repertoire and, for admins, the complete backup and restore
 | Conductor – *Chorleitung* | conductor and deputy | choose the valid version; key, scoring, language, duration and review of a transcription; answer questions; plan concerts and song lists |
 | Proposals (tools) – *Vorschläge (Werkzeuge)* | transcription rounds, scripts | only propose changes, which a music librarian accepts; ask questions |
 | Read only (board, auditors) – *Lesen (Vorstand, Revision)* | board, auditors | read everything including the audit log |
-| Choir members (shared excerpts only) – *Chormitglieder (nur geteilte Ausschnitte)* | the singers | no archive role: only the page "Shared with me" with the excerpts shared with choir members, and only while the module "Links for choir members" is on (see [section 14](#14-sharing-with-choir-members-and-the-public)) |
+| Choir members (shared pieces and excerpts only) – *Chormitglieder (nur geteilte Stücke und Ausschnitte)* | the singers | no archive role: only the page "Shared with me" with the pieces and excerpts shared with choir members, and only while the module "Links for choir members" is on (see [section 14](#14-sharing-with-choir-members-and-the-public)) |
 
 Concerts and song lists are planned by the conductor and the catalog role
 together. Practice files are made by the catalog role and the conductor; only
@@ -285,8 +291,11 @@ for everybody who may change the settings.
 ## 4. First import
 
 An existing catalog is imported from a CSV file (UTF-8, separated by
-semicolons) with the columns of the original catalog. Upload it to
-Nextcloud first; an import file may be at most 20 MB.
+semicolons) with the columns of the original catalog
+([The columns of the catalog file](#the-columns-of-the-catalog-file)).
+Upload it to Nextcloud first; an import file may be at most 20 MB. A choir
+without a catalog file can skip the import and start with the first **New
+accession**.
 
 1. **Archive management** (bottom of the navigation, music librarians) →
    **Import catalog** → **Choose CSV file …**. The app runs a **dry run**
@@ -327,6 +336,56 @@ Copies missing from the CSV stay in the catalog; nothing is deleted.
 
 To try the app first, [tools/demo](../tools/demo/README.md) builds the
 invented archive of a fictitious choir with step-by-step instructions.
+
+### The columns of the catalog file
+
+**Archive management → Import catalog** offers a template to download:
+**Template (CSV)** in the format of the import and **Template (ODS)** for
+LibreOffice, Nextcloud Office or Excel. Both have the columns below and one
+example row; replace or delete the example row before the import. The
+column names are German, as in the catalog the format comes from; they are
+the same in every language of the interface.
+
+- Only **Signatur** is required. A missing column is named in the report of
+  the dry run; unknown columns are ignored.
+- The file is CSV: UTF-8, separated by semicolons. In Excel: **Save as** →
+  **CSV UTF-8 (comma delimited)**; Excel uses the semicolon where the
+  system's list separator is one, as in German. In LibreOffice: **Save as**
+  → **Text CSV**, character set **UTF-8**, field delimiter `;`. The ODS
+  template is for filling in; save it as CSV for the import.
+- Values are text. An import never confirms rights and never chooses a valid
+  version, whatever the columns say.
+
+| Column | Meaning | Example |
+|---|---|---|
+| Mappe | Number of the binder; taken from the shelf mark if empty | `1` |
+| Nr | Number in the binder; taken from the shelf mark if empty | `1` |
+| Signatur | Shelf mark of the copy, **required**; a repeated import matches copies by it | `1-01` |
+| Titel | Title of the work | `Abendlied` |
+| Komponist | Composer | `Josef Rheinberger` |
+| Bearbeiter/Text | Arranger and lyricist of the version | `Text: Lukas 24,29` |
+| Anmerkung | Notes on the version | |
+| Rechte-Ersteinschätzung | The first assessment of the rights in words | `Komponist gestorben 1901` |
+| Rechtestatus | `gemeinfrei`, `geschützt` or `offen`: a recommendation until a music librarian confirms it in the app | `gemeinfrei` |
+| Rechte bestätigt | A note on an earlier confirmation, kept as text | |
+| Auf Singste seit | Since when the version is in the singers' portal, as text (the name comes from the original catalog) | |
+| Verlag / Bestellnummer | Publisher and order number | |
+| Lizenz | The license in words; licenses with their uses are recorded in the app | |
+| Erwerbsbeleg | Where the proof of purchase is | |
+| Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Notes of the original catalog on the copy: versions, PDF files, source of the title, pages, formats and files of the scans | `4` (Seiten) |
+| MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | The MusicXML file, the valid one, its date, its origin and its review, as text | |
+| Veröffentlichung | Publication note; one starting with `frei`, `gesperrt` or `zu klären` sets the publication status, `nein … Erhaltungskopie` marks an internal preservation copy | |
+| Veröffentlichung-Begründung | Reasoning of the publication note | |
+| Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Figures of the original catalog, kept as text; the app derives repertoire and "last sung" from the concerts it documents | |
+
+The complete export (**Download (complete)**) adds every other field as a
+column `level.field`, e.g. `version.key_signature`; it is meant for a
+restore and is read the same way.
+
+MusicXML that a notation scanner produced, for example a score MuseScore
+recognised from a PDF or a photo, usually has wrong notes. Record its origin
+in **MusicXML-Herkunft**, and check it with the review point by point and the
+revisions (user guide) before it is shared.
 
 ## 5. Backups and restore
 
@@ -531,8 +590,20 @@ vulnerability.
 
 On instances without shell access everything is done in the web interface:
 installation from the App Store, settings (Administration → Cantoria),
-imports and restore. The `occ`
-commands are a convenience for self-hosted instances:
+imports and restore.
+
+- **Check the database first.** The app runs only on MySQL or MariaDB;
+  Nextcloud refuses to install it on PostgreSQL, SQLite or Oracle. Many
+  managed offers use PostgreSQL. **Administration → System** (the app
+  *System*, `serverinfo`) shows the database, or ask the provider before you
+  plan the archive around the app.
+- **MuseScore files** (`.mscz`) are linked to their copy, but the app does
+  not show them: the score viewer reads MusicXML. Export MusicXML from
+  MuseScore for the score viewer. To look at `.mscz` files in Nextcloud
+  itself, a viewer app from the App Store such as *MusicSheet Viewer* can
+  help, if your provider offers it; the app does not depend on it.
+
+The `occ` commands are a convenience for self-hosted instances:
 
 | Command | Does |
 |---|---|
@@ -633,7 +704,7 @@ problem, is in the [accessibility statement](accessibility.md).
 
 Not every choir needs every function. Everything outside the core is a
 **module** that admins switch on and off under **Administration →
-Cantoria → Modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
+Cantoria → Functions and modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
 fields, search, status), the start page, the file sync with the archive
 folder, roles, the audit log, CSV import and export, backup and restore, and
 the settings.
@@ -684,9 +755,10 @@ switches below can be changed at any time; the notifications are folded.
 
 Choir members see only versions released for the singers' portal; a piece
 can be kept on a device only with confirmed public domain or a license for
-download or self-printing, and the role "Choir members" needs a group.
-Public pages need confirmed public domain or a license for online
-publication; enter the imprint and the privacy policy under
+download or self-printing, and the role "Choir members" needs a group (the
+setup checks it). Public pages need confirmed public domain or a license for
+online publication, and everyone with a public link can download the scan it
+offers; enter the imprint and the privacy policy under
 **Administration → Theming** first.
 
 ### Presets
@@ -698,7 +770,8 @@ publication; enter the imprint and the privacy policy under
 | **Complete** | everything except the interface for agents, the modules for sharing and for practising without a network, the concert folder, the mirror folder for the print station and the hand-over folder for a choir system |
 
 A preset sets every switch at once; the settings ask first and list what
-changes.
+changes. The presets are folded under the choices above: they set the same
+switches, but none of them switches on sharing.
 
 **New installations** start with the preset **Standard**. It is chosen for
 small choirs with one volunteer music librarian: catalog, rights, scores,

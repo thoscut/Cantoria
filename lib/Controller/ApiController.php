@@ -215,6 +215,27 @@ class ApiController extends Controller {
 		return $response;
 	}
 
+	/**
+	 * The import template: the catalog columns with one example row, as CSV
+	 * or ODS. Plain download link, therefore without CSRF token. Read-only;
+	 * for the catalog role, which imports.
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[UserRateLimit(limit: 30, period: 600)]
+	#[FrontpageRoute(verb: 'GET', url: '/api/import/template')]
+	public function importTemplate(string $format = 'csv'): Response {
+		if ($this->userId === null || !$this->roles->hasAnyRole($this->userId, [Roles::LIBRARIAN])) {
+			return new JSONResponse(['error' => $this->l->t('This requires one of these roles: %s', [$this->l->t(Roles::LABELS[Roles::LIBRARIAN])])], Http::STATUS_FORBIDDEN);
+		}
+		$ods = $format === 'ods';
+		$response = new DataDownloadResponse($this->export->importTemplate($ods ? 'ods' : 'csv'),
+			'cantoria_import_template.' . ($ods ? 'ods' : 'csv'),
+			$ods ? 'application/vnd.oasis.opendocument.spreadsheet' : 'text/csv; charset=utf-8');
+		$response->addHeader('X-Content-Type-Options', 'nosniff');
+		return $response;
+	}
+
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 10, period: 600)]
 	#[FrontpageRoute(verb: 'POST', url: '/api/export/store')]

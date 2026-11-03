@@ -28,11 +28,13 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import BackupRestore from './BackupRestore.vue'
+import GuideLink from './GuideLink.vue'
 import FileSyncReportView from './FileSyncReport.vue'
 import ImportReport from './ImportReport.vue'
 import PerformanceImport from './PerformanceImport.vue'
 import PersonImport from './PersonImport.vue'
-import { adminSettingsUrl, errorMessage, exportUrl, fetchFileSyncStatus, runFileSync, runImport, storeBackup, storeExport } from '../api.ts'
+import { adminSettingsUrl, errorMessage, exportUrl, fetchFileSyncStatus, importTemplateUrl, runFileSync, runImport, storeBackup, storeExport } from '../api.ts'
+import { ADMIN_GUIDE, adminGuideUrl } from '../docs.ts'
 import { formatDateTime } from '../format.ts'
 import { focusAfterDialog, focusAfterUpdate } from '../focus.ts'
 import { showError } from '../toasts.ts'
@@ -254,6 +256,24 @@ function onUpdateOpen(open: boolean): void {
 			<p>
 				{{ t('cantoria', 'Imports the catalog from a CSV file in your Nextcloud. First a dry run shows what would change; only then you decide. Copies are matched by shelf mark, nothing is deleted, and before every import a snapshot of the current state is saved. The import can be repeated.') }}
 			</p>
+			<p>
+				{{ t('cantoria', 'Kept the catalog in another program so far? Fill in the template, one row per copy; only "Signatur" (shelf mark) is required. In Excel: Save as → CSV UTF-8.') }}
+				<GuideLink :href="adminGuideUrl(ADMIN_GUIDE.importColumns)" :label="t('cantoria', 'The columns of the import (administration guide)')" />
+			</p>
+			<div class="archive-management__actions">
+				<NcButton :href="importTemplateUrl('csv')" download variant="secondary">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiDownload" />
+					</template>
+					{{ t('cantoria', 'Template (CSV)') }}
+				</NcButton>
+				<NcButton :href="importTemplateUrl('ods')" download variant="secondary">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiDownload" />
+					</template>
+					{{ t('cantoria', 'Template (ODS)') }}
+				</NcButton>
+			</div>
 
 			<div class="archive-management__actions">
 				<NcButton ref="importButton" :disabled="importBusy" @click="chooseCsv">
