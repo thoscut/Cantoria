@@ -97,6 +97,8 @@ class PublicLinkController extends Controller {
 		$response->addHeader('X-Robots-Tag', 'noindex, nofollow');
 		// The service worker keeps this page on the device only when the visitor asks for it (milestone 0.15)
 		$response->addHeader('X-Cantoria-Page', 'public');
+		// the page is the piece: it stays on the device only while the server says so (S N5)
+		$response->addHeader(OfflineController::KEEP_HEADER, $excerpt['offline'] ? '1' : '0');
 		$response->cacheFor(0, false, false);
 		return $response;
 	}
@@ -128,6 +130,7 @@ class PublicLinkController extends Controller {
 		}
 		$response = ScanResponse::inline($scan);
 		$response->addHeader('X-Robots-Tag', 'noindex, nofollow');
+		$response->addHeader(OfflineController::KEEP_HEADER, $this->shared->publicMayKeep($token) ? '1' : '0');
 		return $response;
 	}
 

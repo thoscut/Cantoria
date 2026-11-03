@@ -40,7 +40,7 @@ use OCP\Files\File;
  *
  * @psalm-type FolderItem = array{id: int, position: int, title: string, composer: string, shelfmark: ?string,
  *     participation: ?string, note: ?string, encore: bool, duration: ?int, score: bool, scan: bool, scanSize: ?int, canPlay: bool,
- *     reason: ?string, offline: bool, offlineReason: ?string, practiceKey: ?string}
+ *     reason: ?string, offline: bool, offlineReason: ?string, print: bool, practiceKey: ?string}
  * @psalm-type FolderConcert = array{id: int, kind: string, title: string, date: ?string, startTime: ?string,
  *     location: ?string, status: string, items: list<FolderItem>}
  */
@@ -138,6 +138,25 @@ class ConcertFolderService {
 	}
 
 	/**
+	 * Whether the notes and the scan of an item may stay on the device
+	 * (header X-Cantoria-Keep, which the service worker follows; S N5): the
+	 * module "offline" and the rights for a copy, checked again with every
+	 * answer.
+	 */
+	public function mayKeep(int $itemId, string $uid): bool {
+		if (!$this->offlineOn()) {
+			return false;
+		}
+		try {
+			$copy = $this->open($itemId, $uid);
+			$version = $this->versions->find($copy->getVersionId());
+		} catch (UserFacingException|DoesNotExistException) {
+			return false;
+		}
+		return $this->keepDenial($version, $uid, $copy) === null;
+	}
+
+	/**
 	 * Whether pieces can be kept on a device at all: the module "offline"
 	 * (milestone 0.19). Without it the folder keeps nothing, as an
 	 * administration that switches it off expects.
@@ -198,6 +217,8 @@ class ConcertFolderService {
 			'reason' => $viewDenial ?? ($score ? $playDenial : null),
 			'offline' => $offline && $keepDenial === null,
 			'offlineReason' => $offline ? $keepDenial : null,
+			// printing the notes is a copy, too (B21): the same rights as a copy on the device
+			'print' => $version !== null && ($score || $scan) && $keepDenial === null,
 			'practiceKey' => $version === null ? null : SharedLinkService::practiceKey($version),
 		];
 	}

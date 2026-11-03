@@ -1404,7 +1404,7 @@ other check of the app. The routes and their modules:
 | `member_practice_audio` | `POST /api/member/links/{token}/practice-audio` (and `member_links`) |
 | `public_links` | `GET /p/{token}` (the 404 page of the public pages instead of the JSON message); `POST /api/copies/{id}/links` with `circle: "public"` |
 | `public_repertoire` | `GET /repertoire` (the 404 page of the public pages); setting `work.public_repertoire` to `true` |
-| `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` and `concert_folder` are both off |
+| `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` is off (the concert folder keeps nothing without it) |
 | `concert_folder` | `GET /concert-folder` (the page), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
 | `files_integration` | `GET /api/nextcloud-files/{fileId}/copy` (and the script of the Files app is not loaded) |
 | `tasks` | `GET /api/tasks`, `POST /api/copies/{id}/tasks`, `POST /api/tasks/{id}/answer`, `…/close` |
@@ -2287,9 +2287,17 @@ pieces: "Shared with me", the concert folder and the page of a public link
 'self'`), built into `js/cantoria-offline-worker.js` and registered with
 the app's path as scope. The browser fetches it itself, also on a public
 page, so the route skips login and the CSRF check (`#[PublicPage]`, core:
-always on); it contains no data. With the modules `offline` and
-`concert_folder` both off it is a worker that deletes the caches of the app
-(`cantoria-…`) and unregisters itself. Each page keeps its pieces in a
+always on); it contains no data. With the module `offline` off (also while
+`concert_folder` is on) it is a worker that deletes the caches of the app
+(`cantoria-…`) and unregisters itself. The build lists the scripts and
+styles of the three pages from Vite's manifest; while a page keeps pieces, a
+new worker loads them into `cantoria-shell-<version>` before it takes over,
+so that a new version of the app opens without a network. A score, a scan
+or the page of a public link stays on the device only when the answer
+carries `X-Cantoria-Keep: 1` (`GET /api/member/links/{token}/score`,
+`…/scan`, `GET /api/concert-folder/items/{id}/score`, `…/scan`,
+`GET /p/{token}` and `GET /p/{token}/scan`, from the same check as
+`offline` in their lists); with `0` the piece is removed from the device. Each page keeps its pieces in a
 cache of its own (`cantoria-offline`, `cantoria-folder`,
 `cantoria-public`, with a list `…-catalog.json`) and the scripts in
 `cantoria-shell-<version>`; a page whose module is off removes its cache,
