@@ -237,7 +237,7 @@ try {
 	$wholeLink = $links->create($public->getId(), ['circle' => 'members', 'voice' => 'Alto', 'scan_file_id' => $scanId], $uid);
 	$check('a link without measures shares the whole piece, with the scan', $wholeLink->getMeasureFrom() === null
 		&& $wholeLink->getMeasureTo() === null && $wholeLink->getScanFileId() === $scanId);
-	$wholeXml = $shared->memberScore($wholeLink->issuedToken(), $memberUid);
+	$wholeXml = $shared->memberScore($wholeLink->issuedToken(), $memberUid)['xml'];
 	$check('the server sends every measure of the whole piece', $wholePiece !== [] && $measures($wholeXml) === $wholePiece, implode(',', $measures($wholeXml)));
 	$check('with the repeats of the score (the full playing order)', str_contains($wholeXml, 'direction="backward"') === $sourceRepeats);
 	$wholeEntry = array_values(array_filter($shared->forMember($memberUid), fn (array $row): bool => $row['token'] === $wholeLink->issuedToken()))[0] ?? [];
@@ -274,7 +274,7 @@ try {
 	$check('a non-member sees nothing', $throws(fn () => $shared->forMember($uid)) !== null);
 
 	$hitsBefore = $linkMapper->findByToken($link->issuedToken())->getHits();
-	$xml = $shared->memberScore($link->issuedToken(), $memberUid);
+	$xml = $shared->memberScore($link->issuedToken(), $memberUid)['xml'];
 	$check('the server sends only the measures of the excerpt', $measures($xml) === ['2', '3', '4'], implode(',', $measures($xml)));
 	$check('with its attributes', str_contains($xml, '<divisions>') && str_contains($xml, '<clef'));
 	$check('the call is counted', $linkMapper->findByToken($link->issuedToken())->getHits() === $hitsBefore + 1);
@@ -315,7 +315,7 @@ try {
 	$check('the public excerpt has only the measures', $excerpt !== null && $measures($excerpt['xml']) === ['9', '10', '11', '12']);
 	$check('and nothing internal', $excerpt !== null && array_keys($excerpt) === ['title', 'composer', 'measureFrom', 'measureTo', 'voice', 'verse',
 		'tempo', 'canPlay', 'scan', 'scanSize', 'practiceKey', 'expires',
-		'offline', 'print', 'served', 'xml', 'credits', 'notices']);
+		'offline', 'offlineModule', 'print', 'served', 'xml', 'credits', 'notices']);
 
 	$publicWhole = $links->create($public->getId(), ['circle' => 'public', 'voice' => 'Alto', 'scan_file_id' => $scanId], $uid);
 	$wholeExcerpt = $shared->publicExcerpt($publicWhole->issuedToken());
