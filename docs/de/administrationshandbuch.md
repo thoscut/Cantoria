@@ -718,7 +718,8 @@ Was die App über Menschen speichert:
   Ausschnitt-Links zählen Aufrufe, ohne festzuhalten, wer sie geöffnet hat.
 - **Auf den Geräten.** Übe-Einstellungen und Stücke, die „ohne Netz
   verfügbar“ sind, liegen nur im Browser des Geräts (`localStorage`, Cache
-  Storage); Mikrofon und Aufnahmen bleiben im Browser. Der
+  Storage; IndexedDB hält für geteilte Geräte einen Hash des Kontos);
+  Mikrofon und Aufnahmen bleiben im Browser. Der
   [rechtliche Hintergrund](rechtlicher-hintergrund.md#mikrofon-aufnahmen-und-speicher-im-browser)
   erklärt § 25 TDDDG.
 - **Berichte und Prüfpunkte.** Berichte von Übertragungen werden so
@@ -1176,10 +1177,22 @@ offline`):
   eigene Anmeldung, getrennt von Safari, und Safari kann Gespeichertes nach
   einigen Tagen ohne Nutzung löschen. Die Seite sagt das vor dem ersten
   Stück. Bei jedem Start mit Netz legt die Seite ihre Skripte neu ab, damit
-  sie nach einem Update der App auch ohne Netz öffnet. Auf einem
-  geteilten Gerät löschen Chormitglieder alles mit **Alles auf diesem Gerät
-  löschen**; das Abmelden bei Nextcloud löscht es nicht. Öffnet ein anderes
-  Konto die Seite im selben Browser, werden die Stücke des vorigen entfernt.
+  sie nach einem Update der App auch ohne Netz öffnet.
+- **Geteilte Geräte.** Chormitglieder löschen alles mit **Alles auf diesem
+  Gerät löschen** am Ende der Seite oder, solange Stücke auf dem Gerät
+  sind, mit **Von diesem Gerät entfernen** oben auf der Seite. Das Abmelden
+  bei Nextcloud löscht die Stücke meist auch: Nextcloud bittet Firefox,
+  Safari und Edge, den Speicher des Servers sofort zu löschen (Header
+  `Clear-Site-Data`, nur wenn Nextcloud HTTPS sieht; hinter einem Proxy
+  `overwriteprotocol` setzen). Chrome und den Browsern auf Android schickt
+  es den Header nicht; dort löscht seine Anmeldeseite nur Stellen und
+  Einstellungen, und Cantoria entfernt die Stücke beim nächsten Öffnen
+  einer seiner Seiten auf diesem Gerät, auch ohne Netz. Öffnet ein anderes
+  Konto eine Seite von Cantoria im selben Browser, werden Stücke, Stellen
+  und Einstellungen des vorigen entfernt. Nicht abgedeckt: ein Abmelden,
+  das nicht auf der Anmeldeseite von Nextcloud endet (manche Anmeldungen
+  über einen fremden Dienst), und eine Sitzung, die ohne Abmelden endet;
+  Einzelheiten in [SECURITY.md](../../SECURITY.md) (englisch).
 - **Öffentliche Links.** Wo die Gemeinfreiheit der Fassung bestätigt ist,
   bietet auch die Seite eines öffentlichen Links **Ohne Netz verfügbar**. Besucher haben kein Konto, deshalb wird je Browser
   gespeichert; jeder Besuch mit Netz ist der Abgleich, und ein widerrufener
@@ -1205,9 +1218,10 @@ oder eine Lizenz für Download oder Selbstausdruck (§ 53 Abs. 4 UrhG; eine
 Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen). Sie
 nutzt denselben Service Worker mit einem eigenen Speicher, denselben
 Abgleich bei jedem Start mit Netz und dieselbe Sperre nach 30 Tagen. Die
-Mappe liest nur. Ein anderes Konto im selben Browser oder ein Besuch ohne
-die Rolle entfernt, was gespeichert war; ist **Üben ohne Netz** aus,
-entfernt der nächste Besuch alles.
+Mappe liest nur. Ein anderes Konto im selben Browser, ein Besuch ohne die
+Rolle oder das Abmelden (wie bei Chormitgliedern, oben) entfernt, was auf
+dem Gerät war; ist **Üben ohne Netz** aus, entfernt der nächste Besuch
+alles.
 
 **Häufige Probleme:**
 

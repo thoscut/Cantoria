@@ -1962,8 +1962,13 @@ Es geht im Browser.
    sind und wie viel Platz sie belegen. Cantoria legt sie in diesem Browser
    auf diesem Gerät ab; ein anderer Browser sieht sie nicht. **Alles auf
    diesem Gerät löschen** entfernt die Stücke, Stellen und Einstellungen;
-   tu das auf einem geteilten Gerät. Das Abmelden bei Nextcloud löscht sie
-   nicht.
+   tu das auf einem geteilten Gerät. Solange Stücke auf dem Gerät sind,
+   führt **Von diesem Gerät entfernen** oben auf der Seite dorthin. Das
+   Abmelden bei Nextcloud löscht sie meist auch: in Firefox, Safari und
+   Edge sofort, in Chrome und auf Android beim nächsten Öffnen einer Seite
+   von Cantoria auf diesem Gerät, auch ohne Netz. Bis dahin bleiben sie im
+   Browser; und nach einer Sitzung, die ohne Abmelden endet, sieht sie ohne
+   Netz, wer das Gerät danach benutzt.
 
 Klappt etwas nicht, steht der Grund direkt unter dem Schalter, zum Beispiel
 „Keine Verbindung“ oder „Auf diesem Gerät ist nicht genug Platz“. **Scan

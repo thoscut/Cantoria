@@ -17,7 +17,10 @@
  * X-Cantoria-Keep, S N5); an answer without it removes the piece from the
  * device. An expired, revoked or locked piece is never answered from the
  * device. It never caches requests that change something, the APIs of
- * Nextcloud, or the pages of the archive.
+ * Nextcloud, or the pages of the archive. The pieces of an account kept
+ * before someone signed out, or before another account used the app in
+ * this browser, it removes before it answers anything of them (S N6,
+ * marker.ts).
  * After an update of the app the new worker first loads the scripts of the
  * new version (the list of the build, A1), and only then takes over and
  * drops the scripts of the old one: when the network fails in between, the
@@ -27,7 +30,8 @@
  */
 import type { Collection, CollectionName } from './rules.ts'
 
-import { CACHE_PREFIX, COLLECTIONS, mayStay, pageCollection, parseCatalog, pieceAddresses, requestKind, SHELL_PREFIX, usable } from './rules.ts'
+import { rememberedAccount } from './marker.ts'
+import { CACHE_PREFIX, COLLECTIONS, mayStay, pageCollection, parseCatalog, pieceAddresses, requestKind, SHELL_PREFIX, staleCatalog, usable } from './rules.ts'
 
 declare const self: ServiceWorkerGlobalScope
 /** The scripts and styles of the pages that keep pieces, relative to the app's path; from the build (vite.config.ts) */
@@ -144,6 +148,11 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 	const data = await caches.open(collection.cache)
 	const catalogUrl = new URL(collection.catalog, scope).href
 	const catalog = parseCatalog(await (await data.match(catalogUrl))?.text() ?? null, collection.key)
+	if (name !== 'public' && catalog !== null && staleCatalog(catalog, await rememberedAccount(), null) !== null) {
+		// Someone signed out, or another account used the app, since these pieces were kept: nothing of them is shown
+		await removeCollection(collection)
+		return fetch(event.request)
+	}
 	const cacheKey = url.origin + url.pathname
 	if (kind === 'page' && name !== 'public') {
 		// The page of the list ("Shared with me", the concert folder): it shows itself what is locked

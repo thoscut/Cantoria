@@ -43,7 +43,12 @@ your phone, please tell the conductor.
   pieces on. Safari and the home screen keep them apart.
 - Open the page with a network at least once every 30 days, or the pieces
   are locked.
-- On a shared device: **Delete everything on this device** at the bottom.
+- On a shared device: **Remove from this device** at the top, or **Delete
+  everything on this device** at the bottom, before you pass the device on.
+  Signing out of Nextcloud usually deletes the pieces, passages and
+  settings too, in some browsers (Chrome, Android) only the next time
+  Cantoria opens on the device. If you only close the browser, you stay
+  signed in, and everything stays for whoever uses the device next.
 
 ## What you may do with the scores
 
@@ -67,6 +72,7 @@ your phone, please tell the conductor.
 | "Nothing has been shared with you yet" | The conductor has not shared anything yet, or the link has expired. Ask for a new link. |
 | No sound | Tap **Play** once (browsers play only after a tap) and check the silent switch of the phone. |
 | "Locked: not checked with the server for more than … days" | Open the page once with a network. |
+| After signing out the pieces are no longer there without a network | Signing out removes them from the device. Sign in with a network and switch on **Available without a network** again. |
 | Without a network the pieces are missing on the iPhone | You switched them on in Safari but open the home screen (or the other way round). Switch them on again where you practise. |
 | "Show my pitch" or "Record myself" does not work | Allow the browser to use the microphone for this page. |
 

@@ -1842,7 +1842,13 @@ install: it works in the browser.
    are available and the space used. Cantoria keeps them in this browser on
    this device; another browser does not see them. **Delete everything on
    this device** removes the pieces, passages and settings; do this on a
-   shared device. Signing out of Nextcloud does not delete them.
+   shared device. While pieces are kept, **Remove from this device** at the
+   top of the page leads there. Signing out of Nextcloud usually deletes
+   them too: in Firefox, Safari and Edge at once, in Chrome and on Android
+   the next time a page of Cantoria opens on this device, also without a
+   network. Until then they stay in the browser; and after a session that
+   ended without signing out, whoever uses the device sees them without a
+   network.
 
 If something goes wrong, the reason is right below the switch, for example
 "There is no connection" or "There is not enough space on this device".

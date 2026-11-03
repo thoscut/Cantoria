@@ -236,14 +236,19 @@ Interne Erhaltungskopien kommen nie auf ein Gerät.
   Cookies (die Nextcloud setzt die Sitzungs-Cookies, die sie zum Arbeiten
   braucht). Sie merkt sich Einstellungen im Browser (`localStorage`: Größe
   der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult,
-  eingeklappte Filter) und legt auf Tippen Stücke im Cache Storage ab.
+  eingeklappte Filter) und legt auf Tippen Stücke im Cache Storage ab. Für
+  geteilte Geräte merkt sie sich einen Hash des angemeldeten Kontos in
+  IndexedDB, damit Stücke eines anderen Kontos oder von vor dem Abmelden
+  entfernt werden (eine Sicherheitsmaßnahme;
+  [SECURITY.md](../../SECURITY.md), englisch).
   Speichern auf einem Gerät braucht eine Einwilligung, außer es ist
   unbedingt erforderlich für einen Dienst, den die Person ausdrücklich
   gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG). Ein Stück auf Tippen zu behalten,
   ist das klar; Übe-Einstellungen für den nächsten Besuch zu merken, ist ein
   Grenzfall. Nichts davon erreicht den Server oder Dritte; „Alles auf
   diesem Gerät löschen“ entfernt es (auf einem öffentlichen Link: „Ohne Netz
-  verfügbar“ ausschalten und die Websitedaten im Browser löschen). Nennt es in den Datenschutzhinweisen,
+  verfügbar“ ausschalten und die Websitedaten im Browser löschen), und das
+  Abmelden bei Nextcloud meist auch. Nennt es in den Datenschutzhinweisen,
   statt „keine Cookies“ zuzusagen; Textbausteine stehen in den
   [Datenschutz-Vorlagen](datenschutz-vorlagen.md).
 

@@ -665,7 +665,8 @@ What the app stores about people:
   without recording who opened them.
 - **On the devices.** Practice settings and pieces kept "available without
   a network" are stored only in the browser of the device (`localStorage`,
-  Cache Storage); microphone and recordings stay in the browser. The
+  Cache Storage; IndexedDB holds a hash of the account for shared devices);
+  microphone and recordings stay in the browser. The
   [legal background](legal-background.md#microphone-recordings-and-browser-storage)
   explains § 25 TDDDG.
 - **Reports and review points.** Transcription reports are kept as received
@@ -1082,10 +1083,21 @@ enable offline`):
   Safari may delete what it kept after some days without use. The page
   says so before the first piece. At every start with a network the page
   keeps its scripts again, so that it opens without a network also after an
-  update of the app. On a shared device, choir members
-  delete everything with **Delete everything on this device**; signing out
-  of Nextcloud does not delete it. When another account opens the page in
-  the same browser, the pieces of the previous one are removed.
+  update of the app.
+- **Shared devices.** Choir members delete everything with **Delete
+  everything on this device** at the end of the page, or **Remove from
+  this device** at its top while pieces are kept. Signing out of Nextcloud
+  usually deletes the pieces too: Nextcloud asks Firefox, Safari and Edge
+  to delete the storage of the server at once (header `Clear-Site-Data`,
+  only where Nextcloud sees HTTPS; behind a proxy set `overwriteprotocol`).
+  To Chrome and the browsers on Android it does not send the header; there
+  its login page deletes only the passages and settings, and Cantoria
+  removes the kept pieces the next time one of its pages opens on this
+  device, also without a network. When another account opens a page of
+  Cantoria in the same browser, the pieces, passages and settings of the
+  previous one are removed. Not covered: a sign-out that does not end on
+  Nextcloud's login page (some single sign-on setups) and a session that
+  ended without signing out; details in [SECURITY.md](../SECURITY.md).
 - **Public links.** Where the public domain of the version is confirmed,
   the page of a public link offers **Available without a network**, too. Visitors
   have no account, so their pieces are kept per browser; each visit with a
@@ -1111,9 +1123,9 @@ license for download or self-printing (§ 53 (4) UrhG; a copy that stays on
 the tablet for weeks is more than viewing). It uses the same service
 worker, with a cache of its own, the same check at every start with a
 network and the same lock after 30 days. The folder only reads. Another
-account in the same browser, or a visit without the role, removes what was
-kept; with **Practising without a network** off, the next visit removes
-everything.
+account in the same browser, a visit without the role or signing out (as
+for choir members, above) removes what was kept; with **Practising without
+a network** off, the next visit removes everything.
 
 **Common problems:**
 

@@ -39,6 +39,7 @@ import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import DiscardRecording from './DiscardRecording.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
+import RemoveFromDevice from './RemoveFromDevice.vue'
 import ScanFrame from './ScanFrame.vue'
 import { focusAfterUpdate, focusElement } from '../focus.ts'
 import { formatDate } from '../format.ts'
@@ -106,6 +107,8 @@ const keepErrors = ref<Record<number, string>>({})
 /** "3 of 12 pieces ready …" while a programme is kept */
 const keepProgress = ref('')
 const confirmingDelete = ref(false)
+/** The button that confirms deleting everything on this device */
+const confirmDeleteButton = ref<FocusTarget>(null)
 const deviceStatus = ref('')
 
 /**
@@ -239,6 +242,12 @@ async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
 	confirmingDelete.value = false
 	deviceStatus.value = t('cantoria', 'Everything the concert folder kept on this device is deleted.')
+}
+
+/** "Remove from this device" at the top: the confirmation at the end of the page, with the focus on it (S N6). */
+function startRemoving(): void {
+	confirmingDelete.value = true
+	focusAfterUpdate(confirmDeleteButton)
 }
 
 /**
@@ -487,6 +496,8 @@ onBeforeUnmount(() => {
 						: t('cantoria', 'The programmes still to be sung, in their order: view, play and practise each piece.') }}
 					<a v-if="!withoutNetwork" :href="archiveUrl" class="folder-app__link">{{ t('cantoria', 'Back to Cantoria') }}</a>
 				</p>
+				<!-- Not only at the end of the page: on a shared device the way to remove them (S N6) -->
+				<RemoveFromDevice v-if="offlineOn && keptCount > 0 && !stageOn" :count="keptCount" @remove="startRemoving" />
 
 				<NcNoteCard v-if="withoutNetwork" type="info" role="status">
 					{{ keptCount > 0
@@ -733,12 +744,15 @@ onBeforeUnmount(() => {
 						<p v-if="homeScreen && keptCount > 0" class="folder-app__muted">
 							{{ t('cantoria', 'Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.') }}
 						</p>
+						<p class="folder-app__muted">
+							{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
+						</p>
 						<div class="folder-app__device-buttons">
 							<NcButton v-if="!confirmingDelete" variant="secondary" @click="confirmingDelete = true">
 								{{ t('cantoria', 'Delete everything on this device') }}
 							</NcButton>
 							<template v-else>
-								<NcButton variant="error" @click="deleteDevice">
+								<NcButton ref="confirmDeleteButton" variant="error" @click="deleteDevice">
 									{{ t('cantoria', 'Delete kept pieces, passages and settings') }}
 								</NcButton>
 								<NcButton variant="tertiary" @click="confirmingDelete = false">

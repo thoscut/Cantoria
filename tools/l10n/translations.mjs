@@ -3217,6 +3217,8 @@ export const singular = {
 	],
 	'Delete everything on this device': 'Alles auf diesem Gerät löschen',
 	'Delete kept pieces, passages and settings': 'Gespeicherte Stücke, Übe-Stellen und Einstellungen löschen',
+	'Remove from this device': 'Von diesem Gerät entfernen',
+	'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.': 'Abmelden bei Nextcloud löscht das meist auch, in manchen Browsern erst beim nächsten Öffnen von Cantoria auf diesem Gerät.',
 	'The app is not built.': 'Die App ist nicht gebaut.',
 	'Practising without a network': 'Üben ohne Netz',
 	'Pieces are kept on a device and viewed, played and practised without a network: by choir members (with the sharing with choir members), by visitors of a public link to a piece whose public domain is confirmed (with public links) and in the concert folder. Only where the rights allow a copy. Kept pieces are checked at every start with a network and locked after 30 days without one. Without this module nothing is kept on a device. Not part of any preset.': 'Stücke bleiben auf einem Gerät und lassen sich ohne Netz ansehen, abspielen und üben: von Chormitgliedern (mit dem Teilen mit Chormitgliedern), von Besuchern eines öffentlichen Links zu einem Stück mit bestätigter Gemeinfreiheit (mit öffentlichen Links) und in der Konzertmappe. Nur wo die Rechte eine Kopie erlauben. Stücke auf einem Gerät werden bei jedem Start mit Netz abgeglichen und nach 30 Tagen ohne Netz gesperrt. Ohne dieses Modul bleibt nichts auf einem Gerät. Gehört zu keiner Voreinstellung.',

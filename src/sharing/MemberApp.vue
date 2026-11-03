@@ -44,6 +44,7 @@ import Attribution from './Attribution.vue'
 import DiscardRecording from './DiscardRecording.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
+import RemoveFromDevice from './RemoveFromDevice.vue'
 import ScanFrame from './ScanFrame.vue'
 import { membersGuideUrl } from '../docs.ts'
 import { focusAfterUpdate, focusElement } from '../focus.ts'
@@ -123,6 +124,8 @@ const keepErrors = ref<Record<string, string>>({})
 /** "3 of 12 pieces ready …" while all are kept */
 const keepProgress = ref('')
 const confirmingDelete = ref(false)
+/** The button that confirms deleting everything on this device */
+const confirmDeleteButton = ref<FocusTarget>(null)
 const deviceStatus = ref('')
 /** Links that may be kept and are not yet */
 const notKept = computed(() => links.filter((link) => link.offline && !isKept(link)))
@@ -222,6 +225,12 @@ async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
 	confirmingDelete.value = false
 	deviceStatus.value = t('cantoria', 'Everything Cantoria kept on this device is deleted.')
+}
+
+/** "Remove from this device" at the top: the confirmation at the end of the page, with the focus on it (S N6). */
+function startRemoving(): void {
+	confirmingDelete.value = true
+	focusAfterUpdate(confirmDeleteButton)
 }
 
 /** Words of a text reference (the same texts as in the archive). */
@@ -409,6 +418,8 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 				<p v-if="links.length > 0" class="member-app__help no-print">
 					<GuideLink :href="guideUrl" :label="t('cantoria', 'Guide for choir members')" />
 				</p>
+				<!-- Not only at the end of the page: on a shared device the way to remove them (S N6) -->
+				<RemoveFromDevice v-if="offlineOn && keptCount > 0 && !stageOn" :count="keptCount" @remove="startRemoving" />
 
 				<NcNoteCard v-if="notice" type="warning" role="status">
 					{{ notice }}
@@ -646,13 +657,14 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 					</p>
 					<p class="member-app__muted">
 						{{ t('cantoria', 'Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.') }}
+						{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
 					</p>
 					<div class="member-app__device-buttons">
 						<NcButton v-if="!confirmingDelete" variant="secondary" @click="confirmingDelete = true">
 							{{ t('cantoria', 'Delete everything on this device') }}
 						</NcButton>
 						<template v-else>
-							<NcButton variant="error" @click="deleteDevice">
+							<NcButton ref="confirmDeleteButton" variant="error" @click="deleteDevice">
 								{{ t('cantoria', 'Delete kept pieces, passages and settings') }}
 							</NcButton>
 							<NcButton variant="tertiary" @click="confirmingDelete = false">

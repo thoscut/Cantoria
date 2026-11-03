@@ -97,6 +97,7 @@ below explain the reasons.
 | Clients and notifications get no internal error texts | `NotifierTest::testExportFailureShowsNoInternalDetails`, `testLinksStayInsideTheApp`; `ApiV1ControllerTest::testErrorsBecomeOcsExceptions` |
 | The app page allows WebAssembly and nothing else beyond Nextcloud's policy | CS `testTheAppPageAllowsWebAssemblyButNoScriptEval` |
 | Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
+| After signing out, or when another account uses the app in the same browser, the pieces of an account kept on the device are removed before anything of them is shown; a public link opened without signing in removes only what was kept before signing out | `offline.test.ts` (a shared device), `sharedDevice.test.ts`; on devices not tested |
 | The audit log has no route to change or delete entries | review: the route list of CS `testEveryRouteIsCoreOrBelongsToAModule` names every route |
 
 ## Design notes
@@ -325,10 +326,8 @@ public links stop working at once.
   the service worker does not answer from the device for an expired link or
   30 days after the last check. Kept like a saved scan, a copy can still be
   taken out of the browser's storage by whoever controls the device; the
-  rules above make it end, not impossible. Signing out of Nextcloud does
-  not delete it (the logout is outside the scope of the worker); the page
-  offers "Delete everything on this device", and another account opening
-  the page removes the pieces of the previous one. The worker
+  rules above make it end, not impossible. What signing out leaves is
+  under "A shared device" below. The worker
   (`GET /offline-worker`) is a script of the app without data, served from
   the app's path with `connect-src 'self'` to everybody (a public page
   registers it, too, so it is a public route of the core); the pages allow
@@ -355,6 +354,45 @@ public links stop working at once.
   license for download or self-printing); the same check at every start
   with a network and the same lock after 30 days apply. Without the module
   it keeps nothing. It only reads.
+- **A shared device** (S N6, milestone 0.18). What signing out of
+  Nextcloud leaves on the device was read in the source code of Nextcloud
+  33 and 34, not tried on devices:
+  - Nextcloud answers the logout with `Clear-Site-Data: "cache",
+    "storage"` only when it sees HTTPS, and not to Chrome, to desktop
+    browsers built on it (Brave, Opera, Vivaldi) and to Android browsers
+    whose user agent names Chrome (`LoginController::logout`). Browsers
+    that follow the header (Firefox, Safari, Edge) then delete Cache
+    Storage, the service worker, localStorage and IndexedDB of the server:
+    everything Cantoria kept.
+  - In every browser, Nextcloud's login page after signing out
+    (`/login?clear=1`) deletes localStorage, sessionStorage and IndexedDB,
+    but not Cache Storage: passages and settings for practising go, the
+    kept pieces (caches `cantoria-offline`, `cantoria-folder`,
+    `cantoria-public`, `cantoria-shell-*`) and the service worker stay.
+  - Therefore Cantoria remembers the account (a hash) in IndexedDB and
+    marks each list of kept pieces of an account that it writes while it
+    does. Once that memory is gone, the service worker removes the pieces
+    of the account at their next request, before it answers anything of
+    them, and so does every page of the app at its start, also without a
+    network (`rules.ts`, `staleCatalog` and `deviceCleanUp`). Until then
+    they stay in the browser's storage, readable with the tools of the
+    browser by whoever controls the device. Lists kept before 0.18 get the
+    mark at their next check with the server.
+  - A page with another account removes the pieces of the previous one,
+    and its passages and settings. A public link opened without signing in
+    removes only what was kept before signing out: a session that simply
+    ended is no reason to take the pieces of the account.
+  - Not covered: a logout that does not end on Nextcloud's login page (some
+    single sign-on setups), a browser that cannot use IndexedDB, and a
+    session that ended without signing out. There whoever holds the device
+    sees the kept page "Shared with me" without a network, with the name,
+    the notes and the pieces of the account (the links themselves do not
+    open without signing in). Pieces of public links belong to the browser,
+    not to an account, and stay.
+  - "Delete everything on this device" at the end of "Shared with me" and
+    of the concert folder, and "Remove from this device" at their top
+    while pieces are kept, delete at once what the page kept and the
+    passages and settings ("Shared with me": everything of the app).
 
 ### Interface for agents
 
