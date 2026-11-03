@@ -8,7 +8,7 @@ import type { CircleOption } from '../types.ts'
 
 import { describe, expect, it } from 'vitest'
 import { excerptTempo, voiceForServer, voiceOfLink } from '../sharing/excerpt.ts'
-import { daysLeft, deviceUntil, endsSoon, sharedUntil } from '../sharing/linkDates.ts'
+import { daysLeft, deviceUntil, endsSoon, hasEnded, sharedUntil } from '../sharing/linkDates.ts'
 import { canOfferScan, initialScope, linkMeasures, measureProblem, previewRows, scopeText } from '../sharing/linkScope.ts'
 
 const voice = (key: string, name: string | null, part: string, number = 1): Voice => ({
@@ -198,5 +198,17 @@ describe('the days of links (milestone 0.18)', () => {
 		expect(sharedUntil('2026-12-27', '2026-12-20', null)).toBe('2026-12-20')
 		expect(sharedUntil('2026-12-27', null, '2027-04-01')).toBe('2027-04-01')
 		expect(sharedUntil('2026-12-27', '2026-12-20', '2026-11-20')).toBe('2026-12-20')
+	})
+
+	it('shares a link that exists already at most until its age allows, as the server does (U41)', () => {
+		expect(sharedUntil('2026-12-27', null, '2026-11-20', '2026-12-01')).toBe('2026-12-01')
+		expect(sharedUntil('2026-12-27', '2026-12-10', '2026-11-20', '2026-12-15')).toBe('2026-12-10')
+		expect(sharedUntil('2026-12-27', null, '2027-01-10', '2026-12-01'), 'never shorter than it is').toBe('2027-01-10')
+	})
+
+	it('knows a link that has ended (U40)', () => {
+		expect(hasEnded('2026-11-02', '2026-11-03')).toBe(true)
+		expect(hasEnded('2026-11-03', '2026-11-03')).toBe(false)
+		expect(hasEnded(null, '2026-11-03')).toBe(false)
 	})
 })

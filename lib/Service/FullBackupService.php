@@ -66,10 +66,16 @@ class FullBackupService {
 	public const KIND_BOOLEAN = 'boolean';
 	public const KIND_TEXT = 'text';
 
-	/** Tables in an order that satisfies the references on restore */
+	/**
+	 * Tables in the order of the backup and of the restore: a table comes
+	 * after the tables it refers to (a link to a copy and to the programme
+	 * it is shared with, `event_id`). The database has no foreign keys, so
+	 * the order is for the reader; FullBackupServiceTest keeps it in step
+	 * with TABLE_NAMES.
+	 */
 	public const TABLES = [
 		'cantoria_works', 'cantoria_versions', 'cantoria_copies', 'cantoria_files', 'cantoria_states', 'cantoria_licenses',
-		'cantoria_proposals', 'cantoria_tasks', 'cantoria_links', 'cantoria_events', 'cantoria_event_items',
+		'cantoria_proposals', 'cantoria_tasks', 'cantoria_events', 'cantoria_event_items', 'cantoria_links',
 		'cantoria_persons', 'cantoria_contributions', 'cantoria_merges', 'cantoria_review_reports', 'cantoria_review_points',
 		'cantoria_folders', 'cantoria_folder_loans', 'cantoria_mirror_files', 'cantoria_audit',
 	];
@@ -103,8 +109,18 @@ class FullBackupService {
 		'cantoria_works', 'cantoria_versions', 'cantoria_copies', 'cantoria_files', 'cantoria_states', 'cantoria_licenses',
 		'cantoria_events', 'cantoria_event_items', 'cantoria_persons', 'cantoria_contributions', 'cantoria_folders',
 	];
-	/** Columns with accounts or their names, emptied in an annual snapshot */
-	public const ACCOUNT_COLUMNS = ['confirmed_by', 'confirmed_by_name', 'valid_set_by', 'created_by', 'created_by_name', 'checked_by'];
+	/**
+	 * Columns with accounts or their names, emptied in an annual snapshot:
+	 * those of PrivacyService::ACCOUNT_FIELDS for the SNAPSHOT_TABLES (one
+	 * list of the columns with accounts; FullBackupServiceTest checks that
+	 * every snapshot table of it is here).
+	 */
+	public const ACCOUNT_COLUMNS = [
+		...PrivacyService::ACCOUNT_FIELDS['cantoria_versions'],
+		...PrivacyService::ACCOUNT_FIELDS['cantoria_states'],
+		...PrivacyService::ACCOUNT_FIELDS['cantoria_events'],
+		...PrivacyService::ACCOUNT_FIELDS['cantoria_persons'],
+	];
 
 	public function export(): string {
 		$stream = $this->exportStream();

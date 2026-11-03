@@ -30,7 +30,9 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * own, so the rights are checked and recorded per piece. A piece that is
  * already shared as a whole with the choir, by a link the account may
  * extend, is extended instead: its token stays, and what choir members
- * kept on their devices stays, too.
+ * kept on their devices stays, too. Such a link shares the whole piece
+ * without a voice, verse or tempo (U45: a link for the altos at 80 % stays
+ * theirs); it may have ended, as long as its age allows extending it (U40).
  *
  * Milestone 0.18 (review of 3 November 2026): a link is never shortened (a
  * later last day stays as it is), the note and the scans chosen apply to
@@ -44,16 +46,21 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * programme, so that "Shared with me" lists the pieces under it in
  * programme order (SharedLinkService::forMember).
  *
+ * `limited` says for each piece that lasts shorter than the chosen day why
+ * (U41): `license` (its license ends) or `age` (the link that exists
+ * already was made almost a year ago). `playback` says whether the choir
+ * members can play the piece, for the message to the choir (U42).
+ *
  * Reasons are English source strings with parameters; the controller
  * translates them.
  *
  * @psalm-type ShareReason = array{message: string, parameters: list<string|int>}
  * @psalm-type ProgrammeShareItem = array{id: int, title: string, shelfmark: ?string, allowed: bool, reason: ?ShareReason,
- *     scan: bool, offline: ?bool, existing: ?array{id: int, expires: ?string, scan: bool, limit: string}, copyId: ?int, scanFileId: ?int,
- *     until: ?string, quantity: ?array{licensed: int, members: int}}
+ *     scan: bool, offline: ?bool, playback: bool, existing: ?array{id: int, expires: ?string, scan: bool, limit: string}, copyId: ?int,
+ *     scanFileId: ?int, until: ?string, quantity: ?array{licensed: int, members: int}}
  * @psalm-type ShareResult = array{created: int, extended: int, kept: int,
  *     failed: list<array{id: int, title: string, reason: ShareReason}>,
- *     limited: list<array{id: int, title: string, expires: string}>}
+ *     limited: list<array{id: int, title: string, expires: string, reason: 'license'|'age'}>}
  */
 class ProgrammeShareService {
 	/** Days after the concert a shared programme stays open by default */
@@ -127,10 +134,14 @@ class ProgrammeShareService {
 			// at most until the license ends
 			$until = $option['until'] !== null && $option['until'] < $expires ? $option['until'] : $expires;
 			$scanFileId = $withScan && $option['scan'] ? $option['scanFileId'] : null;
+			$why = 'license';
 			try {
 				$existing = $option['existing'];
 				if ($existing !== null) {
 					$day = min($until, $existing['limit']);
+					if ($existing['limit'] < $until) {
+						$why = 'age';
+					}
 					// never shorter than it is
 					$day = $existing['expires'] !== null && $existing['expires'] > $day ? $existing['expires'] : $day;
 					$link = $this->linkService->extend($existing['id'], $day, $uid,
@@ -145,7 +156,7 @@ class ProgrammeShareService {
 					$lasts = $until;
 				}
 				if ($lasts < $expires) {
-					$result['limited'][] = ['id' => $option['id'], 'title' => $option['title'], 'expires' => $lasts];
+					$result['limited'][] = ['id' => $option['id'], 'title' => $option['title'], 'expires' => $lasts, 'reason' => $why];
 				}
 			} catch (UserFacingException $e) {
 				$result['failed'][] = ['id' => $option['id'], 'title' => $option['title'],
@@ -191,7 +202,7 @@ class ProgrammeShareService {
 		$version = $this->version($copy?->getVersionId());
 		$title = $this->title($item, $version);
 		$row = ['id' => $item->getId(), 'title' => $title, 'shelfmark' => $copy?->getShelfmark(), 'allowed' => false, 'reason' => null,
-			'scan' => false, 'offline' => null, 'existing' => null, 'copyId' => $copy?->getId(), 'scanFileId' => null, 'until' => null, 'quantity' => null];
+			'scan' => false, 'offline' => null, 'playback' => false, 'existing' => null, 'copyId' => $copy?->getId(), 'scanFileId' => null, 'until' => null, 'quantity' => null];
 		if ($copy === null) {
 			$row['reason'] = ['message' => 'No copy of this piece is in the catalog.', 'parameters' => []];
 			return $row;
@@ -214,6 +225,7 @@ class ProgrammeShareService {
 		$row['scan'] = $members['allowed'] && $members['scan'] && $options['scans'] !== [];
 		$row['scanFileId'] = $row['scan'] ? $options['scans'][0]['id'] : null;
 		$row['offline'] = $members['offline'];
+		$row['playback'] = $members['playback'];
 		$row['until'] = $members['until'] ?? null;
 		$row['quantity'] = $members['quantity'] ?? null;
 		$row['existing'] = $this->existing($copy->getId(), $uid, $today);
@@ -221,9 +233,11 @@ class ProgrammeShareService {
 	}
 
 	/**
-	 * An active link for choir members to the whole piece that the account
-	 * may extend: the one that lasts longest; `limit` is the last day its
-	 * age allows. Links made more than a year ago are not extended any more.
+	 * A link for choir members to the whole piece, without a voice, verse or
+	 * tempo (U45), that the account may extend: the one that lasts longest;
+	 * `limit` is the last day its age allows. A link that has ended counts,
+	 * too (U40): extending it keeps its address. Links made more than a year
+	 * ago are not extended any more, revoked ones never.
 	 *
 	 * @return array{id: int, expires: ?string, scan: bool, limit: string}|null
 	 */
@@ -232,8 +246,8 @@ class ProgrammeShareService {
 		$found = null;
 		foreach ($this->links->findByCopy($copyId) as $link) {
 			if ($link->getCircle() !== ExcerptLink::CIRCLE_MEMBERS || $link->getRevoked() !== null || $link->getMeasureFrom() !== null
-				|| ($link->getExpires() !== null && $link->getExpires() < $today) || (!$librarian && $link->getCreatedBy() !== $uid)
-				|| LinkService::ageLimit($link) < $today) {
+				|| $link->getVoice() !== null || $link->getVerse() !== null || $link->getTempo() !== null
+				|| (!$librarian && $link->getCreatedBy() !== $uid) || LinkService::ageLimit($link) < $today) {
 				continue;
 			}
 			if ($found === null || (string)$link->getExpires() > (string)$found['expires']) {

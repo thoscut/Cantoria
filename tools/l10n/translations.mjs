@@ -441,7 +441,14 @@ export const singular = {
 	'Unknown columns are ignored: %s': 'Unbekannte Spalten werden nicht übernommen: %s',
 	'Catalog columns are missing: %s': 'Spalten des Werkverzeichnisses fehlen: %s',
 	'Row %s, column "%s": the value "%s" is not valid there and was not imported.': 'Zeile %s, Spalte „%s“: Der Wert „%s“ ist dort nicht zulässig und wurde nicht übernommen.',
-	'Row %s: shelf mark "%s" is invalid and was skipped.': 'Zeile %s: Signatur „%s“ ist ungültig und wurde übersprungen.',
+	'Row %s: shelf mark "%s" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.': 'Zeile %s: Signatur „%s“ ist ungültig und wurde übersprungen. Eine Signatur besteht aus Mappe und Nummer, zum Beispiel 12-3.',
+	'Row %s: shelf mark "%s" is a date, not binder and number, and was skipped. Please format the column "Signatur" as text and type the shelf mark again.': [
+		'Zeile %s: Signatur „%s“ ist ein Datum, nicht Mappe und Nummer, und wurde übersprungen. Bitte formatiere die Spalte „Signatur“ als Text und gib die Signatur noch einmal ein.',
+		'Zeile %s: Signatur „%s“ ist ein Datum, nicht Mappe und Nummer, und wurde übersprungen. Bitte formatieren Sie die Spalte „Signatur“ als Text und geben Sie die Signatur noch einmal ein.',
+	],
+	'Row %s is the example row of the template and was not imported.': 'Zeile %s ist die Beispielzeile der Vorlage und wurde nicht importiert.',
+	'The CSV file is separated by commas; it was read that way.': 'Die CSV-Datei ist durch Kommas getrennt; sie wurde so gelesen.',
+	'The CSV file is separated by tabs; it was read that way.': 'Die CSV-Datei ist durch Tabulatoren getrennt; sie wurde so gelesen.',
 	'Row %s: shelf mark "%s" was normalized to %s.': 'Zeile %s: Signatur „%s“ wurde zu %s vereinheitlicht.',
 	'Row %s: shelf mark %s occurs twice and was skipped.': 'Zeile %s: Signatur %s kommt doppelt vor und wurde übersprungen.',
 	'Shelf mark %s: version or work missing in the database, skipped.': 'Signatur %s: Fassung oder Werk fehlt in der Datenbank, übersprungen.',
@@ -3449,17 +3456,37 @@ export const singular = {
 	'The license ends on {date}: shared until then at most.': 'Die Lizenz endet am {date}: höchstens bis dahin geteilt.',
 	'Licensed for {licensed} people, but {members} accounts are in the group of the choir members.': 'Lizenziert für {licensed} Personen, aber in der Gruppe der Chormitglieder sind {members} Konten.',
 	'Hint:': 'Hinweis:',
-	'Hello everyone, the pieces for "{title}" are shared with you in Cantoria under "Shared with me": {url}. Choose your voice there and practise difficult passages with "Loop".': [
-		'Hallo zusammen, die Stücke für „{title}“ findet ihr in Cantoria unter „Mit mir geteilt“: {url}. Wählt dort eure Stimme und übt schwierige Stellen mit „Schleife“.',
-		'Guten Tag zusammen, die Stücke für „{title}“ finden Sie in Cantoria unter „Mit mir geteilt“: {url}. Wählen Sie dort Ihre Stimme und üben Sie schwierige Stellen mit „Schleife“.',
+	// the message to the choir speaks to the singers (ihr / Sie), U42
+	'Hello everyone, the pieces for "{title}" are shared with you in Cantoria under "Shared with me" until {date}: {url}': [
+		'Hallo zusammen, die Stücke für „{title}“ findet ihr bis {date} in Cantoria unter „Mit mir geteilt“: {url}',
+		'Guten Tag zusammen, die Stücke für „{title}“ finden Sie bis {date} in Cantoria unter „Mit mir geteilt“: {url}',
 	],
+	'Sign in with your account of our Nextcloud. The guide for choir members helps with the first steps: {url}': [
+		'Meldet euch mit eurem Konto in unserer Nextcloud an. Die Anleitung für Chormitglieder hilft beim ersten Mal: {url}',
+		'Melden Sie sich mit Ihrem Konto in unserer Nextcloud an. Die Anleitung für Chormitglieder hilft beim ersten Mal: {url}',
+	],
+	'Choose your voice there and practise difficult passages with "Loop".': [
+		'Wählt dort eure Stimme und übt schwierige Stellen mit „Schleife“.',
+		'Wählen Sie dort Ihre Stimme und üben Sie schwierige Stellen mit „Schleife“.',
+	],
+	'The pieces are only for practising in our choir: please do not pass them on, and delete them when you leave the choir.': [
+		'Die Stücke sind nur zum Üben in unserem Chor: Gebt sie bitte nicht weiter und löscht sie, wenn ihr den Chor verlasst.',
+		'Die Stücke sind nur zum Üben in unserem Chor: Bitte geben Sie sie nicht weiter und löschen Sie sie, wenn Sie den Chor verlassen.',
+	],
+	'You can change the text before you copy it, for example the greeting.': [
+		'Du kannst den Text vor dem Kopieren ändern, zum Beispiel die Anrede.',
+		'Sie können den Text vor dem Kopieren ändern, zum Beispiel die Anrede.',
+	],
+	'The link ended on {date}: it is extended to {new} and keeps its address.': 'Der Link ist am {date} abgelaufen: Er wird bis {new} verlängert und behält seine Adresse.',
+	'The link was made almost a year ago and lasts until {date} at most.': 'Der Link wurde vor fast einem Jahr angelegt und gilt höchstens bis {date}.',
 	'The message has been copied.': 'Die Nachricht wurde kopiert.',
 	'The message could not be copied. Please select and copy it by hand.': [
 		'Die Nachricht ließ sich nicht kopieren. Bitte markiere und kopiere sie von Hand.',
 		'Die Nachricht ließ sich nicht kopieren. Bitte markieren und kopieren Sie sie von Hand.',
 	],
-	'Shared until the license ends:': 'Geteilt, bis die Lizenz endet:',
-	'until {date}': 'bis {date}',
+	'Shared for a shorter time:': 'Für kürzere Zeit geteilt:',
+	'until {date}: the license ends then': 'bis {date}: Dann endet die Lizenz',
+	'until {date}: the link was made almost a year ago': 'bis {date}: Der Link wurde vor fast einem Jahr angelegt',
 	'Message to the choir': 'Nachricht an den Chor',
 	'Copy message to the choir': 'Nachricht an den Chor kopieren',
 	'Ends today': 'Endet heute',
@@ -3467,7 +3494,25 @@ export const singular = {
 		'Der Link hat eine neue Adresse. Bitte kopiere sie und gib sie neu weiter.',
 		'Der Link hat eine neue Adresse. Bitte kopieren Sie sie und geben Sie sie neu weiter.',
 	],
-	'A link lasts at most a year after it was made and never beyond the end of the license that releases the piece.': 'Ein Link gilt höchstens ein Jahr nach dem Anlegen und nie über das Ende der Lizenz hinaus, die das Stück freigibt.',
+	// the latest day of an extension, from the server (U41), and the links that ended (U40)
+	'The license that releases the piece ends on {date}: the link lasts until then at most.': 'Die Lizenz, die das Stück freigibt, endet am {date}: Der Link gilt höchstens bis dahin.',
+	'A link lasts at most a year after it was made: this one until {date} at most.': 'Ein Link gilt höchstens ein Jahr nach dem Anlegen: dieser höchstens bis {date}.',
+	'A link lasts at most six months from today, until {date}.': 'Ein Link gilt höchstens sechs Monate ab heute, bis {date}.',
+	'Valid until (at most {date})': 'Gültig bis (höchstens {date})',
+	'Ended in the last 30 days': 'In den letzten 30 Tagen abgelaufen',
+	'Extend a link to open it again. A link for choir members keeps its address; a public link gets a new one.': [
+		'Verlängere einen Link, um ihn wieder zu öffnen. Ein Link für Chormitglieder behält seine Adresse, ein öffentlicher Link bekommt eine neue.',
+		'Verlängern Sie einen Link, um ihn wieder zu öffnen. Ein Link für Chormitglieder behält seine Adresse, ein öffentlicher Link bekommt eine neue.',
+	],
+	'Ended on {date}': 'Abgelaufen am {date}',
+	'Made more than a year ago: it cannot be extended. Please make a new link.': [
+		'Vor mehr als einem Jahr angelegt: Er lässt sich nicht mehr verlängern. Bitte lege einen neuen Link an.',
+		'Vor mehr als einem Jahr angelegt: Er lässt sich nicht mehr verlängern. Bitte legen Sie einen neuen Link an.',
+	],
+	'The link has ended: it gets a new address, and the old one stays closed. Please pass the new one on.': [
+		'Der Link ist abgelaufen: Er bekommt eine neue Adresse, die alte bleibt geschlossen. Bitte gib die neue weiter.',
+		'Der Link ist abgelaufen: Er bekommt eine neue Adresse, die alte bleibt geschlossen. Bitte geben Sie die neue weiter.',
+	],
 	'Give the role "Choir members" a group. Otherwise nobody sees what the conductor shares with the choir.': [
 		'Gib der Rolle „Chormitglieder“ eine Gruppe. Sonst sieht niemand, was die Chorleitung mit dem Chor teilt.',
 		'Geben Sie der Rolle „Chormitglieder“ eine Gruppe. Sonst sieht niemand, was die Chorleitung mit dem Chor teilt.',

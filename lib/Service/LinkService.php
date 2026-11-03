@@ -69,6 +69,8 @@ class LinkService {
 	public const MAX_DAYS = 183;
 	/** Days after it was made that a link ends at the latest, however often it is extended */
 	public const MAX_AGE_DAYS = 365;
+	/** Days after their last day that expired links stay in the lists, to be extended (U40) */
+	public const RECENTLY_EXPIRED_DAYS = 30;
 	/** Roles that make, extend and share links */
 	public const CREATORS = [Roles::LIBRARIAN, Roles::CONDUCTOR, Roles::OPERATIONS];
 	/** Fields a request may set when creating a link */
@@ -264,15 +266,31 @@ class LinkService {
 	 * license that releases the piece; null when the age limit has passed.
 	 */
 	public function extensionLimit(ExcerptLink $link, WorkVersion $version, string $today): ?string {
-		$cap = self::ageLimit($link);
-		if ($cap < $today) {
-			return null;
+		return $this->extensionBound($link, $version, $today)['until'];
+	}
+
+	/**
+	 * The last day a link may get today when it is extended (extensionLimit)
+	 * and what sets it (U41): `six_months` (MAX_DAYS from today), `age`
+	 * (MAX_AGE_DAYS after the link was made; `until` null once that has
+	 * passed) or `license` (the end of the license that releases it).
+	 *
+	 * @return array{until: ?string, limit: 'six_months'|'age'|'license'}
+	 */
+	public function extensionBound(ExcerptLink $link, WorkVersion $version, string $today): array {
+		$age = self::ageLimit($link);
+		if ($age < $today) {
+			return ['until' => null, 'limit' => 'age'];
 		}
-		if (isset(self::CIRCLE_MODULES[$link->getCircle()])) {
-			$end = $this->policy->releaseEnd($version, $link->getCircle(), false, $today);
-			$cap = $end !== null && $end < $cap ? $end : $cap;
-		}
-		return self::latestExpiry($today, $cap);
+		$end = isset(self::CIRCLE_MODULES[$link->getCircle()]) ? $this->policy->releaseEnd($version, $link->getCircle(), false, $today) : null;
+		$months = self::latestExpiry($today);
+		$until = min($months, $age, $end ?? $months);
+		$limit = match (true) {
+			$until === $months => 'six_months',
+			$until === $end => 'license',
+			default => 'age',
+		};
+		return ['until' => $until, 'limit' => $limit];
 	}
 
 	/**
@@ -607,35 +625,41 @@ class LinkService {
 	}
 
 	/**
-	 * Active links (not revoked, not expired), optionally of one copy, as
-	 * view() shows them. Links to copies the account may not view (internal
-	 * preservation copies) are left out.
+	 * Active links (not revoked, not expired) and, so that they can still be
+	 * extended (U40), those that ended in the last RECENTLY_EXPIRED_DAYS
+	 * days; optionally of one copy, as view() shows them. Links to copies the
+	 * account may not view (internal preservation copies) are left out.
+	 *
+	 * For the links the account may extend (its own; the catalog librarian:
+	 * all), `extend_until` is the latest last day the server allows today
+	 * and `extend_limit` what sets it (extensionBound, U41); null for the
+	 * others.
 	 *
 	 * @return list<LinkView>
 	 */
 	public function active(?int $copyId, string $uid): array {
 		$today = $this->rights->today($uid);
+		$since = (new \DateTimeImmutable($today))->modify('-' . self::RECENTLY_EXPIRED_DAYS . ' days')->format('Y-m-d');
 		$mayViewPreservation = $this->policy->mayViewPreservationCopies($uid);
-		$versions = $mayViewPreservation ? [] : $this->versions->findAllById();
+		$librarian = $this->roles->hasAnyRole($uid, [Roles::LIBRARIAN]);
+		$versions = $this->versions->findAllById();
 		$copies = [];
-		if (!$mayViewPreservation) {
-			foreach ($this->copies->findAll() as $copy) {
-				$copies[$copy->getId()] = $copy;
-			}
+		foreach ($this->copies->findAll() as $copy) {
+			$copies[$copy->getId()] = $copy;
 		}
 		$rows = [];
 		foreach ($this->links->findByCopy($copyId) as $link) {
-			if ($link->getRevoked() !== null || ($link->getExpires() !== null && $link->getExpires() < $today)) {
+			if ($link->getRevoked() !== null || ($link->getExpires() !== null && $link->getExpires() < $since)) {
 				continue;
 			}
-			if (!$mayViewPreservation) {
-				$copy = $copies[$link->getCopyId()] ?? null;
-				$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
-				if ($copy === null || $version === null || RightsPolicy::isPreservationCopy($version, $copy)) {
-					continue;
-				}
+			$copy = $copies[$link->getCopyId()] ?? null;
+			$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
+			if (!$mayViewPreservation && ($copy === null || $version === null || RightsPolicy::isPreservationCopy($version, $copy))) {
+				continue;
 			}
-			$rows[] = $this->view($link, $uid);
+			$bound = $version !== null && ($librarian || $link->getCreatedBy() === $uid)
+				? $this->extensionBound($link, $version, $today) : ['until' => null, 'limit' => null];
+			$rows[] = $this->view($link, $uid) + ['extend_until' => $bound['until'], 'extend_limit' => $bound['limit']];
 		}
 		return $rows;
 	}

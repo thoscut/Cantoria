@@ -14,6 +14,14 @@
  * extended links alike. The server checks each piece as if it were shared
  * on its own. Afterwards the dialog offers a message for the choir with the
  * address of "Shared with me" to copy (milestone 0.18).
+ *
+ * Milestone 0.20, second review: a link that exists already lasts at most a
+ * year after it was made, and the list and the result say so instead of
+ * naming the license (U41); a link that has ended is extended, too (U40).
+ * The message to the choir can be changed before it is copied, and says
+ * until when the pieces are shared, how to sign in, where the guide for
+ * choir members is and what the singers may do with the pieces; "Loop"
+ * only when a piece can be played (U42, R B32, W B29).
  */
 import type { ProgrammeShareItem, ProgrammeShareOptions, ProgrammeShareResult } from '../types.ts'
 
@@ -32,8 +40,9 @@ import ActionDialog from './ActionDialog.vue'
 import DateField from './DateField.vue'
 import { errorMessage, fetchProgrammeShareOptions, shareProgramme } from '../api.ts'
 import { copyText } from '../clipboard.ts'
+import { membersGuideUrl } from '../docs.ts'
 import { formatDate, toIsoDate } from '../format.ts'
-import { sharedUntil } from '../sharing/linkDates.ts'
+import { hasEnded, sharedUntil } from '../sharing/linkDates.ts'
 import { showError } from '../toasts.ts'
 
 const props = defineProps<{
@@ -71,9 +80,12 @@ function status(item: ProgrammeShareItem): string {
 	if (!item.allowed) {
 		return item.reason ?? t('cantoria', 'This piece cannot be shared.')
 	}
-	const day = sharedUntil(expires.value, item.until, item.existing?.expires)
+	const day = sharedUntil(expires.value, item.until, item.existing?.expires, item.existing?.limit)
 	if (item.existing) {
 		const was = formatDate(item.existing.expires ?? '')
+		if (hasEnded(item.existing.expires, today)) {
+			return t('cantoria', 'The link ended on {date}: it is extended to {new} and keeps its address.', { date: was, new: formatDate(day) })
+		}
 		return item.existing.expires !== null && item.existing.expires >= day
 			? t('cantoria', 'Already shared until {date}; it stays so.', { date: was })
 			: t('cantoria', 'Already shared until {date}: the link is extended to {new} and keeps its address.', { date: was, new: formatDate(day) })
@@ -92,6 +104,10 @@ function rightsHints(item: ProgrammeShareItem): string[] {
 	if (item.until && item.until < expires.value) {
 		hints.push(t('cantoria', 'The license ends on {date}: shared until then at most.', { date: formatDate(item.until) }))
 	}
+	const limit = item.existing?.limit
+	if (limit && limit < expires.value && (!item.until || limit < item.until) && !(item.existing?.expires && item.existing.expires >= limit)) {
+		hints.push(t('cantoria', 'The link was made almost a year ago and lasts until {date} at most.', { date: formatDate(limit) }))
+	}
 	if (item.quantity) {
 		hints.push(t('cantoria', 'Licensed for {licensed} people, but {members} accounts are in the group of the choir members.', item.quantity))
 	}
@@ -101,9 +117,27 @@ function rightsHints(item: ProgrammeShareItem): string[] {
 /** The address of "Shared with me": the app itself, for choir members */
 const memberPage = window.location.origin + generateUrl('/apps/cantoria/')
 
-/** A message to the choir about the shared pieces, to copy into a mail or a chat (U24) */
-const message = computed(() => t('cantoria', 'Hello everyone, the pieces for "{title}" are shared with you in Cantoria under "Shared with me": {url}. Choose your voice there and practise difficult passages with "Loop".',
-	{ title: props.title, url: memberPage }))
+/** The message to the choir; filled in after sharing and editable (U42) */
+const message = ref('')
+
+/**
+ * A message to the choir about the shared pieces, to copy into a mail or a
+ * chat (U24): where and until when, how to sign in and where the guide is,
+ * "Loop" when at least one piece can be played, and what the singers may
+ * do with the pieces (U42, R B32, W B29).
+ */
+function composeMessage(): string {
+	const chosenItems = (options.value?.items ?? []).filter((item) => chosen.value.includes(String(item.id)))
+	const parts = [
+		t('cantoria', 'Hello everyone, the pieces for "{title}" are shared with you in Cantoria under "Shared with me" until {date}: {url}', { title: props.title, date: formatDate(expires.value), url: memberPage }),
+		t('cantoria', 'Sign in with your account of our Nextcloud. The guide for choir members helps with the first steps: {url}', { url: membersGuideUrl() }),
+	]
+	if (chosenItems.some((item) => item.playback)) {
+		parts.push(t('cantoria', 'Choose your voice there and practise difficult passages with "Loop".'))
+	}
+	parts.push(t('cantoria', 'The pieces are only for practising in our choir: please do not pass them on, and delete them when you leave the choir.'))
+	return parts.join('\n\n')
+}
 
 async function copyMessage(): Promise<void> {
 	if (await copyText(message.value)) {
@@ -139,6 +173,7 @@ async function submit(): Promise<void> {
 	error.value = ''
 	try {
 		result.value = await shareProgramme(props.eventId, { items: chosen.value.map(Number), expires: expires.value, note: note.value, scan: withScans.value })
+		message.value = composeMessage()
 	} catch (caught) {
 		error.value = errorMessage(caught)
 	} finally {
@@ -228,20 +263,23 @@ onMounted(load)
 			</NcNoteCard>
 			<template v-if="result.limited && result.limited.length > 0">
 				<p class="programme-share__limited-title">
-					{{ t('cantoria', 'Shared until the license ends:') }}
+					{{ t('cantoria', 'Shared for a shorter time:') }}
 				</p>
 				<ul class="programme-share__failed">
 					<li v-for="limited in result.limited" :key="limited.id">
-						<strong>{{ limited.title }}</strong>: {{ t('cantoria', 'until {date}', { date: formatDate(limited.expires) }) }}
+						<strong>{{ limited.title }}</strong>:
+						{{ limited.reason === 'age'
+							? t('cantoria', 'until {date}: the link was made almost a year ago', { date: formatDate(limited.expires) })
+							: t('cantoria', 'until {date}: the license ends then', { date: formatDate(limited.expires) }) }}
 					</li>
 				</ul>
 			</template>
 			<div v-if="result.created + result.extended + (result.kept ?? 0) > 0" class="programme-share__message">
-				<NcTextArea :model-value="message"
+				<NcTextArea v-model="message"
 					:label="t('cantoria', 'Message to the choir')"
-					readonly
+					:helper-text="t('cantoria', 'You can change the text before you copy it, for example the greeting.')"
 					resize="vertical"
-					rows="4" />
+					rows="8" />
 				<NcButton variant="secondary" @click="copyMessage">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiContentCopy" />

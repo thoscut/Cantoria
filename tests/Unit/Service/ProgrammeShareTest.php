@@ -201,7 +201,56 @@ final class ProgrammeShareTest extends TestCase {
 	public function testAPieceLastsAtMostUntilItsLicenseEnds(): void {
 		$result = $this->service(licenseEnd: '2026-12-20')->share(4, ['items' => [1, 2], 'expires' => '2026-12-27'], 'carla');
 		self::assertSame('2026-12-20', $this->calls[1][2]['expires'] ?? null);
-		self::assertSame([['id' => 2, 'title' => 'Werk 122', 'expires' => '2026-12-20']], $result['limited'], 'the dialog says so');
+		self::assertSame([['id' => 2, 'title' => 'Werk 122', 'expires' => '2026-12-20', 'reason' => 'license']], $result['limited'], 'the dialog says so');
+	}
+
+	/**
+	 * U41: a link that exists already lasts at most a year after it was
+	 * made; the result names that reason, not the license.
+	 */
+	public function testThePiecesThatLastShorterSayWhy(): void {
+		$old = self::link(50, 31, 'carla');
+		$old->setCreated((int)strtotime('2025-12-01 12:00:00'));
+		$result = $this->service(links: [$old])->share(4, ['items' => [1], 'expires' => '2027-01-15'], 'carla');
+		self::assertSame('2026-12-01', $this->calls[0][2] ?? null, 'a year after it was made');
+		self::assertSame([['id' => 1, 'title' => 'Werk 121', 'expires' => '2026-12-01', 'reason' => 'age']], $result['limited']);
+	}
+
+	/**
+	 * U45: a link with a voice, verse or tempo is not the link of the whole
+	 * choir; sharing the programme makes a new one beside it.
+	 */
+	public function testALinkWithAVoiceVerseOrTempoIsNotTakenOver(): void {
+		foreach (['setVoice' => 'Alt', 'setVerse' => 2, 'setTempo' => 80] as $setter => $value) {
+			$link = self::link(50, 31, 'carla');
+			$link->$setter($value);
+			$options = $this->service(links: [$link])->options(4, 'carla');
+			self::assertNull($options['items'][0]['existing'], $setter);
+			$this->calls = [];
+			$result = $this->service(links: [$link])->share(4, ['items' => [1], 'expires' => '2026-12-27'], 'carla');
+			self::assertSame([1, 0], [$result['created'], $result['extended']], $setter);
+			self::assertSame('create', $this->calls[0][0] ?? null, $setter);
+		}
+	}
+
+	/**
+	 * U40: a link that has ended is extended, too, so that it keeps its
+	 * address; a revoked one is not.
+	 */
+	public function testALinkThatHasEndedIsExtended(): void {
+		$ended = self::link(50, 31, 'carla', expires: '2026-10-20');
+		$result = $this->service(links: [$ended])->share(4, ['items' => [1], 'expires' => '2026-12-27'], 'carla');
+		self::assertSame([0, 1], [$result['created'], $result['extended']]);
+		self::assertSame(['extend', 50, '2026-12-27'], array_slice($this->calls[0], 0, 3));
+
+		$revoked = self::link(50, 31, 'carla', expires: '2026-10-20');
+		$revoked->setRevoked(1);
+		self::assertNull($this->service(links: [$revoked])->options(4, 'carla')['items'][0]['existing']);
+	}
+
+	public function testTheOptionsSayWhetherAPieceCanBePlayed(): void {
+		$items = $this->service()->options(4, 'carla')['items'];
+		self::assertSame([true, true, false], [$items[0]['playback'], $items[1]['playback'], $items[2]['playback']], 'for the message to the choir (U42)');
 	}
 
 	public function testAPreservationCopyShowsNeitherShelfMarkNorCopyToOtherRoles(): void {

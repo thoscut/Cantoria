@@ -14,6 +14,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use OCA\Cantoria\Exception\InvalidInputException;
 use OCA\Cantoria\Service\FullBackupService;
+use OCA\Cantoria\Service\PrivacyService;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -201,6 +202,27 @@ final class FullBackupServiceTest extends TestCase {
 		self::assertLessThan($position['cantoria_event_items'], $position['cantoria_states']);
 		// The manifest of the print station and the hand-over points to copies and files (A3).
 		self::assertLessThan($position['cantoria_mirror_files'], $position['cantoria_files']);
+		// A link points to its copy and to the programme it is shared with (A27)
+		self::assertLessThan($position['cantoria_links'], $position['cantoria_copies']);
+		self::assertLessThan($position['cantoria_links'], $position['cantoria_events']);
 		self::assertSame(array_values(array_unique($tables)), $tables);
+	}
+
+	/**
+	 * One list of the columns with accounts (A27): an annual snapshot
+	 * empties exactly those of PrivacyService::ACCOUNT_FIELDS for its tables.
+	 */
+	public function testTheSnapshotEmptiesTheAccountColumnsOfThePrivacyList(): void {
+		$expected = [];
+		foreach (FullBackupService::SNAPSHOT_TABLES as $table) {
+			foreach (PrivacyService::ACCOUNT_FIELDS[$table] ?? [] as $column) {
+				$expected[$column] = true;
+			}
+		}
+		$columns = array_values(array_unique(FullBackupService::ACCOUNT_COLUMNS));
+		sort($columns);
+		$expected = array_keys($expected);
+		sort($expected);
+		self::assertSame($expected, $columns);
 	}
 }

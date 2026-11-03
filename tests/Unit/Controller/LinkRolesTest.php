@@ -233,7 +233,7 @@ final class LinkRolesTest extends TestCase {
 
 	public function testSharingAProgrammeKeepsTheLicenseEnd(): void {
 		$data = $this->controllers(Roles::CONDUCTOR)[0]->share(4, [1], '2027-04-30')->getData();
-		self::assertSame([1, [['id' => 1, 'title' => 'Werk 131', 'expires' => '2027-03-31']]], [$data['created'] ?? null, $data['limited'] ?? null],
+		self::assertSame([1, [['id' => 1, 'title' => 'Werk 131', 'expires' => '2027-03-31', 'reason' => 'license']]], [$data['created'] ?? null, $data['limited'] ?? null],
 			'the link lasts until the license for the portal ends');
 	}
 

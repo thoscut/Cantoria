@@ -230,7 +230,7 @@ final class PreservationCopyParityTest extends TestCase {
 			$this->createStub(\OCA\Cantoria\Service\AuditLog::class), $roles, $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
 			$this->createStub(\OCA\Cantoria\Db\ContributionMapper::class), $this->createStub(\OCA\Cantoria\Db\PersonMapper::class));
 		$links = $this->createStub(LinkService::class);
-		$links->method('circleOptions')->willReturn(['members' => ['allowed' => false, 'reason' => 'x', 'scan' => false, 'offline' => null], 'public' => [], 'scans' => []]);
+		$links->method('circleOptions')->willReturn(['members' => ['allowed' => false, 'reason' => 'x', 'scan' => false, 'offline' => null, 'playback' => false], 'public' => [], 'scans' => []]);
 		$share = new ProgrammeShareService($events, $items, new ProgrammeCopies($copies, $files), $versions, $works, $this->createStub(ExcerptLinkMapper::class),
 			$links, $rights, $roles);
 		$internal = new EventController($this->createStub(IRequest::class), 'account', $roles, $service, $items,

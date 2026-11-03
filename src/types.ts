@@ -328,6 +328,9 @@ export interface TaskInput {
 	due?: string | null
 }
 
+/** What sets the latest last day of an extension (U41) */
+export type ExtendLimit = 'six_months' | 'age' | 'license'
+
 export interface ExcerptLink {
 	id: number
 	/**
@@ -356,6 +359,14 @@ export interface ExcerptLink {
 	hits: number
 	/** `files[].id` of the PDF scan the link offers (choir members and public only); null for none */
 	scan_file_id?: number | null
+	/**
+	 * The latest last day the server allows when the link is extended today
+	 * (U41); null when it was made more than a year ago, and for links the
+	 * account may not extend. Only in the lists.
+	 */
+	extend_until?: string | null
+	/** What sets `extend_until`: six months from today, the age of the link or the end of the license */
+	extend_limit?: ExtendLimit | null
 }
 
 /**
@@ -421,8 +432,14 @@ export interface ProgrammeShareItem {
 	scan: boolean
 	/** the singers can keep it on their device; null while the module "offline" is off */
 	offline: boolean | null
-	/** an active link to the whole piece that is extended instead of making a second one; never shortened */
-	existing: { id: number, expires: string | null, scan?: boolean } | null
+	/** the choir members can play it (U42: the message to the choir mentions "Loop" only then) */
+	playback?: boolean
+	/**
+	 * a link to the whole piece, without voice, verse or tempo (U45), that is
+	 * extended instead of making a second one; never shortened; it may have
+	 * ended (U40). `limit`: the last day its age allows (U41).
+	 */
+	existing: { id: number, expires: string | null, scan?: boolean, limit?: string } | null
 	/** last day of the license that releases it: the piece is shared until then at most; null without end */
 	until?: string | null
 	/** more choir members than the licenses were bought for (a hint, no barrier) */
@@ -444,8 +461,12 @@ export interface ProgrammeShareResult {
 	/** links that lasted longer already and keep their last day (note and scan apply to them, too) */
 	kept?: number
 	failed: { id: number, title: string, reason: string }[]
-	/** pieces whose license ends before the chosen day, with the day they last */
-	limited?: { id: number, title: string, expires: string }[]
+	/**
+	 * pieces that last shorter than the chosen day, with the day they last
+	 * and why (U41): their license ends, or the link that exists already
+	 * was made almost a year ago
+	 */
+	limited?: { id: number, title: string, expires: string, reason?: 'license' | 'age' }[]
 }
 
 export interface LinkOptions {
