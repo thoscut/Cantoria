@@ -50,6 +50,7 @@ use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\ScanService;
 use OCA\Cantoria\Service\ScoreService;
+use OCA\Cantoria\Service\PageKeys;
 use OCA\Cantoria\Service\SharedLinkService;
 use OCA\Cantoria\Tests\Unit\Support\FakeCrypto;
 use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
@@ -70,6 +71,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(LinkService::class)]
 #[CoversClass(SharedLinkService::class)]
+#[UsesClass(PageKeys::class)]
 #[CoversClass(PublicRepertoireService::class)]
 #[CoversClass(FieldValue::class)]
 #[CoversClass(PracticeAudioService::class)]
@@ -661,7 +663,7 @@ final class SharingTest extends TestCase {
 		$licenseMapper->method('findByVersion')->willReturn($licenses);
 		return new SharedLinkService($mapper, $copies, $versions, $works, $files, $scores, $this->policy($denials), $this->rights(), $roles,
 			$this->modulesWithout(), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
-			$contributions, $persons, $licenseMapper, $events, $items);
+			$contributions, $persons, $licenseMapper, $events, $items, new PageKeys(new FakeCrypto()));
 	}
 
 	private static function programme(int $id, ?string $date, string $title): Event {
@@ -695,7 +697,7 @@ final class SharingTest extends TestCase {
 	}
 
 	private static function programmeKey(int $eventId): string {
-		return substr(hash('sha256', 'cantoria-programme|' . $eventId), 0, 20);
+		return (new PageKeys(new FakeCrypto()))->programme($eventId);
 	}
 
 	/**
@@ -757,7 +759,7 @@ final class SharingTest extends TestCase {
 		self::assertSame(['token' => self::TOKEN, 'title' => 'Abendlied', 'composer' => 'J. Rheinberger', 'measure_from' => '2', 'measure_to' => '3',
 			'voice' => 'Alto', 'verse' => null, 'tempo' => null, 'note' => 'Please practise until Thursday.', 'expires' => '2026-12-31',
 			'canPlay' => true, 'canExportAudio' => true, 'reason' => null, 'scan' => false, 'scanSize' => null, 'offline' => true, 'keepUntil' => null, 'print' => true,
-			'practiceKey' => SharedLinkService::practiceKey($this->version()),
+			'practiceKey' => (new PageKeys(new FakeCrypto()))->practice($this->version()),
 			'credits' => [['role' => 'lyricist', 'name' => 'H. Claudius'], ['role' => 'arranger', 'name' => 'K. Satz']],
 			'notices' => ['By kind permission of Carus'], 'programmes' => []], $list[0], 'the authors by name only, the notices of licenses valid today');
 

@@ -67,7 +67,8 @@ use OCP\Files\File;
  * The page lists the pieces by programme (milestone 0.20, U24): `programmes`
  * of a link names the programmes it was shared with as a whole, with title,
  * date, the place of the programme on the page and of the piece in it
- * (memberProgrammes()). Programmes appear with a key, not with their id.
+ * (memberProgrammes()). Programmes appear with a key, not with their id
+ * (PageKeys, an HMAC with the secret of the instance).
  *
  * @psalm-type Credit = array{role: string, name: string}
  * @psalm-type MemberProgramme = array{key: string, title: string, date: ?string, order: int, position: int}
@@ -101,6 +102,7 @@ class SharedLinkService {
 		private LicenseMapper $licenses,
 		private EventMapper $events,
 		private EventItemMapper $items,
+		private PageKeys $keys,
 	) {
 	}
 
@@ -159,7 +161,7 @@ class SharedLinkService {
 				'keepUntil' => $saveDenial === null ? $this->policy->releaseEnd($version, ExcerptLink::CIRCLE_MEMBERS, true, $today) : null,
 				// printing the notes is a copy, too (B21): the same rights as saving the scan
 				'print' => $saveDenial === null,
-				'practiceKey' => self::practiceKey($version),
+				'practiceKey' => $this->keys->practice($version),
 			] + $this->attribution($version, $today);
 			$pieces[] = ['copy' => $copy->getId(), 'version' => $version->getId(), 'programme' => $link->getEventId()];
 		}
@@ -219,7 +221,7 @@ class SharedLinkService {
 					}
 				}
 			}
-			$key = substr(hash('sha256', 'cantoria-programme|' . $event->getId()), 0, 20);
+			$key = $this->keys->programme($event->getId());
 			foreach ($placed as $row => $position) {
 				if (!isset($own[$position]) || $pieces[$row]['programme'] === $event->getId()) {
 					$listed[$row][] = ['key' => $key, 'title' => (string)$event->getTitle(), 'date' => $event->getEventDate(),
@@ -386,7 +388,7 @@ class SharedLinkService {
 			'canPlay' => $this->policy->publicPlayDenial($version, $today, $copy) === null,
 			'scan' => $scan,
 			'scanSize' => $scan ? $this->scanSize($link) : null,
-			'practiceKey' => self::practiceKey($version),
+			'practiceKey' => $this->keys->practice($version),
 			// Kept on a device (milestone 0.15): only confirmed public domain, as visitors have no license
 			'expires' => $link->getExpires(),
 			'offline' => $this->modules->isEnabled(Modules::OFFLINE) && self::publicDomainConfirmed($version),
@@ -569,15 +571,5 @@ class SharedLinkService {
 
 	private static function expired(ExcerptLink $link, string $today): bool {
 		return $link->getExpires() !== null && $link->getExpires() < $today;
-	}
-
-	/**
-	 * The key under which the browser keeps the practice settings and
-	 * passages of a piece (milestone 0.15): the same for every link to the
-	 * same version, as its measures are the same, and unchanged when a title
-	 * is corrected. A hash, so that the page shows no ids of the catalog.
-	 */
-	public static function practiceKey(WorkVersion $version): string {
-		return substr(hash('sha256', 'cantoria-practice|' . $version->getId()), 0, 20);
 	}
 }
