@@ -25,7 +25,7 @@ Please report security issues privately as described in
 
 ## Development setup
 
-You need a Nextcloud 33, 34 or 35 test instance with MySQL or MariaDB, PHP 8.2
+You need a Nextcloud 33, 34 or 35 test instance with MySQL, MariaDB or PostgreSQL, PHP 8.2
 or newer, Node.js 24 with npm 11, and Composer for the PHP tools.
 
 ```sh

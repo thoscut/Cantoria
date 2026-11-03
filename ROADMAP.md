@@ -764,10 +764,13 @@ ersten Tag.*
   Beschreibung und Homepage, ohne Topics und ohne Release. Fork lösen
   (über den GitHub-Support) oder neu anlegen, Beschreibung, Homepage und
   Topics setzen (W B22).
-- **Store-Text und README nennen die Grenzen:** nur MySQL und MariaDB,
-  damit nicht in Nextcloud All-in-One (PostgreSQL); Chormitglieder
+- **PostgreSQL:** – *umgesetzt: Die App lässt sich auch auf PostgreSQL
+  installieren und damit in Nextcloud All-in-One; die Integrationstests
+  laufen in der CI auf Nextcloud 33 und 35 je mit MariaDB 11.8 und
+  PostgreSQL 17 (W B23).* SQLite und Oracle bleiben ausgeschlossen.
+- **Store-Text und README nennen die Grenzen:** Chormitglieder
   brauchen ein Nextcloud-Konto oder einen öffentlichen Link; Abgrenzung
-  zum Orchestra Scores Manager 2.0.0 (W B23, W B32, W B26).
+  zum Orchestra Scores Manager 2.0.0 (W B32, W B26).
 - **Schriftlizenz Liberation:** bis zur Klärung als GPL-2.0 mit
   Font-Ausnahme ausweisen, mit Lizenztext und Quellverweis; bestätigt sich
   GPL-2.0, ist der Punkt hoch (R B25).
@@ -1131,7 +1134,8 @@ Demodaten.*
   als `QueuedJob`, Sperre über eine eigene Tabelle statt der Dateisperre
   (A)
 - API v1 stabil: Prüfung, dass `openapi.json` kompatibel bleibt (A)
-- Entscheidung zu PostgreSQL und SQLite (A, T, W)
+- Entscheidung zu SQLite (A, T, W); PostgreSQL ist seit dem 3. November
+  2026 unterstützt und in der CI getestet
 - Nutzertest mit Sängern und Chorleitung und ein Durchgang mit
   Screenreader (U, R3, R4 im UX-Bericht)
 - Tests für Service Worker, Bühnenansicht, Verlassen-Schutz und die neuen
@@ -1146,8 +1150,7 @@ Demodaten.*
   weil `memory_limit` beim DOM nicht greift (S N18); Abfragen je Link
   bündeln (heute etwa 14), die Rollenprüfung an einer Stelle, toter Code
   in `RightsPolicy`, im Lasttest messen (A25); Auskunft und Löschung ohne
-  `occ` (R B34); die Entscheidung zu PostgreSQL direkt nach 0.20, weil
-  Nextcloud All-in-One PostgreSQL nutzt (W B23); eine Anleitung in der App
+  `occ` (R B34); eine Anleitung in der App
   und der Nutzertest mit Chorleitung und Sängern (U)
 
 ### Nach 1.0

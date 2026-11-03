@@ -81,9 +81,10 @@ auszuprobieren, nimm die [Demodaten](../../tools/demo/README.md) (englisch).
 ### Voraussetzungen
 
 - Nextcloud 33–35 und PHP 8.2 oder neuer.
-- MySQL oder MariaDB als Datenbank der Nextcloud. Die App ist nur damit
-  getestet; auf PostgreSQL, SQLite oder Oracle verweigert Nextcloud die
-  Installation.
+- MySQL, MariaDB oder PostgreSQL als Datenbank der Nextcloud. Die CI testet
+  die App mit MariaDB 11.8 und PostgreSQL 17; Nextcloud All-in-One, das
+  PostgreSQL nutzt, funktioniert. Auf SQLite oder Oracle verweigert
+  Nextcloud die Installation; beide sind nicht getestet.
 - Empfohlen: die App Benachrichtigungen (Notifications) und ein
   funktionierender Ausführer für Hintergrundjobs (System-Cron). Ohne Cron
   laufen wöchentliche Sicherungen, Fristerinnerungen und Prüfsummenprüfungen
@@ -679,11 +680,12 @@ Auf Instanzen ohne Shell-Zugang geht alles über die Weboberfläche:
 Installation aus dem App Store, Einstellungen (Verwaltungseinstellungen →
 Cantoria), Importe und Wiederherstellung.
 
-- **Zuerst die Datenbank prüfen.** Die App läuft nur mit MySQL oder MariaDB;
-  auf PostgreSQL, SQLite oder Oracle verweigert Nextcloud die Installation.
-  Viele verwaltete Angebote nutzen PostgreSQL. **Verwaltungseinstellungen →
-  System** (die App *System*, `serverinfo`) zeigt die Datenbank, oder frag
-  den Anbieter, bevor ihr das Archiv um die App herum plant.
+- **Zuerst die Datenbank prüfen.** Die App läuft mit MySQL, MariaDB und
+  PostgreSQL, also bei den meisten verwalteten Angeboten und in Nextcloud
+  All-in-One; auf SQLite oder Oracle verweigert Nextcloud die Installation.
+  **Verwaltungseinstellungen → System** (die App *System*, `serverinfo`)
+  zeigt die Datenbank, oder frag den Anbieter, bevor ihr das Archiv um die
+  App herum plant.
 - **MuseScore-Dateien** (`.mscz`) werden ihrem Exemplar zugeordnet, aber die
   App zeigt sie nicht: Die Notenansicht liest MusicXML. Exportiere MusicXML
   aus MuseScore für die Notenansicht. Um `.mscz`-Dateien in Nextcloud selbst

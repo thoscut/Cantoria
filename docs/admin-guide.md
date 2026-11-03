@@ -72,8 +72,10 @@ tools. Steps 5 and 6 need the catalog role. To try the app first, use the
 ### Requirements
 
 - Nextcloud 33–35 and PHP 8.2 or newer.
-- MySQL or MariaDB as Nextcloud's database. The app is tested only with
-  these; Nextcloud refuses to install it on PostgreSQL, SQLite or Oracle.
+- MySQL, MariaDB or PostgreSQL as Nextcloud's database. The CI tests the
+  app with MariaDB 11.8 and PostgreSQL 17; Nextcloud All-in-One, which uses
+  PostgreSQL, works. Nextcloud refuses to install the app on SQLite or
+  Oracle, which are not tested.
 - Recommended: the Notifications app and a working background job runner
   (system cron). Without cron, weekly backups, deadline reminders and checksum
   checks run only when the instance is used ("AJAX" mode) and may be late.
@@ -628,11 +630,11 @@ On instances without shell access everything is done in the web interface:
 installation from the App Store, settings (Administration → Cantoria),
 imports and restore.
 
-- **Check the database first.** The app runs only on MySQL or MariaDB;
-  Nextcloud refuses to install it on PostgreSQL, SQLite or Oracle. Many
-  managed offers use PostgreSQL. **Administration → System** (the app
-  *System*, `serverinfo`) shows the database, or ask the provider before you
-  plan the archive around the app.
+- **Check the database first.** The app runs on MySQL, MariaDB and
+  PostgreSQL, which covers most managed offers and Nextcloud All-in-One;
+  Nextcloud refuses to install it on SQLite or Oracle. **Administration →
+  System** (the app *System*, `serverinfo`) shows the database, or ask the
+  provider before you plan the archive around the app.
 - **MuseScore files** (`.mscz`) are linked to their copy, but the app does
   not show them: the score viewer reads MusicXML. Export MusicXML from
   MuseScore for the score viewer. To look at `.mscz` files in Nextcloud

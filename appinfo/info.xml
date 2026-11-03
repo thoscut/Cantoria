@@ -27,7 +27,7 @@
 - **Agents and tools (optional):** a versioned API (OCS) with an OpenAPI description and an MCP server. With an account of their own, agents read, ask and propose; they never decide, and the server checks every request against their role.
 - **Access by groups:** roles are given to Nextcloud groups, e.g. the music librarians write, the board reads. Other accounts do not see the archive; admins without a role may read it and change the settings.
 
-No external requests and no telemetry: notation, fonts and sounds are part of the app. Accessible (target WCAG 2.2 AA) with inclusive wording. In English and German (informal and formal); French, Spanish, Italian, Dutch and Polish are machine translations that still wait for a review by native speakers. Works on managed hosting without shell access; an existing catalog can be imported from CSV, Excel (.xlsx) or OpenDocument (.ods). Requires MySQL or MariaDB. The rights helpers follow German copyright law; they support a decision and are no legal advice.]]></description>
+No external requests and no telemetry: notation, fonts and sounds are part of the app. Accessible (target WCAG 2.2 AA) with inclusive wording. In English and German (informal and formal); French, Spanish, Italian, Dutch and Polish are machine translations that still wait for a review by native speakers. Works on managed hosting without shell access; an existing catalog can be imported from CSV, Excel (.xlsx) or OpenDocument (.ods). Requires MySQL, MariaDB or PostgreSQL (also in Nextcloud All-in-One). The rights helpers follow German copyright law; they support a decision and are no legal advice.]]></description>
 	<description lang="de"><![CDATA[Führt Werkverzeichnis und Rechte der Noten, die ein Chor schon hat, in Nextcloud: gekaufte und geliehene Ausgaben, gemeinfreie Werke, Papiermappen und Erhaltungskopien, von der Mappe im Regal bis zum Konzertprogramm. Cantoria arbeitet neben dem Chorsystem, in dem die Mitglieder Termine und Neuigkeiten finden: als Archiv dahinter, das übergibt, was für den Chor freigegeben ist, und es mit dem Export des Chorsystems vergleicht. Für Archivverwaltung, Chorleitung, Vorstand und Revision. Auf Wunsch bekommen Chormitglieder Stücke und Ausschnitte zum Ansehen, Anhören und Üben.
 
 - **Werkverzeichnis:** Werk, Fassung (Satz, Bearbeitung, Ausgabe) und Exemplar (Signatur) als getrennte Ebenen, verknüpft mit den Scans, MusicXML- und MuseScore-Dateien, die schon in der Nextcloud liegen. Die App liest die Dateien nur. Nichts im Bestand wird gelöscht, jede Änderung wird protokolliert; Namen im Protokoll werden nach einer Frist entfernt. Die Suche der Nextcloud findet Exemplare nach Signatur, Titel und Person.
@@ -50,7 +50,7 @@ No external requests and no telemetry: notation, fonts and sounds are part of th
 - **Agenten und Werkzeuge (optional):** eine versionierte Schnittstelle (OCS) mit OpenAPI-Beschreibung und ein MCP-Server. Mit einem eigenen Konto lesen, fragen und schlagen Agenten vor; sie entscheiden nie, und der Server prüft jede Anfrage gegen ihre Rolle.
 - **Zugriff über Gruppen:** Rollen werden Nextcloud-Gruppen zugeordnet, z. B. schreibt die Archivverwaltung und der Vorstand liest. Andere Konten sehen das Archiv nicht; die Administration ohne Rolle darf lesen und die Einstellungen ändern.
 
-Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind in der App enthalten. Barrierefrei (Ziel WCAG 2.2 AA) mit inklusiver Sprache. Auf Deutsch (du und Sie) und Englisch; Französisch, Spanisch, Italienisch, Niederländisch und Polnisch sind maschinell übersetzt und warten noch auf eine Durchsicht durch Muttersprachler. Läuft auch bei gehosteten Nextclouds ohne Shell-Zugang; ein vorhandenes Verzeichnis lässt sich aus CSV, Excel (.xlsx) oder OpenDocument (.ods) übernehmen. Benötigt MySQL oder MariaDB. Die Rechte-Hilfen bilden deutsches Urheberrecht ab; sie unterstützen eine Entscheidung und sind keine Rechtsberatung.]]></description>
+Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind in der App enthalten. Barrierefrei (Ziel WCAG 2.2 AA) mit inklusiver Sprache. Auf Deutsch (du und Sie) und Englisch; Französisch, Spanisch, Italienisch, Niederländisch und Polnisch sind maschinell übersetzt und warten noch auf eine Durchsicht durch Muttersprachler. Läuft auch bei gehosteten Nextclouds ohne Shell-Zugang; ein vorhandenes Verzeichnis lässt sich aus CSV, Excel (.xlsx) oder OpenDocument (.ods) übernehmen. Benötigt MySQL, MariaDB oder PostgreSQL (auch in Nextcloud All-in-One). Die Rechte-Hilfen bilden deutsches Urheberrecht ab; sie unterstützen eine Entscheidung und sind keine Rechtsberatung.]]></description>
 	<version>0.17.0-dev.2</version>
 	<licence>AGPL-3.0-or-later</licence>
 	<author homepage="https://github.com/thoscut">Thomas Scheel</author>
@@ -81,10 +81,11 @@ Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind
 	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/de/catalog.png</screenshot>
 	<dependencies>
 		<php min-version="8.2"/>
-		<!-- Tested with MySQL/MariaDB only; PostgreSQL, SQLite and Oracle are not tested.
-		     The attribute makes Nextcloud parse the entry as a list: a single plain
-		     <database> element triggers a PHP warning in its MigrationService. -->
+		<!-- Tested in the CI with MariaDB and PostgreSQL (Nextcloud All-in-One
+		     uses PostgreSQL); SQLite and Oracle are not tested. Nextcloud checks
+		     only the name; the versions document what the CI runs. -->
 		<database min-version="8.0">mysql</database>
+		<database min-version="14">pgsql</database>
 		<nextcloud min-version="33" max-version="35"/>
 	</dependencies>
 	<background-jobs>

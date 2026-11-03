@@ -270,7 +270,7 @@ missing arguments end with exit code 2.
 The CI job `integration` runs all fifteen scripts against a freshly installed
 The CI job `integration` runs all fourteen scripts against a freshly installed
 Nextcloud 33 and 35 (release archives from download.nextcloud.com, checked
-against their SHA-512 checksum) with MariaDB 11.8 and PHP 8.3. The job
+against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17, and PHP 8.3. The job
 installs the app with its built frontend, builds the public demo data
 (`node tools/demo/build.mjs`, see `tools/demo/README.md`) and calls
 

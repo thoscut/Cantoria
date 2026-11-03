@@ -391,10 +391,12 @@ jobs:
 
   integration:
     # The integration tests in tests/Integration against a freshly installed
-    # Nextcloud with MariaDB, the app from the release archive of the job
-    # "archive" and the public demo data (tools/demo). The oldest and the
-    # newest supported Nextcloud (appinfo/info.xml).
-    name: Integration tests, Nextcloud ${{ matrix.nextcloud }}
+    # Nextcloud, the app from the release archive of the job "archive" and
+    # the public demo data (tools/demo). The oldest and the newest supported
+    # Nextcloud (appinfo/info.xml), each with MariaDB and with PostgreSQL
+    # (the database of Nextcloud All-in-One). Both database services start
+    # in every job; the matrix chooses which one Nextcloud uses.
+    name: Integration tests, Nextcloud ${{ matrix.nextcloud }}, ${{ matrix.database }}
     needs: archive
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -402,6 +404,7 @@ jobs:
       fail-fast: false
       matrix:
         nextcloud: ['33', '35']
+        database: ['MariaDB', 'PostgreSQL']
     container:
       image: php:8.3-cli@sha256:600bce7c7acf524756e5aac989f4a763aed709960d7326970bb670f46efee53a
     services:
@@ -416,6 +419,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 30
+      postgres:
+        # As in Nextcloud All-in-One
+        image: postgres:17@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1
+        env:
+          # Throwaway database of this job only
+          POSTGRES_PASSWORD: nextcloud-ci
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
     env:
       NEXTCLOUD_ROOT: /opt/nextcloud
     defaults:
@@ -426,12 +440,12 @@ jobs:
       - name: Install job tools and the PHP extensions Nextcloud needs
         run: |
           apt-get update -qq
-          apt-get install -y -qq --no-install-recommends git curl bzip2 ca-certificates libpng-dev libfreetype-dev libzip-dev libicu-dev >/dev/null
+          apt-get install -y -qq --no-install-recommends git curl bzip2 ca-certificates libpng-dev libfreetype-dev libzip-dev libicu-dev libpq-dev >/dev/null
           # FreeType: Nextcloud draws the letter avatar of a new account
           docker-php-ext-configure gd --with-freetype >/dev/null
-          docker-php-ext-install -j"$(nproc)" gd intl pdo_mysql zip >/dev/null
+          docker-php-ext-install -j"$(nproc)" gd intl pdo_mysql pdo_pgsql zip >/dev/null
           echo 'memory_limit = 1G' > /usr/local/etc/php/conf.d/zz-ci.ini
-          php -r 'foreach (["gd", "intl", "pdo_mysql", "zip"] as $e) { extension_loaded($e) || exit(1); } function_exists("imagettfbbox") || exit(1);'
+          php -r 'foreach (["gd", "intl", "pdo_mysql", "pdo_pgsql", "zip"] as $e) { extension_loaded($e) || exit(1); } function_exists("imagettfbbox") || exit(1);'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -477,15 +491,22 @@ jobs:
           [ -f "$TARBALL" ] || curl -fsSLO "https://download.nextcloud.com/server/releases/$TARBALL"
           grep " $TARBALL\$" "$TARBALL.sha512" | sha512sum -c -
           tar -xjf "$TARBALL" -C "$(dirname "$NEXTCLOUD_ROOT")"
-      - name: Install Nextcloud
+      - name: Install Nextcloud with ${{ matrix.database }}
+        env:
+          DATABASE: ${{ matrix.database }}
         run: |
           admin_pass="$(head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
+          case "$DATABASE" in
+            MariaDB) database=(--database=mysql --database-host=mariadb --database-port=3306 --database-user=root) ;;
+            PostgreSQL) database=(--database=pgsql --database-host=postgres --database-port=5432 --database-user=postgres) ;;
+            *) echo "unknown database $DATABASE" >&2; exit 1 ;;
+          esac
           php "$NEXTCLOUD_ROOT/occ" maintenance:install --no-interaction \
-            --database=mysql --database-host=mariadb --database-port=3306 \
-            --database-name=nextcloud --database-user=root --database-pass=nextcloud-ci \
+            "${database[@]}" --database-name=nextcloud --database-pass=nextcloud-ci \
             --admin-user=admin --admin-pass="$admin_pass" \
             --data-dir="$NEXTCLOUD_ROOT/data"
           php "$NEXTCLOUD_ROOT/occ" status
+          php "$NEXTCLOUD_ROOT/occ" config:system:get dbtype
       - name: Install the app from the release archive
         # The archive of the job "archive", unpacked into apps/ as Nextcloud
         # does with an archive from the app store. The app has no runtime

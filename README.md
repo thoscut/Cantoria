@@ -217,8 +217,9 @@ figures to expect.
 ## Requirements
 
 - Nextcloud 33–35 with PHP 8.2 or newer
-- MySQL or MariaDB as Nextcloud's database; Nextcloud refuses to install the
-  app on PostgreSQL, SQLite or Oracle, which are not tested
+- MySQL, MariaDB or PostgreSQL as Nextcloud's database, so the app also runs
+  in Nextcloud All-in-One; the CI tests MariaDB and PostgreSQL. Nextcloud
+  refuses to install it on SQLite or Oracle, which are not tested
 - the archive files in a folder the music librarians can read, typically a
   group folder
 - recommended: the Notifications app and a background job runner (system

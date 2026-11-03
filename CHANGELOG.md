@@ -12,6 +12,10 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Added
 
+- **PostgreSQL.** The app now installs on PostgreSQL as well as on MySQL
+  and MariaDB, and so also in Nextcloud All-in-One. The integration tests
+  run in the CI on Nextcloud 33 and 35, each with MariaDB 11.8 and with
+  PostgreSQL 17. SQLite and Oracle stay unsupported.
 - **Share a whole programme with the choir.** In a concert or rehearsal,
   "Share with the choir …" shares the pieces of the programme with the
   choir members in one step; pieces that may not be shared are named with
