@@ -49,7 +49,7 @@ No external requests and no telemetry: notation, fonts and sounds are part of th
 - **Zugriff über Gruppen:** Rollen werden Nextcloud-Gruppen zugeordnet, z. B. schreibt die Archivverwaltung und der Vorstand liest. Andere Konten sehen das Archiv nicht; die Administration ohne Rolle darf lesen und die Einstellungen ändern.
 
 Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind in der App enthalten. Barrierefrei (Ziel WCAG 2.2 AA) mit inklusiver Sprache. Auf Deutsch (du und Sie) und Englisch; Französisch, Spanisch, Italienisch, Niederländisch und Polnisch sind maschinell übersetzt und warten noch auf eine Durchsicht durch Muttersprachler. Läuft auch bei gehosteten Nextclouds ohne Shell-Zugang; ein vorhandenes Verzeichnis lässt sich aus CSV übernehmen. Benötigt MySQL oder MariaDB. Die Rechte-Hilfen bilden deutsches Urheberrecht ab; sie unterstützen eine Entscheidung und sind keine Rechtsberatung.]]></description>
-	<version>0.16.1</version>
+	<version>0.17.0-dev.1</version>
 	<licence>AGPL-3.0-or-later</licence>
 	<author homepage="https://github.com/thoscut">Thomas Scheel</author>
 	<namespace>Cantoria</namespace>
