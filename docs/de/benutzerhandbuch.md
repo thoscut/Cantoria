@@ -457,9 +457,9 @@ verwirft sie.
 Schriften und Klänge sind Teil der App; nichts wird von anderen Servern
 geladen.
 
-1. Trage **Von Takt** und **Bis Takt** ein und wähle **Anzeigen**. Es gelten
-   die gedruckten Taktnummern; der Auftakt ist Takt 0. **Alle Takte** zeigt
-   wieder das ganze Stück.
+1. Trage **Von Takt** und **Bis Takt** ein und wähle **Takte zeigen**. Es
+   gelten die gedruckten Taktnummern; der Auftakt ist Takt 0. **Alle Takte**
+   zeigt wieder das ganze Stück.
 2. Wähle eine **Hervorgehobene Stimme**, auch eine, die sich ein
    Notensystem mit einer anderen Stimme teilt (zum Beispiel Tenor II im
    System „Tenor I/II“). Die hervorgehobene Stimme erscheint farbig mit
@@ -557,8 +557,8 @@ deinem Browser: Über dein Üben wird nichts auf dem Server gespeichert.
 - **Tastatur:** Bring den Fokus in die Noten (Tab) und nutze die Pfeiltasten
   **links** und **rechts**: Sie gehen in Spielreihenfolge zum vorigen oder
   nächsten Takt, und der Takt wird angesagt. Die Leertaste spielt dann ab
-  dort. Du kannst den Takt auch in **Von Takt** eintragen und **Anzeigen**
-  wählen.
+  dort. Du kannst den Takt auch in **Von Takt** eintragen und **Takte
+  zeigen** wählen.
 
 > [!IMPORTANT]
 > Abspielen gibt es für gemeinfreie Fassungen und für Fassungen mit einer
@@ -1125,13 +1125,24 @@ Hochformat, klappt die Programmliste weg, sobald ein Stück offen ist;
 Für die Probe und die Bühne:
 
 - **Bühnenansicht** zeigt nur das Stück, wo der Browser es kann auf dem
-  ganzen Bildschirm, und hält den Bildschirm wach. Ein zweiter Druck auf
-  **Bühnenansicht** oder die Escape-Taste beendet sie.
-- **Nächstes** steht in der Leiste, die oben bleibt, und am Ende der Noten,
-  **Vorheriges: …** und **Nächstes: …** unter dem Titel.
+  ganzen Bildschirm, und hält den Bildschirm wach: den Titel in einer
+  Zeile, die Leiste und die Noten. Die Seite beginnt bei den Noten, auch
+  nach jedem Stückwechsel. Komponist, Scan und Einstellungen klappen weg;
+  **Vorheriges** (ein Pfeil), **Nächstes** und **Bühnenansicht verlassen**
+  stehen in der Leiste. Die Escape-Taste oder **Bühnenansicht verlassen**
+  beendet sie. Ist ein Dialog offen, gehört das erste Escape dem Dialog.
+- **Nächstes** steht in der Leiste, die oben bleibt; ohne Noten steht es am
+  Ende des Stücks. **Vorheriges: …** steht unter dem Titel.
 - Ein Fußpedal zum Blättern (Bild ab, Bild auf) blättert System für System.
-  Nach dem letzten System sagt Bild ab das nächste Stück an und setzt den
-  Fokus auf **Nächstes: …**; ein weiterer Druck öffnet es.
+  Nach dem letzten System sagt Bild ab das nächste Stück an, hebt
+  **Nächstes: …** in der Leiste hervor und setzt den Fokus darauf; ein
+  weiterer Druck öffnet es. Solange das nächste Stück noch lädt oder seine
+  Noten gesetzt werden, bewirkt ein Druck nichts, damit kein Stück
+  übersprungen wird. Über ein Lesezeichen geöffnet, liegt der Fokus
+  ebenfalls in den Noten.
+- Die Zurück-Geste des Handys führt zur Liste, egal wie viele Stücke du mit
+  **Nächstes** oder dem Pedal geöffnet hast; ist am Handy der Scan offen,
+  schließt sie zuerst den Scan.
 - Ist eine eigene Aufnahme nicht gespeichert, fragt die Mappe, bevor ein
   anderes Stück sie verwirft.
 
@@ -1141,8 +1152,14 @@ Schalter **Mit den Scans (PDF, …)** darunter kannst du vorher oder nachher
 umstellen; er nennt den Platz, den die Scans brauchen. Unter dem Schalter
 stehen der Fortschritt („3 von 12 Stücken bereit …“) und, falls etwas nicht
 klappt, der Grund und was zu tun ist. Ohne Netz öffnest du die Konzertmappe
-wie gewohnt (ein Lesezeichen oder der Home-Bildschirm): Die Stücke kommen
-vom Gerät, in der Liste mit **Ohne Netz verfügbar** markiert. Wie bei „Mit
+so, wie du die Stücke verfügbar gemacht hast: Die Stücke kommen vom Gerät,
+in der Liste mit **Ohne Netz verfügbar** markiert. Auf iPhone oder iPad
+machst du die Stücke in Safari verfügbar und öffnest die Konzertmappe dort
+über ein Lesezeichen, nicht vom Home-Bildschirm: Von dort öffnet Cantoria
+das Archiv, und das braucht Netz. Öffne die Konzertmappe am Tag vor dem
+Konzert einmal mit Netz: Safari kann, was eine Seite behält, nach einigen
+Tagen ohne Besuch löschen, und der Start gleicht die Stücke mit dem Server
+ab. Wie bei „Mit
 mir geteilt“ gleicht jeder Start mit Netz sie mit dem Server ab, und nach
 30 Tagen ohne Netz sind sie gesperrt. Ohne das Modul speichert die
 Konzertmappe nichts auf dem Gerät.
@@ -1916,7 +1933,7 @@ markiert; **Alles auf diesem Gerät löschen** vergisst auch das.
      und unter **Stimmen beim Abspielen** **Alle gleich**, **Stimme betont**
      oder **Nur diese Stimme**.
    - **Takte und Tempo**: Gib **Von Takt** und **Bis Takt** an und wähle
-     **Anzeigen**; **Schleife** spielt die gezeigten Takte immer wieder,
+     **Takte zeigen**; **Schleife** spielt die gezeigten Takte immer wieder,
      **Alle Takte** zeigt wieder alles. Darunter das Tempo und der
      **Einzähler**, der einen oder zwei Takte vor der Musik klickt.
    - **Mehr zum Üben** (zuerst eingeklappt): Anfangstöne, Metronom,
@@ -1972,10 +1989,11 @@ Es geht im Browser.
 5. **Ohne Netz**, unten auf der Seite, zeigt, wie viele Stücke verfügbar
    sind und wie viel Platz sie belegen. Cantoria legt sie in diesem Browser
    auf diesem Gerät ab; ein anderer Browser sieht sie nicht. **Alles auf
-   diesem Gerät löschen** entfernt die Stücke, Stellen und Einstellungen;
-   tu das auf einem geteilten Gerät. Solange Stücke auf dem Gerät sind,
-   führt **Von diesem Gerät entfernen** oben auf der Seite dorthin. Das
-   Abmelden bei Nextcloud löscht sie meist auch: in Firefox, Safari und
+   diesem Gerät löschen** entfernt die Stücke aller Seiten von Cantoria,
+   die gemerkten Übe-Stellen, die Übe-Einstellungen und die Markierungen
+   **Neu**; tu das auf einem geteilten Gerät. Solange Stücke auf dem Gerät
+   sind, steht derselbe Knopf auch oben auf der Seite. Er fragt vorher,
+   direkt unter dem Knopf, und sagt, was verloren geht. Das Abmelden bei Nextcloud löscht sie meist auch: in Firefox, Safari und
    Edge sofort, in Chrome und auf Android beim nächsten Öffnen einer Seite
    von Cantoria auf diesem Gerät, auch ohne Netz. Bis dahin bleiben sie im
    Browser; und nach einer Sitzung, die ohne Abmelden endet, sieht sie ohne

@@ -1194,7 +1194,7 @@ offline`):
   sie nach einem Update der App auch ohne Netz öffnet.
 - **Geteilte Geräte.** Chormitglieder löschen alles mit **Alles auf diesem
   Gerät löschen** am Ende der Seite oder, solange Stücke auf dem Gerät
-  sind, mit **Von diesem Gerät entfernen** oben auf der Seite. Das Abmelden
+  sind, mit demselben Knopf oben auf der Seite. Das Abmelden
   bei Nextcloud löscht die Stücke meist auch: Nextcloud bittet Firefox,
   Safari und Edge, den Speicher des Servers sofort zu löschen (Header
   `Clear-Site-Data`, nur wenn Nextcloud HTTPS sieht; hinter einem Proxy

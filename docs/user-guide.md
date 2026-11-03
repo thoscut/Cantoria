@@ -424,9 +424,9 @@ The music librarian then applies the answer to the catalog or discards it.
 **Score** opens the MusicXML of a copy in the browser. Notation, fonts and
 sounds are part of the app; nothing is loaded from other servers.
 
-1. Enter **From measure** and **To measure** and choose **Show**. Measures
-   are the printed numbers; the pickup is measure 0. **All measures** shows
-   the whole piece again.
+1. Enter **From measure** and **To measure** and choose **Show
+   measures**. Measures are the printed numbers; the pickup is measure 0.
+   **All measures** shows the whole piece again.
 2. Choose a **Focus voice**, also one that shares a staff with another voice
    (for example Tenor II on the staff "Tenor I/II"). The focus voice is shown
    in colour with bolder note heads and stems, the other voices in a lighter
@@ -519,7 +519,7 @@ about your practising is stored on the server.
 - **Keyboard:** move the focus to the score (Tab) and use the arrow keys
   **left** and **right**: they go to the previous or next measure in playing
   order, and the measure is announced. Space then plays from there. You can
-  also enter the measure in **From measure** and choose **Show**.
+  also enter the measure in **From measure** and choose **Show measures**.
 
 > [!IMPORTANT]
 > Playback is offered for public domain versions and for versions with a
@@ -1051,13 +1051,23 @@ an iPad upright, the programme list folds away once a piece is open;
 For the rehearsal and the stage:
 
 - **Stage view** shows only the piece, on the whole screen where the
-  browser can, and keeps the screen on. Press **Stage view** again or
-  Escape to leave it.
-- **Next** is in the bar that stays at the top and at the end of the notes;
-  **Previous: …** and **Next: …** are below the title.
+  browser can, and keeps the screen on: the title in one line, the bar and
+  the notes. The page starts with the notes, also after each change of
+  piece. Composer, scan and settings fold away; **Previous** (an arrow),
+  **Next** and **Leave the stage view** are in the bar. Escape or **Leave
+  the stage view** ends it. With a dialog open, the first Escape belongs to
+  the dialog.
+- **Next** is in the bar that stays at the top; without notes it stands at
+  the end of the piece. **Previous: …** is below the title.
 - A page-turn pedal (Page Down, Page Up) turns system by system. After the
-  last system Page Down announces the next piece and puts the focus on
-  **Next: …**; one more press opens it.
+  last system Page Down announces the next piece, marks **Next: …** in the
+  bar and puts the focus on it; one more press opens it. While the next
+  piece still loads or its notes are being engraved, a press does nothing,
+  so that no piece is skipped. Opened from a bookmark, the focus is in the
+  notes too.
+- The back gesture of a phone returns to the list, however many pieces
+  were opened with **Next** or the pedal; with the scan open on a phone, it
+  closes the scan first.
 - If a recording of yourself is not saved, the folder asks before another
   piece discards it.
 
@@ -1067,8 +1077,14 @@ rehearsal or the concert. The switch **With the scans (PDF, …)** below it
 can be changed before or afterwards; it names the space the scans need.
 Below the switch you see the progress ("3 of 12 pieces ready …") and, if
 something goes wrong, why and what to do. Without a network, open the
-concert folder as usual (a bookmark or the home screen): the pieces come
+concert folder the same way as when you kept the pieces: the pieces come
 from the device and are marked **Available without a network** in the list.
+On an iPhone or iPad, keep the pieces in Safari and open the concert folder
+there from a bookmark, not from the home screen: from the home screen,
+Cantoria opens the archive, which needs a network. Open the concert folder
+once with a network the day before the concert: Safari may delete what a
+page keeps after some days without a visit, and the start checks the
+pieces with the server.
 As on "Shared with me", every start with a network checks them with the
 server, and after 30 days without one they are locked. Without the module
 the concert folder keeps nothing on the device.
@@ -1796,7 +1812,7 @@ device** forgets it, too.
      **Voices during playback** **All equal**, **Focus voice louder** or
      **Focus voice only**.
    - **Measures and tempo**: enter **From measure** and **To measure** and
-     choose **Show**; **Loop** plays the shown measures again and again,
+     choose **Show measures**; **Loop** plays the shown measures again and again,
      **All measures** shows everything again. Below are the tempo and the
      **Count-in**, which clicks one or two bars before the music.
    - **More for practising** (folded at first): starting tones, metronome,
@@ -1852,9 +1868,11 @@ install: it works in the browser.
 5. **Without a network**, at the bottom of the page, shows how many pieces
    are available and the space used. Cantoria keeps them in this browser on
    this device; another browser does not see them. **Delete everything on
-   this device** removes the pieces, passages and settings; do this on a
-   shared device. While pieces are kept, **Remove from this device** at the
-   top of the page leads there. Signing out of Nextcloud usually deletes
+   this device** removes the pieces of all pages of Cantoria, the
+   remembered passages, the settings for practising and the marks **New**;
+   do this on a shared device. While pieces are kept, the same button
+   stands at the top of the page, too. It asks first, right below the
+   button, and says what goes. Signing out of Nextcloud usually deletes
    them too: in Firefox, Safari and Edge at once, in Chrome and on Android
    the next time a page of Cantoria opens on this device, also without a
    network. Until then they stay in the browser; and after a session that

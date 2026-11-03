@@ -27,7 +27,7 @@ with the choir. You only need a browser, no app. The details are in the
 2. Under **My voice**, choose your voice and **Focus voice louder** or
    **Focus voice only**.
 3. Under **Measures and tempo**, enter **From measure** and **To measure**,
-   tap **Show** and switch on **Loop**: the passage plays again and again.
+   tap **Show measures** and switch on **Loop**: the passage plays again and again.
    The tempo plays it slower.
 4. **Play** starts; a tap on a note starts there.
 5. **More for practising** has starting tones, metronome, lyrics, your own
@@ -45,9 +45,10 @@ your phone, please tell the conductor.
   pieces on. Safari and the home screen keep them apart.
 - Open the page with a network at least once every 30 days, or the pieces
   are locked.
-- On a shared device: **Remove from this device** at the top, or **Delete
-  everything on this device** at the bottom, before you pass the device on.
-  Signing out of Nextcloud usually deletes the pieces, passages and
+- On a shared device: **Delete everything on this device**, at the top or
+  at the bottom of the page, before you pass the device on. It also
+  deletes your remembered passages and settings for practising. Signing
+  out of Nextcloud usually deletes the pieces, passages and
   settings too, in some browsers (Chrome, Android) only the next time
   Cantoria opens on the device. If you only close the browser, you stay
   signed in, and everything stays for whoever uses the device next.
