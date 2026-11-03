@@ -294,7 +294,11 @@ der Mitglieder in den [Datenschutz-Vorlagen](datenschutz-vorlagen.md).
   (Rechtsansprüche). Danach genügt die Rolle: Nach zehn Jahren (Voreinstellung)
   entfernt die App Konto und Namen aus den Protokolleinträgen und behält die
   Rolle (Einstellung `audit_retention_years`, Administrationshandbuch,
-  Abschnitt 10).
+  Abschnitt 10). Das gilt auch für die Werte der Einträge, in denen ein
+  Konto oder ein Name steht, etwa wer einen Rechtestatus bestätigt, eine
+  Person geprüft oder eine Fassung als gültig gesetzt hat; die Auskunft
+  findet ein Konto auch dort, und Löschen auf Antrag sowie ein gelöschtes
+  Konto entfernen es dort ebenso.
 - **Übe-Dateien von Chormitgliedern** werden nur mit der Rolle und dem Tag
   protokolliert, ohne Konto, Namen und Uhrzeit. In einer kleinen
   Stimmgruppe kann ein solcher Eintrag mit anderem Wissen trotzdem auf eine

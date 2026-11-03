@@ -273,7 +273,11 @@ members are in the [privacy templates](privacy-templates.md).
   name that long rests on Art. 17 (3) e GDPR (legal claims). After that the
   role is enough: by default after ten years the app removes account and
   name from audit entries and keeps the role (setting
-  `audit_retention_years`, administration guide, section 10).
+  `audit_retention_years`, administration guide, section 10). This includes
+  the values of entries that hold an account or a name, such as who
+  confirmed a rights status, checked a person or set the valid version; the
+  access report finds an account there, too, and an erasure on request or a
+  deleted account removes it there as well.
 - **Practice files of choir members** are recorded with the role and the
   day only, without account, name or time of day. In a small voice group
   such an entry may still point to one person together with other

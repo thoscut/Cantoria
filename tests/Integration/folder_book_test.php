@@ -20,6 +20,10 @@ declare(strict_types=1);
  *   and from its entries of the audit log; the loan stays and the audit
  *   log notes the anonymisation without the name,
  * - a folder that never comes back, access and erasure by name,
+ * - accounts and names in the values of the audit log (who confirmed a
+ *   rights status): found by the report, removed by the erasure, by a
+ *   deleted account and by the retention period, a second run changes
+ *   nothing (R B27),
  * - the roles: catalog librarian and operations maintain it, conductor and
  *   reader read it, contributors do not see it (nor its audit entries),
  * - the routes answer 404 while the module is off; the data stay.
@@ -45,6 +49,8 @@ use OCA\Cantoria\Db\FolderLoanMapper;
 use OCA\Cantoria\Exception\AccessDeniedException;
 use OCA\Cantoria\Exception\ModuleDisabledException;
 use OCA\Cantoria\Middleware\ModuleMiddleware;
+use OCA\Cantoria\Service\AuditLog;
+use OCA\Cantoria\Service\Fields;
 use OCA\Cantoria\Service\FolderBookService;
 use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\PrivacyService;
@@ -230,6 +236,38 @@ try {
 		fn (array $e): bool => str_contains(json_encode($e) ?: '', 'Privacy Test Person')) === []);
 	$check('the report is empty afterwards', $privacy->report('Privacy Test Person')['loans'] === []);
 	$book->takeBack($open, ['wear' => 'good'], $uid);
+
+	// ---- accounts and names in the values of the audit log (R B27) ----------------------
+	$audit = Server::get(AuditLog::class);
+	$valueObject = 2000000000;
+	$confirm = function () use ($audit, $uid, $valueObject): void {
+		$operation = $audit->newOperation();
+		$audit->record($operation, $uid, Fields::VERSION, $valueObject, 'confirmed', 'confirmed_by', null, 'privacy-value-account');
+		$audit->record($operation, $uid, Fields::VERSION, $valueObject, 'confirmed', 'confirmed_by_name', null, 'Privacy Value Person');
+	};
+	$values = function () use ($auditEntries, $valueObject): array {
+		$result = [];
+		foreach ($auditEntries->findForObjects([[Fields::VERSION, $valueObject]], 100) as $entry) {
+			$result[] = [$entry->getField(), $entry->getNewValue()];
+		}
+		return $result;
+	};
+	$confirm();
+	$found = array_column($privacy->report('Privacy-Value-Account')['auditEntries'], 'field');
+	$check('the report finds an account in the values, whatever the case', $found === ['confirmed_by'], json_encode($found) ?: '');
+	$check('the report finds a name in the values', array_column($privacy->report('privacy value person')['auditEntries'], 'field') === ['confirmed_by_name']);
+	$privacy->forgetAccount('privacy-value-account', 'Privacy Value Person');
+	$check('a deleted account leaves the values, its name stays', $values() === [['confirmed_by_name', 'Privacy Value Person'],
+		['confirmed_by', PrivacyService::ERASED]], json_encode($values()) ?: '');
+	$privacy->erase('Privacy Value Person');
+	$check('erasure removes the name from the values', $values() === [['confirmed_by_name', PrivacyService::ERASED],
+		['confirmed_by', PrivacyService::ERASED]], json_encode($values()) ?: '');
+	$confirm();
+	$fields = [...PrivacyService::AUDIT_ACCOUNT_VALUES, ...PrivacyService::AUDIT_NAME_VALUES];
+	$changed = $auditEntries->pseudonymizeBefore(time() + 60, $fields, PrivacyService::ERASED);
+	$leaks = array_filter($values(), fn (array $row): bool => str_contains((string)$row[1], 'rivacy'));
+	$check('after the retention period no value names the account', $changed > 0 && $leaks === [], json_encode($values()) ?: '');
+	$check('the retention period again changes nothing', $auditEntries->pseudonymizeBefore(time() + 60, $fields, PrivacyService::ERASED) === 0);
 
 	// ---- out of service ----------------------------------------------------------------
 	$book->updateFolder($id, ['status' => 'retired', 'statusReason' => 'pages torn'], $uid);
