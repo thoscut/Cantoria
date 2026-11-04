@@ -38,7 +38,7 @@ use OCP\IRequest;
  */
 class PageController extends Controller {
 	/** The guides (as in appinfo/info.xml and src/docs.ts) */
-	private const DOCS = 'https://github.com/thoscut/choircoresmanager/blob/main/docs/';
+	private const DOCS = 'https://github.com/thoscut/Cantoria/blob/main/docs/';
 
 	public function __construct(
 		IRequest $request,

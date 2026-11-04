@@ -8,8 +8,8 @@
 		}
 	],
 	"support": {
-		"issues": "https://github.com/thoscut/choircoresmanager/issues",
-		"source": "https://github.com/thoscut/choircoresmanager"
+		"issues": "https://github.com/thoscut/Cantoria/issues",
+		"source": "https://github.com/thoscut/Cantoria"
 	},
 	"autoload": {
 		"psr-4": {

@@ -7,7 +7,7 @@
 version = 1
 SPDX-PackageName = "cantoria"
 SPDX-PackageSupplier = "Thomas Scheel"
-SPDX-PackageDownloadLocation = "https://github.com/thoscut/choircoresmanager"
+SPDX-PackageDownloadLocation = "https://github.com/thoscut/Cantoria"
 
 # The app: metadata (kept free of comments for the app store schema), icons,
 # generated translations, documentation and screenshots of the user interface

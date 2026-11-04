@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thank you for reporting a bug. Please do **not** report security issues here; use a
-        [private security advisory](https://github.com/thoscut/choircoresmanager/security/advisories/new) instead.
+        [private security advisory](https://github.com/thoscut/Cantoria/security/advisories/new) instead.
 
         Do not post data of a real choir, names of members, account names or server addresses. If you
         can, reproduce the problem with the public demo data from `tools/demo`.

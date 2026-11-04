@@ -103,7 +103,7 @@ Erklärung kann als Grundlage für den Teil dienen, den sie abdecken.
 
 Wenn dir etwas in der App schwer fällt oder nicht gelingt, sag es uns bitte
 in einem Issue des Repositorys
-([github.com/thoscut/choircoresmanager/issues](https://github.com/thoscut/choircoresmanager/issues))
+([github.com/thoscut/Cantoria/issues](https://github.com/thoscut/Cantoria/issues))
 oder bitte die Administration deiner Nextcloud, es weiterzugeben. Beschreibe
 die Seite, was du tun wolltest, und welche Hilfstechnik du nutzt. Nenne
 keine personenbezogenen Daten anderer.

@@ -10,6 +10,10 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-04
+
+The first version for the Nextcloud app store.
+
 ### Added
 
 - **PostgreSQL.** The app now installs on PostgreSQL as well as on MySQL

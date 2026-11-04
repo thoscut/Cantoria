@@ -66,9 +66,9 @@ describe('help at the place', () => {
 
 	it('links the German user guide for German and the English one otherwise', () => {
 		setLanguage('de')
-		expect(userGuideUrl(USER_GUIDE.termRightsStatus)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/de/benutzerhandbuch.md#rechtestatus-und-best%C3%A4tigung')
+		expect(userGuideUrl(USER_GUIDE.termRightsStatus)).toBe('https://github.com/thoscut/Cantoria/blob/main/docs/de/benutzerhandbuch.md#rechtestatus-und-best%C3%A4tigung')
 		setLanguage('en')
-		expect(userGuideUrl(USER_GUIDE.termRightsStatus)).toBe('https://github.com/thoscut/choircoresmanager/blob/main/docs/user-guide.md#rights-status-and-confirmation')
+		expect(userGuideUrl(USER_GUIDE.termRightsStatus)).toBe('https://github.com/thoscut/Cantoria/blob/main/docs/user-guide.md#rights-status-and-confirmation')
 	})
 })
 
