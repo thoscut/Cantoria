@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/thoscut/choircoresmanager/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/thoscut/choircoresmanager/ci.yml?branch=main&amp;label=CI" alt="CI status of the main branch"></a>
+  <a href="https://github.com/thoscut/Cantoria/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/thoscut/Cantoria/ci.yml?branch=main&amp;label=CI" alt="CI status of the main branch"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue" alt="License: AGPL-3.0-or-later"></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/Nextcloud-33%E2%80%9335-0082c9?logo=nextcloud&amp;logoColor=white" alt="Nextcloud 33 to 35"></a>
   <a href="#accessibility"><img src="https://img.shields.io/badge/accessibility-WCAG%202.2%20AA-2e7d32" alt="Accessibility target: WCAG 2.2 AA"></a>
@@ -205,7 +205,7 @@ figures to expect.
   search "Cantoria" → Download and enable. This is the way for managed
   instances without shell access.
 - **Manually from a release archive:** download `cantoria-<version>.tar.gz`
-  from the [releases](https://github.com/thoscut/choircoresmanager/releases)
+  from the [releases](https://github.com/thoscut/Cantoria/releases)
   as soon as one is published, unpack it into the `apps` (or `custom_apps`)
   folder of your Nextcloud so that you get `apps/cantoria`, make the web
   server user its owner and enable the app under Apps or with
@@ -215,7 +215,7 @@ figures to expect.
 
   ```sh
   cd /path/to/nextcloud/apps
-  git clone https://github.com/thoscut/choircoresmanager.git cantoria
+  git clone https://github.com/thoscut/Cantoria.git cantoria
   cd cantoria
   npm ci && npm run build
   php ../../occ app:enable cantoria

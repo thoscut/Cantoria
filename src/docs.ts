@@ -13,7 +13,7 @@
  */
 import { getLanguage } from '@nextcloud/l10n'
 
-const DOCS = 'https://github.com/thoscut/choircoresmanager/blob/main/docs/'
+const DOCS = 'https://github.com/thoscut/Cantoria/blob/main/docs/'
 
 /** The files of the guides, per language. */
 const FILES = {

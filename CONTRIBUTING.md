@@ -30,7 +30,7 @@ or newer, Node.js 24 with npm 11, and Composer for the PHP tools.
 
 ```sh
 cd /path/to/nextcloud/apps
-git clone https://github.com/thoscut/choircoresmanager.git cantoria
+git clone https://github.com/thoscut/Cantoria.git cantoria
 cd cantoria
 npm ci
 npm run dev          # development build; `npm run watch` rebuilds on changes

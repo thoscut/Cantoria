@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/thoscut/choircoresmanager/security/advisories/new
+    url: https://github.com/thoscut/Cantoria/security/advisories/new
     about: Please report security issues privately through a GitHub security advisory, not in a public issue.

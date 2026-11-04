@@ -1,14 +1,14 @@
 {
   "name": "cantoria",
-  "version": "0.17.0-dev.2",
+  "version": "0.17.0",
   "license": "AGPL-3.0-or-later",
-  "homepage": "https://github.com/thoscut/choircoresmanager",
+  "homepage": "https://github.com/thoscut/Cantoria",
   "bugs": {
-    "url": "https://github.com/thoscut/choircoresmanager/issues"
+    "url": "https://github.com/thoscut/Cantoria/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thoscut/choircoresmanager.git"
+    "url": "git+https://github.com/thoscut/Cantoria.git"
   },
   "type": "module",
   "scripts": {

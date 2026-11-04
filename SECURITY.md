@@ -6,9 +6,9 @@
 
 ## Supported versions
 
-The app is in its 0.x series and no release has been published yet. Security
-fixes go into the `main` branch and into the next release; once releases are
-published, only the latest release receives fixes. Please update to it
+The app is in its 0.x series; 0.17.0 is its first release. Security fixes
+go into the `main` branch and into the next release; only the latest
+release receives fixes. Please update to it
 before you report an issue.
 
 | Version | Security fixes |
@@ -20,7 +20,7 @@ before you report an issue.
 ## Reporting a vulnerability
 
 Please report security issues **privately** through
-[GitHub Security Advisories](https://github.com/thoscut/choircoresmanager/security/advisories/new)
+[GitHub Security Advisories](https://github.com/thoscut/Cantoria/security/advisories/new)
 ("Report a vulnerability" in the Security tab of the repository), not in
 public issues, pull requests or discussions.
 
