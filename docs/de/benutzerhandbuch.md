@@ -366,6 +366,8 @@ Aktionsmenü (⋯) die Aktion **In Cantoria öffnen**:
 - **Scans (PDF), MuseScore, Audio und die übrigen Dateien eines Exemplars:**
   Die Aktion öffnet das Exemplar in der Seitenleiste von Cantoria. Ein
   Klick auf ein PDF öffnet weiterhin den Viewer von Nextcloud.
+  MuseScore-Dateien zeigt die App nicht selbst; die Notenansicht liest die
+  MusicXML, die aus MuseScore exportiert wurde.
 
 Die Aktion gibt es für Konten mit einer Archivrolle und für die
 Administration, und nur für Dateien im Archivordner mit einer Dateiart, die
@@ -455,9 +457,9 @@ verwirft sie.
 Schriften und Klänge sind Teil der App; nichts wird von anderen Servern
 geladen.
 
-1. Trage **Von Takt** und **Bis Takt** ein und wähle **Anzeigen**. Es gelten
-   die gedruckten Taktnummern; der Auftakt ist Takt 0. **Alle Takte** zeigt
-   wieder das ganze Stück.
+1. Trage **Von Takt** und **Bis Takt** ein und wähle **Takte zeigen**. Es
+   gelten die gedruckten Taktnummern; der Auftakt ist Takt 0. **Alle Takte**
+   zeigt wieder das ganze Stück.
 2. Wähle eine **Hervorgehobene Stimme**, auch eine, die sich ein
    Notensystem mit einer anderen Stimme teilt (zum Beispiel Tenor II im
    System „Tenor I/II“). Die hervorgehobene Stimme erscheint farbig mit
@@ -531,14 +533,14 @@ deinem Browser: Über dein Üben wird nichts auf dem Server gespeichert.
   Seite verlässt. Nimm Kopfhörer, sonst wird die Begleitung mit aufgenommen.
   Aufnehmen geht nur über https.
 - **Text mitlesen** (wenn die Noten Text haben) zeigt über den Noten die
-  Zeile deiner Fokusstimme (oder der ersten Stimme mit Text) groß an, die
+  Zeile deiner hervorgehobenen Stimme (oder der ersten Stimme mit Text) groß an, die
   gesungene Silbe fett und unterstrichen, darunter die nächste Zeile. Bei
   einer Wiederholung kommt die nächste Strophe. **Text lernen** blendet
   Schritt für Schritt Buchstaben aus: **Einige ausgeblendet**, **Die meisten
   ausgeblendet** und **Nur Anfangsbuchstaben**, wo nur der erste Buchstabe
   jedes Wortes bleibt.
-- **Meine Tonhöhe zeigen** (mit einer Fokusstimme) fragt nach dem Mikrofon
-  und zeigt über den Noten die Töne der Fokusstimme als Kästchen und deinen
+- **Meine Tonhöhe zeigen** (mit einer hervorgehobenen Stimme) fragt nach dem Mikrofon
+  und zeigt über den Noten die Töne der hervorgehobenen Stimme als Kästchen und deinen
   Gesang als Linie, dazu in Worten, etwa „Sopran: A4 · Gesungen: G4, zu tief
   (−200 ct)“. Bis 30 Cent gilt ein Ton als sauber. Verglichen wird in der
   Oktave der Stimme, so kann ein Mann eine Sopranlinie mitsingen. Die
@@ -555,8 +557,8 @@ deinem Browser: Über dein Üben wird nichts auf dem Server gespeichert.
 - **Tastatur:** Bring den Fokus in die Noten (Tab) und nutze die Pfeiltasten
   **links** und **rechts**: Sie gehen in Spielreihenfolge zum vorigen oder
   nächsten Takt, und der Takt wird angesagt. Die Leertaste spielt dann ab
-  dort. Du kannst den Takt auch in **Von Takt** eintragen und **Anzeigen**
-  wählen.
+  dort. Du kannst den Takt auch in **Von Takt** eintragen und **Takte
+  zeigen** wählen.
 
 > [!IMPORTANT]
 > Abspielen gibt es für gemeinfreie Fassungen und für Fassungen mit einer
@@ -658,11 +660,14 @@ Hat die Administration es eingeschaltet, lässt sich ein ganzes Stück oder ein
 Ausschnitt über die Archivrollen hinaus teilen: mit den **Chormitgliedern**
 (sie melden sich an und sehen es unter „Mit mir geteilt“) oder mit
 **allen** über einen öffentlichen Link ohne Anmeldung. Beide bekommen nur,
-was du teilst, das ganze Stück oder die gewählten Takte als Notenbild, nicht
-die Notendatei des Archivs; der Server prüft bei jedem Aufruf die Rechte. Auf
-Wunsch gibt der Link auch den **Scan (PDF)** des Exemplars mit. Was im
-Browser ankommt, lässt sich dort speichern; sag einem Verlag daher nicht
-„kein Download“ zu.
+was du teilst, das ganze Stück oder die gewählten Takte: als Noten, die der
+Browser aus einer MusicXML-Datei zeichnet. Der Server schneidet sie auf die
+Takte zu und entfernt interne Notizen; die Datei kommt dabei im Browser an,
+nie die Notendatei des Archivs selbst. Der Server prüft bei jedem Aufruf die
+Rechte. Auf Wunsch gibt der Link auch den **Scan (PDF)** des Exemplars mit.
+Was im Browser ankommt, lässt sich dort speichern; sag einem Verlag daher
+nicht „kein Download“ oder „nur als Notenbild“ zu, sondern dass die Noten
+als MusicXML im Browser ankommen.
 
 #### So teilst du ein ganzes Stück mit dem Chor
 
@@ -709,26 +714,46 @@ in den Noten vorkommen.
 Chormitglieder können einen Scan speichern und ausdrucken; das erlaubt eine
 Lizenz für das Chorportal meist nicht. Ohne bestätigte Gemeinfreiheit
 braucht der Scan in einem Link für Chormitglieder deshalb eine Lizenz mit
-der Nutzung „Download und Ausdruck durch Chormitglieder (Scan in Links)“
-(oder „Selbstausdruck durch Chormitglieder“). Fehlt sie, bietet der Dialog
-die Noten an und sagt, warum der Scan fehlt.
+der Nutzung „Download, Ausdruck und Kopien auf Geräten durch Chormitglieder
+(Scan in Links, Konzertmappe, Übergabeordner)“ (oder „Selbstausdruck durch
+Chormitglieder“). Fehlt sie, bietet der Dialog die Noten an und sagt, warum
+der Scan fehlt. Dieselbe Nutzung erlaubt Chormitgliedern, die Noten zu
+drucken, und legt den Scan in den Übergabeordner für ein Chorsystem.
+MusicXML-Dateien und Aufnahmen im Übergabeordner brauchen eigene Nutzungen:
+„Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder
+(Übergabeordner, auf Geräten behaltene Stücke)“ und „Weitergabe von
+Aufnahmen an Chormitglieder (Mitwirkende und Hersteller sind einverstanden;
+Übergabeordner)“. Ein Stück, das ohne Netz auf einem Gerät bleibt (bei
+Chormitgliedern oder in der Konzertmappe), behält seine Noten als
+MusicXML-Datei, also als vollständige digitale Ausgabe: Ohne bestätigte
+Gemeinfreiheit braucht es die Lizenz für Download oder Selbstausdruck
+**und** die für digitale Notendateien. Ansehen und Abspielen im Browser
+brauchen keine von beiden.
 
-Für das Abspielen gelten dieselben Regeln wie im Archiv (gemeinfrei oder
-eine Lizenz für Übe-Audio). Übe-Dateien für Chormitglieder brauchen
-zusätzlich das Modul „Übe-Audio für Chormitglieder“ und einen bestätigten
-Status oder eine Lizenz für Übe-Audio; sie gehen für das ganze Stück wie für
-einen Ausschnitt.
+Zum Abspielen für Chormitglieder braucht eine Fassung bestätigte
+Gemeinfreiheit oder eine Lizenz für Übe-Audio; ein unbestätigter Status
+„gemeinfrei“ spielt nur im Archiv. Übe-Dateien für Chormitglieder brauchen
+zusätzlich das Modul „Übe-Audio für Chormitglieder“; sie gehen für das ganze
+Stück wie für einen Ausschnitt.
 
 **Links** in der Navigation zeigt jeden aktiven Link mit seinem Kreis
 (**Intern**, **Für Chormitglieder**, **Öffentlich**), mit dem, was er teilt
 (**Ganzes Stück** oder die Takte, dazu **mit Scan (PDF)**), seiner
-Gültigkeit und der Zahl der Aufrufe; **Link widerrufen** sperrt einen Link
-sofort für alle. **Link verlängern** gibt ihm einen neuen letzten Tag
-(höchstens sechs Monate ab heute). Der Link behält seine Adresse: Wer ihn
-per Nachricht bekommen hat, kann ihn weiter nutzen, und was Chormitglieder
-ohne Netz verfügbar gemacht haben, bleibt auf ihren Geräten. Verlängern
-können die Person, die den Link erstellt hat, und die Rolle „Bestand“; ein
-widerrufener Link lässt sich nicht verlängern.
+Gültigkeit und der Zahl der Aufrufe; *„Endet in … Tagen“* warnt in der
+letzten Woche. **Link widerrufen** sperrt einen Link sofort für alle.
+**Verlängern** gibt ihm einen neuen letzten Tag; der Dialog nennt den
+spätesten Tag und den Grund: höchstens sechs Monate ab heute, höchstens ein
+Jahr nach dem Anlegen des Links und nie über das Ende der Lizenz hinaus, die
+das Stück freigibt. Der Link behält seine Adresse: Wer ihn per Nachricht
+bekommen hat, kann ihn weiter nutzen, und was Chormitglieder ohne Netz
+verfügbar gemacht haben, bleibt auf ihren Geräten. Links, die in den
+letzten 30 Tagen abgelaufen sind, bleiben unter **In den letzten 30 Tagen
+abgelaufen** in der Liste, mit *„Abgelaufen am …“*; Verlängern öffnet einen
+solchen Link wieder. Ein Link für Chormitglieder behält dabei seine Adresse,
+ein öffentlicher Link bekommt eine neue, die du noch einmal weitergibst.
+Verlängern können die Person, die den Link erstellt hat, und die Rolle
+„Bestand“; ein widerrufener Link und einer, der vor mehr als einem Jahr
+angelegt wurde, lassen sich nicht verlängern.
 
 #### So teilst du ein ganzes Programm mit dem Chor
 
@@ -738,22 +763,38 @@ Stück einzeln zu teilen:
 1. Öffne das Konzert oder die Notenliste unter **Konzerte**.
 2. Wähle **Mit dem Chor teilen …**.
 3. Der Dialog prüft die Rechte jedes Stücks und sagt bei jedem, was
-   passiert: *Ein neuer Link für die Chormitglieder*, *Schon geteilt bis …:
-   Der Link wird verlängert und behält seine Adresse* oder warum es nicht
-   geht. Stücke, die sich teilen lassen, sind angehakt; nimm weg, was der
-   Chor noch nicht braucht.
+   passiert: *„Ein neuer Link für die Chormitglieder.“*, *„Schon geteilt bis
+   …: Der Link wird bis … verlängert und behält seine Adresse.“*, *„Schon
+   geteilt bis …; das bleibt so.“* (der Link gilt länger als der gewählte
+   Tag) oder warum es nicht geht. Auch ein Link, der vor Kurzem abgelaufen
+   ist, wird verlängert. Es zählt nur ein Link für das ganze Stück: Ein Link
+   mit Stimme, Strophen oder Tempo bleibt, wie er ist, und das Stück bekommt
+   einen neuen Link. Stücke, die sich teilen lassen, sind angehakt; nimm
+   weg, was der Chor noch nicht braucht.
 4. **Gültig bis** steht auf zwei Wochen nach dem Konzert (höchstens sechs
-   Monate). Eine **Notiz** sehen die Chormitglieder bei jedem neuen Link.
+   Monate). Endet eine Lizenz früher oder wurde ein Link vor fast einem Jahr
+   angelegt, sagt das Stück, bis wann es höchstens geteilt ist. Die
+   **Notiz** sehen die Chormitglieder bei jedem Stück, auch bei schon
+   bestehenden Links; bleibt das Feld leer, behalten die Links ihre Notiz.
    Wo die Rechte es erlauben, gibt **Die Scans (PDF) mitgeben, wo die Rechte
-   es erlauben** auch die Scans mit.
+   es erlauben, auch bei schon bestehenden Links** auch die Scans mit.
 5. Wähle **… Stücke teilen**. Am Ende steht, wie viele Links neu sind, wie
-   viele verlängert wurden und welche Stücke aus welchem Grund nicht geteilt
-   sind.
+   viele verlängert wurden und wie viele schon länger geteilt sind; unter
+   *„Für kürzere Zeit geteilt:“* stehen die Stücke, die früher enden, mit
+   dem Grund, und welche Stücke aus welchem Grund nicht geteilt sind.
+6. Darunter steht die **Nachricht an den Chor**: Titel und letzter Tag, die
+   Adresse von **Mit mir geteilt**, die Anmeldung mit dem Konto eurer
+   Nextcloud und die Anleitung für Chormitglieder, ein Satz zur „Schleife“,
+   wo ein Stück spielt, und was die Chormitglieder mit den Noten dürfen.
+   Ändere den Text nach Belieben, etwa die Anrede, und wähle **Nachricht an
+   den Chor kopieren**.
 
 Jedes Stück wird geteilt, als hättest du es einzeln geteilt: als ganzes
 Stück, mit denselben Rechten und demselben Eintrag im Änderungsprotokoll.
 Steht bei einem Stück *Ohne Netz verfügbar.*, können die Chormitglieder es
-auf ihrem Gerät behalten und auch im Zug üben.
+auf ihrem Gerät behalten und auch ohne Netz üben. Unter **Mit mir geteilt**
+finden die Chormitglieder die Stücke unter Titel und Datum des Programms,
+in seiner Reihenfolge.
 
 > [!NOTE]
 > Das ganze Stück spielt in der vollen Reihenfolge der Noten, mit allen
@@ -772,8 +813,12 @@ auf ihrem Gerät behalten und auch im Zug üben.
 #### Öffentliche Links
 
 Ein öffentlicher Link zeigt ein ganzes Stück oder einen Ausschnitt allen, die
-den Link haben, und spielt es ab, ohne Anmeldung: als Notenbild, nicht die
-Notendatei des Archivs, ohne Namen und ohne Notiz. Wähle im selben Dialog **Öffentlich (ohne Anmeldung)**.
+den Link haben, und spielt es ab, ohne Anmeldung: als Noten, die der
+Browser aus einer bereinigten MusicXML-Datei zeichnet (die Datei kommt im
+Browser an), nicht die Notendatei des Archivs, ohne Namen und ohne Notiz.
+Besucher haben keine Lizenz: Die Noten drucken und die Seite auf einem
+Gerät behalten können sie nur bei bestätigter Gemeinfreiheit ohne
+Rechtekonflikt, gleich welche Lizenzen die Fassung hat. Wähle im selben Dialog **Öffentlich (ohne Anmeldung)**.
 Das geht nur, wenn
 
 - die Fassung **zur Veröffentlichung freigegeben** ist: Die Rolle „Bestand“
@@ -787,9 +832,16 @@ Das geht nur, wenn
 Eine geschützte Fassung lässt sich auf einem öffentlichen Link nur mit einer
 Lizenz für die Nutzung „Online-Wiedergabe (Audio auf öffentlichen Links)“
 abspielen: Eine Lizenz für Übe-Audio deckt die Nutzung im Chor, nicht eine
-Klangfassung für alle. Gemeinfreie Fassungen spielen wie im Archiv.
+Klangfassung für alle. Eine bestätigt gemeinfreie Fassung spielt; ein
+unbestätigter Status „gemeinfrei“ spielt nicht, auch wenn eine Lizenz für
+die Online-Veröffentlichung die Noten zeigt.
 
-Unter denselben Bedingungen lässt sich der Scan (PDF) mitgeben. Die Seite
+Unter denselben Bedingungen und, wenn die Gemeinfreiheit nicht bestätigt
+ist, mit einer gültigen Lizenz für die Nutzung „Download des Scans auf
+öffentlichen Links“ lässt sich der Scan (PDF) mitgeben: Alle, die den Link
+öffnen, können ihn speichern und drucken, und das deckt eine Lizenz zur
+Online-Veröffentlichung nicht. Ein Link gilt höchstens, bis die Lizenz
+endet, die ihn trägt. Die Seite
 zeigt Titel, Komposition, das ganze Stück oder die Takte, die hervorgehobene
 Stimme und eine Textbeschreibung, spielt es mit betonter Stimme ab und
 verlinkt, falls mitgegeben, den Scan. Läuft der Link ab, wird er widerrufen
@@ -1107,13 +1159,24 @@ Hochformat, klappt die Programmliste weg, sobald ein Stück offen ist;
 Für die Probe und die Bühne:
 
 - **Bühnenansicht** zeigt nur das Stück, wo der Browser es kann auf dem
-  ganzen Bildschirm, und hält den Bildschirm an. Ein zweiter Druck auf
-  **Bühnenansicht** oder die Escape-Taste beendet sie.
-- **Nächstes** steht in der Leiste, die oben bleibt, und am Ende der Noten,
-  **Vorheriges: …** und **Nächstes: …** unter dem Titel.
+  ganzen Bildschirm, und hält den Bildschirm wach: den Titel in einer
+  Zeile, die Leiste und die Noten. Die Seite beginnt bei den Noten, auch
+  nach jedem Stückwechsel. Komponist, Scan und Einstellungen klappen weg;
+  **Vorheriges** (ein Pfeil), **Nächstes** und **Bühnenansicht verlassen**
+  stehen in der Leiste. Die Escape-Taste oder **Bühnenansicht verlassen**
+  beendet sie. Ist ein Dialog offen, gehört das erste Escape dem Dialog.
+- **Nächstes** steht in der Leiste, die oben bleibt; ohne Noten steht es am
+  Ende des Stücks. **Vorheriges: …** steht unter dem Titel.
 - Ein Fußpedal zum Blättern (Bild ab, Bild auf) blättert System für System.
-  Nach dem letzten System sagt Bild ab das nächste Stück an und setzt den
-  Fokus auf **Nächstes: …**; ein weiterer Druck öffnet es.
+  Nach dem letzten System sagt Bild ab das nächste Stück an, hebt
+  **Nächstes: …** in der Leiste hervor und setzt den Fokus darauf; ein
+  weiterer Druck öffnet es. Solange das nächste Stück noch lädt oder seine
+  Noten gesetzt werden, bewirkt ein Druck nichts, damit kein Stück
+  übersprungen wird. Über ein Lesezeichen geöffnet, liegt der Fokus
+  ebenfalls in den Noten.
+- Die Zurück-Geste des Handys führt zur Liste, egal wie viele Stücke du mit
+  **Nächstes** oder dem Pedal geöffnet hast; ist am Handy der Scan offen,
+  schließt sie zuerst den Scan.
 - Ist eine eigene Aufnahme nicht gespeichert, fragt die Mappe, bevor ein
   anderes Stück sie verwirft.
 
@@ -1123,15 +1186,24 @@ Schalter **Mit den Scans (PDF, …)** darunter kannst du vorher oder nachher
 umstellen; er nennt den Platz, den die Scans brauchen. Unter dem Schalter
 stehen der Fortschritt („3 von 12 Stücken bereit …“) und, falls etwas nicht
 klappt, der Grund und was zu tun ist. Ohne Netz öffnest du die Konzertmappe
-wie gewohnt (ein Lesezeichen oder der Home-Bildschirm): Die Stücke kommen
-vom Gerät, in der Liste mit **Ohne Netz verfügbar** markiert. Wie bei „Mit
+so, wie du die Stücke verfügbar gemacht hast: Die Stücke kommen vom Gerät,
+in der Liste mit **Ohne Netz verfügbar** markiert. Auf iPhone oder iPad
+machst du die Stücke in Safari verfügbar und öffnest die Konzertmappe dort
+über ein Lesezeichen, nicht vom Home-Bildschirm: Von dort öffnet Cantoria
+das Archiv, und das braucht Netz. Öffne die Konzertmappe am Tag vor dem
+Konzert einmal mit Netz: Safari kann, was eine Seite behält, nach einigen
+Tagen ohne Besuch löschen, und der Start gleicht die Stücke mit dem Server
+ab. Wie bei „Mit
 mir geteilt“ gleicht jeder Start mit Netz sie mit dem Server ab, und nach
 30 Tagen ohne Netz sind sie gesperrt. Ohne das Modul speichert die
 Konzertmappe nichts auf dem Gerät.
 
 Ohne Netz verfügbar wird ein Stück nur, wo die Rechte eine Kopie auf dem
 Gerät erlauben: bestätigte Gemeinfreiheit oder eine Lizenz für Download
-oder Selbstausdruck. Sonst nennt die Mappe beim Stück den Grund. Eine
+oder Selbstausdruck, für die Noten (eine MusicXML-Datei auf dem Gerät)
+dazu eine Lizenz für digitale Notendateien. Sonst nennt die Mappe beim
+Stück den Grund. Ein behaltenes Stück verschwindet am letzten Tag dieser
+Lizenzen vom Gerät, wie bei „Mit mir geteilt“. Eine
 interne Erhaltungskopie öffnet die Konzertmappe nicht: Sie ist eine Kopie
 für das Archiv, kein Material für Probe und Konzert; nimm ein anderes
 Exemplar der Fassung ins Programm. Die Konzertmappe liest nur: **Als
@@ -1208,10 +1280,15 @@ bestätigt:
    Beteiligten sind vor mehr als 70 Jahren gestorben“ und „Lebensdaten aus
    dem Personenregister“. Beides ist Pflicht.
 4. Vor dem Bestätigen sagt der Dialog, was danach möglich wird, je nach
-   eingeschalteten Modulen: Chorportal und Druckstation, Übe-Dateien, Teilen
-   mit Chormitgliedern und, sobald die Fassung zur Veröffentlichung
-   freigegeben ist, öffentliche Links. Bei *geschützt* sagt er, dass
-   Freigaben dann eine gültige Lizenz brauchen.
+   eingeschalteten Modulen: Chorportal und Druckstation, Übe-Dateien, Drucken
+   aus der Konzertmappe und die Konzertmappe auf dem Gerät, Teilen mit
+   Chormitgliedern (auch eines ganzen Programms), Abspielen und Scan für sie,
+   Stücke auf ihren Geräten ohne Netz, der Übergabeordner für das Chorsystem
+   und, sobald die Fassung zur Veröffentlichung freigegeben ist, öffentliche
+   Links mit Abspielen und Scan, auf einem Gerät ohne Netz, und die
+   öffentliche Repertoireseite. Bei *geschützt* sagt er, dass diese
+   Nutzungen dann eine gültige Lizenz brauchen; ein öffentlicher Link auf
+   einem Gerät und die Repertoireseite bleiben zu.
 5. **Bestätigen**. Name und Datum werden festgehalten.
 
 Änderst du den Rechtestatus später, entfällt die Bestätigung. **Im Zweifel:
@@ -1229,7 +1306,8 @@ vorhandene Bestätigung auf.
 Beleg und Notizen. Jede Nutzung zählt für sich: Kopien für die Chormappen,
 Chorportal, Selbstausdruck durch Chormitglieder, Druckstation, Übe-Audio,
 Aufnahme, Veröffentlichung, Online-Veröffentlichung (öffentliche Links),
-Online-Wiedergabe (Audio auf öffentlichen Links), Download und Ausdruck
+Online-Wiedergabe (Audio auf öffentlichen Links), Download des Scans auf
+öffentlichen Links, Download und Ausdruck
 durch Chormitglieder (Scan in Links), Digitalisierung (Scans,
 MusicXML-Übertragungen) und **Weitergabe an die Rechtsnachfolge**. Die letzte hält fest, dass die Lizenz
 mit dem Archiv an eine Rechtsnachfolge übergehen darf, zum Beispiel wenn
@@ -1478,9 +1556,17 @@ lautet der Vorschlag „unbekannt“ und nennt die fehlende Rolle. Für ein
 Volkslied oder eine Melodie ohne bekannte Urheberschaft stellst du
 **Melodie** auf **Traditionell** und **Text** auf **Traditionell** oder
 **Ohne Text** (im Abschnitt **Rechte**, Modul „Schutzfristen“). Wähle
-„Traditionell“ nur mit Beleg und notiere die Quelle unter **Notizen**. Eine
-Fassung ohne Personen, deren Melodie und Text beide traditionell sind, wird
-als gemeinfrei vorgeschlagen.
+„Traditionell“ nur mit Beleg und notiere die Quelle unter **Notizen**. Die
+meisten Chorsätze von Volksliedern sind Bearbeitungen mit eigenem Schutz:
+Bei traditioneller Melodie braucht der Vorschlag eine Person mit der Rolle
+**Bearbeitung**, außer die Art der Fassung ist **Original**; sonst lautet er
+„unbekannt“. Dasselbe gilt für jede Fassung der Art **Bearbeitung** oder
+**Einrichtung**, auch einer komponierten Melodie, etwa eines Choralsatzes
+nach Bach. Wähle **Original** nur, wenn niemand das Werk bearbeitet hat:
+für die Komposition, wie sie geschrieben wurde, oder die Melodie ohne
+eigenen Satz, nicht für die Originalausgabe eines Chorsatzes. Eine Fassung ohne
+Personen, deren Melodie und Text beide traditionell sind und deren Art
+**Original** ist, wird als gemeinfrei vorgeschlagen.
 
 **Bestätigen** als gemeinfrei gegen einen Vorschlag, der nicht „gemeinfrei“
 lautet, bleibt möglich: Der Dialog zeigt die Begründung und bittet dich
@@ -1594,7 +1680,7 @@ in einem leeren Werkverzeichnis wieder her. Siehe das
 
 ### Jahresstände
 
-Mit dem Modul **Jahresstände** friert die App den Stand des Archivs einmal
+Mit dem Modul **Jahresstände** friert die App das Archiv einmal
 im Jahr ein, für die Unterlagen von Vorstand und Revision. Ein Jahresstand
 ist ein datierter Ordner
 (`annual-snapshots/<year>_<date-time>/` im Sicherungsordner des Kontos, das
@@ -1861,13 +1947,22 @@ Ausschnitte. Jeder Eintrag der Liste ist kurz: der Titel, Komposition und
 **Ganzes Stück** oder die Takte mit der Stimme, wie lange er gilt und, wo
 es eingeschaltet ist, **Ohne Netz verfügbar**.
 
+Die Stücke eines Programms, das als Ganzes mit dem Chor geteilt ist, stehen
+unter seinem Titel und Datum, in der Reihenfolge des Programms; das nächste
+Konzert steht oben, und ein Stück aus zwei Konzerten steht unter beiden.
+Einzeln geteilte Stücke und Ausschnitte folgen unter **Weitere Stücke**.
+**Neu** markiert, was seit deinem letzten Besuch dazugekommen ist; dein
+Browser merkt sich, was er angezeigt hat, nur auf diesem Gerät, und schickt
+davon nichts an den Server. Beim ersten Besuch in einem Browser ist nichts
+markiert; **Alles auf diesem Gerät löschen** vergisst auch das.
+
 ![Die Seite „Mit mir geteilt“ eines Chormitglieds: das ganze Stück „Der Mond ist aufgegangen“ mit der Notiz der Chorleitung, der Gültigkeit, der Schaltfläche „Scan (PDF) zeigen“, der Wiedergabe mit Einzähler und Schleife und den Noten mit hervorgehobenem Alt.](../screenshots/de/shared-with-me.png)
 
 1. Wähle ein Stück in der Liste (ein Link, den du bekommen hast, öffnet es
    direkt). Die Noten erscheinen unter der Liste, auf einem breiten
    Bildschirm daneben, bei einem ganzen Stück alle seine Seiten. Darüber
    stehen die Notiz der Chorleitung, die Gültigkeit und was erlaubt ist
-   (**Abspielen: ja**, **Übe-Dateien: ja**, **mit Scan (PDF)**). **Andere
+   (**Abspielen: ja**, **Übe-Dateien: ja**, **mit Scan (PDF)**). **Alle
    Stücke (…)** unter dem Titel führt auf dem Handy zurück zur Liste.
 2. **Abspielen**, **Pause** und **Stopp**, **Kleiner** und **Größer** (die
    Größe; dein Browser merkt sie sich für das nächste Stück) und **Stimme,
@@ -1879,7 +1974,7 @@ es eingeschaltet ist, **Ohne Netz verfügbar**.
      und unter **Stimmen beim Abspielen** **Alle gleich**, **Stimme betont**
      oder **Nur diese Stimme**.
    - **Takte und Tempo**: Gib **Von Takt** und **Bis Takt** an und wähle
-     **Anzeigen**; **Schleife** spielt die gezeigten Takte immer wieder,
+     **Takte zeigen**; **Schleife** spielt die gezeigten Takte immer wieder,
      **Alle Takte** zeigt wieder alles. Darunter das Tempo und der
      **Einzähler**, der einen oder zwei Takte vor der Musik klickt.
    - **Mehr zum Üben** (zuerst eingeklappt): Anfangstöne, Metronom,
@@ -1935,9 +2030,15 @@ Es geht im Browser.
 5. **Ohne Netz**, unten auf der Seite, zeigt, wie viele Stücke verfügbar
    sind und wie viel Platz sie belegen. Cantoria legt sie in diesem Browser
    auf diesem Gerät ab; ein anderer Browser sieht sie nicht. **Alles auf
-   diesem Gerät löschen** entfernt die Stücke, Stellen und Einstellungen;
-   tu das auf einem geteilten Gerät. Das Abmelden bei Nextcloud löscht sie
-   nicht.
+   diesem Gerät löschen** entfernt die Stücke aller Seiten von Cantoria,
+   die gemerkten Übe-Stellen, die Übe-Einstellungen und die Markierungen
+   **Neu**; tu das auf einem geteilten Gerät. Solange Stücke auf dem Gerät
+   sind, steht derselbe Knopf auch oben auf der Seite. Er fragt vorher,
+   direkt unter dem Knopf, und sagt, was verloren geht. Das Abmelden bei Nextcloud löscht sie meist auch: in Firefox, Safari und
+   Edge sofort, in Chrome und auf Android beim nächsten Öffnen einer Seite
+   von Cantoria auf diesem Gerät, auch ohne Netz. Bis dahin bleiben sie im
+   Browser; und nach einer Sitzung, die ohne Abmelden endet, sieht sie ohne
+   Netz, wer das Gerät danach benutzt.
 
 Klappt etwas nicht, steht der Grund direkt unter dem Schalter, zum Beispiel
 „Keine Verbindung“ oder „Auf diesem Gerät ist nicht genug Platz“. **Scan
@@ -2090,12 +2191,12 @@ oder dir den Vergleich auszudrucken.
 ### Ein Jahresstand ist als unvollständig aufgeführt
 
 Eine Datei fehlt, z. B. weil die Seite geschlossen wurde, während sie
-geschrieben wurde. Friere den Stand erneut ein; den unvollständigen Ordner
+geschrieben wurde. Friere das Archiv erneut ein; den unvollständigen Ordner
 kannst du in der Dateien-App löschen, wenn du willst.
 
 ### „Der letzte automatische Jahresstand ist fehlgeschlagen“
 
-Die Meldung sagt, warum; friere den Stand von Hand ein. Der automatische
+Die Meldung sagt, warum; friere das Archiv von Hand ein. Der automatische
 Jahresstand versucht es bis Ende Januar täglich erneut (siehe
 [Jahresstände](#jahresstände)).
 

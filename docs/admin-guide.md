@@ -37,21 +37,27 @@ it is done.
 1. **Archive folder** – choose the folder with the score files
    ([section 3](#3-archive-folder)). Right after choosing, before you save,
    the page shows which accounts of the role groups cannot open it.
-2. **Roles and groups** – give each role its groups, at least the catalog
-   role (music librarians) ([section 2](#2-roles-and-groups)). Before you
-   save, the page lists which groups get or lose a role.
-3. **Access to the archive folder** – share the folder with the groups of the
-   roles (reading is enough) and **Check access** until nobody is listed
-   ([Sharing the archive folder](#sharing-the-archive-folder)).
-4. **Functions for your choir** – under **What should Cantoria do for your
-   choir?**, choose what you use the app for: keeping the archive in order,
-   planning concerts, practising for the singers or public pages
+2. **Functions for your choir** – under **What should Cantoria do for your
+   choir?** in the section **Functions and modules**, choose what you use the
+   app for: keeping the archive in order, planning concerts, practising for
+   the singers or public pages
    ([What should Cantoria do for your choir?](#what-should-cantoria-do-for-your-choir)).
    The step is done once the administration has chosen something here or
-   changed a switch.
+   changed a switch. It comes before the roles, because it decides which
+   roles need a group.
+3. **Roles and groups** – give each role its groups
+   ([section 2](#2-roles-and-groups)). The step checks the roles the chosen
+   functions need: always the catalog role (music librarians), with the
+   concert folder also the conductor, and with the sharing with choir members
+   also the role "Choir members"; without a group for it nobody sees what is
+   shared. Before you save, the page lists which groups get or lose a role.
+4. **Access to the archive folder** – share the folder with the groups of the
+   roles (reading is enough) and **Check access** until nobody is listed
+   ([Sharing the archive folder](#sharing-the-archive-folder)).
 5. **Import the catalog** – a music librarian, in the app: **Archive
    management → Import catalog**, a dry run first
-   ([section 4](#4-first-import)).
+   ([section 4](#4-first-import)). A choir without a catalog file starts with
+   the first **New accession** instead.
 6. **File sync** – a music librarian, in the app: **Archive management →
    Run file sync**; it links the files of the archive folder to the copies.
 
@@ -66,8 +72,10 @@ tools. Steps 5 and 6 need the catalog role. To try the app first, use the
 ### Requirements
 
 - Nextcloud 33–35 and PHP 8.2 or newer.
-- MySQL or MariaDB as Nextcloud's database. The app is tested only with
-  these; Nextcloud refuses to install it on PostgreSQL, SQLite or Oracle.
+- MySQL, MariaDB or PostgreSQL as Nextcloud's database. The CI tests the
+  app with MariaDB 11.8 and PostgreSQL 17; Nextcloud All-in-One, which uses
+  PostgreSQL, works. Nextcloud refuses to install the app on SQLite or
+  Oracle, which are not tested.
 - Recommended: the Notifications app and a working background job runner
   (system cron). Without cron, weekly backups, deadline reminders and checksum
   checks run only when the instance is used ("AJAX" mode) and may be late.
@@ -139,7 +147,7 @@ repertoire and, for admins, the complete backup and restore
 | Conductor – *Chorleitung* | conductor and deputy | choose the valid version; key, scoring, language, duration and review of a transcription; answer questions; plan concerts and song lists |
 | Proposals (tools) – *Vorschläge (Werkzeuge)* | transcription rounds, scripts | only propose changes, which a music librarian accepts; ask questions |
 | Read only (board, auditors) – *Lesen (Vorstand, Revision)* | board, auditors | read everything including the audit log |
-| Choir members (shared excerpts only) – *Chormitglieder (nur geteilte Ausschnitte)* | the singers | no archive role: only the page "Shared with me" with the excerpts shared with choir members, and only while the module "Links for choir members" is on (see [section 14](#14-sharing-with-choir-members-and-the-public)) |
+| Choir members (shared pieces and excerpts only) – *Chormitglieder (nur geteilte Stücke und Ausschnitte)* | the singers | no archive role: only the page "Shared with me" with the pieces and excerpts shared with choir members, and only while the module "Links for choir members" is on (see [section 14](#14-sharing-with-choir-members-and-the-public)) |
 
 Concerts and song lists are planned by the conductor and the catalog role
 together. Practice files are made by the catalog role and the conductor; only
@@ -213,7 +221,9 @@ who uses it, so everybody only sees files they may see anyway. Background
 jobs (weekly backup, checksums) read through the account that chose the
 folder. The app never changes, moves or deletes files; it only writes into
 its own subfolder `_cantoria-app`, for exports of the catalog, and into
-the backup folder outside the archive folder (section 5). Only an
+the backup folder outside the archive folder (section 5). Everyone who can
+open the archive folder can read `_cantoria-app`, so its exports contain no
+accounts and no internal preservation copies. Only an
 administrator sets or changes the archive folder: background jobs and
 backups run as the account that set it.
 The one exception is a small correction of a MusicXML in the score view
@@ -284,12 +294,18 @@ for everybody who may change the settings.
 
 ## 4. First import
 
-An existing catalog is imported from a CSV file (UTF-8, separated by
-semicolons) with the columns of the original catalog. Upload it to
-Nextcloud first; an import file may be at most 20 MB.
+An existing catalog is imported from a file with the columns of the
+original catalog
+([The columns of the catalog file](#the-columns-of-the-catalog-file)): an
+Excel workbook (`.xlsx`), an OpenDocument spreadsheet (`.ods`, LibreOffice
+and Nextcloud Office) or a CSV file (UTF-8, separated by semicolons).
+Upload it to Nextcloud first; an import file may be at most 20 MB, and the
+text of all cells of a workbook together no more either. A choir without a
+catalog file can skip the import and start with the first **New
+accession**.
 
 1. **Archive management** (bottom of the navigation, music librarians) →
-   **Import catalog** → **Choose CSV file …**. The app runs a **dry run**
+   **Import catalog** → **Choose file …**. The app runs a **dry run**
    right away; nothing is stored yet.
 
    ![The report of a repeated dry run: "Dry run – nothing has been changed yet", 23 rows, no new or changed copies, 7 with MusicXML, 1 internal preservation copy, the distribution of rights status, repertoire and publication, and one warning.](screenshots/import-report.png)
@@ -302,7 +318,9 @@ Nextcloud first; an import file may be at most 20 MB.
    internal preservation copies, the distribution of rights status,
    repertoire and publication, and warnings.
 3. **Import now**. Before an import into a catalog that already holds data,
-   the app stores a snapshot of the previous state in `_cantoria-app`.
+   the app stores a snapshot of the previous state: in `_cantoria-app`
+   without accounts and internal preservation copies, and complete in the
+   backup folder (section 5).
 4. **File sync** → **Run file sync** links the files of the archive folder to
    the copies.
 
@@ -321,12 +339,85 @@ Nextcloud first; an import file may be at most 20 MB.
 > extended export into an empty catalog takes over the decisions recorded in
 > it.
 
-A repeated import (while the CSV is still the leading source) matches copies
-by shelf mark, updates changed values and keeps decisions taken in the app.
-Copies missing from the CSV stay in the catalog; nothing is deleted.
+A repeated import (while the file is still the leading source) matches
+copies by shelf mark, updates changed values and keeps decisions taken in
+the app. Copies missing from the file stay in the catalog; nothing is
+deleted.
 
 To try the app first, [tools/demo](../tools/demo/README.md) builds the
 invented archive of a fictitious choir with step-by-step instructions.
+
+### The columns of the catalog file
+
+**Archive management → Import catalog** offers a template to download:
+**Template (CSV)** in the format of the import and **Template (ODS)** for
+LibreOffice, Nextcloud Office or Excel. Both have the columns below and one
+example row (Abendlied by Josef Rheinberger, with a note starting with
+"Beispielzeile"); the import recognises it, leaves it out and says so in the
+report, so you can add your rows below it. In the ODS template, on the sheet
+"Werkverzeichnis", the column **Signatur** is formatted as text. The
+column names are German, as in the catalog the format comes from; they are
+the same in every language of the interface.
+
+- Only **Signatur** is required. A missing column is named in the report of
+  the dry run; unknown columns are ignored.
+- A shelf mark is the number of the binder and the number in it, joined by a
+  hyphen: `12-3` is the third piece in binder 12. A row without a shelf mark
+  but with **Mappe** and **Nr** gets one from them (`12` and `3` give
+  `12-3`). The dry run lists every shelf mark it cannot read, with this
+  rule.
+- An `.xlsx` or `.ods` file is imported as it is, the filled-in ODS template
+  too. Of a file with several sheets the first one with the column
+  **Signatur** is read, the report names it; rows above the column names
+  (a title, for example) are left out. Formulas count with the value they
+  show last; numbers count with their value, and a cell formatted as a date
+  in Excel or LibreOffice becomes a date such as `2026-11-03`.
+- Spreadsheet programs turn some entries into dates or numbers, `1-3` for
+  example into the 3rd of January. Format the column **Signatur** as text
+  before you type shelf marks (the ODS template already does). A shelf mark
+  that has become a date is skipped, and the dry run names the row: format
+  the column as text and type the shelf mark again.
+- A CSV file is UTF-8, separated by semicolons. A file whose first line has
+  no semicolon is read with commas or tabs, and the report says so. In
+  Excel: **Save as** →
+  **CSV UTF-8 (comma delimited)**; Excel uses the semicolon where the
+  system's list separator is one, as in German. In LibreOffice: **Save as**
+  → **Text CSV**, character set **UTF-8**, field delimiter `;`. The format
+  follows the extension of the file name (`.xlsx`, `.ods`, otherwise CSV);
+  an older Excel file (`.xls`) has to be saved as `.xlsx` first.
+- Values are text. An import never confirms rights and never chooses a valid
+  version, whatever the columns say.
+
+| Column | Meaning | Example |
+|---|---|---|
+| Mappe | Number of the binder; taken from the shelf mark if empty | `1` |
+| Nr | Number in the binder; taken from the shelf mark if empty | `1` |
+| Signatur | Shelf mark of the copy, **required**; a repeated import matches copies by it | `1-1` |
+| Titel | Title of the work | `Abendlied` |
+| Komponist | Composer | `Josef Rheinberger` |
+| Bearbeiter/Text | Arranger and lyricist of the version | `Text: Lukas 24,29` |
+| Anmerkung | Notes on the version | |
+| Rechte-Ersteinschätzung | The first assessment of the rights in words | `Komponist gestorben 1901` |
+| Rechtestatus | `gemeinfrei`, `geschützt` or `offen`: a recommendation until a music librarian confirms it in the app | `gemeinfrei` |
+| Rechte bestätigt | A note on an earlier confirmation, kept as text | |
+| Im Chorportal seit | Since when the version is in the singers' portal, as text; the former column name "Auf Singste seit" is still read on import | |
+| Verlag / Bestellnummer | Publisher and order number | |
+| Lizenz | The license in words; licenses with their uses are recorded in the app | |
+| Erwerbsbeleg | Where the proof of purchase is | |
+| Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Notes of the original catalog on the copy: versions, PDF files, source of the title, pages, formats and files of the scans | `4` (Seiten) |
+| MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | The MusicXML file, the valid one, its date, its origin and its review, as text | |
+| Veröffentlichung | Publication note; one starting with `frei`, `gesperrt` or `zu klären` sets the publication status, `nein … Erhaltungskopie` marks an internal preservation copy | |
+| Veröffentlichung-Begründung | Reasoning of the publication note | |
+| Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Figures of the original catalog, kept as text; the app derives repertoire and "last sung" from the concerts it documents | |
+
+The complete export (**Download (complete)**) adds every other field as a
+column `level.field`, e.g. `version.key_signature`; it is meant for a
+restore and is read the same way.
+
+MusicXML that a notation scanner produced, for example a score MuseScore
+recognised from a PDF or a photo, usually has wrong notes. Record its origin
+in **MusicXML-Herkunft**, and check it with the review point by point and the
+revisions (user guide) before it is shared.
 
 ## 5. Backups and restore
 
@@ -335,7 +426,15 @@ therefore writes, every week, into the **backup folder**: a folder
 "Music archive backups" (in German "Notenarchiv-Sicherungen") in the files
 of the account that set the archive folder, **outside the archive folder**.
 The role groups do not see it unless that account shares it with them; the
-settings page shows its path. The app writes:
+settings page shows its path. The app writes into it only while it is
+private to that account: if the folder, a file or a folder in it (such as
+a single backup or `annual-snapshots`) is shared, or the folder belongs to
+another account after a move, the backup stops with a message that names
+the folder. Stop sharing all of it, or delete the folder so that the app
+creates a new one; a moved folder is found again by its id.
+A folder of that name that is shared or lies inside the archive folder is
+not reused; the app creates "Music archive backups (2)" next to it. The
+app writes:
 
 - `…_catalog_weekly.csv`: the catalog in the legacy column layout plus all
   fields, readable in any spreadsheet program
@@ -345,16 +444,21 @@ settings page shows its path. The app writes:
   versions, copies, files, licenses, proposals, tasks, links, concerts and
   song lists with their programme lines, persons, contributions, merges,
   transcription reports and review points, the revisions of the versions,
-  the folder book with its loans, audit log) for a lossless restore. Links
-  are kept **without their tokens**: after a restore they are revoked and
-  have to be shared again.
+  the folder book with its loans, the files of the mirror folder of the
+  print station, audit log) for a lossless restore. Links are kept
+  **without their tokens**: after a restore they are revoked and have to be
+  shared again. The tables carry their names in the app (format 2, for
+  example `works`), not those of the database; backups of older versions
+  are still read.
 
 ![The backup sections of the archive management: storing a complete backup now, downloading the complete backup as JSON, and restoring a backup into an empty catalog.](screenshots/backup-restore.png)
 
 In **Archive management**, **Store a complete backup now** writes the same
 three files at once, for example before larger changes, and **Download
-complete backup (JSON)** saves the backup on your computer. The backup is
-written piece by piece and is never held in memory as a whole.
+complete backup (JSON)** saves the backup on your computer; the audit log
+records who downloaded it when, as such a copy is out of the app's reach.
+The backup is written piece by piece and is never held in memory as a
+whole.
 
 > [!WARNING]
 > The backups hold the complete catalog including the audit log (who changed
@@ -370,7 +474,13 @@ the account, and Nextcloud keeps older **versions** of changed files: both
 can still hold names after the retention period of the folder book. Set
 `trashbin_retention_obligation` and `versions_retention_obligation` in
 `config.php` (for example `auto, 30`) so that Nextcloud removes them, and
-keep your server backups no longer than you need them.
+keep your server backups no longer than you need them. A restore brings
+back data erased since the backup: after a restore, run the recorded
+erasures (`occ cantoria:privacy-erase`) again.
+
+**Exports.** The catalog export of the app (CSV) names no accounts, and it
+contains internal preservation copies only for the catalog role and the
+conductor. The complete catalog with accounts is in the backups.
 
 **Missing backups.** The daily check notifies the catalog role when the last
 complete backup is older than eight days, for example because the background
@@ -531,13 +641,25 @@ vulnerability.
 
 On instances without shell access everything is done in the web interface:
 installation from the App Store, settings (Administration → Cantoria),
-imports and restore. The `occ`
-commands are a convenience for self-hosted instances:
+imports and restore.
+
+- **Check the database first.** The app runs on MySQL, MariaDB and
+  PostgreSQL, which covers most managed offers and Nextcloud All-in-One;
+  Nextcloud refuses to install it on SQLite or Oracle. **Administration →
+  System** (the app *System*, `serverinfo`) shows the database, or ask the
+  provider before you plan the archive around the app.
+- **MuseScore files** (`.mscz`) are linked to their copy, but the app does
+  not show them: the score viewer reads MusicXML. Export MusicXML from
+  MuseScore for the score viewer. To look at `.mscz` files in Nextcloud
+  itself, a viewer app from the App Store such as *MusicSheet Viewer* can
+  help, if your provider offers it; the app does not depend on it.
+
+The `occ` commands are a convenience for self-hosted instances:
 
 | Command | Does |
 |---|---|
 | `occ cantoria:setup <account> [<folder>] [--role role=groups]` | sets the archive folder and the role groups; with an archive folder it names the accounts of the role groups that cannot open it |
-| `occ cantoria:import <account> <file> [--execute]` | imports the catalog CSV; a dry run unless `--execute` is given |
+| `occ cantoria:import <account> <file> [--execute]` | imports the catalog (CSV, `.xlsx` or `.ods`); a dry run unless `--execute` is given |
 | `occ cantoria:export [--extended] [--full]` | writes the catalog CSV, all fields, or the complete backup (JSON) to standard output |
 | `occ cantoria:file-sync <account>` | runs the file sync; refused (exit code 1) while another one is running |
 | `occ cantoria:restore <file> [<account>]` | restores a complete backup into an empty catalog |
@@ -551,7 +673,9 @@ What the app stores about people:
 
 - **Function holders.** The audit log records who changed what, as a
   snapshot of the display name with the account. That is the record of the
-  catalog (legitimate interest, Art. 6 (1) f GDPR).
+  catalog (legitimate interest, Art. 6 (1) f GDPR). Tasks, proposals,
+  review points, links, concerts, confirmations and checks of persons keep
+  who created or decided them.
 - **Register of persons.** Names, life dates and roles of composers,
   arrangers, lyricists and other persons involved, from public sources
   (prints, publisher catalogues), kept for the rights assessment (Art. 6 (1)
@@ -566,7 +690,15 @@ What the app stores about people:
   Nextcloud account of the person who has a choir folder and notes about
   the loan. Practice audio files of choir members are recorded with the role
   only, without account or name (since 0.11; older entries were anonymised on
-  the update). Excerpt links count calls without recording who opened them.
+  the update), and with the day instead of the time. In a small voice group
+  such an entry may still point to one person. Excerpt links count calls
+  without recording who opened them.
+- **On the devices.** Practice settings and pieces kept "available without
+  a network" are stored only in the browser of the device (`localStorage`,
+  Cache Storage; IndexedDB holds a hash of the account for shared devices);
+  microphone and recordings stay in the browser. The
+  [legal background](legal-background.md#microphone-recordings-and-browser-storage)
+  explains § 25 TDDDG.
 - **Reports and review points.** Transcription reports are kept as received
   (as evidence, with their checksum); their rights section may name the
   persons involved in a work. Review points record who decided them and
@@ -582,15 +714,28 @@ personal data; an open loan keeps the name of the holder (the folder is
 still out), but no longer the account; audit entries lose the account and
 keep the display name of who made a change.
 
+**Retention of the audit log.** The daily check removes account and name
+from audit entries older than **ten years** and keeps their roles; the
+audit log records how many entries it changed. Ten years is the longest
+time in which claims of rights holders become time-barred (§ 102 UrhG with
+§ 199 BGB); until then the entries are evidence (Art. 17 (3) e GDPR). Set
+another period with `occ config:app:set cantoria audit_retention_years
+--value=<years> --type=integer`; `0` switches it off. Enter the period in
+the register of processing activities.
+
 **Access and erasure.** On self-hosted instances `occ
 cantoria:privacy-report <account or name>` lists the loans, the audit
-entries made by the person and persons of the same name in the register of
-persons (JSON). `occ cantoria:privacy-erase <account or name> --execute`
+entries made by the person, the records in which the account or the name
+is recorded as who created, decided, confirmed or checked something
+(tasks, proposals, review points, links, concerts, versions and their
+revisions, persons, merges, transcription reports) and persons of the same
+name in the register of persons (JSON). `occ cantoria:privacy-erase <account or name> --execute`
 removes the personal data of the loans (also from their audit entries; an
 open loan stays recorded as out, without the holder) and the account and
 name from the audit entries made by the person; the erasure itself is
 recorded without the name. Without `--execute` it only shows what would be
-erased. Persons of the register are only reported. On managed hosting ask
+erased. Persons of the register and the records are only reported: they
+stay as evidence of who decided. On managed hosting ask
 the provider to run the commands, or remove the data by hand: the folder
 book in the app, the register of persons in the app.
 
@@ -598,7 +743,8 @@ book in the app, the register of persons in the app.
 everyone. Nextcloud records the IP addresses of their visitors: in the web
 server log (with the address of the link), in the brute-force protection
 and the rate limit, and in `nextcloud.log` on errors. The app sets no cookies
-for visitors without an account and loads nothing from third parties.
+of its own and loads nothing from third parties; practice settings and pieces
+kept on a tap stay in the visitor's browser.
 Before you switch these modules on, enter the addresses of the **imprint**
 and the **privacy policy** under *Administration → Theming*: the public pages
 show both in their footer, and the module settings warn while one is
@@ -633,7 +779,7 @@ problem, is in the [accessibility statement](accessibility.md).
 
 Not every choir needs every function. Everything outside the core is a
 **module** that admins switch on and off under **Administration →
-Cantoria → Modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
+Cantoria → Functions and modules** (also the groups the settings page was given to). The core is always on: the catalog (works, versions, copies,
 fields, search, status), the start page, the file sync with the archive
 folder, roles, the audit log, CSV import and export, backup and restore, and
 the settings.
@@ -684,9 +830,11 @@ switches below can be changed at any time; the notifications are folded.
 
 Choir members see only versions released for the singers' portal; a piece
 can be kept on a device only with confirmed public domain or a license for
-download or self-printing, and the role "Choir members" needs a group.
-Public pages need confirmed public domain or a license for online
-publication; enter the imprint and the privacy policy under
+download or self-printing together with one for digital score files (its
+notes stay there as MusicXML), and the role "Choir members" needs a group (the
+setup checks it). Public pages need confirmed public domain or a license for
+online publication, and everyone with a public link can download the scan it
+offers; enter the imprint and the privacy policy under
 **Administration → Theming** first.
 
 ### Presets
@@ -698,7 +846,8 @@ publication; enter the imprint and the privacy policy under
 | **Complete** | everything except the interface for agents, the modules for sharing and for practising without a network, the concert folder, the mirror folder for the print station and the hand-over folder for a choir system |
 
 A preset sets every switch at once; the settings ask first and list what
-changes.
+changes. The presets are folded under the choices above: they set the same
+switches, but none of them switches on sharing.
 
 **New installations** start with the preset **Standard**. It is chosen for
 small choirs with one volunteer music librarian: catalog, rights, scores,
@@ -950,9 +1099,22 @@ enable offline`):
   for practising are remembered in the browser as before. Nothing is
   written to the server without a network: practice files need it, as the
   server checks the rights and records each file.
-- **Rights.** Only where choir members may save and print the notes (the
-  same rule as for the scan and the hand-over folder): a license for the
-  singers' portal alone covers viewing, not a copy on the device.
+- **Rights.** One rule for every way (RightsPolicy: "Shared with me", the
+  concert folder, public links, the dialog for links and the header
+  `X-Cantoria-Keep` of every answer the service worker keeps). Unless
+  public domain is confirmed, a piece needs a license for download or
+  self-printing, as for the scan and for printing, and for its notes a
+  license "Passing on digital score files (MusicXML) to choir members
+  (hand-over folder, pieces kept on devices)": the device keeps the notes
+  as a MusicXML file, a complete digital edition from which new prints and
+  parts can be made, as in the hand-over folder. A license for the
+  singers' portal alone covers viewing, not a copy on the device. The
+  device drops a piece on the last day of these licenses, also without a
+  network. Viewing and playing in the browser are not affected: the page
+  receives the MusicXML of what it shows to draw the notes, under the
+  release of the notes (singers' portal, online publication). Tell a
+  publisher so; "only as an image" would say too little. This reading is
+  cautious and should be confirmed by a lawyer before 1.0 (R B26).
 - **Expiry and revocation.** At every start with a network the page checks
   the kept pieces with the server; expired, revoked and no longer allowed
   ones are removed. Without a check for 30 days the kept pieces are locked,
@@ -965,16 +1127,31 @@ enable offline`):
   Safari may delete what it kept after some days without use. The page
   says so before the first piece. At every start with a network the page
   keeps its scripts again, so that it opens without a network also after an
-  update of the app. On a shared device, choir members
-  delete everything with **Delete everything on this device**; signing out
-  of Nextcloud does not delete it. When another account opens the page in
-  the same browser, the pieces of the previous one are removed.
+  update of the app.
+- **Shared devices.** Choir members delete everything with **Delete
+  everything on this device** at the end of the page, or with the same
+  button at its top while pieces are kept. Signing out of Nextcloud
+  usually deletes the pieces too: Nextcloud asks Firefox, Safari and Edge
+  to delete the storage of the server at once (header `Clear-Site-Data`,
+  only where Nextcloud sees HTTPS; behind a proxy set `overwriteprotocol`).
+  To Chrome and the browsers on Android it does not send the header; there
+  its login page deletes only the passages and settings, and Cantoria
+  removes the kept pieces the next time one of its pages opens on this
+  device, also without a network. When another account opens a page of
+  Cantoria in the same browser, the pieces, passages and settings of the
+  previous one are removed. Not covered: a sign-out that does not end on
+  Nextcloud's login page (some single sign-on setups) and a session that
+  ended without signing out; details in [SECURITY.md](../SECURITY.md).
 - **Public links.** Where the public domain of the version is confirmed,
   the page of a public link offers **Available without a network**, too. Visitors
   have no account, so their pieces are kept per browser; each visit with a
   network is the check, and a revoked or expired link is removed from the
   device at the next one. A license is never enough here: it covers the
-  public showing, not a copy on every visitor's device.
+  public showing, not a copy on every visitor's device. The same holds for
+  printing the notes of a public link. A rights conflict (confirmed public
+  domain, but protected by the persons recorded now) closes both, as it
+  closes the scan and playback, until the catalog librarian has checked
+  the rights.
 - **Switching it off.** The next visit with a network removes the service
   worker and everything it kept. After an update of the app the worker
   renews itself and drops the old scripts.
@@ -991,12 +1168,14 @@ concert. With the module **Practising without a network** a whole
 programme can be kept on the device for the rehearsal and the concert, but
 only the pieces whose rights allow a copy: confirmed public domain, or a
 license for download or self-printing (§ 53 (4) UrhG; a copy that stays on
-the tablet for weeks is more than viewing). It uses the same service
+the tablet for weeks is more than viewing), and for the notes a license for
+digital score files, the same rule as for choir members. A piece leaves
+the device on the last day of these licenses. It uses the same service
 worker, with a cache of its own, the same check at every start with a
 network and the same lock after 30 days. The folder only reads. Another
-account in the same browser, or a visit without the role, removes what was
-kept; with **Practising without a network** off, the next visit removes
-everything.
+account in the same browser, a visit without the role or signing out (as
+for choir members, above) removes what was kept; with **Practising without
+a network** off, the next visit removes everything.
 
 **Common problems:**
 
@@ -1094,7 +1273,10 @@ active copies, never internal preservation copies, named
 `<shelf mark> <title>.pdf`, and a `LIESMICH.txt`. Every write and every
 removal is in the audit log. It replaces or removes only files it wrote
 itself and that nobody changed since (it keeps their checksums); every other
-file in the folder stays. If the daily sync fails (folder gone, no write
+file in the folder stays. A file it wrote is removed when its version
+leaves the list and also when the rights no longer allow it while the
+version stays (a copy marked as an internal preservation copy); a file
+that cannot be read at the moment stays until the next sync. If the daily sync fails (folder gone, no write
 permission), the catalog role and the administrators get a notification
 "Print station sync failed".
 
@@ -1140,11 +1322,22 @@ What it copies, for every version released for the singers' portal (rows
 "In order", "Add" and "No valid version chosen" of its list), from its active copies, never from internal
 preservation copies:
 
-- the scans (PDF) and MusicXML files, if choir members may save and print
-  them (the same rule as the download button of the portal);
-- the practice recordings (audio files in the archive folder), if the
-  rights allow practice audio. The app does not render new recordings for
-  the hand-over;
+- the scans (PDF), if choir members may save and print them (the same
+  rule as the download button of the portal);
+- the MusicXML files, with confirmed public domain or a license "Passing on
+  digital score files (MusicXML) to choir members (hand-over folder, pieces
+  kept on devices)": a
+  MusicXML file is a complete digital edition from which new prints and
+  parts can be made, which a license for printing does not cover. The app
+  writes them checked and cleaned like the score of a link (no encoder,
+  notes or comments), always uncompressed as `.musicxml`;
+- the recordings (audio files in the archive folder), if the rights allow
+  practice audio and a license "Passing on recordings to choir members
+  (performers and producer agree; hand-over folder)" exists, also for
+  works in the public domain: the performers and the producer of a
+  recording have rights of their own (§§ 73, 77, 78, 85 UrhG). For a
+  recording of your own conductor, record their consent as such a
+  license. The app does not render new recordings for the hand-over;
 - `Liste.csv`: one row per file with shelf mark, title, composer, version,
   current revision and since when it is valid, rights status and the
   license notice (confirmed public domain, or the notices of the valid
@@ -1159,7 +1352,14 @@ Files are named `<shelf mark> <title>.pdf` or `.musicxml`, recordings
 replaces or removes only files it wrote itself and that nobody changed
 since; every write and removal is in the audit log; if the daily sync
 fails, the catalog role and the administrators get the notification
-"Hand-over to the choir system failed".
+"Hand-over to the choir system failed". The sync removes a file it wrote
+when its version leaves the list and also when a license it needed has
+ended while the version stays on the list (download or self-printing for a
+scan, digital score files for MusicXML, passing on recordings for a
+recording); the preview lists these removals. A file that cannot be read
+at the moment, or whose name is not allowed, stays until the next sync.
+MusicXML files written by an older version of the app are cleaned only
+when their source changes.
 
 Risks:
 
@@ -1181,7 +1381,8 @@ disappears there with the next sync. This needs no module beyond the
 hand-over, but has none of the tools for practising: for those, keep
 pieces with the module **Practising without a network** (see
 [Sharing with choir members and the public](#14-sharing-with-choir-members-and-the-public)).
-The folder holds only what choir members may save and print anyway.
+The folder holds only what the rights allow choir members to keep: from
+the first sync after a license ends, the file is gone.
 
 How the archive and a choir system share the work, and what never leaves
 the archive, is in [Cantoria alongside a choir system](alongside-a-choir-system.md).

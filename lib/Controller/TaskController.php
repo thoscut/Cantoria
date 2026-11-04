@@ -20,6 +20,7 @@ use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -72,7 +73,7 @@ class TaskController extends Controller {
 	public function tasks(int $closed = 0): JSONResponse {
 		return $this->run(function (string $uid) use ($closed) {
 			$this->roles->requireAccess($uid);
-			return $this->tasks->all($closed === 1);
+			return $this->tasks->all($closed === 1, $uid);
 		});
 	}
 
@@ -172,10 +173,12 @@ class TaskController extends Controller {
 	}
 
 	/**
-	 * Extends a link to a new last day and keeps its token (milestone 0.19).
+	 * Extends a link to a new last day and keeps its token (milestone 0.19);
+	 * an expired public link gets a new one (milestone 0.18).
 	 */
 	#[NoAdminRequired]
 	#[RequiresModule('excerpt_links')]
+	#[UserRateLimit(limit: 60, period: 600)]
 	#[FrontpageRoute(verb: 'POST', url: '/api/links/{id}/extend', requirements: ['id' => '\d+'])]
 	public function extendLink(int $id, ?string $expires = null): JSONResponse {
 		return $this->run(fn (string $uid) => $this->links->view($this->links->extend($id, $expires, $uid), $uid));

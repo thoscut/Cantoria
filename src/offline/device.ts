@@ -10,14 +10,19 @@
  * piece, the check with the server and the space used. Everything stays in
  * the browser (Cache Storage), one cache per page (rules.ts, COLLECTIONS);
  * nothing is kept without a click, and only what the server allows to keep.
- * The rules are in rules.ts, the worker in worker.ts.
+ * At the start of every page, what another account or a signed-out one
+ * kept goes first (claimDevice, S N6). The rules are in rules.ts, the
+ * worker in worker.ts.
  */
 import type { Catalog, Collection, CollectionName, KeptPiece, PieceForDevice } from './rules.ts'
 
 import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
+import { t } from '../l10n.ts'
+import { forgetPractising } from '../score/practiceSettings.ts'
 import { preloadToolkit } from '../score/toolkit.ts'
-import { CACHE_PREFIX, COLLECTIONS, parseCatalog, PUBLIC_ACCOUNT, requestKind, SHELL_PREFIX, syncCatalog } from './rules.ts'
+import { forgetAccount, rememberAccount, rememberedAccount } from './marker.ts'
+import { ACCOUNT_COLLECTIONS, CACHE_PREFIX, COLLECTIONS, deviceCleanUp, mayStay, parseCatalog, pieceAddresses, PUBLIC_ACCOUNT, requestKind, SHELL_PREFIX, syncCatalog } from './rules.ts'
 
 /** Whether this browser can keep pieces: a service worker and Cache Storage, on HTTPS */
 export function offlineSupported(): boolean {
@@ -44,19 +49,19 @@ function appUrl(path: string): string {
 const ADDRESSES: Record<CollectionName, { page: (key: string) => string, score: ((key: string) => string) | null, scan: (key: string) => string }> = {
 	member: {
 		page: () => scopeUrl(),
-		score: (token) => appUrl(`api/member/links/${token}/score`),
-		scan: (token) => appUrl(`api/member/links/${token}/scan`),
+		score: (token) => appUrl(pieceAddresses('member', token).notes),
+		scan: (token) => appUrl(pieceAddresses('member', token).scan),
 	},
 	folder: {
 		page: () => appUrl('concert-folder'),
-		score: (id) => appUrl(`api/concert-folder/items/${id}/score`),
-		scan: (id) => appUrl(`api/concert-folder/items/${id}/scan`),
+		score: (id) => appUrl(pieceAddresses('folder', id).notes),
+		scan: (id) => appUrl(pieceAddresses('folder', id).scan),
 	},
 	public: {
 		// the page of a public link is the piece: its notes come with it
-		page: (token) => appUrl(`p/${token}`),
+		page: (token) => appUrl(pieceAddresses('public', token).notes),
 		score: null,
-		scan: (token) => appUrl(`p/${token}/scan`),
+		scan: (token) => appUrl(pieceAddresses('public', token).scan),
 	},
 }
 
@@ -117,9 +122,69 @@ export async function accountKey(name: CollectionName = 'member'): Promise<strin
 	if (name === 'public') {
 		return PUBLIC_ACCOUNT
 	}
-	const uid = getCurrentUser()?.uid ?? ''
+	return hashAccount(getCurrentUser()?.uid ?? '')
+}
+
+/**
+ * The hash of an account, never the account itself on the device.
+ *
+ * @param uid - the account
+ */
+async function hashAccount(uid: string): Promise<string> {
 	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cantoria|' + uid))
 	return Array.from(new Uint8Array(digest).slice(0, 16), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Whether the browser remembers the account of a list of kept pieces now,
+ * so that the list counts as signed out once that memory is gone
+ * (Catalog.signedIn). Public links have no account.
+ *
+ * @param name - the collection
+ * @param account - the account of the list
+ */
+async function signedIn(name: CollectionName, account: string): Promise<{ signedIn?: true }> {
+	return name !== 'public' && (await rememberedAccount()) === account ? { signedIn: true } : {}
+}
+
+/**
+ * At the start of every page of the app, before it shows anything (S N6):
+ * the pieces kept in this browser by another account, or before someone
+ * signed out (Nextcloud's login page clears the browser's storage then, but
+ * not the kept pieces), are removed, and so are the passages and settings
+ * for practising of another account; then the browser remembers the account
+ * of the page. A page without signing in (a public link) removes only what
+ * was kept before signing out. Never throws.
+ *
+ * @param page - the collection of the page, null for the archive
+ * @return whether the page must load again: its own pieces belonged to someone who signed out, and it may have come from the device
+ */
+export async function claimDevice(page: CollectionName | null): Promise<boolean> {
+	if (typeof window === 'undefined' || window.isSecureContext !== true) {
+		// without HTTPS nothing is kept on the device, and the account cannot be hashed
+		return false
+	}
+	try {
+		const uid = getCurrentUser()?.uid
+		const account = uid ? await hashAccount(uid) : null
+		const remembered = await rememberedAccount()
+		const catalogs = Object.fromEntries(await Promise.all(ACCOUNT_COLLECTIONS.map(async (name) => [name, await readCatalog(name)] as const)))
+		const plan = deviceCleanUp(catalogs, remembered, account)
+		for (const name of Object.keys(plan.remove) as CollectionName[]) {
+			await removeEverything(name)
+		}
+		if (plan.forgetPractising) {
+			forgetPractising()
+		}
+		if (plan.remember !== null) {
+			await rememberAccount(plan.remember)
+		}
+		// the page itself may be the one of the signed-out account: load it from the server, or not at all
+		return page !== null && plan.remove[page] === 'signedOut' && (await readCatalog(page)) === null
+	} catch (error) {
+		console.warn('Cantoria: the pieces of another account could not be checked on this device', error)
+		return false
+	}
 }
 
 /**
@@ -143,6 +208,7 @@ async function writeCatalog(collection: Collection, catalog: Catalog): Promise<v
 
 /**
  * Fetch an address and keep the answer; throws with the server's message.
+ * Only what the server allows to stay on the device (X-Cantoria-Keep).
  *
  * @param cache - the cache
  * @param url - address, also the key in the cache
@@ -158,6 +224,9 @@ async function keep(cache: Cache, url: string, header: string | null = null): Pr
 			// no JSON
 		}
 		throw new Error(message)
+	}
+	if (!mayStay(response.headers)) {
+		throw new Error(t('cantoria', 'Not available without a network: the rights allow no copy on the device.'))
 	}
 	await cache.put(url, response.clone())
 	return response
@@ -204,6 +273,7 @@ export async function keepPieces(name: CollectionName, pieces: PieceForDevice[],
 	}
 	const cache = await caches.open(collection.cache)
 	const now = new Date().toISOString()
+	const remembered = await signedIn(name, account)
 	const kept: Record<string, KeptPiece> = { ...(catalog?.pieces ?? {}) }
 	for (const piece of pieces) {
 		let checked: string | undefined
@@ -223,7 +293,7 @@ export async function keepPieces(name: CollectionName, pieces: PieceForDevice[],
 		}
 		kept[piece.key] = { title: piece.title, composer: piece.composer, expires: piece.expires, scan, kept: now, ...(checked ? { checked } : {}) }
 		// written after each piece, so that a failure keeps what is already on the device
-		await writeCatalog(collection, { v: 1, account, checked: catalog?.checked ?? now, pieces: kept })
+		await writeCatalog(collection, { v: 1, account, checked: catalog?.checked ?? now, pieces: kept, ...remembered })
 		onProgress?.(pieces.indexOf(piece) + 1)
 	}
 	if (addresses.score) {
@@ -233,7 +303,7 @@ export async function keepPieces(name: CollectionName, pieces: PieceForDevice[],
 		}
 	}
 	await keepShell(version)
-	return { v: 1, account, checked: catalog?.checked ?? now, pieces: kept }
+	return { v: 1, account, checked: catalog?.checked ?? now, pieces: kept, ...remembered }
 }
 
 /**
@@ -313,7 +383,9 @@ export async function forgetPieces(name: CollectionName, keys: string[]): Promis
 
 /**
  * Delete what a page kept on this device; without a page, every cache of
- * the app. The scripts go when no page keeps pieces any more.
+ * the app and the account the browser remembers (marker.ts; the next page
+ * with an account remembers it again). The scripts go when no page keeps
+ * pieces any more.
  *
  * @param name - the collection, or null for everything
  */
@@ -331,6 +403,9 @@ export async function removeEverything(name: CollectionName | null = null): Prom
 		if (key.startsWith(CACHE_PREFIX)) {
 			await caches.delete(key)
 		}
+	}
+	if (name === null) {
+		await forgetAccount()
 	}
 }
 
@@ -364,8 +439,10 @@ export async function checkWithServer(name: CollectionName, fresh: PieceForDevic
 		await removeEverything(name)
 		return null
 	}
-	await writeCatalog(COLLECTIONS[name], next)
-	return next
+	// written again while the browser remembers the account: from now on signing out removes it
+	const checked: Catalog = { v: 1, account: next.account, checked: next.checked, pieces: next.pieces, ...(await signedIn(name, next.account)) }
+	await writeCatalog(COLLECTIONS[name], checked)
+	return checked
 }
 
 /**

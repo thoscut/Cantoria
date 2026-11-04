@@ -42,22 +42,28 @@ Link an die Stelle, wo er erledigt wird.
 1. **Archivordner** – wähle den Ordner mit den Notendateien
    ([Abschnitt 3](#3-archivordner)). Gleich nach der Wahl, vor dem Speichern,
    zeigt die Seite, welche Konten der Rollengruppen ihn nicht öffnen können.
-2. **Rollen und Gruppen** – gib jeder Rolle ihre Gruppen, mindestens der
-   Rolle „Bestand“ (Archivverwaltung) ([Abschnitt 2](#2-rollen-und-gruppen)).
-   Vor dem Speichern listet die Seite, welche Gruppen eine Rolle bekommen
-   oder verlieren.
-3. **Zugriff auf den Archivordner** – teile den Ordner mit den Gruppen der
-   Rollen (Lesen genügt) und wähle **Zugriff prüfen**, bis niemand mehr
-   aufgeführt ist ([Den Archivordner teilen](#den-archivordner-teilen)).
-4. **Funktionen für euren Chor** – wähle unter **Was soll Cantoria für euren
-   Chor tun?**, wofür ihr die App nutzt: das Archiv ordnen, Konzerte planen,
-   Üben für den Chor oder öffentliche Seiten
+2. **Funktionen für euren Chor** – wähle im Abschnitt **Funktionen und
+   Module** unter **Was soll Cantoria für euren Chor tun?**, wofür ihr die App
+   nutzt: das Archiv ordnen, Konzerte planen, Üben für den Chor oder
+   öffentliche Seiten
    ([Was soll Cantoria für euren Chor tun?](#was-soll-cantoria-für-euren-chor-tun)).
    Erledigt ist der Schritt, sobald die Administration hier etwas gewählt
-   oder einen Schalter geändert hat.
+   oder einen Schalter geändert hat. Er steht vor den Rollen, weil er
+   entscheidet, welche Rollen eine Gruppe brauchen.
+3. **Rollen und Gruppen** – gib jeder Rolle ihre Gruppen
+   ([Abschnitt 2](#2-rollen-und-gruppen)). Der Schritt prüft die Rollen, die
+   die gewählten Funktionen brauchen: immer die Rolle „Bestand“
+   (Archivverwaltung), mit der Konzertmappe auch die Chorleitung und mit dem
+   Teilen mit Chormitgliedern auch die Rolle „Chormitglieder“; ohne Gruppe
+   dafür sieht niemand, was geteilt wird. Vor dem Speichern listet die Seite,
+   welche Gruppen eine Rolle bekommen oder verlieren.
+4. **Zugriff auf den Archivordner** – teile den Ordner mit den Gruppen der
+   Rollen (Lesen genügt) und wähle **Zugriff prüfen**, bis niemand mehr
+   aufgeführt ist ([Den Archivordner teilen](#den-archivordner-teilen)).
 5. **Werkverzeichnis importieren** – die Archivverwaltung, in der App:
    **Archivverwaltung → Werkverzeichnis importieren**, zuerst ein Probelauf
-   ([Abschnitt 4](#4-erster-import)).
+   ([Abschnitt 4](#4-erster-import)). Ein Chor ohne Verzeichnisdatei beginnt
+   stattdessen mit dem ersten **Neuzugang**.
 6. **Dateiabgleich** – die Archivverwaltung, in der App: **Archivverwaltung →
    Dateiabgleich starten**; er verknüpft die Dateien des Archivordners mit den
    Exemplaren.
@@ -75,9 +81,10 @@ auszuprobieren, nimm die [Demodaten](../../tools/demo/README.md) (englisch).
 ### Voraussetzungen
 
 - Nextcloud 33–35 und PHP 8.2 oder neuer.
-- MySQL oder MariaDB als Datenbank der Nextcloud. Die App ist nur damit
-  getestet; auf PostgreSQL, SQLite oder Oracle verweigert Nextcloud die
-  Installation.
+- MySQL, MariaDB oder PostgreSQL als Datenbank der Nextcloud. Die CI testet
+  die App mit MariaDB 11.8 und PostgreSQL 17; Nextcloud All-in-One, das
+  PostgreSQL nutzt, funktioniert. Auf SQLite oder Oracle verweigert
+  Nextcloud die Installation; beide sind nicht getestet.
 - Empfohlen: die App Benachrichtigungen (Notifications) und ein
   funktionierender Ausführer für Hintergrundjobs (System-Cron). Ohne Cron
   laufen wöchentliche Sicherungen, Fristerinnerungen und Prüfsummenprüfungen
@@ -137,7 +144,7 @@ ist ein Wechsel der Gruppenmitgliedschaft.
 4. Prüfe den Zugriff auf den Archivordner: Auch Konten, die neu eine Rolle
    haben, brauchen ihn ([Abschnitt 3](#prüfen-wer-den-archivordner-öffnen-kann)).
 
-![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/de/settings-roles.png)
+![Der Abschnitt „Rollen und Gruppen“ unter Verwaltungseinstellungen → Cantoria: jede Rolle mit den ihr zugeordneten Gruppen und einer kurzen Beschreibung, zum Beispiel die Gruppe „Music librarians“ für die Rolle „Bestand (Archivverwaltung)“ und „Choir members“ für die Rolle „Chormitglieder (nur geteilte Stücke und Ausschnitte)“, und die Schaltfläche „Rollen speichern“.](../screenshots/de/settings-roles.png)
 
 Die Seite **Verwaltungseinstellungen → Cantoria** enthält alle
 Einstellungen der App: Archivordner, Rollen und Gruppen, Zugriff auf den
@@ -154,7 +161,7 @@ sieht (**Ansicht anpassen**), bleibt in der App.
 | Chorleitung | Chorleitung und Vertretung | geltende Fassung festlegen; Tonart, Besetzung, Sprache, Dauer und Prüfung einer Übertragung; Rückfragen beantworten; Konzerte und Notenlisten planen |
 | Vorschläge (Werkzeuge) | Übertragungsrunden, Skripte | nur Änderungen vorschlagen, die die Archivverwaltung annimmt; Rückfragen stellen |
 | Lesen (Vorstand, Revision) | Vorstand, Revision | alles lesen, auch das Protokoll |
-| Chormitglieder (nur geteilte Ausschnitte) | die Chormitglieder | keine Archivrolle: nur die Seite „Mit mir geteilt“ mit den für Chormitglieder geteilten Ausschnitten, und nur, solange das Modul „Links für Chormitglieder“ eingeschaltet ist (siehe [Abschnitt 14](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)) |
+| Chormitglieder (nur geteilte Stücke und Ausschnitte) | die Chormitglieder | keine Archivrolle: nur die Seite „Mit mir geteilt“ mit den für Chormitglieder geteilten Stücken und Ausschnitten, und nur, solange das Modul „Links für Chormitglieder“ eingeschaltet ist (siehe [Abschnitt 14](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)) |
 
 Konzerte und Notenlisten planen die Chorleitung und die Rolle „Bestand“
 gemeinsam. Übe-Dateien erstellen die Rolle „Bestand“ und die Chorleitung;
@@ -228,14 +235,16 @@ Archivmappe.
    nicht öffnen können; teile ihn mit ihren Gruppen (siehe unten).
 3. **Archivordner speichern**.
 
-Es sollte ein Gruppenordner oder eine Freigabe sein, die alle Konten mit
+Es sollte ein Gruppenordner oder ein geteilter Ordner sein, den alle Konten mit
 einer Rolle in ihrer eigenen Nextcloud öffnen können. Die App liest Dateien über das
 Konto der Person, die sie benutzt; so sieht jede Person nur Dateien, die sie
 ohnehin sehen darf. Hintergrundjobs (wöchentliche Sicherung, Prüfsummen)
 lesen über das Konto, das den Ordner gewählt hat. Die App ändert, verschiebt
 oder löscht nie Dateien; sie schreibt nur in ihren eigenen Unterordner
 `_cantoria-app`, für Exporte des Werkverzeichnisses, und in den
-Sicherungsordner außerhalb des Archivordners (Abschnitt 5). Nur die
+Sicherungsordner außerhalb des Archivordners (Abschnitt 5). Wer den
+Archivordner öffnen kann, kann auch `_cantoria-app` lesen; seine Exporte
+enthalten darum keine Konten und keine internen Erhaltungskopien. Nur die
 Administration legt den Archivordner fest oder ändert ihn: Hintergrundjobs
 und Sicherungen laufen mit dem Konto, das ihn festgelegt hat. Die einzige
 Ausnahme ist eine kleine Korrektur einer MusicXML-Datei in der Notenansicht
@@ -310,13 +319,18 @@ alle, die die Einstellungen ändern dürfen.
 
 ## 4. Erster Import
 
-Ein vorhandenes Werkverzeichnis wird aus einer CSV-Datei (UTF-8, durch
-Semikolons getrennt) mit den Spalten des ursprünglichen Werkverzeichnisses
-importiert. Lade sie zuerst in die Nextcloud hoch; eine Importdatei darf
-höchstens 20 MB groß sein.
+Ein vorhandenes Werkverzeichnis wird aus einer Datei mit den Spalten des
+ursprünglichen Werkverzeichnisses importiert
+([Die Spalten der Werkverzeichnis-Datei](#die-spalten-der-werkverzeichnis-datei)):
+aus einer Excel-Arbeitsmappe (`.xlsx`), einer OpenDocument-Tabelle (`.ods`,
+LibreOffice und Nextcloud Office) oder einer CSV-Datei (UTF-8, durch
+Semikolons getrennt). Lade sie zuerst in die Nextcloud hoch; eine
+Importdatei darf höchstens 20 MB groß sein, und der Text aller Zellen einer
+Arbeitsmappe zusammen auch nicht mehr. Ein Chor ohne Verzeichnisdatei
+überspringt den Import und beginnt mit dem ersten **Neuzugang**.
 
 1. **Archivverwaltung** (unten in der Navigation, für die Archivverwaltung)
-   → **Werkverzeichnis importieren** → **CSV-Datei wählen …**. Die App macht
+   → **Werkverzeichnis importieren** → **Datei wählen …**. Die App macht
    sofort einen **Probelauf**; noch wird nichts gespeichert.
 
    ![Der Bericht eines wiederholten Probelaufs: „Probelauf – es wurde noch nichts geändert“, 23 Zeilen, keine neuen oder geänderten Exemplare, 7 mit MusicXML, 1 interne Erhaltungskopie, die Verteilung von Rechtestatus, Repertoire und Veröffentlichung und eine Warnung.](../screenshots/de/import-report.png)
@@ -329,8 +343,9 @@ höchstens 20 MB groß sein.
    MusicXML, interne Erhaltungskopien, die Verteilung von Rechtestatus,
    Repertoire und Veröffentlichung sowie Warnungen.
 3. **Jetzt importieren**. Vor einem Import in ein Werkverzeichnis, das schon
-   Daten enthält, legt die App einen Stand des bisherigen Zustands in
-   `_cantoria-app` ab.
+   Daten enthält, legt die App einen Schnappschuss des bisherigen Zustands
+   ab: in `_cantoria-app` ohne Konten und interne Erhaltungskopien,
+   vollständig im Sicherungsordner (Abschnitt 5).
 4. **Dateiabgleich** → **Dateiabgleich starten** verknüpft die Dateien des
    Archivordners mit den Exemplaren.
 
@@ -350,14 +365,88 @@ höchstens 20 MB groß sein.
 > Wiederherstellen eines erweiterten Exports in ein leeres Werkverzeichnis
 > übernimmt die darin festgehaltenen Entscheidungen.
 
-Ein wiederholter Import (solange die CSV-Datei die führende Quelle ist)
-ordnet Exemplare nach Signatur zu, aktualisiert geänderte Werte und behält
-Entscheidungen, die in der App getroffen wurden. Exemplare, die in der
-CSV-Datei fehlen, bleiben im Werkverzeichnis; nichts wird gelöscht.
+Ein wiederholter Import (solange die Datei die führende Quelle ist) ordnet
+Exemplare nach Signatur zu, aktualisiert geänderte Werte und behält
+Entscheidungen, die in der App getroffen wurden. Exemplare, die in der Datei
+fehlen, bleiben im Werkverzeichnis; nichts wird gelöscht.
 
 Um die App erst auszuprobieren, baut [tools/demo](../../tools/demo/README.md)
 (englisch) das erfundene Archiv eines ausgedachten Chors auf, mit einer
 Anleitung Schritt für Schritt.
+
+### Die Spalten der Werkverzeichnis-Datei
+
+**Archivverwaltung → Werkverzeichnis importieren** bietet eine Vorlage zum
+Herunterladen: **Vorlage (CSV)** im Format des Imports und **Vorlage (ODS)**
+für LibreOffice, Nextcloud Office oder Excel. Beide haben die Spalten unten
+und eine Beispielzeile (Abendlied von Josef Rheinberger, mit einer Anmerkung,
+die mit „Beispielzeile“ beginnt); der Import erkennt sie, lässt sie aus und
+sagt es im Bericht, du kannst deine Zeilen also darunter anfügen. In der
+ODS-Vorlage, auf dem Tabellenblatt „Werkverzeichnis“, ist die Spalte
+**Signatur** als Text formatiert. Die Spaltennamen sind deutsch, wie im Werkverzeichnis, aus dem das
+Format stammt, und in jeder Sprache der Oberfläche gleich.
+
+- Pflicht ist nur **Signatur**. Eine fehlende Spalte nennt der Bericht des
+  Probelaufs; unbekannte Spalten werden übergangen.
+- Eine Signatur ist die Nummer der Mappe und die Nummer darin, verbunden
+  durch einen Bindestrich: `12-3` ist das dritte Stück in Mappe 12. Eine
+  Zeile ohne Signatur, aber mit **Mappe** und **Nr** bekommt sie daraus
+  (`12` und `3` ergeben `12-3`). Der Probelauf nennt jede Signatur, die er
+  nicht lesen kann, mit dieser Regel.
+- Eine `.xlsx`- oder `.ods`-Datei wird importiert, wie sie ist, auch die
+  ausgefüllte ODS-Vorlage. Von einer Datei mit mehreren Tabellenblättern
+  wird das erste mit der Spalte **Signatur** gelesen, der Bericht nennt es;
+  Zeilen über den Spaltennamen (etwa ein Titel) bleiben außen vor. Formeln
+  zählen mit dem Wert, den sie zuletzt zeigten; Zahlen zählen mit ihrem
+  Wert, und eine Zelle, die in Excel oder LibreOffice als Datum formatiert
+  ist, wird ein Datum wie `2026-11-03`.
+- Tabellenprogramme machen aus manchen Eingaben ein Datum oder eine Zahl,
+  aus `1-3` etwa den 3. Januar. Formatiere die Spalte **Signatur** als Text,
+  bevor du Signaturen eintippst (die ODS-Vorlage tut das schon). Eine
+  Signatur, die zum Datum geworden ist, wird übersprungen, und der Probelauf
+  nennt die Zeile: Formatiere die Spalte als Text und tippe die Signatur
+  neu ein.
+- Eine CSV-Datei ist UTF-8, durch Semikolons getrennt. Eine Datei, deren
+  erste Zeile kein Semikolon hat, wird mit Kommas oder Tabulatoren gelesen,
+  und der Bericht sagt es. In Excel: **Speichern
+  unter** → **CSV UTF-8 (durch Trennzeichen getrennt)**; ein deutsches Excel
+  trennt dabei mit Semikolon. In LibreOffice: **Speichern unter** →
+  **Text CSV**, Zeichensatz **UTF-8**, Feldtrenner `;`. Das Format richtet
+  sich nach der Endung des Dateinamens (`.xlsx`, `.ods`, sonst CSV); eine
+  ältere Excel-Datei (`.xls`) speicherst du zuerst als `.xlsx`.
+- Werte sind Text. Ein Import bestätigt nie Rechte und legt nie eine
+  geltende Fassung fest, gleich was in den Spalten steht.
+
+| Spalte | Bedeutung | Beispiel |
+|---|---|---|
+| Mappe | Nummer der Mappe; aus der Signatur, wenn leer | `1` |
+| Nr | Nummer in der Mappe; aus der Signatur, wenn leer | `1` |
+| Signatur | Signatur des Exemplars, **Pflicht**; ein wiederholter Import ordnet Exemplare danach zu | `1-1` |
+| Titel | Titel des Werks | `Abendlied` |
+| Komponist | Komposition | `Josef Rheinberger` |
+| Bearbeiter/Text | Bearbeitung und Text der Fassung | `Text: Lukas 24,29` |
+| Anmerkung | Anmerkung zur Fassung | |
+| Rechte-Ersteinschätzung | Die erste Einschätzung der Rechte in Worten | `Komponist gestorben 1901` |
+| Rechtestatus | `gemeinfrei`, `geschützt` oder `offen`: eine Empfehlung, bis die Archivverwaltung ihn in der App bestätigt | `gemeinfrei` |
+| Rechte bestätigt | Ein Vermerk über eine frühere Bestätigung, als Text | |
+| Im Chorportal seit | Seit wann die Fassung im Chorportal ist, als Text; der frühere Spaltenname „Auf Singste seit“ wird beim Import weiter gelesen | |
+| Verlag / Bestellnummer | Verlag und Bestellnummer | |
+| Lizenz | Die Lizenz in Worten; Lizenzen mit ihren Nutzungen werden in der App erfasst | |
+| Erwerbsbeleg | Wo der Erwerbsbeleg liegt | |
+| Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Vermerke des ursprünglichen Werkverzeichnisses zum Exemplar: Fassungen, PDF-Dateien, Quelle des Titels, Seiten, Formate und Dateien der Scans | `4` (Seiten) |
+| MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | Die MusicXML-Datei, die geltende, ihr Datum, ihre Herkunft und ihre Prüfung, als Text | |
+| Veröffentlichung | Vermerk zur Veröffentlichung; einer, der mit `frei`, `gesperrt` oder `zu klären` beginnt, setzt den Veröffentlichungsstatus, `nein … Erhaltungskopie` kennzeichnet eine interne Erhaltungskopie | |
+| Veröffentlichung-Begründung | Begründung des Vermerks | |
+| Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Zahlen des ursprünglichen Werkverzeichnisses, als Text; Repertoire und „zuletzt gesungen“ leitet die App aus den Konzerten ab, die sie festhält | |
+
+Der vollständige Export (**Herunterladen (vollständig)**) hängt jedes weitere Feld
+als Spalte `Ebene.Feld` an, z. B. `version.key_signature`; er ist für eine
+Wiederherstellung gedacht und wird genauso gelesen.
+
+MusicXML aus einer Notenerkennung, etwa eine Partitur, die MuseScore aus
+einem PDF oder Foto erkannt hat, enthält meist falsche Noten. Halte ihre
+Herkunft in **MusicXML-Herkunft** fest und prüfe sie mit der Prüfung Punkt für
+Punkt und den Ständen (Benutzerhandbuch), bevor sie geteilt wird.
 
 ## 5. Sicherung und Wiederherstellung
 
@@ -366,7 +455,16 @@ Löschungen. Die App schreibt deshalb jede Woche in den **Sicherungsordner**:
 einen Ordner „Notenarchiv-Sicherungen“ in den Dateien des Kontos, das den
 Archivordner festgelegt hat, **außerhalb des Archivordners**. Die
 Rollengruppen sehen ihn nicht, solange dieses Konto ihn nicht mit ihnen
-teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt:
+teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt nur
+hinein, solange er diesem Konto allein gehört: Ist der Ordner, eine Datei
+oder ein Ordner darin (etwa eine einzelne Sicherung oder
+`annual-snapshots`) geteilt, oder gehört der Ordner nach einem Verschieben
+einem anderen Konto, bricht die Sicherung mit einer Meldung ab, die den
+Ordner nennt. Teile nichts davon mehr, oder lösche den Ordner, damit die App
+einen neuen anlegt; einen verschobenen Ordner findet sie über seine
+Kennung wieder. Einen Ordner dieses
+Namens, der geteilt ist oder im Archivordner liegt, nimmt die App nicht; sie
+legt daneben „Notenarchiv-Sicherungen (2)“ an. Die App schreibt:
 
 - `…_catalog_weekly.csv`: das Werkverzeichnis im bisherigen Spaltenaufbau
   plus alle Felder, lesbar in jeder Tabellenkalkulation
@@ -377,17 +475,21 @@ teilt; die Einstellungsseite zeigt seinen Pfad. Die App schreibt:
   Links, Konzerte und Notenlisten mit ihren Programmpunkten, Personen,
   Beteiligungen, Zusammenführungen, Berichte von Übertragungen und
   Prüfpunkte, die Stände der Fassungen, das Mappenbuch mit seinen Ausgaben,
-  Protokoll) für eine verlustfreie Wiederherstellung. Links stehen **ohne
-  ihre Token** darin: Nach einer Wiederherstellung sind sie widerrufen und
-  müssen neu geteilt werden.
+  die Dateien des Spiegelordners der Druckstation, Protokoll) für eine
+  verlustfreie Wiederherstellung. Links stehen **ohne ihre Token** darin:
+  Nach einer Wiederherstellung sind sie widerrufen und müssen neu geteilt
+  werden. Die Tabellen tragen ihre Namen in der App (Format 2, zum Beispiel
+  `works`), nicht die der Datenbank; Sicherungen älterer Versionen werden
+  weiter gelesen.
 
 ![Die Bereiche zur Sicherung in der Archivverwaltung: eine vollständige Sicherung jetzt ablegen, die vollständige Sicherung als JSON herunterladen und eine Sicherung in ein leeres Werkverzeichnis wiederherstellen.](../screenshots/de/backup-restore.png)
 
 In der **Archivverwaltung** schreibt **Vollständige Sicherung jetzt ablegen**
 dieselben drei Dateien sofort, zum Beispiel vor größeren Änderungen, und
 **Vollständige Sicherung herunterladen (JSON)** speichert die Sicherung auf
-deinem Computer. Die Sicherung entsteht Stück für Stück und liegt nie ganz
-im Speicher.
+deinem Computer; das Protokoll hält fest, wer sie wann heruntergeladen hat,
+denn eine solche Kopie liegt außerhalb der Reichweite der App. Die Sicherung
+entsteht Stück für Stück und liegt nie ganz im Speicher.
 
 > [!WARNING]
 > Die Sicherungen enthalten das vollständige Werkverzeichnis einschließlich
@@ -405,7 +507,14 @@ landen im **Papierkorb** des Kontos, und die Nextcloud bewahrt ältere
 des Mappenbuchs noch Namen enthalten. Setze `trashbin_retention_obligation`
 und `versions_retention_obligation` in der `config.php` (zum Beispiel
 `auto, 30`), damit die Nextcloud sie entfernt, und bewahre deine
-Server-Sicherungen nicht länger auf als nötig.
+Server-Sicherungen nicht länger auf als nötig. Eine Wiederherstellung
+bringt Daten zurück, die seit der Sicherung gelöscht wurden: Führe danach
+die vermerkten Löschungen (`occ cantoria:privacy-erase`) erneut aus.
+
+**Exporte.** Der Export des Werkverzeichnisses in der App (CSV) nennt keine
+Konten und enthält interne Erhaltungskopien nur für die Rolle „Bestand“ und
+die Chorleitung. Das vollständige Werkverzeichnis mit Konten steht in den
+Sicherungen.
 
 **Fehlende Sicherungen.** Die tägliche Prüfung benachrichtigt die Rolle
 „Bestand“, wenn die letzte vollständige Sicherung älter als acht Tage ist,
@@ -585,13 +694,26 @@ eine Schwachstelle meldest.
 
 Auf Instanzen ohne Shell-Zugang geht alles über die Weboberfläche:
 Installation aus dem App Store, Einstellungen (Verwaltungseinstellungen →
-Cantoria), Importe und Wiederherstellung. Die `occ`-Befehle sind eine
-Erleichterung für selbst betriebene Instanzen:
+Cantoria), Importe und Wiederherstellung.
+
+- **Zuerst die Datenbank prüfen.** Die App läuft mit MySQL, MariaDB und
+  PostgreSQL, also bei den meisten verwalteten Angeboten und in Nextcloud
+  All-in-One; auf SQLite oder Oracle verweigert Nextcloud die Installation.
+  **Verwaltungseinstellungen → System** (die App *System*, `serverinfo`)
+  zeigt die Datenbank, oder frag den Anbieter, bevor ihr das Archiv um die
+  App herum plant.
+- **MuseScore-Dateien** (`.mscz`) werden ihrem Exemplar zugeordnet, aber die
+  App zeigt sie nicht: Die Notenansicht liest MusicXML. Exportiere MusicXML
+  aus MuseScore für die Notenansicht. Um `.mscz`-Dateien in Nextcloud selbst
+  anzusehen, kann eine Viewer-App aus dem App Store wie *MusicSheet Viewer*
+  helfen, wenn der Anbieter sie anbietet; die App hängt nicht davon ab.
+
+Die `occ`-Befehle sind eine Erleichterung für selbst betriebene Instanzen:
 
 | Befehl | Macht |
 |---|---|
 | `occ cantoria:setup <account> [<folder>] [--role role=groups]` | setzt den Archivordner und die Rollengruppen; mit Archivordner nennt er die Konten der Rollengruppen, die ihn nicht öffnen können |
-| `occ cantoria:import <account> <file> [--execute]` | importiert die CSV-Datei des Werkverzeichnisses; ein Probelauf, solange `--execute` fehlt |
+| `occ cantoria:import <account> <file> [--execute]` | importiert das Werkverzeichnis (CSV, `.xlsx` oder `.ods`); ein Probelauf, solange `--execute` fehlt |
 | `occ cantoria:export [--extended] [--full]` | schreibt die CSV-Datei des Werkverzeichnisses, alle Felder oder die vollständige Sicherung (JSON) auf die Standardausgabe |
 | `occ cantoria:file-sync <account>` | startet den Dateiabgleich; abgelehnt (Exit-Code 1), solange ein anderer läuft |
 | `occ cantoria:restore <file> [<account>]` | stellt eine vollständige Sicherung in ein leeres Werkverzeichnis wieder her |
@@ -606,6 +728,8 @@ Was die App über Menschen speichert:
 - **Funktionsträger.** Das Protokoll hält fest, wer was geändert hat, als
   Momentaufnahme des Anzeigenamens mit dem Konto. Das ist der Nachweis des
   Werkverzeichnisses (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO).
+  Aufgaben, Vorschläge, Prüfpunkte, Links, Konzerte, Bestätigungen und
+  Prüfungen von Personen halten fest, wer sie angelegt oder entschieden hat.
 - **Personenregister.** Namen, Lebensdaten und Rollen der Personen aus
   Komposition, Bearbeitung, Text und weiterer Beteiligter, aus öffentlichen
   Quellen (Drucke, Verlagsverzeichnisse), aufbewahrt für die Einschätzung der
@@ -621,8 +745,15 @@ Was die App über Menschen speichert:
   das Nextcloud-Konto der Person, die eine Chormappe hat, und Notizen zur
   Ausgabe. Übe-Dateien von Chormitgliedern werden nur mit der Rolle
   protokolliert, ohne Konto und Namen (seit 0.11; ältere Einträge wurden beim
-  Update anonymisiert). Ausschnitt-Links zählen Aufrufe, ohne festzuhalten,
-  wer sie geöffnet hat.
+  Update anonymisiert), und mit dem Tag statt der Uhrzeit. In einer kleinen
+  Stimmgruppe kann ein solcher Eintrag trotzdem auf eine Person deuten.
+  Ausschnitt-Links zählen Aufrufe, ohne festzuhalten, wer sie geöffnet hat.
+- **Auf den Geräten.** Übe-Einstellungen und Stücke, die „ohne Netz
+  verfügbar“ sind, liegen nur im Browser des Geräts (`localStorage`, Cache
+  Storage; IndexedDB hält für geteilte Geräte einen Hash des Kontos);
+  Mikrofon und Aufnahmen bleiben im Browser. Der
+  [rechtliche Hintergrund](rechtlicher-hintergrund.md#mikrofon-aufnahmen-und-speicher-im-browser)
+  erklärt § 25 TDDDG.
 - **Berichte und Prüfpunkte.** Berichte von Übertragungen werden so
   aufbewahrt, wie sie eingegangen sind (als Beleg, mit ihrer Prüfsumme); ihr
   Abschnitt zu den Rechten kann die an einem Werk beteiligten Personen
@@ -640,15 +771,29 @@ Mappe ist noch draußen), aber nicht mehr das Konto; Protokolleinträge
 verlieren das Konto und behalten den Anzeigenamen dessen, der etwas geändert
 hat.
 
+**Löschfrist des Protokolls.** Die tägliche Prüfung entfernt Konto und
+Namen aus Protokolleinträgen, die älter als **zehn Jahre** sind, und behält
+ihre Rollen; das Protokoll hält fest, wie viele Einträge sie geändert hat.
+Zehn Jahre sind die längste Frist, in der Ansprüche von Rechteinhabern
+verjähren (§ 102 UrhG i. V. m. § 199 BGB); bis dahin sind die Einträge
+Nachweis (Art. 17 Abs. 3 lit. e DSGVO). Eine andere Frist setzt du mit
+`occ config:app:set cantoria audit_retention_years --value=<Jahre>
+--type=integer`; `0` schaltet sie ab. Trage die Frist in das Verzeichnis
+von Verarbeitungstätigkeiten ein.
+
 **Auskunft und Löschung.** Auf selbst betriebenen Instanzen listet `occ
 cantoria:privacy-report <Konto oder Name>` die Ausgaben, die
-Protokolleinträge der Person und Personen gleichen Namens im
-Personenregister (JSON). `occ cantoria:privacy-erase <Konto oder Name>
+Protokolleinträge der Person, die Einträge, in denen Konto oder Name als
+die Person steht, die etwas angelegt, entschieden, bestätigt oder geprüft
+hat (Aufgaben, Vorschläge, Prüfpunkte, Links, Konzerte, Fassungen und ihre
+Stände, Personen, Zusammenführungen, Berichte von Übertragungen), und
+Personen gleichen Namens im Personenregister (JSON). `occ cantoria:privacy-erase <Konto oder Name>
 --execute` entfernt die personenbezogenen Daten der Ausgaben (auch aus ihren
 Protokolleinträgen; eine offene Ausgabe bleibt als ausgegeben vermerkt, ohne
 Person) und Konto und Namen aus den Protokolleinträgen der Person; die
 Löschung selbst wird ohne Namen protokolliert. Ohne `--execute` zeigt der
-Befehl nur, was gelöscht würde. Personen des Registers werden nur genannt.
+Befehl nur, was gelöscht würde. Personen des Registers und die Einträge
+werden nur genannt: Sie bleiben als Nachweis, wer entschieden hat.
 Beim verwalteten Hosting bitte den Anbieter, die Befehle auszuführen, oder
 entferne die Daten von Hand: das Mappenbuch und das Personenregister in der
 App.
@@ -657,8 +802,9 @@ App.
 Repertoireseite sind Seiten für alle. Die Nextcloud verarbeitet dabei die
 IP-Adressen der Besucher: im Log des Webservers (mit der Adresse des Links),
 im Schutz gegen Brute-Force-Angriffe und in der Begrenzung der Aufrufe, bei
-Fehlern in `nextcloud.log`. Die App setzt für Besucher ohne Konto keine
-Cookies und lädt nichts von Dritten. Bevor du diese Module einschaltest,
+Fehlern in `nextcloud.log`. Die App setzt keine eigenen Cookies und lädt
+nichts von Dritten; Übe-Einstellungen und auf Tippen gespeicherte Stücke
+bleiben im Browser der Besucher. Bevor du diese Module einschaltest,
 trage unter *Verwaltung → Design* die Adressen des **Impressums** und der
 **Datenschutzerklärung** ein: Die öffentlichen Seiten zeigen beide in ihrer
 Fußzeile, und die Moduleinstellungen warnen, solange eines fehlt. Die
@@ -695,7 +841,7 @@ nicht barrierefrei ist und wie man ein Problem meldet, steht in der
 
 Nicht jeder Chor braucht jede Funktion. Alles außerhalb des Kerns ist ein
 **Modul**, das die Administration unter **Verwaltungseinstellungen →
-Cantoria → Module** ein- und ausschaltet (auch die Gruppen, denen die
+Cantoria → Funktionen und Module** ein- und ausschaltet (auch die Gruppen, denen die
 Einstellungsseite übertragen wurde). Der Kern ist immer eingeschaltet: das
 Werkverzeichnis (Werke, Fassungen, Exemplare, Felder, Suche, Status), die
 Startseite, der Dateiabgleich mit dem Archivordner, Rollen, das Protokoll,
@@ -752,10 +898,12 @@ Benachrichtigungen sind eingeklappt.
 
 Die Chormitglieder sehen nur Fassungen, die für das Chorportal freigegeben
 sind; auf einem Gerät behalten lässt sich ein Stück nur mit bestätigter
-Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck, und die
-Rolle „Chormitglieder“ braucht eine Gruppe. Öffentliche Seiten gehen nur
-mit bestätigter Gemeinfreiheit oder einer Lizenz für die
-Online-Veröffentlichung; trage vorher Impressum und Datenschutzerklärung
+Gemeinfreiheit oder einer Lizenz für Download oder Selbstausdruck zusammen
+mit einer für digitale Notendateien (seine Noten bleiben dort als
+MusicXML), und die Rolle „Chormitglieder“ braucht eine Gruppe (die Einrichtung prüft das).
+Öffentliche Seiten gehen nur mit bestätigter Gemeinfreiheit oder einer Lizenz
+für die Online-Veröffentlichung, und den Scan eines öffentlichen Links kann
+jede Person mit dem Link herunterladen; trage vorher Impressum und Datenschutzerklärung
 unter **Verwaltungseinstellungen → Design** ein.
 
 ### Voreinstellungen
@@ -767,7 +915,9 @@ unter **Verwaltungseinstellungen → Design** ein.
 | **Vollständig** | alles außer der Schnittstelle für Agenten, den Modulen zum Teilen und für das Üben ohne Netz, der Konzertmappe, dem Spiegelordner für die Druckstation und dem Übergabeordner für ein Chorsystem |
 
 Eine Voreinstellung setzt alle Schalter auf einmal; die Einstellungen fragen
-vorher nach und listen, was sich ändert.
+vorher nach und listen, was sich ändert. Die Voreinstellungen sind unter den
+Wahlen darüber eingeklappt: Sie setzen dieselben Schalter, aber keine schaltet
+das Teilen ein.
 
 **Neue Installationen** beginnen mit der Voreinstellung **Standard**. Sie ist
 für kleine Chöre mit einer ehrenamtlichen Archivverwaltung gedacht:
@@ -857,7 +1007,7 @@ können (siehe Abschnitt 16).
 | Import von Aufführungslisten | Konzerte und Notenlisten | ein | Kein Import, keine Liste unklarer Programmpunkte. |
 | Repertoirezahlen | Konzerte und Notenlisten | ein | Das Werkverzeichnis zeigt die Repertoirewerte des importierten Werkverzeichnisses; keine Grenzen in den Einstellungen. |
 | Konzerte im Kalender | Konzerte und Notenlisten | ein | Keine Kalenderdateien und -einträge. Einträge in Kalendern bleiben dort. |
-| Konzertmappe | Konzerte und Notenlisten, Notenansicht | aus (in keiner Voreinstellung) | Keine Seite „Konzertmappe“ und kein Eintrag in der Navigation; ihre Routen antworten mit 404. Was die Chorleitung auf ihren Geräten gespeichert hat, wird beim nächsten Besuch mit Netz entfernt. |
+| Konzertmappe | Konzerte und Notenlisten, Notenansicht | aus (in keiner Voreinstellung) | Keine Seite „Konzertmappe“ und kein Eintrag in der Navigation; ihre Routen antworten mit 404. Was die Chorleitung auf ihren Geräten behalten hat, wird beim nächsten Besuch mit Netz entfernt. |
 | Neuzugänge und Etiketten | – | ein | Kein Assistent für Neuzugänge und keine Etiketten. Der Import legt weiterhin Exemplare an. |
 | Werke zusammenführen | – | ein | Keine Vorschläge zum Zusammenführen, kein Zusammenführen und kein Rückgängigmachen. Erfolgte Zusammenführungen bleiben. |
 | Inventur | – | ein | Keine Inventurlisten und keine Liste der Signaturlücken. Erfasste Zählungen bleiben im Werkverzeichnis. |
@@ -873,7 +1023,7 @@ können (siehe Abschnitt 16).
 | Übe-Audio für Chormitglieder | Links für Chormitglieder, Übe-Audio-Dateien | aus (in keiner Voreinstellung) | Chormitglieder erstellen keine Übe-Dateien; der Server lehnt jede Anfrage ab. |
 | Öffentliche Links | Ausschnitt-Links, Wiedergabe, Veröffentlichung | aus (in keiner Voreinstellung) | Jeder öffentliche Link antwortet mit derselben 404-Seite; keine neuen öffentlichen Links. Vorhandene Links bleiben erhalten und laufen ab wie bisher. |
 | Öffentliche Repertoireseite | Rechtebestätigung und Lizenzen | aus (in keiner Voreinstellung) | `/apps/cantoria/repertoire` antwortet mit 404; die Werkfelder für die Seite sind ausgeblendet. |
-| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“, von öffentlichen Links und aus der Konzertmappe lässt sich nichts auf einem Gerät speichern; der nächste Besuch mit Netz entfernt, was dort gespeichert war. Wirkt nur zusammen mit **Links für Chormitglieder**, **Öffentliche Links** oder **Konzertmappe**. |
+| Üben ohne Netz | – | aus (in keiner Voreinstellung) | Aus „Mit mir geteilt“, von öffentlichen Links und aus der Konzertmappe lässt sich nichts auf einem Gerät behalten; der nächste Besuch mit Netz entfernt, was dort lag. Wirkt nur zusammen mit **Links für Chormitglieder**, **Öffentliche Links** oder **Konzertmappe**. |
 | Schnittstelle für Agenten | – | aus (in keiner Voreinstellung) | Die API für Agenten (`/ocs/v2.php/apps/cantoria/api/v1/…`) antwortet mit 404; der MCP-Server meldet die Schnittstelle als abgeschaltet. Sonst ändert sich nichts. |
 
 ### Kommandozeile
@@ -1044,13 +1194,27 @@ offline`):
   der Browser wie bisher. Ohne Netz wird nichts auf den Server geschrieben:
   Übe-Dateien brauchen es, weil der Server die Rechte prüft und jede Datei
   protokolliert.
-- **Rechte.** Nur wo Chormitglieder die Noten speichern und drucken dürfen
-  (dieselbe Regel wie für den Scan und den Übergabeordner): Eine Lizenz für
-  das Chorportal allein deckt das Ansehen, keine Kopie auf dem Gerät.
+- **Rechte.** Eine Regel für jeden Weg (RightsPolicy: „Mit mir geteilt“,
+  die Konzertmappe, öffentliche Links, der Dialog für Links und der Header
+  `X-Cantoria-Keep` jeder Antwort, die der Service Worker behält). Ohne
+  bestätigte Gemeinfreiheit braucht ein Stück eine Lizenz für Download oder
+  Selbstausdruck, wie für den Scan und das Drucken, und für seine Noten
+  eine Lizenz „Weitergabe digitaler Notendateien (MusicXML) an
+  Chormitglieder (Übergabeordner, auf Geräten behaltene Stücke)“: Das Gerät
+  behält die Noten als MusicXML-Datei, also als vollständige digitale
+  Ausgabe, aus der sich neue Drucke und Stimmen machen lassen, wie im
+  Übergabeordner. Eine Lizenz für das Chorportal allein deckt das Ansehen,
+  keine Kopie auf dem Gerät. Das Gerät entfernt ein Stück am letzten Tag
+  dieser Lizenzen, auch ohne Netz. Ansehen und Abspielen im Browser
+  betrifft das nicht: Die Seite bekommt die MusicXML dessen, was sie zeigt,
+  um die Noten zu zeichnen, unter der Freigabe der Noten (Chorportal,
+  Online-Veröffentlichung). Sag das einem Verlag so; „nur als Notenbild“
+  wäre zu wenig. Diese Lesart ist vorsichtig und sollte vor 1.0 anwaltlich
+  bestätigt werden (R B26).
 - **Ablauf und Widerruf.** Bei jedem Start mit Netz gleicht die Seite die
-  gespeicherten Stücke mit dem Server ab; abgelaufene, widerrufene und
+  Stücke auf dem Gerät mit dem Server ab; abgelaufene, widerrufene und
   nicht mehr erlaubte werden entfernt. Nach 30 Tagen ohne Abgleich sind die
-  gespeicherten Stücke gesperrt, und ein abgelaufener Link wird nie
+  Stücke auf dem Gerät gesperrt, und ein abgelaufener Link wird nie
   gezeigt, auch ohne Netz. Ein Stück, das vom Gerät kommt, zählt nicht als
   Aufruf des Links.
 - **Geräte.** Es braucht HTTPS und einen aktuellen Browser. Die Stücke
@@ -1060,16 +1224,31 @@ offline`):
   eigene Anmeldung, getrennt von Safari, und Safari kann Gespeichertes nach
   einigen Tagen ohne Nutzung löschen. Die Seite sagt das vor dem ersten
   Stück. Bei jedem Start mit Netz legt die Seite ihre Skripte neu ab, damit
-  sie nach einem Update der App auch ohne Netz öffnet. Auf einem
-  geteilten Gerät löschen Chormitglieder alles mit **Alles auf diesem Gerät
-  löschen**; das Abmelden bei Nextcloud löscht es nicht. Öffnet ein anderes
-  Konto die Seite im selben Browser, werden die Stücke des vorigen entfernt.
+  sie nach einem Update der App auch ohne Netz öffnet.
+- **Geteilte Geräte.** Chormitglieder löschen alles mit **Alles auf diesem
+  Gerät löschen** am Ende der Seite oder, solange Stücke auf dem Gerät
+  sind, mit demselben Knopf oben auf der Seite. Das Abmelden
+  bei Nextcloud löscht die Stücke meist auch: Nextcloud bittet Firefox,
+  Safari und Edge, den Speicher des Servers sofort zu löschen (Header
+  `Clear-Site-Data`, nur wenn Nextcloud HTTPS sieht; hinter einem Proxy
+  `overwriteprotocol` setzen). Chrome und den Browsern auf Android schickt
+  es den Header nicht; dort löscht seine Anmeldeseite nur Stellen und
+  Einstellungen, und Cantoria entfernt die Stücke beim nächsten Öffnen
+  einer seiner Seiten auf diesem Gerät, auch ohne Netz. Öffnet ein anderes
+  Konto eine Seite von Cantoria im selben Browser, werden Stücke, Stellen
+  und Einstellungen des vorigen entfernt. Nicht abgedeckt: ein Abmelden,
+  das nicht auf der Anmeldeseite von Nextcloud endet (manche Anmeldungen
+  über einen fremden Dienst), und eine Sitzung, die ohne Abmelden endet;
+  Einzelheiten in [SECURITY.md](../../SECURITY.md) (englisch).
 - **Öffentliche Links.** Wo die Gemeinfreiheit der Fassung bestätigt ist,
   bietet auch die Seite eines öffentlichen Links **Ohne Netz verfügbar**. Besucher haben kein Konto, deshalb wird je Browser
   gespeichert; jeder Besuch mit Netz ist der Abgleich, und ein widerrufener
   oder abgelaufener Link wird beim nächsten vom Gerät entfernt. Eine Lizenz
   reicht hier nie: Sie deckt das öffentliche Zeigen, keine Kopie auf dem
-  Gerät jedes Besuchers.
+  Gerät jedes Besuchers. Dasselbe gilt für das Drucken der Noten eines
+  öffentlichen Links. Ein Rechtekonflikt (bestätigt gemeinfrei, nach den
+  jetzt erfassten Personen aber geschützt) schließt beides, wie er Scan und
+  Wiedergabe schließt, bis die Archivverwaltung die Rechte geprüft hat.
 - **Ausschalten.** Der nächste Besuch mit Netz entfernt den Service Worker
   und alles, was er gespeichert hat. Nach einem Update der App erneuert
   sich der Worker und verwirft die alten Skripte.
@@ -1086,12 +1265,15 @@ Probe und Konzert. Mit dem Modul **Üben ohne Netz** lässt sich ein ganzes
 Programm für Probe und Konzert ohne Netz auf dem Gerät speichern, aber nur
 die Stücke, deren Rechte eine Kopie erlauben: bestätigte Gemeinfreiheit
 oder eine Lizenz für Download oder Selbstausdruck (§ 53 Abs. 4 UrhG; eine
-Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen). Sie
-nutzt denselben Service Worker mit einem eigenen Speicher, denselben
+Kopie, die wochenlang auf dem Tablet bleibt, ist kein bloßes Ansehen) und
+für die Noten eine Lizenz für digitale Notendateien, dieselbe Regel wie für
+Chormitglieder. Ein Stück verschwindet am letzten Tag dieser Lizenzen vom
+Gerät. Sie nutzt denselben Service Worker mit einem eigenen Speicher, denselben
 Abgleich bei jedem Start mit Netz und dieselbe Sperre nach 30 Tagen. Die
-Mappe liest nur. Ein anderes Konto im selben Browser oder ein Besuch ohne
-die Rolle entfernt, was gespeichert war; ist **Üben ohne Netz** aus,
-entfernt der nächste Besuch alles.
+Mappe liest nur. Ein anderes Konto im selben Browser, ein Besuch ohne die
+Rolle oder das Abmelden (wie bei Chormitgliedern, oben) entfernt, was auf
+dem Gerät war; ist **Üben ohne Netz** aus, entfernt der nächste Besuch
+alles.
 
 **Häufige Probleme:**
 
@@ -1104,8 +1286,8 @@ entfernt der nächste Besuch alles.
 | „Die Noten dieses Links sind gerade nicht verfügbar.“ oder „Der Scan dieses Links ist gerade nicht verfügbar.“ | Das Konto, das den Archivordner gewählt hat (Einstellungen → Archivordner), muss noch vorhanden sein und den Ordner sehen. Die MusicXML-Datei oder der PDF-Scan muss noch darin liegen und mit dem Exemplar verknüpft sein. |
 | Ein öffentlicher Scan zeigt „nicht gefunden“ | Dieselben Gründe wie bei der Seite, oder die PDF-Datei liegt nicht mehr im Archivordner; verknüpfe den Scan erneut und erstelle einen neuen Link. |
 | Ein öffentlicher Link zeigt „nicht gefunden“ | Er ist abgelaufen, wurde widerrufen, die Fassung ist nicht mehr freigegeben, oder das Modul ist ausgeschaltet; die Seite sagt nicht, was davon. Erstelle bei Bedarf einen neuen Link. |
-| **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke speichern (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
-| Gespeicherte Stücke sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und speichere die Stücke erneut. |
+| **Ohne Netz verfügbar** fehlt | Das Modul **Üben ohne Netz** ist aus, oder der Browser kann keine Stücke behalten (kein HTTPS, ein privates Fenster); die Seite sagt es unter **Ohne Netz**. Bei einem einzelnen Stück steht „Ohne Netz nicht verfügbar“ mit dem Grund, wenn die Rechte keine Kopie erlauben. |
+| Stücke, die ohne Netz verfügbar waren, sind auf iPhone oder iPad weg | Safari löscht den Speicher einer Seite nach einigen Tagen ohne Nutzung, wenn sie nicht auf dem Home-Bildschirm liegt. Lege sie dort ab, öffne sie einmal mit Netz und mach die Stücke erneut ohne Netz verfügbar. |
 
 ## 15. Mappenbuch: Löschfrist
 
@@ -1180,7 +1362,7 @@ So richtest du es ein:
    Zielordner Dateien anlegen, ändern und löschen können.
 3. **Einstellungen → Druckstation: Spiegelordner → Ordner wählen …**. Die
    App prüft den Ordner sofort: nicht der Archivordner, nicht darin (auch
-   nicht über Freigaben), Schreibrecht. Dann **Zielordner speichern**.
+   nicht über geteilte Ordner), Schreibrecht. Dann **Zielordner speichern**.
 4. Sieh dir die Vorschau an und starte den ersten Abgleich (in den
    Einstellungen oder in der Liste **Druckstation**). Der tägliche Abgleich
    beginnt erst nach diesem ersten Abgleich von Hand.
@@ -1196,10 +1378,14 @@ PDF-Scans ihrer aktiven Exemplare, nie interne Erhaltungskopien, benannt
 `<shelf mark> <title>.pdf`, und eine `LIESMICH.txt`. Jedes Schreiben und
 jedes Entfernen steht im Protokoll. Sie ersetzt oder entfernt nur Dateien,
 die sie selbst geschrieben hat und die seitdem niemand geändert hat (sie
-merkt sich ihre Prüfsummen); jede andere Datei im Ordner bleibt. Schlägt der
-tägliche Abgleich fehl (Ordner weg, kein Schreibrecht), bekommen die Rolle
-„Bestand“ und die Administration die Benachrichtigung „Abgleich der
-Druckstation fehlgeschlagen“.
+merkt sich ihre Prüfsummen); jede andere Datei im Ordner bleibt. Eine
+Datei, die sie geschrieben hat, entfernt sie, wenn ihre Fassung die Liste
+verlässt, und auch, wenn die Rechte sie nicht mehr erlauben, während die
+Fassung bleibt (ein Exemplar, das als interne Erhaltungskopie markiert
+ist); eine Datei, die gerade nicht lesbar ist, bleibt bis zum nächsten
+Abgleich. Schlägt der tägliche Abgleich fehl (Ordner weg, kein
+Schreibrecht), bekommen die Rolle „Bestand“ und die Administration die
+Benachrichtigung „Abgleich der Druckstation fehlgeschlagen“.
 
 Risiken:
 
@@ -1248,10 +1434,23 @@ Was kopiert wird, für jede für das Chorportal freigegebene Fassung (Zeilen
 Liste), aus ihren aktiven Exemplaren, nie aus
 internen Erhaltungskopien:
 
-- die Scans (PDF) und MusicXML-Dateien, wenn Chormitglieder sie speichern
-  und drucken dürfen (dieselbe Regel wie beim Herunterladen im Portal);
-- die Übe-Aufnahmen (Audiodateien im Archivordner), wenn die Rechte Übe-Audio
-  erlauben. Für die Übergabe erzeugt die App keine neuen Aufnahmen;
+- die Scans (PDF), wenn Chormitglieder sie speichern und drucken dürfen
+  (dieselbe Regel wie beim Herunterladen im Portal);
+- die MusicXML-Dateien bei bestätigter Gemeinfreiheit oder mit einer Lizenz
+  „Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder
+  (Übergabeordner, auf Geräten behaltene Stücke)“: Eine MusicXML-Datei ist eine vollständige digitale
+  Ausgabe, aus der sich neue Drucke und Stimmen machen lassen; eine Lizenz
+  zum Ausdrucken deckt sie nicht. Die App legt sie geprüft und bereinigt
+  ab wie die Noten eines Links (ohne Encoder, Notizen, Kommentare),
+  immer unkomprimiert als `.musicxml`;
+- die Aufnahmen (Audiodateien im Archivordner), wenn die Rechte Übe-Audio
+  erlauben und eine Lizenz „Weitergabe von Aufnahmen an Chormitglieder
+  (Mitwirkende und Hersteller sind einverstanden; Übergabeordner)“
+  besteht, auch bei gemeinfreien Werken: An einer Aufnahme haben die
+  Mitwirkenden und der Hersteller eigene Rechte (§§ 73, 77, 78, 85 UrhG).
+  Für eine eigene Aufnahme der Chorleitung trägst du ihre Zustimmung als
+  solche Lizenz ein. Für die Übergabe erzeugt die App keine neuen
+  Aufnahmen;
 - `Liste.csv`: eine Zeile je Datei mit Signatur, Titel, Komposition,
   Fassung, aktuellem Stand und seit wann er gilt, Rechtestatus und
   Lizenzhinweis (bestätigt gemeinfrei, oder die Hinweise der gültigen
@@ -1266,7 +1465,15 @@ entfernt die App nur Dateien, die sie selbst geschrieben hat und die seitdem
 niemand geändert hat; jedes Schreiben und Entfernen steht im Protokoll;
 schlägt der tägliche Abgleich fehl, bekommen die Rolle „Bestand“ und die
 Administration die Benachrichtigung „Übergabe an das Chorsystem
-fehlgeschlagen“.
+fehlgeschlagen“. Der Abgleich entfernt eine Datei, die er geschrieben hat,
+wenn ihre Fassung die Liste verlässt, und auch, wenn eine Lizenz, die sie
+brauchte, abgelaufen ist, während die Fassung auf der Liste bleibt
+(Download oder Selbstausdruck für einen Scan, digitale Notendateien für
+MusicXML, Weitergabe von Aufnahmen für eine Aufnahme); die Vorschau nennt
+diese Entfernungen. Eine Datei, die gerade nicht lesbar ist oder deren
+Name nicht erlaubt ist, bleibt bis zum nächsten Abgleich. MusicXML-Dateien,
+die eine ältere Version der App geschrieben hat, werden erst bereinigt,
+wenn sich ihre Quelle ändert.
 
 Risiken:
 
@@ -1291,8 +1498,9 @@ nächsten Abgleich. Das braucht kein Modul außer der Übergabe, hat aber
 keine Werkzeuge zum Üben: Dafür speichern Chormitglieder Stücke mit dem
 Modul **Üben ohne Netz** (siehe
 [Mit Chormitgliedern und der Öffentlichkeit teilen](#14-mit-chormitgliedern-und-der-öffentlichkeit-teilen)).
-Der Ordner enthält nur, was Chormitglieder ohnehin speichern und drucken
-dürfen.
+Der Ordner enthält nur, was die Rechte Chormitgliedern zu behalten
+erlauben: Ab dem ersten Abgleich nach dem Ende einer Lizenz ist die Datei
+weg.
 
 Wie sich Archiv und Chorsystem die Arbeit teilen und was das Archiv nie
 verlässt, steht in [Cantoria neben einem Chorsystem](neben-einem-chorsystem.md).

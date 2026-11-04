@@ -14,6 +14,7 @@ import {
 	normalizeGroups,
 	normalizeSettings,
 	parseThresholds,
+	neededRoles,
 	roleChanges,
 	setupSteps,
 } from '../settings.ts'
@@ -81,6 +82,8 @@ describe('settings of the app', () => {
 			repertoire: { current: 3, dormant: 10 },
 			catalog: { copies: 23, files: 30 },
 			modulesChosen: 'yes',
+			concertFolder: true,
+			memberLinks: 'yes',
 			folderBook: true,
 			printMirror: 'yes',
 			admin: true,
@@ -95,6 +98,8 @@ describe('settings of the app', () => {
 			repertoire: { current: 3, dormant: 10 },
 			catalog: { copies: 23, files: 30 },
 			modulesChosen: false,
+			concertFolder: true,
+			memberLinks: false,
 			folderBook: true,
 			printMirror: false,
 			choirHandover: false,
@@ -115,6 +120,8 @@ describe('settings of the app', () => {
 			repertoire: null,
 			catalog: { copies: 0, files: 0 },
 			modulesChosen: false,
+			concertFolder: false,
+			memberLinks: false,
 			folderBook: false,
 			printMirror: false,
 			choirHandover: false,
@@ -212,7 +219,8 @@ describe('setup in six steps', () => {
 	}
 
 	it('starts with everything missing, in the order of the setup', () => {
-		expect(setupSteps(fresh, null).map((step) => step.key)).toEqual(['archive', 'roles', 'access', 'modules', 'import', 'fileSync'])
+		// The functions come before the roles: they decide which roles need a group (U31)
+		expect(setupSteps(fresh, null).map((step) => step.key)).toEqual(['archive', 'modules', 'roles', 'access', 'import', 'fileSync'])
 		expect(statuses({})).toEqual({ archive: 'missing', roles: 'missing', access: 'missing', modules: 'missing', import: 'missing', fileSync: 'missing' })
 	})
 
@@ -226,6 +234,21 @@ describe('setup in six steps', () => {
 	it('needs a group for the catalog role and flags groups that no longer exist', () => {
 		expect(statuses({ archive: { id: 1 }, roles: { reader: ['board'] } }).roles).toBe('missing')
 		expect(statuses({ archive: { id: 1 }, roles: { librarian: ['archive', 'old'] }, groupsMissing: ['old'] }).roles).toBe('problem')
+	})
+
+	it('needs a group for the roles of the chosen functions', () => {
+		const roles = (settings: Record<string, unknown>) => setupSteps(normalizeSettings({ archive: { id: 1 }, ...settings }), null)
+			.find((step) => step.key === 'roles')!
+		// Only the archive: the catalog role is enough
+		expect(roles({ roles: { librarian: ['archive'] } })).toMatchObject({ status: 'done', rolesWithoutGroup: [] })
+		// The concert folder needs the conductor, the sharing with the choir the choir members
+		expect(roles({ roles: { librarian: ['archive'] }, concertFolder: true })).toMatchObject({ status: 'missing', rolesWithoutGroup: ['conductor'] })
+		expect(roles({ roles: { librarian: ['archive'], conductor: ['conductors'] }, concertFolder: true, memberLinks: true }))
+			.toMatchObject({ status: 'missing', rolesWithoutGroup: ['member'] })
+		expect(roles({ roles: { conductor: ['conductors'] }, memberLinks: true })).toMatchObject({ status: 'missing', rolesWithoutGroup: ['librarian', 'member'] })
+		expect(roles({ roles: { librarian: ['archive'], conductor: ['conductors'], member: ['singers'] }, concertFolder: true, memberLinks: true }))
+			.toMatchObject({ status: 'done', rolesWithoutGroup: [] })
+		expect(neededRoles(normalizeSettings({ memberLinks: true }))).toEqual(['librarian', 'member'])
 	})
 })
 

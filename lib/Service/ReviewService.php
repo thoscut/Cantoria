@@ -158,7 +158,8 @@ class ReviewService {
 		$this->modules->requireEnabled(self::MODULE);
 		$this->roles->requireAccess($uid);
 		$version = $this->loadVersion($versionId);
-		if ($version->getPreservationCopy() === true && !$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS)) {
+		if (!$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS)
+			&& RightsPolicy::versionHasPreservationCopy($version, $this->copies->findByVersion($version->getId()))) {
 			throw new AccessDeniedException('Internal preservation copy: only the catalog librarian and the conductor may view it.');
 		}
 		$points = $this->points->findByVersion($version->getId());
@@ -582,7 +583,9 @@ class ReviewService {
 					return ChecksumService::hash($node);
 				}
 			} catch (\Throwable $e) {
-				$this->logger->info('Cantoria: checksum of file ' . $file->getId() . ' as ' . $account . ' failed: ' . $e->getMessage());
+				// The log names no account (S N20)
+				$this->logger->info('Cantoria: checksum of file ' . $file->getId() . ' failed as the account '
+					. ($account === $archiveUser ? 'of the archive folder' : 'that hands in the report') . ': ' . $e->getMessage());
 			}
 		}
 		return null;

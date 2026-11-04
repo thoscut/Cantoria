@@ -167,7 +167,8 @@ async function shareWith(librarian, demoFolder, group, { ocs, sharesPath, log })
 
 /**
  * The state of the pictures of milestones 0.7 to 0.9: links for choir
- * members and the public, the public repertoire page, the folder book, the
+ * members and the public, the concert shared as a programme (0.20), the
+ * public repertoire page, the folder book, the
  * mirror folder of the print station, a revision made by a correction, a
  * special case of the protection term and two annual snapshots. Needs the
  * modules member_links, public_links, public_repertoire, folder_book,
@@ -176,7 +177,7 @@ async function shareWith(librarian, demoFolder, group, { ocs, sharesPath, log })
  *
  * @param {object} context sessions and helpers of prepare()
  */
-async function extras({ session, librarian, copy, versionOf, check, log, demoFolder, ocs, sharesPath }) {
+async function extras({ session, librarian, conductor, copy, versionOf, check, log, demoFolder, ocs, sharesPath }) {
 	const admin = await session('admin')
 	const entry = async (shelfmark) => check('entry ' + shelfmark, await librarian.api('GET', `/api/entries/${copy[shelfmark].id}`))
 
@@ -207,6 +208,20 @@ async function extras({ session, librarian, copy, versionOf, check, log, demoFol
 			link: { circle: 'public', scan_file_id: await scanOf('1-2') },
 		}))
 		log('public link created (1-2, whole piece with scan)')
+	}
+
+	// "Shared with me" by programme (milestone 0.20, W B27): the concert of
+	// the demo shared with the choir as a whole, as the conductor does it
+	if (!check('links', await librarian.api('GET', '/api/links')).some((link) => link.event_id)) {
+		const concert = check('concerts', await conductor.api('GET', '/api/events?kind=concert')).find((event) => event.title === CONCERT)
+		const options = concert ? check('share options', await conductor.api('GET', `/api/events/${concert.id}/share-options`)) : null
+		const items = (options?.items ?? []).filter((item) => item.allowed).map((item) => item.id)
+		if (items.length > 0) {
+			const result = check('share programme', await conductor.api('POST', `/api/events/${concert.id}/share`, {
+				items, expires: options.expires, note: 'For the Advent concert: please practise your voice.', scan: false,
+			}))
+			log(`"${CONCERT}" shared with the choir: ${result.created} new, ${result.extended} extended`)
+		}
 	}
 
 	// The public repertoire page: works with a version confirmed public domain

@@ -19,7 +19,7 @@ import type { CircleOption, ExcerptLink, LinkCircle, LinkInput, LinkOptions } fr
 import { mdiContentCopy } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
 import { t } from '../l10n.ts'
-import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
@@ -147,6 +147,32 @@ const circleHint = computed(() => {
 	}
 })
 
+/** The last day the link may have: six months, and no later than the license that releases it (milestone 0.18) */
+const maxDay = computed(() => {
+	const until = circle.value === 'internal' ? null : option.value?.until
+	return until && until < latest ? until : latest
+})
+
+// the suggested last day follows the end of the license
+watch(maxDay, (day) => {
+	if (draft.expires > day) {
+		draft.expires = day
+	}
+})
+
+/** What the rights add: the license ends earlier, or there are more choir members than licenses (a hint) */
+const rightsHints = computed(() => {
+	const chosen = circle.value === 'internal' ? null : option.value
+	const hints: string[] = []
+	if (chosen?.allowed && chosen.until && chosen.until < latest) {
+		hints.push(t('cantoria', 'The license ends on {date}: shared until then at most.', { date: formatDate(chosen.until) }))
+	}
+	if (chosen?.allowed && chosen.quantity) {
+		hints.push(t('cantoria', 'Licensed for {licensed} people, but {members} accounts are in the group of the choir members.', chosen.quantity))
+	}
+	return hints
+})
+
 // ---- the scan (choir members and public links) -------------------------------------
 
 const scans = computed(() => options.value?.scans ?? [])
@@ -231,6 +257,10 @@ async function save(): Promise<void> {
 	}
 	if (draft.expires === '' || draft.expires < today || draft.expires > latest) {
 		error.value = t('cantoria', 'The expiry date must lie between today and six months from now.')
+		return
+	}
+	if (draft.expires > maxDay.value) {
+		error.value = t('cantoria', 'The license ends on {date}: shared until then at most.', { date: formatDate(maxDay.value) })
 		return
 	}
 	const link: LinkInput = {
@@ -370,9 +400,12 @@ async function copyLink(): Promise<void> {
 		</template>
 		<DateField v-model="draft.expires"
 			:min="today"
-			:max="latest"
+			:max="maxDay"
 			required
 			:label="t('cantoria', 'Valid until (at most six months)')" />
+		<p v-for="hint in rightsHints" :key="hint" class="action-dialog__hint">
+			{{ t('cantoria', 'Hint:') }} {{ hint }}
+		</p>
 		<div v-if="scanOffered" class="link-dialog__scan">
 			<NcCheckboxRadioSwitch v-model="withScan" type="checkbox">
 				{{ t('cantoria', 'Include the scan (PDF)') }}

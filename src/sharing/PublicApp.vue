@@ -13,15 +13,17 @@
  * With the module "offline" (milestone 0.15) a piece whose public domain is
  * confirmed can be made available without a network; then the page itself
  * comes from the device when there is no network. Each visit with a network
- * is its check. The switch stands above the notes, as on the other pages
- * (milestone 0.19).
+ * is its check, and then the scripts of the page are kept again, so that
+ * it still opens without a network after an update of the app (the same
+ * code as on the other two pages, src/offline/useKeptPieces.ts). The
+ * switch stands above the notes, as on the other pages (milestone 0.19).
  */
-import type { Catalog, PieceForDevice } from '../offline/rules.ts'
+import type { PieceForDevice } from '../offline/rules.ts'
 import type { PublicExcerpt } from '../types.ts'
 
 import { mdiAlertCircleOutline } from '@mdi/js'
 import { loadState } from '@nextcloud/initial-state'
-import { n, t } from '../l10n.ts'
+import { t } from '../l10n.ts'
 import { computed, onMounted, ref, useId } from 'vue'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
@@ -31,9 +33,10 @@ import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
 import ScanFrame from './ScanFrame.vue'
 import { formatDateTime } from '../format.ts'
-import { askToPersist, checkPublicPiece, forgetPieces, keepPieces, offlineSupported, setUpWorker } from '../offline/device.ts'
+import { forgetPieces, offlineSupported } from '../offline/device.ts'
 import { deviceErrorText } from '../offline/errors.ts'
-import { MAX_DAYS_UNCHECKED, usable } from '../offline/rules.ts'
+import { MAX_DAYS_UNCHECKED } from '../offline/rules.ts'
+import { useKeptPieces } from '../offline/useKeptPieces.ts'
 import { useLeaveGuard } from './leaveGuard.ts'
 
 /**
@@ -63,20 +66,28 @@ const token = /\/p\/([A-Za-z0-9]{32})\/?$/.exec(window.location.pathname)?.[1] ?
 
 // ---- kept on this device (milestone 0.15) ----------------------------------
 
+/**
+ * The module apart from this piece (A24): a page whose piece may not be
+ * kept removes only this piece from the device, and only a module switched
+ * off removes every public piece kept there (setUpWorker). A page kept from
+ * before the server said so came from a piece that could be kept.
+ */
+const moduleOn = (excerpt?.offlineModule ?? excerpt?.offline) === true
+const device = useKeptPieces('public', { enabled: moduleOn && token !== '', version })
 /** This piece may be kept: module on, rights, and the browser can */
-const offlineOn = excerpt?.offline === true && token !== '' && offlineSupported()
-const catalog = ref<Catalog | null>(null)
+const offlineOn = device.offlineOn && excerpt?.offline === true
+const { catalog } = device
 /** The page came from the device: no network */
 const fromDevice = ref(false)
 const keeping = ref(false)
 const keepError = ref('')
 const deviceStatus = ref('')
-const kept = computed(() => catalog.value?.pieces[token] !== undefined)
+const kept = computed(() => device.isKept(token))
 const deviceHeadingId = useId()
 /** A recording of oneself waits unsaved */
 const recordingUnsaved = ref(false)
 useLeaveGuard(recordingUnsaved)
-const scanKept = computed(() => catalog.value?.pieces[token]?.scan === true)
+const scanKept = computed(() => device.scanKept(token))
 
 const piece: PieceForDevice = {
 	key: token,
@@ -106,11 +117,10 @@ async function setKept(keep: boolean, withScan: boolean): Promise<void> {
 	keepError.value = ''
 	try {
 		if (keep) {
-			catalog.value = await keepPieces('public', [piece], withScan, version)
-			await askToPersist()
+			await device.keep([piece], withScan)
 			deviceStatus.value = t('cantoria', '"{title}" is available without a network.', { title: piece.title })
 		} else {
-			catalog.value = await forgetPieces('public', [token])
+			await device.forget([token])
 			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: piece.title })
 		}
 	} catch (error) {
@@ -122,29 +132,19 @@ async function setKept(keep: boolean, withScan: boolean): Promise<void> {
 }
 
 /** Why the kept piece will not open again without a network, or '' */
-const lockText = computed(() => {
-	switch (usable(catalog.value, token, new Date())) {
-	case 'expired':
-		return t('cantoria', 'This link has expired. It is removed from this device at the next start with a network.')
-	case 'unchecked':
-		return n('cantoria', 'Locked: not checked with the server for more than %n day. Please open this page once with a network.',
-			'Locked: not checked with the server for more than %n days. Please open this page once with a network.', MAX_DAYS_UNCHECKED)
-	default:
-		return ''
-	}
-})
+const lockText = computed(() => kept.value ? device.lockText(token) : '')
 
 onMounted(async () => {
 	if (!offlineSupported() || token === '') {
 		return
 	}
-	// registers the worker, or removes this piece when it may no longer be kept
-	await setUpWorker('public', excerpt?.offline === true)
+	// registers the worker, or removes every public piece when the module is off
+	await device.start()
 	if (offlineOn) {
-		const checked = await checkPublicPiece(piece, excerpt?.served ?? '')
-		catalog.value = checked.catalog
-		fromDevice.value = checked.fromDevice
-	} else {
+		// with a network also the scripts again, after an update of the app (A17)
+		fromDevice.value = await device.checkPublic(piece, excerpt?.served ?? '')
+	} else if (moduleOn) {
+		// only this piece, which may not (or no longer) be kept
 		await forgetPieces('public', [token])
 	}
 })
@@ -174,7 +174,8 @@ onMounted(async () => {
 				<h3 :id="deviceHeadingId" class="public-excerpt__device-title">
 					{{ t('cantoria', 'Without a network') }}
 				</h3>
-				<KeepOffline :kept="kept"
+				<KeepOffline place="public"
+					:kept="kept"
 					:scan-kept="scanKept"
 					:scan-offered="excerpt.scan === true"
 					:scan-size="excerpt.scanSize ?? null"
@@ -214,7 +215,8 @@ onMounted(async () => {
 				:tempo="excerpt.tempo"
 				:can-play="excerpt.canPlay"
 				:practice-key="excerpt.practiceKey ?? null"
-				:offline="fromDevice" />
+				:offline="fromDevice"
+				:printable="excerpt.print === true" />
 		</template>
 		<NcEmptyContent v-else
 			:name="t('cantoria', 'The score cannot be shown')"

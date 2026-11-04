@@ -18,6 +18,10 @@
  * notation (WCAG 1.1.1). As there: a count-in, showing and looping a range
  * of measures (From measure, To measure) and starting at a clicked note, or
  * with the arrow keys.
+ * In the stage view (milestone 0.19) the settings fold away and the
+ * targets grow. The parent can put the focus into the notes once they are
+ * shown (the pedal turns at once) and turn them itself. Where the rights do
+ * not allow printing the notes, the print view says so instead.
  */
 import type { Click, CountInBars } from '../score/countIn.ts'
 import type { RecorderState, VoiceOption } from '../components/PlaybackSettings.vue'
@@ -64,6 +68,8 @@ import { createToolkit } from '../score/toolkit.ts'
 import { voiceLabel } from '../score/voices.ts'
 import { encodeWav } from '../score/wav.ts'
 import { nextZoom, storedZoom, storeZoom, ZOOM_DEFAULT, ZOOM_STEPS } from '../score/zoom.ts'
+import { LARGE_SCREEN } from '../score/screen.ts'
+import { APP_CONTENT, useStickyHeader } from '../stickyHeader.ts'
 import { resolveRange } from '../score/range.ts'
 import { excerptTempo, TEMPO_MAX, TEMPO_MIN, voiceForServer, voiceOfLink } from './excerpt.ts'
 import { scopeText } from './linkScope.ts'
@@ -90,6 +96,12 @@ const props = withDefaults(defineProps<{
 	practiceKey?: string | null
 	/** shown from the device without a network: practice files need the server (milestone 0.15) */
 	offline?: boolean
+	/** the stage view: the settings fold away, larger targets (milestone 0.19) */
+	stage?: boolean
+	/** put the focus into the notes once they are shown, e.g. after a change of piece */
+	focusOnReady?: boolean
+	/** the rights allow printing the notes; otherwise the print view says so instead */
+	printable?: boolean
 }>(), {
 	composer: '',
 	voice: null,
@@ -99,6 +111,9 @@ const props = withDefaults(defineProps<{
 	exportAudio: null,
 	practiceKey: null,
 	offline: false,
+	stage: false,
+	focusOnReady: false,
+	printable: true,
 })
 
 const summaryId = useId()
@@ -111,7 +126,17 @@ const settingsId = useId()
  * and on a low screen (a phone held sideways), so that the score starts
  * high up (the bar with play and size stays).
  */
-const settingsShown = ref(window.matchMedia?.('(min-width: 1024px) and (min-height: 640px)').matches ?? true)
+const settingsShown = ref(window.matchMedia?.(LARGE_SCREEN).matches ?? true)
+/** In the stage view the settings fold away; afterwards they are as before */
+let settingsBeforeStage = settingsShown.value
+watch(() => props.stage, (stage) => {
+	if (stage) {
+		settingsBeforeStage = settingsShown.value
+		settingsShown.value = false
+	} else {
+		settingsShown.value = settingsBeforeStage
+	}
+}, { immediate: true })
 
 // ---- loading ----------------------------------------------------------------
 
@@ -120,8 +145,12 @@ const errorText = ref('')
 const model = shallowRef<ScoreModel | null>(null)
 const pages = shallowRef<string[]>([])
 const scoreElement = ref<HTMLElement | null>(null)
+const rootElement = ref<HTMLElement | null>(null)
 const pagesElement = ref<HTMLElement | null>(null)
 const barElement = ref<HTMLElement | null>(null)
+// the focus stays below the bar (WCAG 2.4.11): the page, or the box of a public link;
+// the bar sticks only within the view, so the room is kept only there (D34)
+useStickyHeader(barElement, `${APP_CONTENT}, #cantoria-public`, { within: true })
 
 let toolkit: VerovioToolkit | null = null
 let player: ScorePlayerType | null = null
@@ -156,6 +185,11 @@ async function load(): Promise<void> {
 		await nextTick()
 		layout()
 		updateTimeline()
+		if (props.focusOnReady) {
+			// once the pages are in the page: in the stage view the notes come up to the bar
+			await nextTick()
+			focusScore()
+		}
 	} catch (error) {
 		console.error('Excerpt view: the score could not be shown', error)
 		status.value = 'error'
@@ -1026,6 +1060,47 @@ function onKeydown(event: KeyboardEvent): void {
 	}
 }
 
+/**
+ * Put the focus into the notes: the pedal turns them from now on. In the
+ * stage view the notes come up to the bar first, so that the page starts
+ * with them (D27).
+ */
+function focusScore(): void {
+	const score = scoreElement.value
+	if (!score) {
+		return
+	}
+	if (props.stage) {
+		rootElement.value?.scrollIntoView?.({ block: 'start' })
+	}
+	score.focus({ preventScroll: props.stage })
+}
+
+/**
+ * Turn the notes by one system, as the pedal does.
+ *
+ * @param direction - 1 on, -1 back
+ * @return 'turned'; 'end' at the end (or the start) of the notes, or when
+ *   they cannot be shown; 'busy' while the score is still being engraved,
+ *   so that a press then is no press at the end of the piece (U37)
+ */
+function turn(direction: 1 | -1): 'turned' | 'end' | 'busy' {
+	if (status.value === 'loading') {
+		return 'busy'
+	}
+	if (scoreElement.value === null) {
+		return 'end'
+	}
+	return turnSystem(scoreElement.value, barElement.value, direction) ? 'turned' : 'end'
+}
+
+/** The score is still being engraved: no notes to turn yet. */
+function busy(): boolean {
+	return status.value === 'loading'
+}
+
+defineExpose({ focusScore, turn, busy })
+
 // ---- lifecycle --------------------------------------------------------------
 
 onMounted(load)
@@ -1057,8 +1132,12 @@ onBeforeUnmount(() => {
 <template>
 	<!-- Key handling for the whole view: Space plays/pauses (see onKeydown) -->
 	<!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -->
-	<div class="excerpt-viewer" @keydown="onKeydown">
-		<p class="excerpt-viewer__reference">
+	<div ref="rootElement"
+		class="excerpt-viewer"
+		:class="{ 'excerpt-viewer--stage': stage, 'excerpt-viewer--no-print': !printable }"
+		@keydown="onKeydown">
+		<!-- In the stage view the page starts with the bar and the notes (D27): the reference stays for screen readers -->
+		<p class="excerpt-viewer__reference" :class="{ 'hidden-visually': stage }">
 			<span class="excerpt-viewer__label">{{ t('cantoria', 'Text reference') }}:</span>
 			{{ reference }}
 		</p>
@@ -1093,13 +1172,13 @@ onBeforeUnmount(() => {
 						<template #icon>
 							<NcIconSvgWrapper :path="playing ? mdiPause : mdiPlay" />
 						</template>
-						{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}
+						<span class="excerpt-viewer__button-label">{{ playing ? t('cantoria', 'Pause') : t('cantoria', 'Play') }}</span>
 					</NcButton>
 					<NcButton :disabled="!playing && position === 0" @click="stop">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiStop" />
 						</template>
-						{{ t('cantoria', 'Stop') }}
+						<span class="excerpt-viewer__button-label">{{ t('cantoria', 'Stop') }}</span>
 					</NcButton>
 				</div>
 				<div class="excerpt-viewer__buttons" role="group" :aria-label="t('cantoria', 'Size of the score')">
@@ -1211,7 +1290,7 @@ onBeforeUnmount(() => {
 				{{ rangeError }}
 			</p>
 
-			<p :id="summaryId" class="excerpt-viewer__summary">
+			<p :id="summaryId" class="excerpt-viewer__summary" :class="{ 'hidden-visually': stage }">
 				{{ summary }}
 				<template v-if="canPlay">
 					· {{ t('cantoria', 'Tap or click a note to play from there.') }}
@@ -1245,6 +1324,9 @@ onBeforeUnmount(() => {
 					<!-- eslint-enable vue/no-v-html -->
 				</div>
 			</div>
+			<p v-if="!printable" class="excerpt-viewer__print-denied">
+				{{ t('cantoria', 'Printing is not licensed for this piece.') }}
+			</p>
 			<details class="excerpt-viewer__description">
 				<summary>{{ whole ? t('cantoria', 'Description of the piece') : t('cantoria', 'Description of the excerpt') }}</summary>
 				<p>{{ description }}</p>
@@ -1308,6 +1390,17 @@ onBeforeUnmount(() => {
 	margin: 0;
 }
 
+/* A focused element of the view, or one scrolled to, stays below the bar
+   that sticks within the view (src/stickyHeader.ts, D34) */
+.excerpt-viewer :deep(*) {
+	scroll-margin-top: var(--cantoria-sticky-offset, 0px);
+}
+
+.excerpt-viewer__bar,
+.excerpt-viewer__bar :deep(*) {
+	scroll-margin-top: 0;
+}
+
 .excerpt-viewer__reference {
 	overflow-wrap: anywhere;
 }
@@ -1326,7 +1419,7 @@ onBeforeUnmount(() => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
-	padding-block: var(--default-grid-baseline);
+	padding: var(--default-grid-baseline);
 	border-bottom: 1px solid var(--color-border);
 	background-color: var(--color-main-background);
 }
@@ -1496,9 +1589,23 @@ onBeforeUnmount(() => {
 }
 
 /* Printing: the score only, black on white, the focus voice bold */
+.excerpt-viewer__print-denied {
+	display: none;
+}
+
 @media print {
-	.excerpt-viewer > :not(.excerpt-viewer__score):not(.excerpt-viewer__reference) {
+	.excerpt-viewer > :not(.excerpt-viewer__score):not(.excerpt-viewer__reference):not(.excerpt-viewer__print-denied) {
 		display: none !important;
+	}
+
+	/* the rights cover viewing, not a copy on paper (section 53 (4) UrhG) */
+	.excerpt-viewer--no-print > .excerpt-viewer__score {
+		display: none !important;
+	}
+
+	.excerpt-viewer--no-print > .excerpt-viewer__print-denied {
+		display: block !important;
+		color: #000;
 	}
 
 	.excerpt-viewer__score {
@@ -1525,7 +1632,7 @@ onBeforeUnmount(() => {
 	}
 }
 
-@media (min-width: 1024px) and (min-height: 640px) {
+@media (min-width: 1024px) and (min-height: 561px) {
 	.excerpt-viewer__score {
 		height: max(16em, min(65vh, 40em));
 	}
@@ -1535,6 +1642,37 @@ onBeforeUnmount(() => {
 @media (pointer: coarse) {
 	.excerpt-viewer {
 		--default-clickable-area: 44px;
+	}
+}
+
+/* The stage view: larger targets at the music stand */
+.excerpt-viewer.excerpt-viewer--stage {
+	--default-clickable-area: 48px;
+}
+
+/* The stage view: the settings are folded, their button needs no word on
+   the screen (it stays for screen readers) */
+.excerpt-viewer--stage .excerpt-viewer__settings-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* The stage view on a phone: one line of buttons named by their icons, so
+   that the notes start high up (D27) */
+@media (max-width: 600px), (max-height: 560px) {
+	.excerpt-viewer--stage .excerpt-viewer__button-label,
+	.excerpt-viewer--stage .excerpt-viewer__zoom-value {
+		position: absolute;
+		width: 1px;
+		min-width: 0;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 }
 
@@ -1551,9 +1689,10 @@ onBeforeUnmount(() => {
 	}
 }
 
-/* A low screen, e.g. a phone held sideways: the bar never takes more
-   than part of the height, so that the score stays in view */
-@media (max-height: 560px) {
+/* A phone, upright or held sideways: the bar never takes more than part
+   of the height, so that the score stays in view (its side padding keeps
+   the focus outline of the first button) */
+@media (max-width: 600px), (max-height: 560px) {
 	.excerpt-viewer__bar {
 		max-height: 45vh;
 		overflow-y: auto;

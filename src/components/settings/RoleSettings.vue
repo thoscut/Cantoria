@@ -59,7 +59,7 @@ function roleDescription(role: string): string {
 	case 'reader':
 		return t('cantoria', 'Reads everything, including the audit log.')
 	case 'member':
-		return t('cantoria', 'Sees only the excerpts shared with choir members, while the module "Links for choir members" is on; no access to the catalog.')
+		return t('cantoria', 'Sees only the pieces and excerpts shared with choir members, while the module "Links for choir members" is on; no access to the catalog.')
 	default:
 		return ''
 	}

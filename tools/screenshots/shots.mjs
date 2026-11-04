@@ -73,6 +73,40 @@ const escape = async (h) => {
 	await h.sleep(500)
 }
 
+/**
+ * Open the panel "Voice, measures and practising" of a score view and its
+ * part "More for practising" (milestones 0.13 and 0.14), where they are
+ * folded.
+ *
+ * @param {object} h helpers
+ * @param {string} scope the score view, e.g. '.score-viewer' or '.excerpt-viewer'
+ */
+async function practice(h, scope) {
+	for (const label of [h.t('Voice, measures and practising'), h.t('More for practising')]) {
+		const folded = await h.page.evaluate((scope, label) => [...document.querySelectorAll(`${scope} button[aria-expanded="false"]`)]
+			.some((button) => button.getClientRects().length > 0 && button.innerText.includes(label)), scope, label)
+		if (folded) {
+			await h.click(`${scope} button[aria-expanded="false"]`, label)
+			await h.settle(600)
+		}
+	}
+}
+
+/**
+ * The concert folder (milestones 0.15 and 0.19) of the conductor with the
+ * concert of the demo and its first piece.
+ *
+ * @param {object} h helpers
+ */
+async function concertFolder(h) {
+	await h.goto('/apps/cantoria/concert-folder')
+	await h.page.waitForFunction(() => document.body.innerText.length > 50, { timeout: 30000 })
+	// The concert and its first piece, if the folder does not open them by itself
+	await h.click('.folder-app button, .folder-app a', CONCERT).catch(() => {})
+	await h.page.waitForSelector('.folder-app svg', { timeout: 60000 })
+	await h.settle(1500)
+}
+
 /** Open the archive management dialog. */
 async function archiveManagement(h) {
 	await h.app('?view=catalog')
@@ -581,6 +615,177 @@ export const SHOTS = [
 		},
 	},
 ]
+
+/**
+ * The views of milestones 0.13 to 0.19 (practising, concert folder, stage
+ * view, keeping pieces without a network, sharing a programme), the phone,
+ * the contrast mode of Windows and print. `viewport` gives another window
+ * (phones get touch and a device scale of 2), `forcedColors` the contrast
+ * mode, `media: 'print'` the print styles. Run them with --axe to check each
+ * view with axe-core as well (docs/accessibility.md).
+ */
+const phone = { width: 390, height: 844 }
+const smallPhone = { width: 360, height: 780 }
+const landscape = { width: 844, height: 390 }
+SHOTS.push(
+	{
+		name: 'practice-tools', file: 'practice-tools.png', account: 'conductor', ...en,
+		run: async (h) => {
+			await score(h, '2-1', 'Tenor II', 'focus', ['1', '8'])
+			await practice(h, '.score-viewer')
+		},
+	},
+	{
+		name: 'concert-folder', file: 'concert-folder.png', account: 'conductor', ...en,
+		run: concertFolder,
+	},
+	{
+		name: 'stage-view', file: 'stage-view.png', account: 'conductor', ...en, viewport: { width: 1280, height: 800 },
+		run: async (h) => {
+			await concertFolder(h)
+			// A headless browser may refuse the full screen; the stage view shows all the same
+			await h.click('.folder-app button', h.t('Stage view'))
+			await h.settle(1200)
+		},
+		after: async (h) => {
+			await h.page.keyboard.press('Escape')
+			await h.sleep(500)
+		},
+	},
+	{
+		name: 'keep-offline', file: 'keep-offline.png', account: 'member', ...en, viewport: phone,
+		run: async (h) => {
+			await h.goto('/apps/cantoria/')
+			await h.page.waitForSelector('.keep-offline', { visible: true, timeout: 60000 })
+			await h.page.evaluate(() => document.querySelector('.keep-offline')?.scrollIntoView({ block: 'center' }))
+			await h.settle(1000)
+		},
+	},
+	{
+		name: 'programme-share', file: 'programme-share.png', account: 'conductor', ...en,
+		run: async (h) => {
+			await h.app(`?event=${await h.eventId(CONCERT)}`)
+			await h.click('button', h.t('Share with the choir …'))
+			await h.page.waitForSelector('.modal-container', { visible: true })
+			await h.settle(1200)
+			return dialogClip(h)
+		},
+		after: escape,
+	},
+	{
+		name: 'phone-shared-with-me', file: 'phone-shared-with-me.png', account: 'member', ...en, viewport: phone,
+		run: async (h) => {
+			await h.goto('/apps/cantoria/')
+			await h.page.waitForSelector('.excerpt-viewer svg', { timeout: 60000 })
+			await practice(h, '.excerpt-viewer')
+		},
+	},
+	{
+		name: 'phone-concert-folder', file: 'phone-concert-folder.png', account: 'conductor', ...en, viewport: smallPhone,
+		run: concertFolder,
+	},
+	{
+		name: 'phone-landscape-stage', file: 'phone-landscape-stage.png', account: 'conductor', ...en, viewport: landscape,
+		run: async (h) => {
+			await concertFolder(h)
+			await h.click('.folder-app button', h.t('Stage view'))
+			await h.settle(1200)
+		},
+		after: async (h) => {
+			await h.page.keyboard.press('Escape')
+			await h.sleep(500)
+		},
+	},
+	{
+		name: 'catalog-contrast', file: 'catalog-contrast.png', account: 'librarian', ...en, forcedColors: true,
+		run: async (h) => sidebar(h, '2-1', 'rights'),
+	},
+	{
+		name: 'phone-catalog-contrast', file: 'phone-catalog-contrast.png', account: 'librarian', ...en, viewport: phone, forcedColors: true,
+		run: async (h) => h.app(`?view=catalog&copy=${await h.copyId('2-1')}`),
+	},
+	{
+		name: 'score-contrast', file: 'score-contrast.png', account: 'librarian', ...en, forcedColors: true,
+		run: async (h) => score(h, '2-1', 'Tenor II', 'focus', ['1', '8']),
+	},
+	{
+		name: 'score-print', file: 'score-print.png', account: 'librarian', ...en, media: 'print',
+		run: async (h) => score(h, '2-1', 'Tenor II', 'focus', ['1', '8']),
+	},
+	{
+		name: 'concert-print', file: 'concert-print.png', account: 'conductor', ...en, media: 'print',
+		run: async (h) => h.app(`?event=${await h.eventId(CONCERT)}`),
+	},
+)
+
+/**
+ * The scenes the store text starts with (milestone 0.20, W B27): the
+ * hand-over to the choir system and the comparison with its export, the
+ * setup by scenarios, the import with the template, the pieces under their
+ * programme in "Shared with me" and the message to the choir after sharing
+ * a programme. Each of them also in German (POSITIONING_TWINS). The module
+ * choir_handover has to be on (README.md); --prepare shares the concert of
+ * the demo as a programme.
+ */
+SHOTS.push(
+	{
+		name: 'choir-handover', file: 'choir-handover.png', account: 'librarian', ...en,
+		run: async (h) => {
+			await h.app('?view=portal')
+			await h.page.waitForSelector('#release-choir-handover', { visible: true, timeout: 30000 })
+			await h.page.evaluate(() => document.querySelector('#release-choir-handover')?.scrollIntoView({ block: 'start' }))
+			await h.settle(800)
+			return h.rect(['section[aria-labelledby="release-choir-handover"]', 'section[aria-labelledby="release-choir-compare"]'], { pad: 12 })
+		},
+	},
+	{
+		name: 'setup-scenarios', file: 'setup-scenarios.png', account: 'admin', ...en,
+		run: async (h) => {
+			await h.goto('/settings/admin/cantoria#cantoria-modules')
+			await h.page.waitForSelector('#module-settings-scenarios', { visible: true, timeout: 30000 })
+			await h.page.evaluate(() => document.querySelector('#module-settings-scenarios')?.scrollIntoView({ block: 'start' }))
+			await h.settle(1200)
+			return h.rect(['section[aria-labelledby="module-settings-scenarios"]'], { pad: 12 })
+		},
+	},
+	{
+		name: 'import-template', file: 'import-template.png', account: 'librarian', ...en,
+		run: async (h) => {
+			await archiveManagement(h)
+			await h.page.evaluate(() => document.querySelector('#archive-import')?.scrollIntoView({ block: 'start' }))
+			await h.settle(500)
+			return h.rect(['section[aria-labelledby="archive-import"]'], { pad: 12 })
+		},
+		after: escape,
+	},
+	{
+		name: 'shared-with-me-programmes', file: 'shared-with-me-programmes.png', account: 'member', ...en,
+		run: async (h) => {
+			await h.goto('/apps/cantoria/')
+			await h.page.waitForSelector('.member-app__group-title', { visible: true, timeout: 60000 })
+			await h.settle(1500)
+		},
+	},
+	{
+		name: 'programme-share-message', file: 'programme-share-message.png', account: 'conductor', ...en,
+		run: async (h) => {
+			await h.app(`?event=${await h.eventId(CONCERT)}`)
+			await h.click('button', h.t('Share with the choir …'))
+			await h.page.waitForSelector('.modal-container button[type=submit]:not([disabled])', { visible: true, timeout: 60000 })
+			await h.settle(800)
+			// shares again: links that exist already are extended or stay, the address stays
+			await h.page.click('.modal-container button[type=submit]')
+			await h.page.waitForSelector('.programme-share__message', { visible: true, timeout: 60000 })
+			await h.settle(800)
+			return dialogClip(h)
+		},
+		after: escape,
+	},
+)
+for (const name of ['choir-handover', 'setup-scenarios', 'import-template', 'shared-with-me-programmes', 'programme-share-message']) {
+	const shot = SHOTS.find((candidate) => candidate.name === name)
+	SHOTS.push({ ...shot, name: `de-${name}`, file: `de/${shot.file}`, ...de })
+}
 
 /**
  * Pictures of the English guides that the German guides show in the German

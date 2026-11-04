@@ -41,6 +41,8 @@ class MetaService {
 			'roleLabels' => Roles::LABELS,
 			'fields' => Fields::all(),
 			'licenseUses' => Fields::LICENSE_USES,
+			// ways out that only confirmed public domain opens, never a license (src/rightsHints.ts)
+			'freeOnlyWays' => RightsPolicy::FREE_ONLY_WAYS,
 			'personFields' => Fields::person(),
 			'contributionRoles' => Fields::CONTRIBUTION_ROLES,
 			'archive' => $archive,

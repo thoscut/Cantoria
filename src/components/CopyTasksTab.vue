@@ -99,7 +99,7 @@ function onCreated(): void {
 					{{ t('cantoria', 'New link') }}
 				</NcButton>
 			</div>
-			<LinkList :links="detail.links" @changed="emit('changed')" />
+			<LinkList :links="detail.links" :heading-level="4" @changed="emit('changed')" />
 		</section>
 
 		<TaskDialog v-if="taskDialogOpen"

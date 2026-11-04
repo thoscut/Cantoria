@@ -26,9 +26,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
+	<!-- Both answers in full: where they do not fit side by side, they stand one below the other (D29) -->
 	<NcDialog :name="t('cantoria', 'Discard the recording?')"
 		:open="true"
 		size="small"
+		dialog-classes="discard-recording"
 		@update:open="(open: boolean) => open || emit('stay')">
 		<p>
 			{{ t('cantoria', 'Your recording is not saved. If you open "{title}" now, it is gone.', { title: next }) }}
@@ -43,3 +45,19 @@ const emit = defineEmits<{
 		</template>
 	</NcDialog>
 </template>
+
+<style>
+/* The answers in full (D29): they wrap below each other and keep their words */
+.discard-recording .dialog__actions {
+	flex-wrap: wrap;
+}
+
+.discard-recording .dialog__actions .button-vue {
+	max-width: 100%;
+}
+
+.discard-recording .dialog__actions .button-vue__text {
+	white-space: normal;
+	text-align: center;
+}
+</style>

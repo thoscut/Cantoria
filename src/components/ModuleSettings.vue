@@ -6,8 +6,8 @@
 /**
  * Settings "Modules" (Administration → Cantoria): the core that is
  * always on, what Cantoria should do for the choir in words (scenarios,
- * with the one the switches match or come closest to), the presets and one
- * switch per module, grouped; the notifications folded. Labels and
+ * with the one the switches match or come closest to), the presets folded
+ * below them and one switch per module, grouped; the notifications folded. Labels and
  * descriptions come translated from the server. Switching a module on also
  * switches on what it requires (the server does it); switching off a module
  * that others need asks first and lists them. The server checks everything
@@ -376,10 +376,12 @@ function alsoOnText(module: ModuleInfo): string {
 				</ul>
 			</section>
 
-			<section aria-labelledby="module-settings-presets">
-				<h3 id="module-settings-presets">
+			<!-- The presets set the same switches as the scenarios: folded, so that the choice above comes first (U31) -->
+			<details class="module-settings__fold">
+				<summary>
 					{{ t('cantoria', 'Presets') }}
-				</h3>
+					<span class="module-settings__muted">{{ t('cantoria', '(older combinations; they do not switch on the sharing with choir members and the public)') }}</span>
+				</summary>
 				<ul class="module-settings__presets">
 					<li v-for="preset in settings.presets" :key="preset.key">
 						<NcButton :id="`module-preset-${preset.key}`"
@@ -394,7 +396,7 @@ function alsoOnText(module: ModuleInfo): string {
 						</span>
 					</li>
 				</ul>
-			</section>
+			</details>
 
 			<!-- Result of the last change; always present, so that screen readers announce it -->
 			<div class="module-settings__status" role="status">

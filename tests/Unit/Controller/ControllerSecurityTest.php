@@ -116,6 +116,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
 use OCP\Files\IFilenameValidator;
 use OCP\Files\IRootFolder;
+use OCP\Group\ISubAdmin;
 use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use OCP\IDBConnection;
@@ -123,6 +124,8 @@ use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IURLGenerator;
+use OCP\IUser;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
 use OCP\Settings\IManager as ISettingsManager;
@@ -181,7 +184,7 @@ final class ControllerSecurityTest extends TestCase {
 	private const CORE = [
 		'PageController::index',
 		'ApiController::meta', 'ApiController::entries', 'ApiController::entry', 'ApiController::update',
-		'ApiController::import', 'ApiController::fileSync', 'ApiController::fileSyncStatus', 'ApiController::export',
+		'ApiController::import', 'ApiController::importTemplate', 'ApiController::fileSync', 'ApiController::fileSyncStatus', 'ApiController::export',
 		'ApiController::exportStore', 'ApiController::audit',
 		'SettingsController::index', 'SettingsController::update', 'SettingsController::groups', 'SettingsController::access',
 		'WorkflowController::backup', 'WorkflowController::fullBackup', 'WorkflowController::restore',
@@ -201,6 +204,8 @@ final class ControllerSecurityTest extends TestCase {
 	 */
 	private const WITHOUT_CSRF = [
 		'PageController::index', 'ApiController::export', 'WorkflowController::fullBackup', 'EventController::songOrder',
+		// The import template: no data, only the columns and an example row
+		'ApiController::importTemplate',
 		'StatisticsController::csv', 'StatisticsController::reportCsv',
 		'CalendarController::concertFile', 'CalendarController::upcomingFile',
 		// The scan beside the score is opened by the browser itself (frame or window).
@@ -243,6 +248,8 @@ final class ControllerSecurityTest extends TestCase {
 		'AnnualSnapshotController::create', 'AnnualSnapshotController::compare',
 		// setting the current revision of a version writes
 		'StateController::setCurrent',
+		// sharing a programme and extending links write links and check the rights per piece (milestone 0.18, S N14)
+		'EventController::share', 'TaskController::extendLink',
 	];
 
 	/**
@@ -554,10 +561,10 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertSame('index', $both->getTemplateName(), 'an archive role gets the archive');
 	}
 
-	private function publicLinkController(?array $excerpt, ?File $scan = null): PublicLinkController {
+	private function publicLinkController(?array $excerpt, ?File $scan = null, bool $mayKeep = false): PublicLinkController {
 		$shared = $this->createStub(SharedLinkService::class);
 		$shared->method('publicExcerpt')->willReturn($excerpt);
-		$shared->method('publicScan')->willReturn($scan);
+		$shared->method('publicScan')->willReturn($scan === null ? null : ['file' => $scan, 'keep' => $mayKeep]);
 		return new PublicLinkController($this->createStub(IRequest::class), $shared, $this->createStub(IInitialState::class), $this->l10n(),
 			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class));
 	}
@@ -596,6 +603,8 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertSame('inline; filename="scan.pdf"', $headers['Content-Disposition'] ?? null, 'shown by the PDF viewer of the browser');
 		self::assertSame('nosniff', $headers['X-Content-Type-Options'] ?? null);
 		self::assertSame('noindex, nofollow', $headers['X-Robots-Tag'] ?? null);
+		self::assertSame('0', $headers['X-Cantoria-Keep'] ?? null, 'the worker keeps it only when the server says so');
+		self::assertSame('1', self::headers($this->publicLinkController($excerpt, $scan, true)->scan(str_repeat('a', 32)))['X-Cantoria-Keep'] ?? null);
 		$scanPolicy = $response->getContentSecurityPolicy()->buildPolicy();
 		self::assertStringContainsString("default-src 'none'", $scanPolicy);
 		self::assertStringContainsString("object-src 'self'", $scanPolicy);
@@ -632,14 +641,14 @@ final class ControllerSecurityTest extends TestCase {
 
 	public function testMemberRoutesRefuseOthersAndThrottleUnknownTokens(): void {
 		$shared = $this->createStub(SharedLinkService::class);
-		$shared->method('memberScore')->willReturnCallback(function (string $token, string $uid): string {
+		$shared->method('memberScore')->willReturnCallback(function (string $token, string $uid): array {
 			if ($uid !== 'singer') {
 				throw new AccessDeniedException('This page is only for choir members. Roles are linked to groups; please ask an administrator.');
 			}
 			if ($token === str_repeat('u', 32)) {
 				throw new UnknownLinkException('This link does not exist.');
 			}
-			return '<score-partwise/>';
+			return ['xml' => '<score-partwise/>', 'keep' => $token === str_repeat('k', 32)];
 		});
 		$controller = fn (?string $uid): MemberController => new MemberController($this->createStub(IRequest::class), $uid, $shared,
 			$this->createStub(PracticeAudioService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
@@ -647,6 +656,8 @@ final class ControllerSecurityTest extends TestCase {
 		$response = $controller('singer')->score(str_repeat('a', 32));
 		$headers = self::headers($response);
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('0', $headers['X-Cantoria-Keep'] ?? null, 'the rights allow no copy: the worker keeps nothing');
+		self::assertSame('1', self::headers($controller('singer')->score(str_repeat('k', 32)))['X-Cantoria-Keep'] ?? null);
 		self::assertSame('attachment; filename="excerpt.musicxml"', $headers['Content-Disposition'] ?? null);
 		self::assertSame('nosniff', $headers['X-Content-Type-Options'] ?? null);
 		self::assertStringContainsString("default-src 'none'", $response->getContentSecurityPolicy()->buildPolicy());
@@ -660,16 +671,20 @@ final class ControllerSecurityTest extends TestCase {
 
 	/**
 	 * The service worker (milestone 0.15) is a script without data from the
-	 * app's own path. With the modules offline and concert_folder off it is
-	 * the worker that removes everything kept on the device; it never comes
-	 * from elsewhere.
+	 * app's own path. With the module offline off it is the worker that
+	 * removes everything kept on the device, also while the concert folder
+	 * is on (it keeps nothing without offline; S N5); it never comes from
+	 * elsewhere.
 	 */
 	public function testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself(): void {
 		$apps = $this->createStub(IAppManager::class);
 		$apps->method('getAppVersion')->willReturn('0.15.0');
+		$urls = $this->createStub(IURLGenerator::class);
+		$urls->method('linkTo')->willReturn('/custom_apps/cantoria/');
 		$controller = fn (array $off): OfflineController => new OfflineController($this->createStub(IRequest::class),
-			$this->modulesWithout($off), $apps, $this->l10n());
+			$this->modulesWithout($off), $apps, $this->l10n(), $urls);
 
+		self::assertSame(OfflineController::REMOVING_WORKER, $controller([Modules::OFFLINE])->worker()->render(), 'the concert folder alone keeps nothing');
 		$off = $controller([Modules::OFFLINE, Modules::CONCERT_FOLDER])->worker();
 		self::assertSame(Http::STATUS_OK, $off->getStatus());
 		self::assertSame('text/javascript; charset=utf-8', self::headers($off)['Content-Type'] ?? null);
@@ -679,16 +694,50 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertStringContainsString("connect-src 'self'", $off->getContentSecurityPolicy()->buildPolicy());
 		self::assertStringNotContainsString('http', $off->getContentSecurityPolicy()->buildPolicy(), 'no other server');
 
+		// With the module on, the built worker; without a build of js/ (the CI job of the unit
+		// tests) there is none. What goes into the script is checked below without a build.
 		$built = __DIR__ . '/../../../js/cantoria-offline-worker.js';
-		foreach (['both on' => [], 'only the concert folder' => [Modules::OFFLINE], 'only the shared pages' => [Modules::CONCERT_FOLDER]] as $case => $without) {
+		foreach (['both on' => [], 'only the shared pages' => [Modules::CONCERT_FOLDER]] as $case => $without) {
 			$on = $controller($without)->worker();
 			if (is_file($built)) {
 				self::assertSame(Http::STATUS_OK, $on->getStatus(), $case);
-				self::assertStringContainsString('"0.15.0"', $on->render(), $case . ': the version names the cache of the scripts');
-				self::assertStringNotContainsString('__CANTORIA_VERSION__', $on->render(), $case);
+				self::assertSame(OfflineController::fillWorker((string)file_get_contents($built), '0.15.0', '/custom_apps/cantoria/'), $on->render(), $case);
+				self::assertStringNotContainsString('__CANTORIA_', $on->render(), $case);
 			} else {
 				self::assertSame(Http::STATUS_NOT_FOUND, $on->getStatus(), $case . ': without a build there is no worker');
 			}
+		}
+	}
+
+	/**
+	 * The version and the path of the app go into the worker, a path that is not a plain path
+	 * of this server never does (T24): checked on a fixed text with both placeholders, so it
+	 * runs without a build of js/.
+	 */
+	public function testTheOfflineWorkerGetsOnlyAPlainPathOfThisServer(): void {
+		$built = "const VERSION = '__CANTORIA_VERSION__'\nconst APP_PATH = '__CANTORIA_APP_PATH__' as string\n"
+			. "importScripts(APP_PATH + 'js/a.js') // __CANTORIA_APP_PATH__ __CANTORIA_VERSION__\n";
+
+		$script = OfflineController::fillWorker($built, '0.15.0', '/custom_apps/cantoria/');
+		self::assertStringContainsString("const VERSION = '0.15.0'", $script, 'the version names the cache of the scripts');
+		self::assertStringContainsString("const APP_PATH = '/custom_apps/cantoria/'", $script, 'where its scripts are');
+		self::assertStringContainsString('// /custom_apps/cantoria/ 0.15.0', $script, 'every placeholder');
+		self::assertStringNotContainsString('__CANTORIA_', $script);
+		self::assertStringContainsString("const APP_PATH = '/apps/cantoria/'", OfflineController::fillWorker($built, '0.15.0', '/apps/cantoria/'));
+		self::assertStringContainsString("const VERSION = '0.17.0-dev.2'", OfflineController::fillWorker($built, '0.17.0-dev.2', '/apps/cantoria/'));
+
+		foreach (["'+alert(1)+'", '"+alert(1)+"', 'https://elsewhere.example/cantoria/', '//elsewhere.example/cantoria/', "/apps/cantoria/\n", "/apps/cantoria/'\n", '/apps/<script>/', ''] as $odd) {
+			$script = OfflineController::fillWorker($built, '0.15.0', $odd);
+			self::assertStringContainsString("const APP_PATH = ''", $script, var_export($odd, true));
+			self::assertStringNotContainsString('alert', $script, $odd);
+			self::assertStringNotContainsString('elsewhere', $script, $odd);
+			self::assertStringNotContainsString('<script>', $script, $odd);
+			self::assertStringNotContainsString('__CANTORIA_', $script, $odd);
+		}
+		foreach (["0.15.0'+alert(1)+'", "0.15.0\n", ''] as $odd) {
+			$script = OfflineController::fillWorker($built, $odd, '/apps/cantoria/');
+			self::assertStringContainsString("const VERSION = ''", $script, var_export($odd, true));
+			self::assertStringNotContainsString('alert', $script, $odd);
 		}
 	}
 
@@ -707,11 +756,11 @@ final class ControllerSecurityTest extends TestCase {
 		$folder = $this->createStub(ConcertFolderService::class);
 		$folder->method('mayOpen')->willReturnCallback(fn (string $uid): bool => $uid === 'conductor');
 		$folder->method('concerts')->willReturn([]);
-		$folder->method('score')->willReturnCallback(function (int $id, string $uid): string {
+		$folder->method('score')->willReturnCallback(function (int $id, string $uid): array {
 			if ($uid !== 'conductor') {
 				throw new AccessDeniedException('The concert folder is for the conductor and the catalog librarian.');
 			}
-			return '<score-partwise/>';
+			return ['xml' => '<score-partwise/>', 'keep' => $id === 8];
 		});
 		$folder->method('scan')->willThrowException(new NotFoundException('This programme item has no scan.'));
 
@@ -731,6 +780,8 @@ final class ControllerSecurityTest extends TestCase {
 		self::assertSame(Http::STATUS_OK, $score->getStatus());
 		self::assertSame('attachment; filename="score.musicxml"', self::headers($score)['Content-Disposition'] ?? null);
 		self::assertSame('nosniff', self::headers($score)['X-Content-Type-Options'] ?? null);
+		self::assertSame('0', self::headers($score)['X-Cantoria-Keep'] ?? null, 'no copy on the device allowed: the worker keeps nothing');
+		self::assertSame('1', self::headers($this->concertFolderController('conductor', $folder)->score(8))['X-Cantoria-Keep'] ?? null);
 		self::assertSame(Http::STATUS_FORBIDDEN, $this->concertFolderController('singer', $folder)->score(7)->getStatus());
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $this->concertFolderController(null, $folder)->score(7)->getStatus());
 		self::assertSame(Http::STATUS_NOT_FOUND, $this->concertFolderController('conductor', $folder)->scan(7)->getStatus());
@@ -756,7 +807,7 @@ final class ControllerSecurityTest extends TestCase {
 
 	public function testTheScanOfAMemberLinkIsShownInlineAfterTheSameChecks(): void {
 		$shared = $this->createStub(SharedLinkService::class);
-		$shared->method('memberScan')->willReturnCallback(function (string $token, string $uid): File {
+		$shared->method('memberScan')->willReturnCallback(function (string $token, string $uid): array {
 			if ($uid !== 'singer') {
 				throw new AccessDeniedException('This page is only for choir members. Roles are linked to groups; please ask an administrator.');
 			}
@@ -766,7 +817,7 @@ final class ControllerSecurityTest extends TestCase {
 			if ($token === str_repeat('n', 32)) {
 				throw new NotFoundException('The scan of this link is not available at the moment.');
 			}
-			return $this->createStub(File::class);
+			return ['file' => $this->createStub(File::class), 'keep' => true];
 		});
 		$controller = fn (?string $uid): MemberController => new MemberController($this->createStub(IRequest::class), $uid, $shared,
 			$this->createStub(PracticeAudioService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
@@ -774,6 +825,7 @@ final class ControllerSecurityTest extends TestCase {
 		$response = $controller('singer')->scan(str_repeat('a', 32));
 		$headers = self::headers($response);
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('1', $headers['X-Cantoria-Keep'] ?? null, 'the server says the scan may stay on the device');
 		self::assertSame('application/pdf', $headers['Content-Type'] ?? null);
 		self::assertSame('inline; filename="scan.pdf"', $headers['Content-Disposition'] ?? null);
 		self::assertSame('nosniff', $headers['X-Content-Type-Options'] ?? null);
@@ -820,7 +872,7 @@ final class ControllerSecurityTest extends TestCase {
 		$controller = new SettingsController($this->createStub(IRequest::class), 'carla', $roles, $this->createStub(AppSettings::class),
 			$this->createStub(ArchiveAccess::class), $this->modulesWithout(), $this->createStub(RepertoireService::class),
 			$this->createStub(FullBackupService::class), $this->createStub(AuditLog::class), $this->createStub(IGroupManager::class), $this->l10n(),
-			$this->createStub(LoggerInterface::class));
+			$this->createStub(LoggerInterface::class), $this->createStub(ISubAdmin::class), $this->createStub(IUserManager::class));
 		$responses = [$controller->index(), $controller->update(['librarian' => ['everyone']]), $controller->groups('a'), $controller->access()];
 		foreach ($responses as $response) {
 			self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
@@ -843,7 +895,7 @@ final class ControllerSecurityTest extends TestCase {
 		$controller = fn (string $uid): SettingsController => new SettingsController($this->createStub(IRequest::class), $uid, $roles,
 			$this->createStub(AppSettings::class), $this->createStub(ArchiveAccess::class), $this->modulesWithout(['repertoire']),
 			$this->createStub(RepertoireService::class), $backup, $this->createStub(AuditLog::class), $groups, $this->l10n(),
-			$this->createStub(LoggerInterface::class));
+			$this->createStub(LoggerInterface::class), $this->createStub(ISubAdmin::class), $this->createStub(IUserManager::class));
 
 		$data = $controller('root')->index()->getData();
 		self::assertIsArray($data);
@@ -878,6 +930,24 @@ final class ControllerSecurityTest extends TestCase {
 		});
 		$groups = $this->createStub(IGroupManager::class);
 		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $group): bool => $uid === 'anna' && $group === 'settings-team');
+		$groups->method('get')->willReturnCallback(function (string $id): ?IGroup {
+			if ($id === 'future-choir') {
+				return null;
+			}
+			$group = $this->createStub(IGroup::class);
+			$group->method('getGID')->willReturn($id);
+			return $group;
+		});
+		$users = $this->createStub(IUserManager::class);
+		$users->method('get')->willReturnCallback(function (string $uid): IUser {
+			$user = $this->createStub(IUser::class);
+			$user->method('getUID')->willReturn($uid);
+			return $user;
+		});
+		// Anna is group admin of "board-helpers": she could add herself to it.
+		$subAdmin = $this->createStub(ISubAdmin::class);
+		$subAdmin->method('isSubAdminOfGroup')->willReturnCallback(fn (IUser $user, IGroup $group): bool => $user->getUID() === 'anna'
+			&& $group->getGID() === 'board-helpers');
 		$settings = $this->createStub(AppSettings::class);
 		$settings->method('archiveInfo')->willReturn(['id' => 7, 'path' => 'Archiv', 'user' => 'root']);
 		$recorded = [];
@@ -888,12 +958,21 @@ final class ControllerSecurityTest extends TestCase {
 		});
 		$controller = fn (string $uid): SettingsController => new SettingsController($this->createStub(IRequest::class), $uid, $roles,
 			$settings, $this->createStub(ArchiveAccess::class), $this->modulesWithout(), $this->createStub(RepertoireService::class),
-			$this->createStub(FullBackupService::class), $audit, $groups, $this->l10n(), $this->createStub(LoggerInterface::class));
+			$this->createStub(FullBackupService::class), $audit, $groups, $this->l10n(), $this->createStub(LoggerInterface::class),
+			$subAdmin, $users);
 
 		// A group given the settings page cannot give a role to itself ...
 		$response = $controller('anna')->update([Roles::LIBRARIAN => ['archive', 'settings-team']]);
 		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		self::assertSame(['archive'], $stored[Roles::LIBRARIAN]);
+		// ... nor to a group whose members it manages as group admin ...
+		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update([Roles::LIBRARIAN => ['archive', 'board-helpers']])->getStatus());
+		self::assertSame(['archive'], $stored[Roles::LIBRARIAN]);
+		// ... nor to a group that does not exist yet, which whoever creates it could fill (S N21) ...
+		$future = $controller('anna')->update([Roles::READER => ['future-choir']]);
+		self::assertSame(Http::STATUS_FORBIDDEN, $future->getStatus());
+		self::assertSame(['error' => 'Only an administrator can give a role to a group that does not exist yet.'], $future->getData());
+		self::assertSame([], $stored[Roles::READER]);
 		// ... nor move the archive folder, but it can save it unchanged
 		self::assertSame(Http::STATUS_FORBIDDEN, $controller('anna')->update(null, 8)->getStatus());
 		self::assertSame(Http::STATUS_OK, $controller('anna')->update(null, 7)->getStatus());
@@ -1346,7 +1425,8 @@ final class ControllerSecurityTest extends TestCase {
 			$this->createStub(IUserManager::class), $this->createStub(IFactory::class), $this->createStub(ITimeFactory::class),
 			$this->createStub(IDateTimeZone::class), $this->createStub(LoggerInterface::class), $this->runLock(),
 			$this->createStub(WorkVersionMapper::class), $this->createStub(RightsPolicy::class), $this->createStub(RightsService::class),
-			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class));
+			$this->createStub(LicenseMapper::class), $this->createStub(ExcerptLinkMapper::class), $this->createStub(StateService::class),
+			$this->createStub(\OCA\Cantoria\Service\ScoreService::class));
 		return new HandoverController($this->createStub(IRequest::class), $uid, $roles, $service, $this->l10n(),
 			$this->createStub(LoggerInterface::class));
 	}
@@ -1403,6 +1483,20 @@ final class ControllerSecurityTest extends TestCase {
 		}
 		self::assertSame([FolderBookService::OBJECT_TYPES, []], $excluded, 'contributors do not see the names of the folder book');
 	}
+	public function testTheImportTemplateIsForTheCatalogRole(): void {
+		foreach (['operations', 'conductor', 'contributor', 'reader', 'member', 'nobody'] as $uid) {
+			// The template is never built for them
+			$export = $this->createMock(ExportService::class);
+			$export->expects(self::never())->method('importTemplate');
+			$controller = new ApiController($this->createStub(IRequest::class), $uid, $this->rolesByName(), $this->createStub(MetaService::class),
+				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $export,
+				$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
+				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
+				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+			self::assertSame(Http::STATUS_FORBIDDEN, $controller->importTemplate('ods')->getStatus(), $uid);
+		}
+	}
+
 	private function stateController(string $uid): StateController {
 		$roles = $this->rolesByName();
 		$mapper = $this->createStub(VersionStateMapper::class);

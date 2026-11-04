@@ -17,6 +17,10 @@ use OCA\Cantoria\Db\Contribution;
 use OCA\Cantoria\Db\ContributionMapper;
 use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
+use OCA\Cantoria\Db\Event;
+use OCA\Cantoria\Db\EventItem;
+use OCA\Cantoria\Db\EventItemMapper;
+use OCA\Cantoria\Db\EventMapper;
 use OCA\Cantoria\Db\ExcerptLink;
 use OCA\Cantoria\Db\ExcerptLinkMapper;
 use OCA\Cantoria\Db\License;
@@ -39,6 +43,7 @@ use OCA\Cantoria\Service\LinkService;
 use OCA\Cantoria\Service\LinkTokens;
 use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\MusicXmlExcerpt;
+use OCA\Cantoria\Service\PageKeys;
 use OCA\Cantoria\Service\PracticeAudioService;
 use OCA\Cantoria\Service\PublicRepertoireService;
 use OCA\Cantoria\Service\RightsPolicy;
@@ -66,6 +71,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(LinkService::class)]
 #[CoversClass(SharedLinkService::class)]
+#[UsesClass(PageKeys::class)]
 #[CoversClass(PublicRepertoireService::class)]
 #[CoversClass(FieldValue::class)]
 #[CoversClass(PracticeAudioService::class)]
@@ -134,21 +140,28 @@ final class SharingTest extends TestCase {
 	}
 
 	/**
-	 * @param array<string, ?string> $denials RightsPolicy method => reason
+	 * @param array<string, string|int|null> $denials RightsPolicy method => reason (releaseEnd, deviceEnd: the day, licensedQuantity: the
+	 *                                                number); printDenial and deviceDenial also per circle, e.g. `deviceDenial:public`
 	 */
 	private function policy(array $denials = []): RightsPolicy {
 		$policy = $this->createStub(RightsPolicy::class);
-		foreach (['viewDenial', 'memberViewDenial', 'memberPlayDenial', 'memberPracticeAudioDenial', 'memberScanDenial', 'publicViewDenial', 'publicPlayDenial'] as $method) {
+		foreach (['viewDenial', 'memberViewDenial', 'memberPlayDenial', 'memberPracticeAudioDenial', 'memberScanDenial', 'publicViewDenial', 'publicPlayDenial',
+			'publicScanDenial', 'releaseEnd', 'deviceEnd', 'licensedQuantity'] as $method) {
 			$policy->method($method)->willReturn($denials[$method] ?? null);
 		}
+		foreach (['printDenial', 'deviceDenial'] as $method) {
+			$policy->method($method)->willReturnCallback(fn (string $circle): mixed => $denials[$method . ':' . $circle] ?? $denials[$method] ?? null);
+		}
+		$policy->method('remembering')->willReturnCallback(fn (callable $work): mixed => $work());
 		return $policy;
 	}
 
 	/**
-	 * @param array<string, ?string> $denials
+	 * @param array<string, string|int|null> $denials
 	 * @param list<string> $off modules switched off
+	 * @param int $members accounts in the groups of the choir members
 	 */
-	private function links(array $denials = [], array $off = [], bool $withScore = true): LinkService {
+	private function links(array $denials = [], array $off = [], bool $withScore = true, int $members = 0): LinkService {
 		$copies = $this->createStub(CopyMapper::class);
 		$copies->method('find')->willReturn($this->copy());
 		$versions = $this->createStub(WorkVersionMapper::class);
@@ -182,8 +195,10 @@ final class SharingTest extends TestCase {
 		$random->method('generate')->willReturn(self::TOKEN);
 		$scans = $this->createStub(ScanService::class);
 		$scans->method('scan')->willReturn($this->createStub(File::class));
+		$roles = $this->createStub(Roles::class);
+		$roles->method('memberCount')->willReturn($members);
 		return new LinkService($mapper, $copies, $versions, $files, $scores, $this->policy($denials), $this->rights(), $this->auditLog(),
-			$this->createStub(Roles::class), $this->createStub(IUserManager::class), new LinkTokens(new FakeCrypto(), $random), $this->createStub(ITimeFactory::class),
+			$roles, $this->createStub(IUserManager::class), new LinkTokens(new FakeCrypto(), $random), $this->createStub(ITimeFactory::class),
 			$this->modulesWithout($off), $scans);
 	}
 
@@ -201,12 +216,14 @@ final class SharingTest extends TestCase {
 
 	// ---- extending links (milestone 0.19) -------------------------------------------
 
-	private function storedLink(string $expires, string $creator = 'conductor', ?int $revoked = null): ExcerptLink {
+	private function storedLink(string $expires, string $creator = 'conductor', ?int $revoked = null, string $circle = ExcerptLink::CIRCLE_MEMBERS,
+		string $created = '2026-09-01'): ExcerptLink {
 		$link = new ExcerptLink();
 		$link->setId(9);
 		$link->setCopyId(35);
-		$link->setCircle(ExcerptLink::CIRCLE_MEMBERS);
+		$link->setCircle($circle);
 		$link->setCreatedBy($creator);
+		$link->setCreated((int)strtotime($created . ' 12:00:00'));
 		$link->setExpires($expires);
 		$link->setRevoked($revoked);
 		$link->setToken('kept');
@@ -234,6 +251,16 @@ final class SharingTest extends TestCase {
 				AccessDeniedException::class, 'Not released for choir members.'],
 			'too far' => [fn () => $this->storedLink('2026-11-01'), [], InvalidInputException::class,
 				'The expiry date must lie between today and six months from now.', '2027-12-31'],
+			'shorter' => [fn () => $this->storedLink('2027-01-31'), [], InvalidInputException::class,
+				'The link is valid until %s already. Extending never shortens a link; to end it earlier, revoke it.', '2026-12-31'],
+			'beyond the license' => [fn () => $this->storedLink('2026-11-01'), ['releaseEnd' => '2026-12-15'], InvalidInputException::class,
+				'The expiry date must lie between today and %s: the license that releases the piece, or the age of the link, allows no later day.'],
+			'beyond a year after it was made' => [fn () => $this->storedLink('2026-11-01', created: '2026-01-10'), [], InvalidInputException::class,
+				'The expiry date must lie between today and %s: the license that releases the piece, or the age of the link, allows no later day.', '2027-01-15'],
+			'made more than a year ago' => [fn () => $this->storedLink('2026-11-01', created: '2025-10-01'), [], InvalidInputException::class,
+				'This link was made more than a year ago and cannot be extended any more. Please make a new one.'],
+			'public, release withdrawn' => [fn () => $this->storedLink('2026-11-01', circle: ExcerptLink::CIRCLE_PUBLIC),
+				['publicViewDenial' => 'Public domain is not confirmed yet.'], AccessDeniedException::class, 'Public domain is not confirmed yet.'],
 		];
 		foreach ($cases as $case => [$store, $denials, $class, $message]) {
 			$store();
@@ -245,6 +272,114 @@ final class SharingTest extends TestCase {
 				self::assertSame($message, $e->getMessage(), $case);
 			}
 		}
+	}
+
+	public function testAnExpiredPublicLinkGetsANewTokenWhenExtended(): void {
+		$this->storedLink('2026-11-01', circle: ExcerptLink::CIRCLE_PUBLIC);
+		self::assertSame('kept', $this->links()->extend(9, '2026-12-31', 'conductor')->getToken(), 'a public link that is still valid keeps its address');
+		self::assertNotContains(['extended', 'token', 'new'], $this->audit);
+
+		$this->storedLink('2026-10-01', circle: ExcerptLink::CIRCLE_PUBLIC);
+		$link = $this->links()->extend(9, '2026-12-31', 'conductor');
+		self::assertSame(ExcerptLink::hashToken(self::TOKEN), $link->getToken(), 'the old address from a message or a log stays closed');
+		self::assertSame(self::TOKEN, $link->issuedToken(), 'the creator gets the new address');
+		self::assertContains(['extended', 'token', 'new'], $this->audit);
+
+		$this->storedLink('2026-10-01');
+		self::assertSame('kept', $this->links()->extend(9, '2026-12-31', 'conductor')->getToken(), 'a link for choir members keeps it: they are signed in');
+	}
+
+	public function testALinkLastsAtMostUntilTheLicenseEnds(): void {
+		$this->storedLink('2026-11-01');
+		self::assertSame('2026-12-15', $this->links(['releaseEnd' => '2026-12-15'])->extend(9, '', 'conductor')->getExpires(), 'by default as far as the license');
+		self::assertContains(['extended', 'license_until', '2026-12-15'], $this->audit, 'the end of the license is recorded as evidence');
+
+		$this->storedLink('2026-11-01', created: '2026-01-10');
+		self::assertSame('2027-01-10', $this->links()->extend(9, '', 'conductor')->getExpires(), 'a year after the link was made at the latest');
+
+		$link = $this->links(['releaseEnd' => '2026-12-15'])->create(35, ['circle' => 'members'], 'conductor');
+		self::assertSame('2026-12-15', $link->getExpires(), 'a new link, too');
+		try {
+			$this->links(['releaseEnd' => '2026-12-15'])->create(35, ['circle' => 'members', 'expires' => '2027-01-31'], 'conductor');
+			self::fail('a link beyond the end of the license');
+		} catch (InvalidInputException $e) {
+			self::assertSame(['2026-12-15'], $e->getParameters());
+		}
+		self::assertSame(LinkService::latestExpiry(self::TODAY), $this->links(['releaseEnd' => '2026-12-15'])->create(35, ['voice' => 'Alto'], 'conductor')->getExpires(),
+			'internal links need no license');
+	}
+
+	public function testExtendingTakesTheNoteAndTheScanWithTheSameChecks(): void {
+		$this->storedLink('2026-11-01');
+		$link = $this->links()->extend(9, '2026-12-31', 'conductor', ['note' => 'Bis Donnerstag', 'scan_file_id' => 5]);
+		self::assertSame(['2026-12-31', 'Bis Donnerstag', 5], [$link->getExpires(), $link->getNote(), $link->getScanFileId()]);
+		self::assertContains(['extended', 'scan_file_id', 5], $this->audit);
+		self::assertContains(['extended', 'note', 'Bis Donnerstag'], $this->audit);
+
+		$cases = [
+			'no license for the scan' => [ExcerptLink::CIRCLE_MEMBERS, ['memberScanDenial' => 'Choir members can save and print the scan.'], ['scan_file_id' => 5],
+				AccessDeniedException::class, 'Choir members can save and print the scan.'],
+			'public, no license for the download of the scan' => [ExcerptLink::CIRCLE_PUBLIC, ['publicScanDenial' => 'Everyone who opens a public link can save and print its scan.'],
+				['scan_file_id' => 5], AccessDeniedException::class, 'Everyone who opens a public link can save and print its scan.'],
+			'a scan of another copy' => [ExcerptLink::CIRCLE_MEMBERS, [], ['scan_file_id' => 6], InvalidInputException::class,
+				'This scan does not belong to the copy. Please choose one of the PDF files of the copy (tab "Files").'],
+			'a note for everyone' => [ExcerptLink::CIRCLE_PUBLIC, [], ['note' => 'internal remark'], InvalidInputException::class,
+				'A public link has no note, because everyone could read it. Please leave the note empty.'],
+		];
+		foreach ($cases as $case => [$circle, $denials, $changes, $class, $message]) {
+			$this->storedLink('2026-11-01', circle: $circle);
+			try {
+				$this->links($denials)->extend(9, '2026-12-31', 'conductor', $changes);
+				self::fail($case);
+			} catch (InvalidInputException|AccessDeniedException $e) {
+				self::assertInstanceOf($class, $e, $case);
+				self::assertSame($message, $e->getMessage(), $case);
+			}
+		}
+	}
+
+	public function testALinkOfAProgrammeKnowsTheProgramme(): void {
+		self::assertSame(4, $this->links()->create(35, ['circle' => 'members'], 'conductor', 4)->getEventId(), 'for "Shared with me" (U24)');
+		self::assertNull($this->links()->create(35, ['circle' => 'members'], 'conductor')->getEventId(), 'a link made on its own');
+		self::assertNull($this->links()->create(35, ['circle' => 'public'], 'conductor', 4)->getEventId(), 'only links for choir members');
+		try {
+			$this->links()->create(35, ['circle' => 'members', 'event_id' => 4], 'conductor');
+			self::fail('no request sets the programme');
+		} catch (InvalidInputException $e) {
+			self::assertSame(['event_id'], $e->getParameters());
+		}
+
+		$this->storedLink('2026-11-01');
+		$link = $this->links()->extend(9, '2026-12-31', 'conductor', ['programme' => 5]);
+		self::assertSame(5, $link->getEventId(), 'shared with another programme: listed under that one');
+		self::assertSame(5, $this->links()->extend(9, '2026-12-31', 'conductor')->getEventId(), 'extended in the list of links: it stays');
+		$this->storedLink('2026-11-01', circle: ExcerptLink::CIRCLE_PUBLIC);
+		self::assertNull($this->links()->extend(9, '2026-12-31', 'conductor', ['programme' => 5])->getEventId());
+	}
+
+	public function testThePublicScanNeedsItsOwnLicense(): void {
+		$reason = 'Everyone who opens a public link can save and print its scan.';
+		try {
+			$this->links(['publicScanDenial' => $reason])->create(35, ['circle' => 'public', 'scan_file_id' => 5], 'conductor');
+			self::fail('a public scan with a license for online publication only');
+		} catch (AccessDeniedException $e) {
+			self::assertSame($reason, $e->getMessage());
+		}
+		$options = $this->links(['publicScanDenial' => $reason])->circleOptions(35, 'conductor');
+		self::assertSame([true, false, $reason], [$options['public']['allowed'], $options['public']['scan'], $options['public']['scanReason']]);
+		self::assertTrue($options['members']['scan'], 'choir members follow their own license');
+	}
+
+	public function testTheDialogHintsAtTooFewLicensesAndTheirEnd(): void {
+		$options = $this->links(['licensedQuantity' => 20, 'releaseEnd' => '2027-03-31'], members: 35)->circleOptions(35, 'conductor');
+		self::assertSame(['licensed' => 20, 'members' => 35], $options['members']['quantity'], 'more choir members than licenses (W B17)');
+		self::assertSame('2027-03-31', $options['members']['until']);
+		self::assertNull($options['public']['quantity'], 'the public is no group to count');
+		self::assertNull($this->links(['licensedQuantity' => 40], members: 35)->circleOptions(35, 'conductor')['members']['quantity'], 'enough licenses');
+		self::assertNull($this->links(members: 35)->circleOptions(35, 'conductor')['members']['quantity'], 'no quantity known');
+
+		$listed = $this->shared([$this->link('members')], ['deviceEnd' => '2027-03-31'])->forMember('singer');
+		self::assertSame('2027-03-31', $listed[0]['keepUntil'], 'the device drops its copy when the licenses for the copy end (R B8, RightsPolicy::deviceEnd)');
 	}
 
 	// ---- making links -------------------------------------------------------------
@@ -360,28 +495,29 @@ final class SharingTest extends TestCase {
 	}
 
 	public function testTheDialogLearnsWhatTheRecipientsGet(): void {
-		$options = $this->links(['publicPlayDenial' => 'Protected version: playback needs a license for practice audio.'], [Modules::MEMBER_PRACTICE_AUDIO])
+		$options = $this->links(['publicPlayDenial' => 'Protected version: playback needs a license for practice audio.',
+			'deviceDenial:public' => 'Visitors of a public link hold no license.'], [Modules::MEMBER_PRACTICE_AUDIO])
 			->circleOptions(35, 'conductor');
 		self::assertSame([['id' => 5, 'name' => '1-03.pdf']], $options['scans'], 'the PDF scans of the copy that are still found');
 		self::assertSame(['available' => true, 'allowed' => true, 'reason' => null, 'scan' => true, 'scanReason' => null, 'playback' => true,
-			'practiceAudio' => false, 'offline' => true], $options['members'], 'practice audio for choir members is switched off');
+			'practiceAudio' => false, 'offline' => true, 'until' => null, 'quantity' => null], $options['members'], 'practice audio for choir members is switched off');
 		self::assertSame(['available' => true, 'allowed' => true, 'reason' => 'Protected version: playback needs a license for practice audio.',
-			'scan' => true, 'scanReason' => null, 'playback' => false, 'practiceAudio' => false, 'offline' => false], $options['public'],
-			'a public link is kept on a device only for confirmed public domain');
+			'scan' => true, 'scanReason' => null, 'playback' => false, 'practiceAudio' => false, 'offline' => false, 'until' => null, 'quantity' => null], $options['public'],
+			'whether visitors may keep it: RightsPolicy::deviceDenial');
 
 		$options = $this->links([], [Modules::PUBLIC_LINKS])->circleOptions(35, 'conductor');
 		self::assertTrue($options['members']['practiceAudio']);
 		self::assertSame(['available' => false, 'allowed' => false, 'reason' => LinkService::SWITCHED_OFF, 'scan' => false, 'scanReason' => null,
-			'playback' => false, 'practiceAudio' => false, 'offline' => null], $options['public']);
+			'playback' => false, 'practiceAudio' => false, 'offline' => null, 'until' => null, 'quantity' => null], $options['public']);
 		self::assertNull($this->links([], [Modules::OFFLINE])->circleOptions(35, 'conductor')['members']['offline'], 'nothing to say while the module is off');
 
 		$noDownload = 'Choir members can save and print the scan: unless public domain is confirmed, it needs a license for download and printing by choir members. The catalog librarian records it on the tab "Rights".';
-		$options = $this->links(['memberScanDenial' => $noDownload])->circleOptions(35, 'conductor');
+		$options = $this->links(['memberScanDenial' => $noDownload, 'deviceDenial:members' => 'Not available without a network.'])->circleOptions(35, 'conductor');
 		self::assertTrue($options['members']['allowed'], 'the notes may be shared');
 		self::assertFalse($options['members']['scan'], 'the scan not');
 		self::assertSame($noDownload, $options['members']['scanReason']);
 		self::assertFalse($options['members']['offline'], 'no copy on the device either');
-		self::assertTrue($options['public']['scan'], 'public links follow the release for publication');
+		self::assertTrue($options['public']['scan'], 'public links follow their own license for the download of the scan');
 		try {
 			$this->links(['memberScanDenial' => $noDownload])->create(35, ['circle' => 'members', 'scan_file_id' => 5], 'conductor');
 			self::fail('a scan without a license for copies was offered');
@@ -437,8 +573,10 @@ final class SharingTest extends TestCase {
 	/**
 	 * @param list<ExcerptLink> $links
 	 * @param array<string, ?string> $denials
+	 * @param array<int, array{0: Event, 1: list<EventItem>}> $programmes event id => event and its items
+	 * @param list<string> $off modules switched off
 	 */
-	private function shared(array $links, array $denials = [], bool $member = true): SharedLinkService {
+	private function shared(array $links, array $denials = [], bool $member = true, array $versionValues = [], array $programmes = [], array $off = []): SharedLinkService {
 		$mapper = $this->createStub(ExcerptLinkMapper::class);
 		$mapper->method('findByToken')->willReturnCallback(function (string $token) use ($links): ExcerptLink {
 			foreach ($links as $link) {
@@ -454,9 +592,25 @@ final class SharingTest extends TestCase {
 			$this->hits[] = $id;
 		});
 		$copies = $this->createStub(CopyMapper::class);
-		$copies->method('find')->willReturn($this->copy());
+		// copy 35 of version 3; every other copy of the version with its own id
+		$copies->method('find')->willReturnCallback(function (int $id): Copy {
+			$copy = $this->copy();
+			if ($id !== 35) {
+				$copy->setId($id);
+				$copy->setVersionId($id);
+			}
+			return $copy;
+		});
 		$versions = $this->createStub(WorkVersionMapper::class);
-		$versions->method('find')->willReturn($this->version(['arranger_text' => 'K. Satz']));
+		$versions->method('find')->willReturnCallback(function (int $id) use ($versionValues): WorkVersion {
+			$version = $this->version(['arranger_text' => 'K. Satz'] + $versionValues);
+			$version->setId($id);
+			return $version;
+		});
+		$events = $this->createStub(EventMapper::class);
+		$events->method('find')->willReturnCallback(fn (int $id): Event => $programmes[$id][0] ?? throw new DoesNotExistException('none'));
+		$items = $this->createStub(EventItemMapper::class);
+		$items->method('findByEvent')->willReturnCallback(fn (int $id): array => $programmes[$id][1] ?? []);
 		$work = new Work();
 		$work->setId(7);
 		$work->setTitle('Abendlied');
@@ -515,8 +669,92 @@ final class SharingTest extends TestCase {
 		$licenseMapper = $this->createStub(LicenseMapper::class);
 		$licenseMapper->method('findByVersion')->willReturn($licenses);
 		return new SharedLinkService($mapper, $copies, $versions, $works, $files, $scores, $this->policy($denials), $this->rights(), $roles,
-			$this->modulesWithout(), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
-			$contributions, $persons, $licenseMapper);
+			$this->modulesWithout($off), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
+			$contributions, $persons, $licenseMapper, $events, $items, new PageKeys(new FakeCrypto()));
+	}
+
+	private static function programme(int $id, ?string $date, string $title): Event {
+		$event = new Event();
+		$event->setId($id);
+		$event->setTitle($title);
+		$event->setEventDate($date);
+		return $event;
+	}
+
+	/**
+	 * Items of a programme in their order: a copy id, or ['version' => id]
+	 * for an item without a copy, or ['struck' => copy id].
+	 *
+	 * @param list<int|array<string, int>> $pieces
+	 * @return list<EventItem>
+	 */
+	private static function items(int $eventId, array $pieces): array {
+		$items = [];
+		foreach ($pieces as $position => $piece) {
+			$item = new EventItem();
+			$item->setId(100 * $eventId + $position);
+			$item->setEventId($eventId);
+			$item->setPosition($position + 1);
+			$item->setCopyId(is_int($piece) ? $piece : ($piece['struck'] ?? null));
+			$item->setVersionId(is_array($piece) ? ($piece['version'] ?? null) : null);
+			$item->setStruck(is_array($piece) && isset($piece['struck']));
+			$items[] = $item;
+		}
+		return $items;
+	}
+
+	private static function programmeKey(int $eventId): string {
+		return (new PageKeys(new FakeCrypto()))->programme($eventId);
+	}
+
+	/**
+	 * "Shared with me" by programme (U24): a link that came with the
+	 * programme stands under it at the place of its piece; a piece of two
+	 * programmes in both, unless a programme has a link of its own for it;
+	 * struck items, deleted programmes and links made on their own stand
+	 * under none. The next concert first, past ones after the coming ones,
+	 * undated ones last.
+	 */
+	public function testThePageListsThePiecesByProgrammeInTheirOrder(): void {
+		$programmes = [
+			4 => [self::programme(4, '2026-12-13', 'Adventskonzert'), self::items(4, [41, ['struck' => 43], 42, 35])],
+			5 => [self::programme(5, '2026-12-24', 'Weihnachtskonzert'), self::items(5, [35, 44])],
+			6 => [self::programme(6, '2026-07-01', 'Sommerkonzert'), self::items(6, [45, ['version' => 47]])],
+			8 => [self::programme(8, null, 'Neues Programm'), self::items(8, [48])],
+		];
+		$links = [];
+		foreach ([['a', 44, 5], ['b', 35, 4], ['c', 42, 4], ['d', 41, 4], ['e', 43, 4], ['f', 45, 6], ['g', 46, 7], ['h', 41, null],
+			['i', 35, 5], ['j', 47, 6], ['k', 48, 8]] as [$letter, $copyId, $eventId]) {
+			$links[] = $this->link('members', ['token' => str_repeat($letter, 32), 'copy_id' => $copyId, 'event_id' => $eventId,
+				'measure_from' => null, 'measure_to' => null]);
+		}
+		$list = $this->shared($links, programmes: $programmes)->forMember('singer');
+
+		$places = [];
+		foreach ($list as $row) {
+			$places[$row['token'][0]] = array_map(fn (array $p): array => [$p['key'], $p['title'], $p['date'], $p['order'], $p['position']], $row['programmes']);
+		}
+		$advent = [self::programmeKey(4), 'Adventskonzert', '2026-12-13', 0];
+		$christmas = [self::programmeKey(5), 'Weihnachtskonzert', '2026-12-24', 1];
+		$summer = [self::programmeKey(6), 'Sommerkonzert', '2026-07-01', 2];
+		self::assertSame([
+			'a' => [[...$christmas, 1]],
+			'b' => [[...$advent, 2]],
+			'c' => [[...$advent, 1]],
+			'd' => [[...$advent, 0]],
+			'e' => [],
+			'f' => [[...$summer, 0]],
+			'g' => [],
+			'h' => [],
+			'i' => [[...$christmas, 0]],
+			'j' => [[...$summer, 1]],
+			'k' => [[self::programmeKey(8), 'Neues Programm', null, 3, 0]],
+		], $places, 'struck items do not count; each programme keeps its own link of a piece of both; an item without a copy by its version');
+		self::assertMatchesRegularExpression('/^[0-9a-f]{20}$/', $list[0]['programmes'][0]['key'], 'a key, not the id of the programme');
+
+		$shared = $this->shared([$this->link('members', ['copy_id' => 35, 'event_id' => 4])], programmes: $programmes);
+		self::assertSame([[...$advent, 2]], array_map(fn (array $p): array => [$p['key'], $p['title'], $p['date'], $p['order'], $p['position']],
+			$shared->forMember('singer')[0]['programmes']), 'a piece of two programmes, the other one not shared with the choir: only under its own');
 	}
 
 	public function testChoirMembersSeeTheirLinksAndOnlyTheMeasures(): void {
@@ -527,19 +765,64 @@ final class SharingTest extends TestCase {
 		self::assertCount(1, $list, 'only active links for choir members');
 		self::assertSame(['token' => self::TOKEN, 'title' => 'Abendlied', 'composer' => 'J. Rheinberger', 'measure_from' => '2', 'measure_to' => '3',
 			'voice' => 'Alto', 'verse' => null, 'tempo' => null, 'note' => 'Please practise until Thursday.', 'expires' => '2026-12-31',
-			'canPlay' => true, 'canExportAudio' => true, 'reason' => null, 'scan' => false, 'scanSize' => null, 'offline' => true,
-			'practiceKey' => SharedLinkService::practiceKey($this->version()),
+			'canPlay' => true, 'canExportAudio' => true, 'reason' => null, 'scan' => false, 'scanSize' => null, 'offline' => true, 'keepUntil' => null, 'print' => true,
+			'practiceKey' => (new PageKeys(new FakeCrypto()))->practice($this->version()),
 			'credits' => [['role' => 'lyricist', 'name' => 'H. Claudius'], ['role' => 'arranger', 'name' => 'K. Satz']],
-			'notices' => ['By kind permission of Carus']], $list[0], 'the authors by name only, the notices of licenses valid today');
+			'notices' => ['By kind permission of Carus'], 'programmes' => []], $list[0], 'the authors by name only, the notices of licenses valid today');
 
-		$xml = $shared->memberScore(self::TOKEN, 'singer');
+		['xml' => $xml, 'keep' => $keep] = $shared->memberScore(self::TOKEN, 'singer');
 		self::assertStringContainsString('<measure number="2"', $xml);
 		self::assertStringContainsString('<measure number="3"', $xml);
 		self::assertStringNotContainsString('<measure number="1"', $xml, 'never the whole score');
 		self::assertSame([9], $this->hits, 'the call is counted');
+		self::assertTrue($keep, 'the worker may keep it (X-Cantoria-Keep), from the same checks (A25)');
 
 		$this->expectException(UnknownLinkException::class);
 		$shared->memberScore(str_repeat('i', 32), 'singer');
+	}
+
+	/**
+	 * Printing the notes and keeping them on the device are copies (B21,
+	 * S N5): without the rights for a copy the page offers no print view,
+	 * and the worker keeps nothing of the answers.
+	 */
+	public function testWithoutTheRightsForACopyNothingIsPrintedOrKept(): void {
+		$withScan = $this->link('members', ['scan_file_id' => 5]);
+		$denied = ['printDenial' => 'Printing is a copy: it needs a license.', 'deviceDenial' => 'Not available without a network.', 'deviceEnd' => '2027-01-31'];
+		$shared = $this->shared([$withScan], $denied);
+		$row = $shared->forMember('singer')[0];
+		self::assertSame([false, false, null, true], [$row['print'], $row['offline'], $row['keepUntil'], $row['scan']],
+			'the scan may still be offered: printing and the device follow RightsPolicy (A23)');
+		self::assertFalse($shared->memberScore(self::TOKEN, 'singer')['keep']);
+		self::assertFalse($shared->memberScan(self::TOKEN, 'singer')['keep']);
+		$kept = $this->shared([$withScan], ['deviceEnd' => '2027-01-31']);
+		self::assertSame([true, true, '2027-01-31'], [$kept->forMember('singer')[0]['print'], $kept->forMember('singer')[0]['offline'],
+			$kept->forMember('singer')[0]['keepUntil']], 'the device learns when the licenses for the copy end');
+		self::assertTrue($kept->memberScan(self::TOKEN, 'singer')['keep']);
+
+		$public = $this->link('public', ['scan_file_id' => 5]);
+		$visitors = 'Visitors of a public link hold no license.';
+		$closed = $this->shared([$public], ['printDenial:public' => $visitors, 'deviceDenial:public' => $visitors]);
+		$excerpt = $closed->publicExcerpt(self::TOKEN);
+		self::assertSame([false, false], [$excerpt['offline'] ?? null, $excerpt['print'] ?? null], 'no copy for visitors, also on paper (B21, B30)');
+		self::assertFalse($closed->publicScan(self::TOKEN)['keep'] ?? null, 'the worker keeps the scan only as the page');
+		$free = $this->shared([$public]);
+		$excerpt = $free->publicExcerpt(self::TOKEN);
+		self::assertSame([true, true], [$excerpt['offline'] ?? null, $excerpt['print'] ?? null], 'allowed by the rights');
+		self::assertTrue($free->publicScan(self::TOKEN)['keep'] ?? null, 'it may stay on the device');
+	}
+
+	/**
+	 * A piece that may not be kept is not a module switched off (A24): the
+	 * page of a public link removes only itself from the device then, not
+	 * every public piece kept there for a concert.
+	 */
+	public function testAPublicLinkTellsAPieceThatMayNotBeKeptFromTheModuleSwitchedOff(): void {
+		$protected = $this->shared([$this->link('public')], ['deviceDenial:public' => 'Public domain is not confirmed yet.'])->publicExcerpt(self::TOKEN);
+		self::assertSame([false, true], [$protected['offline'] ?? null, $protected['offlineModule'] ?? null], 'this piece may not be kept, the module is on');
+		$off = $this->shared([$this->link('public')], [], true, ['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01'], [], [Modules::OFFLINE])
+			->publicExcerpt(self::TOKEN);
+		self::assertSame([false, false], [$off['offline'] ?? null, $off['offlineModule'] ?? null], 'the module is off: nothing may stay');
 	}
 
 	public function testOthersAndWithdrawnLinksGetNothing(): void {
@@ -566,13 +849,13 @@ final class SharingTest extends TestCase {
 		self::assertFalse($list[1]['scan']);
 		self::assertNull($list[1]['scanSize']);
 
-		$xml = $shared->memberScore(self::TOKEN, 'singer');
+		$xml = $shared->memberScore(self::TOKEN, 'singer')['xml'];
 		foreach (['1', '2', '3'] as $number) {
 			self::assertStringContainsString('<measure number="' . $number . '"', $xml, 'the whole piece');
 		}
 		self::assertStringContainsString('<work-title>Abendlied</work-title>', $xml);
 
-		self::assertSame(strlen(self::PDF), $shared->memberScan(self::TOKEN, 'singer')->getSize(), 'the scan of the link');
+		self::assertSame(strlen(self::PDF), $shared->memberScan(self::TOKEN, 'singer')['file']->getSize(), 'the scan of the link');
 		try {
 			$shared->memberScan(str_repeat('x', 32), 'singer');
 			self::fail('a link without a scan');
@@ -603,7 +886,7 @@ final class SharingTest extends TestCase {
 		self::assertNotNull($excerpt);
 		self::assertSame([null, null, true], [$excerpt['measureFrom'], $excerpt['measureTo'], $excerpt['scan']]);
 		self::assertStringContainsString('<measure number="1"', $excerpt['xml'], 'the whole piece');
-		self::assertInstanceOf(File::class, $this->shared([$whole])->publicScan(self::TOKEN));
+		self::assertInstanceOf(File::class, $this->shared([$whole])->publicScan(self::TOKEN)['file'] ?? null);
 
 		$refused = [
 			'no scan' => [[$this->link('public')], []],
@@ -612,18 +895,22 @@ final class SharingTest extends TestCase {
 			'revoked' => [[$this->link('public', ['scan_file_id' => 5, 'revoked' => 1700000000])], []],
 			'expired' => [[$this->link('public', ['scan_file_id' => 5, 'expires' => '2026-10-21'])], []],
 			'no longer released' => [[$whole], ['publicViewDenial' => 'Not released for publication.']],
+			'no license for the download of the scan' => [[$whole], ['publicScanDenial' => 'Everyone who opens a public link can save and print its scan.']],
 			'unknown' => [[], []],
 		];
 		foreach ($refused as $case => [$links, $denials]) {
 			self::assertNull($this->shared($links, $denials)->publicScan(self::TOKEN), $case);
 		}
+		$withoutScan = $this->shared([$whole], ['publicScanDenial' => 'Everyone who opens a public link can save and print its scan.'])->publicExcerpt(self::TOKEN);
+		self::assertNotNull($withoutScan, 'the page shows the notes');
+		self::assertSame([false, null], [$withoutScan['scan'], $withoutScan['scanSize']], 'but offers no scan (R B2)');
 	}
 
 	public function testAPublicLinkShowsOnlyTheExcerptAndNothingInternal(): void {
 		$excerpt = $this->shared([$this->link('public')])->publicExcerpt(self::TOKEN);
 		self::assertNotNull($excerpt);
 		self::assertSame(['title', 'composer', 'measureFrom', 'measureTo', 'voice', 'verse', 'tempo', 'canPlay', 'scan', 'scanSize', 'practiceKey', 'expires', 'offline',
-			'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
+			'offlineModule', 'print', 'served', 'xml', 'credits', 'notices'], array_keys($excerpt), 'no note, no shelf mark, no account');
 		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $excerpt['served'], 'when the page was made, for the check on the device');
 		self::assertSame(['By kind permission of Carus'], $excerpt['notices']);
 		self::assertSame(['role', 'name'], array_keys($excerpt['credits'][0]), 'no life dates');
@@ -760,12 +1047,17 @@ final class SharingTest extends TestCase {
 		$roles->method('isMember')->willReturnCallback(fn (string $uid): bool => $uid === 'singer');
 		$users = $this->createStub(IUserManager::class);
 		$users->method('getDisplayName')->willReturnCallback(fn (string $uid): string => ucfirst($uid));
-		$log = new AuditLog($mapper, $users, $roles, $this->createStub(ITimeFactory::class));
+		$time = $this->createStub(ITimeFactory::class);
+		// 2026-10-22 21:14:07 UTC
+		$time->method('getTime')->willReturn(1792703647);
+		$log = new AuditLog($mapper, $users, $roles, $time);
 		$log->record('op', 'singer', 'version', 3, PracticeAudioService::ACTION);
 		$log->record('op', 'stranger', 'version', 3, PracticeAudioService::ACTION);
 		self::assertSame(['member', ''], array_map(fn (AuditEntry $entry): ?string => $entry->getRoles(), $entries));
 		self::assertNull($entries[0]->getUserId(), 'no account of a choir member');
 		self::assertNull($entries[0]->getUserName(), 'and no name');
+		self::assertSame('2026-10-22 00:00:00', gmdate('Y-m-d H:i:s', (int)$entries[0]->getTime()), 'and only the day: "Bass, 21:14:07" could tell who it was');
 		self::assertSame('stranger', $entries[1]->getUserId());
+		self::assertSame(1792703647, $entries[1]->getTime());
 	}
 }

@@ -13,6 +13,7 @@ use OCA\Cantoria\AppInfo\Application;
 use OCA\Cantoria\Attribute\RequiresModule;
 use OCA\Cantoria\Db\Proposal;
 use OCA\Cantoria\Exception\InvalidInputException;
+use OCA\Cantoria\Service\AuditLog;
 use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\FolderBookService;
 use OCA\Cantoria\Service\FullBackupService;
@@ -63,6 +64,7 @@ class WorkflowController extends Controller {
 		private IL10N $l,
 		private LoggerInterface $logger,
 		private IUserManager $userManager,
+		private AuditLog $audit,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -246,7 +248,9 @@ class WorkflowController extends Controller {
 	/**
 	 * Complete backup (JSON) as download, for the roles that read all of
 	 * the catalog including the folder book (which names choir members) and
-	 * for administrators; not for contributors (tools).
+	 * for administrators; not for contributors (tools). Every download is
+	 * recorded in the audit log with account and roles (who took the names
+	 * of the choir members along, Art. 5 (2) GDPR), without its content.
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -261,7 +265,9 @@ class WorkflowController extends Controller {
 				Http::STATUS_FORBIDDEN);
 		}
 		$name = 'cantoria-backup-' . gmdate('Ymd-His') . '.json';
-		$response = new DataDownloadResponse($this->fullBackupService->export(), $name, 'application/json');
+		$content = $this->fullBackupService->export();
+		$this->audit->record($this->audit->newOperation(), $this->userId, 'export', null, 'download_backup', null, null, $name);
+		$response = new DataDownloadResponse($content, $name, 'application/json');
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
 		return $response;
 	}

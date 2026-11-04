@@ -143,7 +143,8 @@ try {
 	$title = Server::get(WorkMapper::class)->find($version->getWorkId())->getTitle();
 	$base = PrintMirrorService::fileBase($shelfmark, $title);
 	$pdf = $base . '.pdf';
-	$musicxml = $base . '.' . strtolower(pathinfo($roles['musicxml']->getName(), PATHINFO_EXTENSION));
+	// Written uncompressed and cleaned, also from an .mxl file (S N4)
+	$musicxml = $base . '.musicxml';
 	$notes = $base . HandoverService::NOTES;
 	$rights = Server::get(RightsService::class);
 	$releases = Server::get(ReleaseListService::class);
@@ -185,6 +186,10 @@ try {
 	$check('Liste.csv names the file and its shelf mark', str_contains($listText, $pdf) && str_contains($listText, $shelfmark));
 	// English in the CI, German on instances whose account speaks German
 	$check('Liste.csv gives the license notice', str_contains($listText, 'Public domain (confirmed)') || str_contains($listText, 'Gemeinfrei (bestätigt)'), $listText);
+	$scoreFile = $target->nodeExists($musicxml) ? $target->get($musicxml) : null;
+	$scoreText = $scoreFile instanceof File ? $scoreFile->getContent() : '';
+	$check('the MusicXML file is cleaned like the score of a link', str_contains($scoreText, '<score-partwise')
+		&& !str_contains($scoreText, '<!--') && !str_contains($scoreText, '<encoder') && !str_contains($scoreText, '<miscellaneous'));
 	$notesFile = $target->nodeExists($notes) ? $target->get($notes) : null;
 	$notesText = $notesFile instanceof File ? $notesFile->getContent() : '';
 	$check('the notes give the passage, the voice and the note on one line', preg_match('/(m\.|T\.) 1–2, Alto: Breathe after the first phrase\. Softly\./u', $notesText) === 1, $notesText);

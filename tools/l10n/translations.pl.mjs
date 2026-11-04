@@ -2223,7 +2223,7 @@ export const singular = {
 	"Text": "Tekst",
 	"Choose \"Traditional\" only with evidence, e.g. a folk song collection, and note it under \"Notes\". Then the protection proposal needs no composer; the arranger still counts.": "Wybierz „Tradycyjny” tylko z dowodem, np. zbiorem pieśni ludowych, i zapisz go w „Uwagach”. Wtedy propozycja okresu ochrony nie potrzebuje kompozycji; aranżacja nadal się liczy.",
 	"Choose \"Traditional\" only with evidence and note it under \"Notes\", or \"Without text\" for a version without words. Otherwise the protection proposal needs a lyricist.": "Wybierz „Tradycyjny” tylko z dowodem i zapisz go w „Uwagach” albo „Bez tekstu” dla wersji bez słów. W przeciwnym razie propozycja okresu ochrony potrzebuje osoby od tekstu.",
-	"Traditional (public domain)": "Tradycyjny (domena publiczna)",
+	"Traditional (no known author)": "Tradycyjny (autor nieznany)",
 	"Without text": "Bez tekstu",
 	"Public domain in doubt": "Domena publiczna wątpliwa",
 	"To the catalog librarian, daily: a version confirmed as public domain no longer is by the protection proposal, after a person or life dates were changed.": "Do administracji archiwum, codziennie: wersja potwierdzona jako w domenie publicznej według propozycji okresu ochrony już nią nie jest, po zmianie osoby lub dat życia.",

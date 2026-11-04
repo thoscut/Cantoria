@@ -314,11 +314,18 @@ class EventService {
 	 * none; `revision_valid_since` the day since when it is the current one,
 	 * `revision_sung` whether it is the revision kept as sung.
 	 *
+	 * An internal preservation copy in a programme (milestone 0.18, S N13):
+	 * the roles that may not view it get the title of the line, but neither
+	 * its shelf mark nor the ids of its copy and version, nor details of its
+	 * version; its warnings say only "Not available.". The API for agents
+	 * shows the same (ApiV1\ConcertView).
+	 *
 	 * @return array{event: Event, items: list<array<string, string|int|bool|null|list<string>>>, totalDuration: int, missingDurations: int}
 	 */
 	public function detail(int $eventId, string $uid): array {
 		['event' => $event, 'lines' => $lines] = $this->lines($eventId, $uid);
 		$revisions = $this->states->forItems(array_map(fn (array $line): EventItem => $line['item'], $lines));
+		$mayViewPreservation = $this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
 		$items = [];
 		$total = 0;
 		$missingDurations = 0;
@@ -331,7 +338,7 @@ class EventService {
 					$total += $duration;
 				}
 			}
-			$items[] = $item->jsonSerialize() + [
+			$entry = $item->jsonSerialize() + [
 				'shelfmark' => $copy?->getShelfmark(),
 				'title' => $work?->getTitle() ?? $item->getTitleText(),
 				'composer' => $work?->getComposer() ?? $item->getComposerText(),
@@ -342,6 +349,13 @@ class EventService {
 				'revision_valid_since' => $revisions[$item->getId()]['valid_since'] ?? null,
 				'revision_sung' => $revisions[$item->getId()]['sung'] ?? false,
 			];
+			if (!$mayViewPreservation && $version !== null && RightsPolicy::isPreservationCopy($version, $copy)) {
+				$entry = [
+					'copy_id' => null, 'version_id' => null, 'shelfmark' => null, 'arranger_text' => null, 'publisher' => null,
+					'warnings' => [ProgrammeShareService::NOT_AVAILABLE], 'revision' => null, 'revision_valid_since' => null, 'revision_sung' => false,
+				] + $entry;
+			}
+			$items[] = $entry;
 		}
 		return ['event' => $event, 'items' => $items, 'totalDuration' => $total, 'missingDurations' => $missingDurations];
 	}
@@ -383,7 +397,7 @@ class EventService {
 			$copy = $copyId === null ? null : ($copies[$copyId] ?? null);
 			$warnings = [];
 			if ($version !== null && $event->getImported() !== true) {
-				if ($version->getPreservationCopy() === true) {
+				if (RightsPolicy::isPreservationCopy($version, $copy)) {
 					$warnings[] = 'Internal preservation copy: not a singing copy.';
 				}
 				$versionLicenses = $licenses[$version->getId()] ?? [];
@@ -450,25 +464,30 @@ class EventService {
 			$header = [...$header, $l->t('Revision'), $l->t('Revision valid since')];
 		}
 		$rows[] = $header;
+		$mayViewPreservation = $this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
 		foreach ($lines as ['item' => $item, 'copy' => $copy, 'version' => $version, 'work' => $work]) {
 			if ($item->getStruck() === true) {
 				continue;
 			}
+			// An internal preservation copy shows its title and composer, as in
+			// detail(): shelf mark, arranger, publisher, work number and
+			// revision stay empty, the rights status says "Not available." (S N17)
+			$hidden = !$mayViewPreservation && $version !== null && RightsPolicy::isPreservationCopy($version, $copy);
 			$names = $version === null ? [] : $this->namesByRole($version->getId());
 			$duration = $item->getDuration();
 			$status = $version?->getRightsStatus();
 			$row = [
-				(string)$item->getPosition(), $copy?->getShelfmark() ?? '', $work?->getTitle() ?? $item->getTitleText() ?? '',
+				(string)$item->getPosition(), $hidden ? '' : ($copy?->getShelfmark() ?? ''), $work?->getTitle() ?? $item->getTitleText() ?? '',
 				$names['composer'] ?? $work?->getComposer() ?? $item->getComposerText() ?? '',
 				$names['lyricist'] ?? '',
-				$names['arranger'] ?? $version?->getArrangerText() ?? '',
-				$version?->getPublisher() ?? '', $version?->getSocietyWorkNo() ?? '',
-				$status === null ? '' : ($statuses[$status] ?? $status),
+				$hidden ? '' : ($names['arranger'] ?? $version?->getArrangerText() ?? ''),
+				$hidden ? '' : ($version?->getPublisher() ?? ''), $hidden ? '' : ($version?->getSocietyWorkNo() ?? ''),
+				$hidden ? $l->t('Not available.') : ($status === null ? '' : ($statuses[$status] ?? $status)),
 				$duration === null ? '' : sprintf('%d:%02d', intdiv($duration, 60), $duration % 60),
 				$item->getEncore() === true ? $l->t('Encore') : '',
 			];
 			if ($withRevisions) {
-				$revision = $revisions[$item->getId()] ?? null;
+				$revision = $hidden ? null : ($revisions[$item->getId()] ?? null);
 				$row[] = $revision === null ? '' : (string)$revision['number'];
 				$row[] = $revision['valid_since'] ?? '';
 			}

@@ -7,8 +7,8 @@
 **English** | [Deutsch](de/rechtlicher-hintergrund.md)
 
 This page explains which rules the rights checks of the music archive rest
-on and where their limits are. It describes German law as of October 2026
-(app version 0.11); the German page,
+on and where their limits are. It describes German law as of November 2026
+(app version 0.16.1 with the changes up to milestone 0.20); the German page,
 [Rechtlicher Hintergrund](de/rechtlicher-hintergrund.md), is the reference.
 
 > [!IMPORTANT]
@@ -72,12 +72,39 @@ work.
 
 ### Folk songs and traditional melodies
 
-A melody without a known author is free. An **insignificant arrangement**
+A melody or a text without a known author is not free for that reason
+alone. The right in an anonymous work ends 70 years after its publication
+(§ 66 (1) sentence 1 UrhG), or 70 years after its creation if it was not
+published within these 70 years (sentence 2). If the author becomes known
+within the term, for example because they make themselves known or their
+name comes to light, the rule of 70 years after death applies again
+(§ 66 (2) with § 64 UrhG). A traditional melody is therefore free when its
+creation or first publication lies more than 70 years back and that is
+documented, for example by an old folk song collection. The app does not
+ask for a year: note the collection with its year under "Notes"; the
+person who confirms the rights status checks the evidence (guideline 1).
+The same holds for a text marked "Traditional (no known author)". Many "folk tunes" in collections of the 20th century are in
+truth compositions whose author is known or can be found. An
+**insignificant arrangement**
 of a musical work that is not protected is no arrangement of its own (§ 3
 sentence 2 UrhG), such as merely setting a melody with simple chords. A
 worked-out choral setting usually is an arrangement with protection of its
 own. Mark melody or text as "traditional" only with evidence, for example a
-folk song collection, and still record the arranger.
+folk song collection, and still record the arranger. The app suggests a
+traditional melody as public domain only when the arranger is recorded or
+the kind of version is "Original"; otherwise the suggestion is "unknown".
+"Original" means that no one has arranged the work: the composition as it
+was written, or the melody without a setting of its own. The original
+edition of a choral setting is no "Original" in this sense but an
+"Arrangement".
+
+The same holds for every arrangement, not only of folk songs: a chorale
+setting or an arrangement of a classical work is an arrangement with a
+protection of its own under § 3 UrhG, even when the composition has long
+been in the public domain. When the kind of version is "Arrangement" or
+"Adaptation" and no person with the role "Arranger" is recorded, a
+suggestion of public domain becomes "unknown". This matters most after an
+import from a spreadsheet with only one column for the composer.
 
 ## Photocopies of sheet music
 
@@ -99,6 +126,13 @@ or there are more copies than it allows. It blocks nothing.
 - **GEMA** grants the rights for performances (concerts; hence the
   programme list) and recordings. A GEMA license for a concert allows no
   copies of the music.
+- **Recordings** have rights of their own besides those in the work: the
+  performers (§§ 73, 77, 78 UrhG) and the producer of the recording (§ 85
+  UrhG), for decades after the recording or its release (§§ 82, 85 (3)
+  UrhG), also when the work is in the public domain. A commercial recording
+  needs the consent of the label, a recording of your own conductor or
+  accompanist theirs. GEMA grants the rights in a protected composition,
+  not those in the recording.
 
 ## Preservation copies
 
@@ -139,7 +173,18 @@ consent as a scan (use "Digitisation").
   members are not personally connected. The app therefore requires
   confirmed public domain or a license for exactly that use for every kind
   of sharing: singers' portal, self-printing, practice audio, online
-  publication, online playback (audio), download and printing by members.
+  publication, online playback (audio), and download, printing and copies
+  on devices by members (scan in links, concert folder, hand-over folder).
+- **MusicXML is a complete edition.** From a MusicXML file new prints and
+  parts can be made; a license for printing a PDF does not cover passing it
+  on. For the hand-over folder of a choir system the app therefore wants
+  confirmed public domain or a license "Passing on digital score files
+  (MusicXML) to choir members", and it writes the files cleaned (no
+  encoder, notes or comments).
+- **Recordings in the hand-over folder** need, besides the rights in the
+  work (public domain or practice audio), a license "Passing on recordings
+  to choir members" in every case, because performers and producer have
+  rights of their own (see "Who grants which rights").
 - **An excerpt counts as the whole sheet.** A few measures are still part
   of the work; the app shares only released versions.
 - **What reaches a browser can be saved.** The public pages have no download
@@ -151,12 +196,76 @@ consent as a scan (use "Digitisation").
   members. Pass on the license's duties to delete to the members.
 - **Internal playback.** For the archive roles an imported, not yet
   confirmed status "public domain" is enough for playback. That is
-  defensible internally; only what is confirmed is shared.
+  defensible internally; only what is confirmed is shared, and only that
+  plays for choir members and on public links.
 - **IMSLP and CPDL.** The public repertoire page links only to the page of
   the work. Not every edition offered there is free in Germany, for example
   arrangements or editions that are free only in Canada or the USA. For
   links without a profit motive the liability risk is low (CJEU, C-160/15,
   *GS Media*).
+
+## Practising without a network and the concert folder
+
+A piece kept "available without a network" is a copy on the device of the
+choir member or the conductor (§ 16 UrhG), not only a view. The app allows
+it only where choir members may keep a copy anyway: confirmed public domain,
+or a valid license "Download, printing and copies on devices by choir
+members" or for self-printing. Internal preservation copies never go on a
+device.
+
+- Each start with a network checks the kept pieces with the server: what is
+  no longer shared or may no longer be kept disappears from the device.
+  After 30 days without a network the pieces are locked until the page is
+  opened once with one.
+- A license that ends therefore reaches the devices only at their next
+  check with a network. If a license demands deletion on a fixed day, tell
+  the members, and remember that recordings and practice files they saved
+  as files stay with them.
+- The concert folder keeps the programme on the conductor's device for the
+  rehearsal and the concert; the same rules apply.
+
+## Microphone, recordings and browser storage
+
+- **Microphone.** "Show my pitch" and "Record myself" use the microphone
+  only after a tap and the browser's permission. The voice is processed in
+  the browser; nothing is sent to the server. A recording stays in the
+  memory of the page until the person saves it as a file or leaves.
+- **Passing on own recordings.** A recording of yourself with the
+  accompaniment of a protected piece is a reproduction of the work, and the
+  voices of others in it have performers' rights. Passing it on, for example
+  in a chat group, needs rights the app does not check.
+- **Storage on the device (§ 25 TDDDG).** The app sets no cookies of its
+  own (Nextcloud sets the session cookies it needs to work). It remembers
+  settings in the browser (`localStorage`: size of the
+  notes, count-in, passages, practice settings such as tempo and mixer,
+  folded filters), and on a tap it keeps pieces in the Cache Storage. For
+  a shared device it remembers a hash of the signed-in account in
+  IndexedDB, so that pieces of another account, or kept before signing out,
+  are removed (a security measure; [SECURITY.md](../SECURITY.md)).
+  Three kinds of storage happen without any action of the person: every
+  page of the app writes the hash of the account on every call, also in
+  the archive and without the module "Practising without a network";
+  "Shared with me" remembers on every call the marks of the links seen and
+  the time, per account as a hash, for the mark "New" (`localStorage`);
+  and with the module "Practising without a network" every page registers
+  a service worker in the browser on opening (on a public link once the
+  piece may be kept), which keeps content only once someone has saved
+  something.
+  Storing on a device needs consent unless it is strictly necessary for a
+  service the person explicitly asked for (§ 25 (2) no. 2 TDDDG; this
+  applies whether or not the data are personal). Keeping a piece on a tap,
+  and the hash of the account that protects such pieces, usually are.
+  Practice settings for the next visit, the "New" marks, the hash on pages
+  without kept pieces and the service worker before the first save are
+  convenience or preparation and, on the strict reading of the supervisory
+  authorities, need consent: a borderline case. The practical risk is low,
+  since nothing leaves the device; the text blocks therefore name the
+  exception only with a reservation. Nothing of it reaches the server or third
+  parties; "Delete everything on this device" removes it (on a public link:
+  switching off "Available without a network" and clearing the site data in
+  the browser), and signing out of Nextcloud usually does, too. Name it in
+  the privacy information instead of promising "no cookies"; text blocks
+  are in the [privacy templates](privacy-templates.md).
 
 ## Public pages: imprint and privacy policy
 
@@ -187,3 +296,25 @@ erase is in the
 [administration guide, section 10](admin-guide.md#10-data-protection);
 templates for the register of processing activities and the information of
 members are in the [privacy templates](privacy-templates.md).
+
+- **Retention of the audit log.** The audit log is the evidence towards
+  rights holders of what the choir did with a piece and on which license.
+  Claims under copyright become time-barred three years after the end of
+  the year in which the claimant learned of them, at the latest ten years
+  after they arose (§ 102 UrhG with §§ 195, 199 BGB). Keeping account and
+  name that long rests on Art. 17 (3) e GDPR (legal claims). After that the
+  role is enough: by default after ten years the app removes account and
+  name from audit entries and keeps the role (setting
+  `audit_retention_years`, administration guide, section 10). This includes
+  the values of entries that hold an account or a name, such as who
+  confirmed a rights status, checked a person or set the valid version; the
+  access report finds an account there, too, and an erasure on request or a
+  deleted account removes it there as well.
+- **Practice files of choir members** are recorded with the role and the
+  day only, without account, name or time of day. In a small voice group
+  such an entry may still point to one person together with other
+  knowledge; it is then pseudonymous, not anonymous (recital 26 GDPR).
+- **Access (Art. 15 GDPR)** covers everything recorded about a person: the
+  access report also lists the tasks, proposals, review points, links,
+  concerts, confirmations and checks in which the account or the name is
+  recorded as who created, decided or confirmed them.

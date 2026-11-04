@@ -29,9 +29,9 @@ class Import extends Command {
 	#[\Override]
 	protected function configure(): void {
 		$this->setName('cantoria:import')
-			->setDescription('Import the catalog from CSV; a dry run unless --execute is given')
-			->addArgument('user', InputArgument::REQUIRED, 'account that owns the CSV and is recorded in the audit log')
-			->addArgument('file', InputArgument::REQUIRED, 'path of the CSV, relative to the account\'s files')
+			->setDescription('Import the catalog from CSV, .xlsx or .ods; a dry run unless --execute is given')
+			->addArgument('user', InputArgument::REQUIRED, 'account that owns the file and is recorded in the audit log')
+			->addArgument('file', InputArgument::REQUIRED, 'path of the file (CSV, .xlsx or .ods), relative to the account\'s files')
 			->addOption('execute', null, InputOption::VALUE_NONE, 'really import instead of a dry run');
 	}
 

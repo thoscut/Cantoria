@@ -8,31 +8,50 @@
 /**
  * The service worker of the pages that keep pieces on a device (milestone
  * 0.15): "Shared with me", the concert folder and the page of a public link.
- * Served by OfflineController::worker. It keeps nothing on its own account:
- * only while a page has put pieces on the device (the cache of its
- * collection exists) does it keep the scripts and styles of that page and
- * answer from the device when the network does not answer. With the
- * network, the network always wins and refreshes what is kept; an expired,
- * revoked or locked piece is never answered from the device. It never
- * caches requests that change something, the APIs of Nextcloud, or the
- * pages of the archive.
+ * Served by OfflineController::worker, only with the module "offline". It
+ * keeps nothing on its own account: only while a page has put pieces on the
+ * device (the cache of its collection exists) does it keep the scripts and
+ * styles of that page and answer from the device when the network does not
+ * answer. With the network, the network always wins and refreshes what is
+ * kept, but only while the server's answer says it may stay (header
+ * X-Cantoria-Keep, S N5); an answer without it removes the piece from the
+ * device. An expired, revoked or locked piece is never answered from the
+ * device. The page of a list ("Shared with me", the concert folder) is
+ * answered from the device only when the network fails, not when it is
+ * slow (S N19). It never caches requests that change something, the APIs of
+ * Nextcloud, or the pages of the archive. The pieces of an account kept
+ * before someone signed out, or before another account used the app in
+ * this browser, it removes before it answers anything of them (S N6,
+ * marker.ts).
+ * After an update of the app the new worker first loads the scripts of the
+ * new version (the list of the build, A1), and only then takes over and
+ * drops the scripts of the old one: when the network fails in between, the
+ * old worker and the old scripts stay, and the pages still open.
  *
  * Built as a classic script of its own (vite.config.ts), without imports.
  */
 import type { Collection, CollectionName } from './rules.ts'
 
-import { CACHE_PREFIX, COLLECTIONS, pageCollection, parseCatalog, requestKind, SHELL_PREFIX, usable } from './rules.ts'
+import { rememberedAccount } from './marker.ts'
+import { networkFirst as networkOrKept } from './network.ts'
+import { CACHE_PREFIX, COLLECTIONS, mayStay, pageCollection, parseCatalog, pieceAddresses, requestKind, SHELL_PREFIX, staleCatalog, usable } from './rules.ts'
 
 declare const self: ServiceWorkerGlobalScope
+/** The scripts and styles of the pages that keep pieces, relative to the app's path; from the build (vite.config.ts) */
+declare const __CANTORIA_SHELL_FILES__: string[]
 
 /** Replaced by the server with the version of the app */
 const VERSION = '__CANTORIA_VERSION__'
+/** Replaced by the server with the path of the app's files, e.g. /apps/cantoria/ */
+const APP_PATH = '__CANTORIA_APP_PATH__' as string
 const SHELL_CACHE = SHELL_PREFIX + VERSION
-/** How long to wait for the network before answering from the device */
-const TIMEOUT_MS = 4000
 
-self.addEventListener('install', () => {
-	self.skipWaiting()
+self.addEventListener('install', (event) => {
+	event.waitUntil((async () => {
+		// a failure keeps the old worker and the old scripts, and the browser tries again later
+		await keepScripts()
+		await self.skipWaiting()
+	})())
 })
 
 self.addEventListener('activate', (event) => {
@@ -64,6 +83,31 @@ self.addEventListener('fetch', (event) => {
 	event.respondWith(answer(event, asked.kind, asked.collection, asked.key ?? '', url, scope))
 })
 
+/**
+ * The scripts of this version of the app, before the worker takes over:
+ * only while a page keeps pieces on this device. The pages add what else
+ * they load (keepShell).
+ */
+async function keepScripts(): Promise<void> {
+	const files = typeof __CANTORIA_SHELL_FILES__ === 'undefined' ? [] : __CANTORIA_SHELL_FILES__
+	// the placeholder stays, or the server found no path of its own: nothing to keep
+	if (!APP_PATH.startsWith('/') || files.length === 0 || (await keptCollections()).length === 0) {
+		return
+	}
+	const shell = await caches.open(SHELL_CACHE)
+	await Promise.all(files.map(async (file) => {
+		const url = new URL(APP_PATH + file, self.location.origin).href
+		if (await shell.match(url, { ignoreSearch: true })) {
+			return
+		}
+		const response = await fetch(url, { credentials: 'same-origin', cache: 'no-cache' })
+		if (!response.ok) {
+			throw new Error(`Cantoria: ${file} could not be loaded (${response.status})`)
+		}
+		await shell.put(url, response)
+	}))
+}
+
 /** The collections with pieces on this device */
 async function keptCollections(): Promise<CollectionName[]> {
 	const names = new Set(await caches.keys())
@@ -90,7 +134,8 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 	if (kind === 'asset') {
 		const shell = await caches.open(SHELL_CACHE)
 		const forKeptPage = await isForKeptPage(event, scope, kept)
-		return networkFirst(event, await shell.match(event.request), (response) => {
+		// the scripts of one version of the app: their version parameter does not matter
+		return networkFirst(event, await shell.match(event.request, { ignoreSearch: true }), (response) => {
 			// only the scripts of a page that keeps pieces, not those of the archive
 			if (forKeptPage && response.ok && response.type === 'basic') {
 				return shell.put(event.request, response)
@@ -104,9 +149,16 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 	const data = await caches.open(collection.cache)
 	const catalogUrl = new URL(collection.catalog, scope).href
 	const catalog = parseCatalog(await (await data.match(catalogUrl))?.text() ?? null, collection.key)
+	if (name !== 'public' && catalog !== null && staleCatalog(catalog, await rememberedAccount(), null) !== null) {
+		// Someone signed out, or another account used the app, since these pieces were kept: nothing of them is shown
+		await removeCollection(collection)
+		return fetch(event.request)
+	}
 	const cacheKey = url.origin + url.pathname
 	if (kind === 'page' && name !== 'public') {
-		// The page of the list ("Shared with me", the concert folder): it shows itself what is locked
+		// The page of the list ("Shared with me", the concert folder): it shows itself what is locked.
+		// From the device only without a network, never because the network is slow: the kept page
+		// carries its account, which may not be the one signed in now (S N19).
 		return networkFirst(event, await data.match(cacheKey), async (response) => {
 			if (response.ok && response.headers.get('X-Cantoria-Page') === collection.header) {
 				await data.put(cacheKey, response)
@@ -115,7 +167,7 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 				await removeCollection(collection)
 			}
 			// a redirect to the login keeps everything for the next start with a network
-		})
+		}, null)
 	}
 	// a score or scan, or the page of a public link (which is the piece)
 	if (catalog?.pieces[key] === undefined) {
@@ -124,14 +176,12 @@ async function answer(event: FetchEvent, kind: 'page' | 'score' | 'scan' | 'asse
 	const stored = await data.match(cacheKey)
 	const shown = stored && usable(catalog, key, new Date()) === 'ok' ? stored : undefined
 	return networkFirst(event, shown, async (response) => {
-		if (response.ok && !response.redirected && (kind !== 'page' || response.headers.get('X-Cantoria-Page') === collection.header)) {
+		const page = kind !== 'page' || response.headers.get('X-Cantoria-Page') === collection.header
+		if (response.ok && !response.redirected && page && mayStay(response.headers)) {
 			await data.put(cacheKey, response)
-		} else if (response.status === 403 || response.status === 404) {
-			// revoked, expired or no longer allowed: removed from the device
-			await data.delete(cacheKey)
-			if (name === 'public') {
-				await forgetPublic(data, catalogUrl, key, scope)
-			}
+		} else if ((response.ok && !response.redirected && page) || response.status === 403 || response.status === 404) {
+			// the server no longer allows it on the device (a license ended), or it is revoked or expired: removed
+			await forgetPiece(collection, data, catalogUrl, key, scope)
 		}
 	})
 }
@@ -153,48 +203,40 @@ async function isForKeptPage(event: FetchEvent, scope: URL, kept: CollectionName
 }
 
 /**
- * The network's answer; the kept one when the network fails or takes
- * longer than TIMEOUT_MS. The network's answer refreshes what is kept, also
- * when it comes late.
+ * The network's answer; the kept one when the network fails or, unless
+ * timeoutMs is null, takes longer than that (network.ts).
  *
  * @param event - the fetch event, kept alive until the cache is written
  * @param kept - the kept answer, undefined when there is none or it may not be shown
  * @param store - writes the network's answer (a copy) to the device
+ * @param timeoutMs - how long to wait for the network; null: until it answers or fails
  */
-function networkFirst(event: FetchEvent, kept: Response | undefined, store: (response: Response) => Promise<void> | void): Promise<Response> {
-	const network = fetch(event.request).then((response) => {
-		event.waitUntil(Promise.resolve(store(response.clone())).catch(() => undefined))
-		return response
-	})
-	if (!kept) {
-		return network
-	}
-	const late = new Promise<Response>((resolve) => {
-		setTimeout(() => resolve(kept), TIMEOUT_MS)
-	})
-	event.waitUntil(network.then(() => undefined, () => undefined))
-	return Promise.race([network.catch(() => kept), late])
+function networkFirst(event: FetchEvent, kept: Response | undefined, store: (response: Response) => Promise<void> | void,
+	timeoutMs?: number | null): Promise<Response> {
+	return networkOrKept(() => fetch(event.request), (promise) => event.waitUntil(promise), kept, store, timeoutMs)
 }
 
 /**
- * Remove a public link that is gone from the list of kept public pieces,
- * with its scan.
+ * Remove a piece the server no longer allows on the device from the list
+ * of kept pieces of its page, with its notes and its scan.
  *
- * @param data - the cache of the public links
+ * @param collection - the collection
+ * @param data - its cache
  * @param catalogUrl - address of the list
- * @param token - token of the link
+ * @param key - token of the link or id of the programme item
  * @param scope - scope of the worker
  */
-async function forgetPublic(data: Cache, catalogUrl: string, token: string, scope: URL): Promise<void> {
-	await data.delete(new URL(`p/${token}`, scope).href)
-	await data.delete(new URL(`p/${token}/scan`, scope).href)
-	const catalog = parseCatalog(await (await data.match(catalogUrl))?.text() ?? null, COLLECTIONS.public.key)
-	if (catalog === null) {
+async function forgetPiece(collection: Collection, data: Cache, catalogUrl: string, key: string, scope: URL): Promise<void> {
+	const addresses = pieceAddresses(collection.name, key)
+	await data.delete(new URL(addresses.notes, scope).href)
+	await data.delete(new URL(addresses.scan, scope).href)
+	const catalog = parseCatalog(await (await data.match(catalogUrl))?.text() ?? null, collection.key)
+	if (catalog === null || catalog.pieces[key] === undefined) {
 		return
 	}
-	delete catalog.pieces[token]
+	delete catalog.pieces[key]
 	if (Object.keys(catalog.pieces).length === 0) {
-		await removeCollection(COLLECTIONS.public)
+		await removeCollection(collection)
 		return
 	}
 	await data.put(catalogUrl, new Response(JSON.stringify(catalog), { headers: { 'Content-Type': 'application/json' } }))

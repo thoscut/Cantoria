@@ -27,6 +27,7 @@ use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\NotificationService;
 use OCA\Cantoria\Service\PersonService;
 use OCA\Cantoria\Service\PrintMirrorService;
+use OCA\Cantoria\Service\PrivacyService;
 use OCA\Cantoria\Service\ProtectionTerm;
 use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
@@ -78,6 +79,7 @@ class DailyChecks extends TimedJob {
 		private PrintMirrorService $printMirror,
 		private ExportService $export,
 		private HandoverService $handover,
+		private PrivacyService $privacy,
 	) {
 		parent::__construct($time);
 		$this->setInterval(24 * 3600);
@@ -170,6 +172,7 @@ class DailyChecks extends TimedJob {
 		// the retention period, also while the module is off (switching off
 		// never makes anything less safe).
 		$this->folderBook->anonymizeExpired($today);
+		$this->privacy->applyRetention();
 		// The mirror folder of the print station and the hand-over folder, while their modules are on.
 		$this->printMirror->runDaily();
 		$this->handover->runDaily();

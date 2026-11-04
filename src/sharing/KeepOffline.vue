@@ -10,9 +10,11 @@
  * scan that can be changed at any time, before or after. What happens,
  * the progress and an error stand right under the switches, not at the end
  * of the page. Before the first piece is kept on an iPhone or iPad, a hint
- * says to put the page on the home screen first: a page opened from there
- * keeps its own pieces, apart from Safari.
+ * says where to open the page: a page opened from the home screen keeps its
+ * own pieces, apart from Safari (src/offline/hints.ts, one text per page).
  */
+import type { KeepingPage } from '../offline/hints.ts'
+
 import { mdiAlertCircleOutline } from '@mdi/js'
 import { computed, ref } from 'vue'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
@@ -20,6 +22,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import { formatSize } from '../format.ts'
 import { t } from '../l10n.ts'
+import { homeScreenHint } from '../offline/hints.ts'
 import { homeScreenAdvice } from '../offline/platform.ts'
 
 const props = withDefaults(defineProps<{
@@ -53,6 +56,8 @@ const props = withDefaults(defineProps<{
 	firstKeep?: boolean
 	/** label of the main switch */
 	label?: string
+	/** the page, for the hint about the home screen */
+	place?: KeepingPage
 }>(), {
 	scanSize: null,
 	several: false,
@@ -63,6 +68,7 @@ const props = withDefaults(defineProps<{
 	lock: '',
 	firstKeep: false,
 	label: '',
+	place: 'member',
 })
 
 const emit = defineEmits<{
@@ -113,7 +119,7 @@ function setScan(on: boolean): void {
 		</p>
 		<template v-else>
 			<NcNoteCard v-if="homeScreen && firstKeep && !kept" type="info" class="keep-offline__hint">
-				{{ t('cantoria', 'On an iPhone or iPad: first add this page to the home screen, open it from there, sign in and then make the pieces available. Safari and the home screen keep them apart.') }}
+				{{ homeScreenHint(place) }}
 			</NcNoteCard>
 			<NcCheckboxRadioSwitch type="switch"
 				:model-value="kept"
@@ -121,7 +127,8 @@ function setScan(on: boolean): void {
 				:loading="busy"
 				@update:model-value="setKept">
 				{{ label || t('cantoria', 'Available without a network') }}
-				<template v-if="progress || lock || withoutNetwork" #description>
+				<!-- No empty line: without a network a kept piece needs no description (U36) -->
+				<template v-if="progress || lock || (withoutNetwork && !kept)" #description>
 					{{ progress || lock || (kept ? '' : t('cantoria', 'Needs a network to change.')) }}
 				</template>
 			</NcCheckboxRadioSwitch>

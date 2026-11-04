@@ -47,6 +47,34 @@ final class ModulesTest extends TestCase {
 		}
 	}
 
+	/**
+	 * Modules outside the presets that no scenario switches, and why. The
+	 * administration switches them on on purpose, after the choir decided.
+	 */
+	private const UNTOUCHED_BY_SCENARIOS = [
+		Modules::AGENT_API => 'an access path for tools, not a function for people',
+		Modules::PRINT_MIRROR => 'writes files into the folder of a print station',
+		Modules::CHOIR_HANDOVER => 'writes files into a folder for a choir system',
+	];
+
+	/**
+	 * A new module outside the presets is either switched by every scenario
+	 * or named in UNTOUCHED_BY_SCENARIOS. Otherwise it would silently keep
+	 * its switch, and the settings would call a scenario "closest" that does
+	 * not know it.
+	 */
+	public function testEveryScenarioDecidesOnEveryModuleOutsideThePresets(): void {
+		foreach (Modules::SCENARIOS as $key => $scenario) {
+			foreach (Modules::OUTSIDE_PRESETS as $module) {
+				self::assertNotSame(array_key_exists($module, $scenario['modules']), array_key_exists($module, self::UNTOUCHED_BY_SCENARIOS),
+					"$key: $module is switched by the scenario or named as untouched, not both and not neither");
+			}
+			self::assertSame([], array_values(array_diff(array_keys($scenario['modules']), Modules::OUTSIDE_PRESETS)),
+				"$key switches only modules outside the presets; the preset decides on the others");
+		}
+		self::assertSame([], array_values(array_diff(array_keys(self::UNTOUCHED_BY_SCENARIOS), Modules::OUTSIDE_PRESETS)));
+	}
+
 	public function testTheInterfaceForAgentsIsSwitchedOnlyByItself(): void {
 		foreach ([Modules::AGENT_API, Modules::PRINT_MIRROR, Modules::MEMBER_LINKS, Modules::PUBLIC_LINKS, Modules::PUBLIC_REPERTOIRE] as $outside) {
 			self::assertContains($outside, Modules::OUTSIDE_PRESETS);

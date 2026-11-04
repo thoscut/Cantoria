@@ -269,7 +269,6 @@ function statusText(entry: Entry): string {
 				<!-- On a phone the filters are in the navigation, which is closed: a way there -->
 				<NcButton v-if="isMobile"
 					variant="secondary"
-					aria-haspopup="true"
 					@click="openFilters">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFilterVariant" />
@@ -523,9 +522,12 @@ function statusText(entry: Entry): string {
 }
 
 /* not only a colour: a bar at the start of the row and the shelf mark
-   underlined, as on the pages of the choir members */
+   underlined, as on the pages of the choir members. The bar is a real
+   border, which the contrast themes keep (they drop shadows; D21); the
+   padding gives back its width, so that the row does not move */
 .catalog-table__row--selected > td:first-child {
-	box-shadow: inset 4px 0 0 var(--color-primary-element);
+	padding-inline-start: calc(2 * var(--default-grid-baseline) - 4px);
+	border-inline-start: 4px solid var(--color-primary-element);
 }
 
 .catalog-table__row--selected .catalog-table__open {
@@ -641,9 +643,32 @@ function statusText(entry: Entry): string {
 }
 
 .catalog-card--selected {
+	padding-inline-start: calc(2 * var(--default-grid-baseline) - 3px);
 	border-color: var(--color-primary-element);
+	border-inline-start-width: 4px;
 	background-color: var(--color-primary-element-light);
-	box-shadow: inset 4px 0 0 var(--color-primary-element);
+}
+
+/* the chosen card: also its title underlined, not only the bar */
+.catalog-card--selected .catalog-card__title {
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 3px;
+}
+
+/* Windows contrast themes: the bar and the frame in the colour of a selection */
+@media (forced-colors: active) {
+	.catalog-table__row--selected > td:first-child,
+	.catalog-card--selected {
+		border-color: Highlight;
+	}
+
+	.catalog-card--selected {
+		border-width: 2px;
+		border-inline-start-width: 4px;
+		padding: calc(2 * var(--default-grid-baseline) - 1px);
+		padding-inline-start: calc(2 * var(--default-grid-baseline) - 3px);
+	}
 }
 
 .catalog-card__head {

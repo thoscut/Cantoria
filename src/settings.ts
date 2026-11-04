@@ -30,6 +30,10 @@ export const SETTINGS_SECTIONS = {
 
 /** The role that imports and keeps the catalog (see docs/api.md). */
 const CATALOG_ROLE = 'librarian'
+/** The conductor: needed once the concert folder is on. */
+const CONDUCTOR_ROLE = 'conductor'
+/** The choir members: needed once the sharing with them is on. */
+const MEMBER_ROLE = 'member'
 
 type Raw = Record<string, unknown>
 
@@ -126,6 +130,8 @@ export function normalizeSettings(data: unknown): Settings {
 			: { current: count(thresholds.current), dormant: count(thresholds.dormant) },
 		catalog: { copies: count(catalog.copies), files: count(catalog.files) },
 		modulesChosen: raw.modulesChosen === true,
+		concertFolder: raw.concertFolder === true,
+		memberLinks: raw.memberLinks === true,
 		folderBook: raw.folderBook === true,
 		printMirror: raw.printMirror === true,
 		choirHandover: raw.choirHandover === true,
@@ -283,26 +289,45 @@ export function parseThresholds(current: string, dormant: string): RepertoireThr
 export type StepStatus = 'done' | 'missing' | 'problem' | 'unchecked'
 
 /** The steps of the setup, in the order in which they are done. */
-export type StepKey = 'archive' | 'roles' | 'access' | 'modules' | 'import' | 'fileSync'
+export type StepKey = 'archive' | 'modules' | 'roles' | 'access' | 'import' | 'fileSync'
 
 export interface SetupStep {
 	key: StepKey
 	status: StepStatus
+	/** step "roles": the roles the chosen functions need that have no group yet, in this order */
+	rolesWithoutGroup?: string[]
+}
+
+/**
+ * The roles the chosen functions need: always the catalog role, the
+ * conductor with the concert folder, the choir members with the sharing
+ * with them (otherwise nobody sees what is shared).
+ *
+ * @param settings - settings of the server
+ */
+export function neededRoles(settings: Settings): string[] {
+	return [
+		CATALOG_ROLE,
+		...(settings.concertFolder === true ? [CONDUCTOR_ROLE] : []),
+		...(settings.memberLinks === true ? [MEMBER_ROLE] : []),
+	]
 }
 
 /**
  * The setup in six steps, derived from what the server already reports:
- * archive folder, the groups of the catalog role, the access check (only
- * known after it ran on this page), whether the functions for the choir
- * were chosen, imported copies and files found by the file sync. Only the
- * choice of the functions is stored, as a flag.
+ * archive folder, whether the functions for the choir were chosen, the
+ * groups of the roles these functions need, the access check (only known
+ * after it ran on this page), imported copies and files found by the file
+ * sync. The functions come before the roles, because they decide which
+ * roles need a group. Only the choice of the functions is stored, as a flag.
  *
  * @param settings - settings of the server
  * @param report - result of the access check of the saved archive folder, if it ran
  */
 export function setupSteps(settings: Settings, report: AccessReport | null): SetupStep[] {
 	const hasArchive = settings.archive.id > 0
-	let roles: StepStatus = (settings.roles[CATALOG_ROLE] ?? []).length > 0 ? 'done' : 'missing'
+	const rolesWithoutGroup = neededRoles(settings).filter((role) => (settings.roles[role] ?? []).length === 0)
+	let roles: StepStatus = rolesWithoutGroup.length === 0 ? 'done' : 'missing'
 	if (settings.groupsMissing.length > 0) {
 		roles = 'problem'
 	}
@@ -314,9 +339,9 @@ export function setupSteps(settings: Settings, report: AccessReport | null): Set
 	}
 	return [
 		{ key: 'archive', status: hasArchive ? 'done' : 'missing' },
-		{ key: 'roles', status: roles },
-		{ key: 'access', status: access },
 		{ key: 'modules', status: settings.modulesChosen === true ? 'done' : 'missing' },
+		{ key: 'roles', status: roles, rolesWithoutGroup },
+		{ key: 'access', status: access },
 		{ key: 'import', status: settings.catalog.copies > 0 ? 'done' : 'missing' },
 		{ key: 'fileSync', status: settings.catalog.files > 0 ? 'done' : 'missing' },
 	]

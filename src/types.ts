@@ -61,6 +61,11 @@ export interface Meta {
 	fields: Record<Level, FieldMap>
 	/** license use key => English label */
 	licenseUses: Record<string, string>
+	/**
+	 * Ways out that only confirmed public domain opens, never a license
+	 * (RightsPolicy::FREE_ONLY_WAYS), e.g. `public_device`
+	 */
+	freeOnlyWays: string[]
 	/** field directory of a person (same format as fields) */
 	personFields: FieldMap
 	/** contribution role key => English label */
@@ -328,6 +333,9 @@ export interface TaskInput {
 	due?: string | null
 }
 
+/** What sets the latest last day of an extension (U41) */
+export type ExtendLimit = 'six_months' | 'age' | 'license'
+
 export interface ExcerptLink {
 	id: number
 	/**
@@ -356,6 +364,14 @@ export interface ExcerptLink {
 	hits: number
 	/** `files[].id` of the PDF scan the link offers (choir members and public only); null for none */
 	scan_file_id?: number | null
+	/**
+	 * The latest last day the server allows when the link is extended today
+	 * (U41); null when it was made more than a year ago, and for links the
+	 * account may not extend. Only in the lists.
+	 */
+	extend_until?: string | null
+	/** What sets `extend_until`: six months from today, the age of the link or the end of the license */
+	extend_limit?: ExtendLimit | null
 }
 
 /**
@@ -401,6 +417,10 @@ export interface CircleOption {
 	practiceAudio: boolean
 	/** the recipients can keep it on their device (milestone 0.19); null while the module "offline" is off */
 	offline?: boolean | null
+	/** last day of the license that releases it (YYYY-MM-DD): a link lasts until then at most; null without end */
+	until?: string | null
+	/** more choir members than the licenses were bought for (a hint, no barrier) */
+	quantity?: { licensed: number, members: number } | null
 }
 
 /** A piece of a programme in the dialog "Share the programme with the choir" (milestone 0.19). */
@@ -417,8 +437,18 @@ export interface ProgrammeShareItem {
 	scan: boolean
 	/** the singers can keep it on their device; null while the module "offline" is off */
 	offline: boolean | null
-	/** an active link to the whole piece that is extended instead of making a second one */
-	existing: { id: number, expires: string | null } | null
+	/** the choir members can play it (U42: the message to the choir mentions "Loop" only then) */
+	playback?: boolean
+	/**
+	 * a link to the whole piece, without voice, verse or tempo (U45), that is
+	 * extended instead of making a second one; never shortened; it may have
+	 * ended (U40). `limit`: the last day its age allows (U41).
+	 */
+	existing: { id: number, expires: string | null, scan?: boolean, limit?: string } | null
+	/** last day of the license that releases it: the piece is shared until then at most; null without end */
+	until?: string | null
+	/** more choir members than the licenses were bought for (a hint, no barrier) */
+	quantity?: { licensed: number, members: number } | null
 }
 
 export interface ProgrammeShareOptions {
@@ -431,8 +461,17 @@ export interface ProgrammeShareOptions {
 
 export interface ProgrammeShareResult {
 	created: number
+	/** links that last longer now */
 	extended: number
+	/** links that lasted longer already and keep their last day (note and scan apply to them, too) */
+	kept?: number
 	failed: { id: number, title: string, reason: string }[]
+	/**
+	 * pieces that last shorter than the chosen day, with the day they last
+	 * and why (U41): their license ends, or the link that exists already
+	 * was made almost a year ago
+	 */
+	limited?: { id: number, title: string, expires: string, reason?: 'license' | 'age' }[]
 }
 
 export interface LinkOptions {
@@ -446,6 +485,19 @@ export interface LinkOptions {
 export interface Credit {
 	role: 'lyricist' | 'arranger' | 'translator'
 	name: string
+}
+
+/** A programme under which "Shared with me" lists a link (milestone 0.20, U24). */
+export interface MemberProgramme {
+	/** stands for the programme, without its id */
+	key: string
+	title: string
+	/** date of the concert (YYYY-MM-DD), null without one */
+	date: string | null
+	/** place of the programme on the page: the next concert first, past ones after, undated ones last */
+	order: number
+	/** place of the piece in the programme, from 0 */
+	position: number
 }
 
 /** A link for choir members, as the page "Shared with me" receives it. */
@@ -472,11 +524,17 @@ export interface MemberLink {
 	scanSize?: number | null
 	/** the rights allow keeping the piece on the device (module "offline", milestone 0.15) */
 	offline?: boolean
+	/** last day the license allows a copy on the device (milestone 0.18); null without end */
+	keepUntil?: string | null
+	/** the rights allow printing the notes (a copy, as the scan); false: the print view says so instead */
+	print?: boolean
 	/** key of the piece for what is remembered in the browser while practising (milestone 0.15) */
 	practiceKey?: string
 	credits: Credit[]
 	/** notices the licenses ask for */
 	notices: string[]
+	/** the programmes the link was shared with as a whole, where the page lists it (milestone 0.20, U24); empty for a link on its own */
+	programmes?: MemberProgramme[]
 }
 
 /** Initial state `member` of the page for choir members. */
@@ -515,6 +573,10 @@ export interface FolderItem {
 	offline: boolean
 	/** translated reason why it may not be kept */
 	offlineReason: string | null
+	/** last day the licenses allow the copy on the device; null: no end (R B29) */
+	keepUntil?: string | null
+	/** the rights allow printing the notes; false: the print view says so instead */
+	print?: boolean
 	practiceKey: string | null
 }
 
@@ -560,6 +622,10 @@ export interface PublicExcerpt {
 	expires?: string | null
 	/** may be kept on a device (milestone 0.15): module "offline", confirmed public domain */
 	offline?: boolean
+	/** the module "offline" is on, whether or not this piece may be kept (A24) */
+	offlineModule?: boolean
+	/** may be printed: confirmed public domain, as visitors have no license */
+	print?: boolean
 	/** when the server made the page (ISO time): newer than the last check means it came from the server */
 	served?: string
 	/** MusicXML with only the measures of the excerpt, or the whole piece */
@@ -889,6 +955,10 @@ export interface Settings {
 	catalog: { copies: number, files: number }
 	/** the functions for the choir were chosen (a scenario, a preset or a switch) */
 	modulesChosen?: boolean
+	/** the module "concert_folder" is active: the role "Conductor" needs a group (setup) */
+	concertFolder?: boolean
+	/** the module "member_links" is active: the role "Choir members" needs a group (setup) */
+	memberLinks?: boolean
 	/** role key => English label */
 	roleLabels: Record<string, string>
 	archive: ArchiveInfo

@@ -13,21 +13,22 @@
  * is changed from here, also not "sung" (that is confirmed in the archive
  * afterwards).
  * For the stage (milestone 0.19): the stage view fills the screen with the
- * piece and keeps the screen on, "Next" stands in the bar that stays in view
- * and at the end of the notes, and the page-turn pedal turns to the next
- * piece after the last system. On a narrow screen the programme list folds
- * away once a piece is open.
+ * piece and keeps the screen on; its settings fold away, and "Next" and the
+ * way out stand in the bar that stays in view. After every change of piece
+ * the focus goes into the notes, so that the page-turn pedal turns at once
+ * and turns to the next piece after the last system. On a narrow screen the
+ * programme list folds away once a piece is open; the back gesture of a
+ * phone returns to it.
  */
 import type { FocusTarget } from '../focus.ts'
-import type { Catalog, PieceForDevice } from '../offline/rules.ts'
+import type { PieceForDevice } from '../offline/rules.ts'
 import type { FolderConcert, FolderItem, FolderPageState } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiArrowRight, mdiCellphoneCheck, mdiChevronDown, mdiChevronUp, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowLeft, mdiArrowRight, mdiCellphoneCheck, mdiChevronDown, mdiChevronUp, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline } from '@mdi/js'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
-import { isAxiosError } from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcContent from '@nextcloud/vue/components/NcContent'
@@ -38,14 +39,14 @@ import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import DiscardRecording from './DiscardRecording.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
+import RemoveFromDevice from './RemoveFromDevice.vue'
 import ScanFrame from './ScanFrame.vue'
 import { focusAfterUpdate, focusElement } from '../focus.ts'
-import { formatDate, formatDateTime, formatSize } from '../format.ts'
-import { askToPersist, checkWithServer, forgetPieces, keepPieces, keepShell, offlineSupported, readCatalog, removeEverything, setUpWorker, storageInfo } from '../offline/device.ts'
+import { formatDate } from '../format.ts'
 import { deviceErrorText } from '../offline/errors.ts'
+import { homeScreenHint } from '../offline/hints.ts'
 import { homeScreenAdvice } from '../offline/platform.ts'
-import { MAX_DAYS_UNCHECKED, usable } from '../offline/rules.ts'
-import { forgetPractising } from '../score/practiceSettings.ts'
+import { useKeptPieces } from '../offline/useKeptPieces.ts'
 import { fetchFolderConcerts, fetchFolderScore } from './api.ts'
 import { useLeaveGuard } from './leaveGuard.ts'
 import { useStage } from './stage.ts'
@@ -61,13 +62,13 @@ function initialState(): FolderPageState {
 
 const state = initialState()
 const concerts = state.concerts
-/** Programmes can be kept on this device: module "offline", and the browser can */
-const offlineOn = state.offline === true && offlineSupported()
 const deviceHeadingId = useId()
 const itemHeadingId = useId()
 const listId = useId()
 const itemHeading = ref<HTMLElement | null>(null)
 const nextButton = ref<FocusTarget>(null)
+const stageButton = ref<FocusTarget>(null)
+const viewer = ref<InstanceType<typeof ExcerptViewer> | null>(null)
 const pieceElement = ref<HTMLElement | null>(null)
 const archiveUrl = generateUrl('/apps/cantoria/')
 const homeScreen = homeScreenAdvice()
@@ -87,41 +88,56 @@ const pendingItem = ref<FolderItem | null>(null)
 /** The pedal reached the end of the piece; the next press opens the next one */
 const offerNext = ref(false)
 const turnStatus = ref('')
+/** After a change of piece the focus goes into the notes once they are shown, so that the pedal turns at once */
+const focusScore = ref(false)
 useLeaveGuard(recordingUnsaved)
-const { on: stageOn, toggle: toggleStage } = useStage(pieceElement)
+const { on: stageOn, toggle: toggleStage } = useStage(() => focusAfterUpdate(stageButton))
+/** In the stage view the notes are in view: the page shows only the bar and the notes (D27) */
+const notesOnStage = computed(() => stageOn.value && scoreStatus.value === 'ready')
+
+/** Enter or leave the stage view; entering it, the focus goes into the notes, which come up to the bar (D27). */
+async function toggleStageView(): Promise<void> {
+	await toggleStage()
+	if (stageOn.value) {
+		await nextTick()
+		viewer.value?.focusScore()
+	}
+}
 
 // ---- available without a network ------------------------------------------
 
-const catalog = ref<Catalog | null>(null)
-/** The server answered the last check; false: shown from the device */
-const reachable = ref(true)
+const device = useKeptPieces('folder', {
+	enabled: state.offline === true,
+	version: state.version,
+	fresh: async () => (await fetchFolderConcerts()).flatMap((concert) => concert.items.map(forDevice)),
+})
+const { offlineOn, storage, withoutNetwork, keptCount, storageText, checkedText } = device
 /** Id of the programme being kept or removed */
 const keeping = ref<number | null>(null)
 /** Why keeping a programme did not work, by its id */
 const keepErrors = ref<Record<number, string>>({})
 /** "3 of 12 pieces ready …" while a programme is kept */
 const keepProgress = ref('')
-const storage = ref<{ usage: number | null, quota: number | null, persisted: boolean } | null>(null)
-const confirmingDelete = ref(false)
+/** The heading "Without a network": the focus after everything is deleted (D28) */
+const deviceHeading = ref<HTMLElement | null>(null)
 const deviceStatus = ref('')
-const withoutNetwork = computed(() => offlineOn && !reachable.value)
-const keptCount = computed(() => Object.keys(catalog.value?.pieces ?? {}).length)
 
 /**
- * What the server says about keeping an item.
+ * What the server says about keeping an item; the device drops it when the
+ * licenses for the copy end (`keepUntil`, R B29), as on "Shared with me".
  *
  * @param item - programme item
  */
 function forDevice(item: FolderItem): PieceForDevice {
-	return { key: String(item.id), title: item.title, composer: item.composer, expires: null, offline: item.offline, scan: item.scan, score: item.score }
+	return { key: String(item.id), title: item.title, composer: item.composer, expires: item.keepUntil ?? null, offline: item.offline, scan: item.scan, score: item.score }
 }
 
 function isKept(item: FolderItem): boolean {
-	return catalog.value?.pieces[String(item.id)] !== undefined
+	return device.isKept(String(item.id))
 }
 
 function scanKept(item: FolderItem): boolean {
-	return catalog.value?.pieces[String(item.id)]?.scan === true
+	return device.scanKept(String(item.id))
 }
 
 /**
@@ -131,6 +147,32 @@ function scanKept(item: FolderItem): boolean {
  */
 function keepable(concert: FolderConcert): FolderItem[] {
 	return concert.items.filter((item) => item.offline)
+}
+
+/**
+ * The items of a programme with notes or a scan that may not be kept, with
+ * the reason: the switch for the programme names them (U28).
+ *
+ * @param concert - programme
+ */
+function notKeepable(concert: FolderConcert): FolderItem[] {
+	return concert.items.filter((item) => !item.offline && (item.score || item.scan))
+}
+
+/** The first programme with pieces to keep: the hint for an iPhone or iPad stands there only, once per page (U38) */
+const firstKeepable = concerts.find((concert) => keepable(concert).length > 0)?.id ?? null
+
+/**
+ * Label of the switch for a programme: "All 12 pieces" or "10 of 12 pieces".
+ *
+ * @param concert - programme
+ */
+function keepLabel(concert: FolderConcert): string {
+	const count = keepable(concert).length
+	const missing = notKeepable(concert).length
+	return missing === 0
+		? n('cantoria', '%n piece available without a network', 'All %n pieces available without a network', count)
+		: n('cantoria', '{count} of %n piece available without a network', '{count} of %n pieces available without a network', count + missing, { count })
 }
 
 /**
@@ -169,43 +211,7 @@ function scansSize(concert: FolderConcert): number | null {
  * @param item - programme item
  */
 function lockText(item: FolderItem): string {
-	switch (usable(catalog.value, String(item.id), new Date())) {
-	case 'ok':
-		return ''
-	case 'unchecked':
-		return n('cantoria', 'Locked: not checked with the server for more than %n day. Please open this page once with a network.',
-			'Locked: not checked with the server for more than %n days. Please open this page once with a network.', MAX_DAYS_UNCHECKED)
-	default:
-		return t('cantoria', 'There is no network, and this piece is not available without a network.')
-	}
-}
-
-async function refreshStorage(): Promise<void> {
-	storage.value = await storageInfo()
-}
-
-/**
- * Check the kept items with the server; without an answer the page shows
- * what is kept. With an answer the scripts of the page are kept again, so
- * that it still opens without a network after an update of the app.
- */
-async function checkDevice(): Promise<void> {
-	if (!offlineOn) {
-		return
-	}
-	catalog.value = await readCatalog('folder')
-	try {
-		const fresh = await fetchFolderConcerts()
-		reachable.value = true
-		catalog.value = await checkWithServer('folder', fresh.flatMap((concert) => concert.items.map(forDevice)))
-		if (keptCount.value > 0) {
-			keepShell(state.version).catch((error) => console.warn('Cantoria: the page could not be kept for use without a network', error))
-		}
-	} catch (error) {
-		// an answer of the server (e.g. not logged in) is no missing network
-		reachable.value = isAxiosError(error) && error.response !== undefined
-	}
-	await refreshStorage()
+	return device.lockText(String(item.id))
 }
 
 /**
@@ -226,16 +232,14 @@ async function setConcertKept(concert: FolderConcert, keep: boolean, withScans: 
 				keepProgress.value = t('cantoria', '{done} of {total} pieces ready …', { done, total: items.length })
 			}
 			progress(0)
-			catalog.value = await keepPieces('folder', items.map(forDevice), withScans, state.version, progress)
-			await askToPersist()
+			await device.keep(items.map(forDevice), withScans, progress)
 			deviceStatus.value = n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', items.length)
 		} else {
-			catalog.value = await forgetPieces('folder', items.map((item) => String(item.id)))
+			await device.forget(items.map((item) => String(item.id)))
 			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: concert.title })
 		}
 	} catch (error) {
 		console.warn('Cantoria: keeping a programme on this device failed', error)
-		catalog.value = await readCatalog('folder')
 		const missing = items.filter((item) => !isKept(item)).length
 		keepErrors.value = {
 			...keepErrors.value,
@@ -245,36 +249,17 @@ async function setConcertKept(concert: FolderConcert, keep: boolean, withScans: 
 	} finally {
 		keeping.value = null
 		keepProgress.value = ''
-		await refreshStorage()
 	}
 }
 
 /** Delete the kept items and everything remembered for practising, on this device only. */
 async function deleteDevice(): Promise<void> {
-	await removeEverything('folder')
-	forgetPractising()
-	catalog.value = null
-	confirmingDelete.value = false
+	await device.deleteDevice()
 	deviceStatus.value = t('cantoria', 'Everything the concert folder kept on this device is deleted.')
-	await refreshStorage()
 }
 
-const storageText = computed(() => {
-	const info = storage.value
-	if (!info || info.usage === null) {
-		return ''
-	}
-	return info.quota === null
-		? t('cantoria', '{used} used on this device.', { used: formatSize(info.usage) })
-		: t('cantoria', '{used} of {available} used on this device.', { used: formatSize(info.usage), available: formatSize(info.quota) })
-})
-
-const checkedText = computed(() => {
-	const checked = catalog.value ? Date.parse(catalog.value.checked) : NaN
-	return Number.isFinite(checked)
-		? t('cantoria', 'Last checked with the server: {time}.', { time: formatDateTime(Math.floor(checked / 1000)) })
-		: ''
-})
+/** What "Delete everything on this device" deletes besides the pieces (U43) */
+const deleteConsequence = t('cantoria', 'In this browser, this deletes the pieces of the concert folder available without a network, the remembered passages and the settings for practising.')
 
 /**
  * Date, time and place of a programme.
@@ -348,28 +333,91 @@ async function loadSelectedScore(): Promise<void> {
 }
 
 /**
- * Show an item; the address names it, so that it can be bookmarked. An
- * unsaved recording of the shown piece is not lost without a question.
+ * The address of an item, so that it can be bookmarked.
+ *
+ * @param item - programme item, or null for the list
+ */
+function itemAddress(item: FolderItem | null): string {
+	return window.location.pathname + (item ? '?item=' + item.id : '') + window.location.hash
+}
+
+/**
+ * Show an item; the address names it, so that it can be bookmarked. The
+ * first piece opened from the list adds an entry to the history, every
+ * further one (the list, "Next", the pedal) takes its place: the back
+ * gesture of a phone always returns to the list, also after twelve pieces
+ * in a concert (U29, U39). An unsaved recording of the shown piece is not
+ * lost without a question. The focus goes to the heading and, once the
+ * notes are shown, into the notes: the pedal turns at once (U22), also when
+ * the page opens with the piece (U37).
  *
  * @param item - programme item
- * @param moveFocus - put the focus on its heading
+ * @param moveFocus - put the focus on the heading and say the piece (not when the page opens with it)
+ * @param history - 'push' a new entry (from the list), 'replace' it (from the address) or 'none' (back and forward)
  */
-async function select(item: FolderItem, moveFocus = true): Promise<void> {
+async function select(item: FolderItem, moveFocus = true, history: 'push' | 'replace' | 'none' = 'push'): Promise<void> {
 	if (recordingUnsaved.value && item.id !== selectedId.value) {
 		pendingItem.value = item
 		return
 	}
+	// the entry of the history is the list, not yet a piece
+	const fromList = (window.history.state as { cantoriaItem?: unknown } | null)?.cantoriaItem === undefined
 	selectedId.value = item.id
 	scoreXml.value = ''
 	offerNext.value = false
-	turnStatus.value = ''
 	recordingUnsaved.value = false
 	listOpen.value = false
-	window.history.replaceState(null, '', window.location.pathname + '?item=' + item.id + window.location.hash)
+	if (history === 'push' && fromList) {
+		window.history.pushState({ cantoriaItem: item.id }, '', itemAddress(item))
+	} else if (history !== 'none') {
+		window.history.replaceState({ cantoriaItem: item.id }, '', itemAddress(item))
+	}
+	focusScore.value = true
 	if (moveFocus) {
+		// said by the status line as well: the focus goes on into the notes
+		turnStatus.value = t('cantoria', '{title}, piece {position} of {count}', { title: item.title, position: neighbours.value.position, count: neighbours.value.count })
 		focusAfterUpdate(itemHeading)
+	} else {
+		turnStatus.value = ''
 	}
 	await loadSelectedScore()
+}
+
+/** Back to the list of programmes: the back gesture, or the first press of Back after a piece (U29). */
+function showList(): void {
+	if (stageOn.value) {
+		toggleStage()
+	}
+	selectedId.value = null
+	scoreStatus.value = 'idle'
+	listOpen.value = true
+	offerNext.value = false
+	focusAfterUpdate(() => document.querySelector<HTMLElement>('.folder-app__concert-title'))
+}
+
+/**
+ * Back and forward of the browser or the phone: the piece of the address,
+ * or the list. With an unsaved recording the piece stays and asks first.
+ */
+function onPopState(): void {
+	const id = Number(new URLSearchParams(window.location.search).get('item'))
+	const item = concerts.flatMap((concert) => concert.items).find((entry) => entry.id === id) ?? null
+	if (item !== null && item.id === selectedId.value) {
+		// e.g. the back gesture closed the scan: the piece stays as it is
+		return
+	}
+	if (recordingUnsaved.value) {
+		window.history.pushState({ cantoriaItem: selectedId.value }, '', itemAddress(selected.value))
+		if (item) {
+			pendingItem.value = item
+		}
+		return
+	}
+	if (item) {
+		select(item, true, 'none')
+	} else {
+		showList()
+	}
 }
 
 /** The recording may go: open the piece that was asked for. */
@@ -396,59 +444,95 @@ const neighbours = computed(() => {
 
 /**
  * Page Down of a page-turn pedal in the shown piece that the score did
- * not take (after its last system): the first press says what comes next and puts the focus on
- * "Next", the second opens it. Fields and sliders keep the key.
+ * not take (after its last system): the first press says what comes next,
+ * marks "Next" and puts the focus on it, the second opens it. While the
+ * next piece still loads or its notes are still engraved, a press is no
+ * press at the end of the piece: it does nothing, so that impatient presses
+ * never skip a piece (U37). Once the notes turn again (or go back), the
+ * offer is gone. Fields and sliders keep the key. Outside the notes (the
+ * heading, or no focus at all in the stage view) the pedal turns the notes
+ * all the same (U22).
  *
- * @param event - key event in the shown piece
+ * @param event - key event on the page
  */
 function onPieceKeydown(event: KeyboardEvent): void {
+	if ((event.key !== 'PageDown' && event.key !== 'PageUp') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+		return
+	}
 	const target = event.target instanceof HTMLElement ? event.target : null
-	if (!target || !pieceElement.value?.contains(target) || event.key !== 'PageDown' || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
-		|| target?.closest('input, textarea, select, [contenteditable="true"]')) {
+	const inPiece = target !== null && pieceElement.value?.contains(target) === true
+	const nowhere = target === null || target === document.body || target === document.documentElement
+	if (!selected.value || (!inPiece && !(nowhere && stageOn.value)) || target?.closest('input, textarea, select, [contenteditable="true"], [role="combobox"], [role="listbox"]')) {
+		return
+	}
+	if (event.key === 'PageUp' || event.defaultPrevented) {
+		// the notes turned (or went back): no longer at the end of the piece
+		withdrawOffer()
+		return
+	}
+	const turned = scoreBusy() ? 'busy' : (offerNext.value || target?.closest('.excerpt-viewer') ? 'end' : viewer.value?.turn(1) ?? 'end')
+	if (turned === 'busy') {
+		event.preventDefault()
+		return
+	}
+	if (turned === 'turned') {
+		// the heading or the page had the focus: the notes turn, and keep the focus from now on
+		event.preventDefault()
+		viewer.value?.focusScore()
 		return
 	}
 	const next = neighbours.value.next
 	if (!next) {
 		return
 	}
+	event.preventDefault()
 	if (offerNext.value) {
-		event.preventDefault()
 		select(next)
 		return
 	}
-	// only after the score itself could turn no further
-	if (!target?.closest('.excerpt-viewer')) {
-		return
-	}
-	event.preventDefault()
 	offerNext.value = true
 	turnStatus.value = t('cantoria', 'End of the piece. Press again for "{title}".', { title: next.title })
 	focusElement(nextButton.value)
 }
 
-function onOnline(): void {
-	checkDevice()
+/**
+ * The shown piece has notes that are not in view yet: the score still
+ * comes from the server, or the score view still engraves it.
+ */
+function scoreBusy(): boolean {
+	if (!selected.value?.score) {
+		return false
+	}
+	if (scoreStatus.value === 'loading') {
+		return true
+	}
+	return scoreStatus.value === 'ready' && (viewer.value === null || viewer.value.busy())
+}
+
+/** The notes turn again: "Next" is no longer offered. */
+function withdrawOffer(): void {
+	if (offerNext.value) {
+		offerNext.value = false
+		turnStatus.value = ''
+	}
 }
 
 onMounted(async () => {
-	if (offlineSupported()) {
-		// registers the worker, or removes it and what it kept when the module is off
-		await setUpWorker('folder', state.offline === true)
-		await checkDevice()
-		window.addEventListener('online', onOnline)
-	}
+	// registers the worker, or removes it and what it kept when the module is off
+	await device.start()
 	// after the score's own handler, which takes the key while it can turn
 	window.addEventListener('keydown', onPieceKeydown)
+	window.addEventListener('popstate', onPopState)
 	const id = Number(new URLSearchParams(window.location.search).get('item'))
 	const linked = concerts.flatMap((concert) => concert.items).find((item) => item.id === id)
 	if (linked) {
-		select(linked, false)
+		select(linked, false, 'replace')
 	}
 })
 
 onBeforeUnmount(() => {
-	window.removeEventListener('online', onOnline)
 	window.removeEventListener('keydown', onPieceKeydown)
+	window.removeEventListener('popstate', onPopState)
 })
 </script>
 
@@ -466,6 +550,12 @@ onBeforeUnmount(() => {
 						: t('cantoria', 'The programmes still to be sung, in their order: view, play and practise each piece.') }}
 					<a v-if="!withoutNetwork" :href="archiveUrl" class="folder-app__link">{{ t('cantoria', 'Back to Cantoria') }}</a>
 				</p>
+				<!-- Not only at the end of the page: on a shared device the way to remove them (S N6) -->
+				<RemoveFromDevice v-if="offlineOn && keptCount > 0 && !stageOn"
+					:count="keptCount"
+					:consequence="deleteConsequence"
+					:remove="deleteDevice"
+					@removed="focusAfterUpdate(deviceHeading)" />
 
 				<NcNoteCard v-if="withoutNetwork" type="info" role="status">
 					{{ keptCount > 0
@@ -510,7 +600,8 @@ onBeforeUnmount(() => {
 								</p>
 								<KeepOffline v-if="offlineOn && keepable(concert).length > 0"
 									several
-									:label="n('cantoria', '%n piece available without a network', 'All %n pieces available without a network', keepable(concert).length)"
+									place="folder"
+									:label="keepLabel(concert)"
 									:kept="concertKept(concert)"
 									:scan-kept="withScanChoice(concert).length > 0 && withScanChoice(concert).every((item) => scanKept(item))"
 									:scan-offered="withScanChoice(concert).length > 0"
@@ -521,8 +612,19 @@ onBeforeUnmount(() => {
 									:locked="keeping !== null && keeping !== concert.id"
 									:progress="keeping === concert.id ? keepProgress : ''"
 									:error="keepErrors[concert.id] ?? ''"
-									:first-keep="keptCount === 0"
+									:first-keep="keptCount === 0 && concert.id === firstKeepable"
 									@change="(keep: boolean, withScans: boolean) => setConcertKept(concert, keep, withScans)" />
+								<!-- which pieces stay behind, and why (U28) -->
+								<div v-if="offlineOn && notKeepable(concert).length > 0" class="folder-app__missing">
+									<p class="folder-app__muted">
+										{{ t('cantoria', 'Not available without a network:') }}
+									</p>
+									<ul>
+										<li v-for="item in notKeepable(concert)" :key="item.id">
+											{{ t('cantoria', '{title}: {reason}', { title: item.title, reason: item.offlineReason || t('cantoria', 'the rights allow no copy on the device.') }) }}
+										</li>
+									</ul>
+								</div>
 								<ol class="folder-app__items">
 									<li v-for="item in concert.items"
 										:key="item.id"
@@ -556,44 +658,44 @@ onBeforeUnmount(() => {
 					<section v-if="selected"
 						ref="pieceElement"
 						class="folder-app__piece"
+						:class="{ 'folder-app__piece--notes-on-stage': notesOnStage }"
 						:aria-labelledby="itemHeadingId">
+						<!-- In the stage view with the notes in view: only the title in one line, the way out is in the bar -->
 						<div class="folder-app__piece-head">
-							<div>
-								<h2 :id="itemHeadingId" ref="itemHeading" class="folder-app__concert-title">
+							<div class="folder-app__piece-name">
+								<h2 :id="itemHeadingId" ref="itemHeading" class="folder-app__concert-title folder-app__piece-title">
 									{{ selected.title }}
 								</h2>
-								<p v-if="selected.composer" class="folder-app__muted">
+								<p v-if="selected.composer" class="folder-app__muted folder-app__off-stage">
 									{{ selected.composer }}
 								</p>
 							</div>
-							<NcButton variant="tertiary"
-								class="no-print"
+							<NcButton ref="stageButton"
+								variant="tertiary"
+								class="no-print folder-app__off-stage"
 								:aria-pressed="stageOn ? 'true' : 'false'"
-								@click="toggleStage">
+								@click="toggleStageView">
 								<template #icon>
 									<NcIconSvgWrapper :path="stageOn ? mdiFullscreenExit : mdiFullscreen" />
 								</template>
 								{{ t('cantoria', 'Stage view') }}
 							</NcButton>
 						</div>
-						<!-- two buttons, no links: a group, not a navigation landmark -->
-						<div class="folder-app__turn no-print" role="group" :aria-label="t('cantoria', 'Programme order')">
-							<NcButton v-if="neighbours.previous" variant="tertiary" @click="select(neighbours.previous)">
+						<!-- "Next" stands once, in the bar of the notes (or at the end without notes) -->
+						<div v-if="neighbours.previous" class="folder-app__turn folder-app__off-stage no-print">
+							<NcButton variant="tertiary" @click="select(neighbours.previous)">
 								{{ t('cantoria', 'Previous: {title}', { title: neighbours.previous.title }) }}
 							</NcButton>
-							<NcButton v-if="neighbours.next" variant="secondary" @click="select(neighbours.next)">
-								{{ t('cantoria', 'Next: {title}', { title: neighbours.next.title }) }}
-							</NcButton>
 						</div>
-						<p v-if="offlineOn && !selected.offline && selected.offlineReason" class="folder-app__muted">
+						<p v-if="offlineOn && !selected.offline && selected.offlineReason" class="folder-app__muted folder-app__off-stage">
 							{{ selected.offlineReason }}
 						</p>
-						<p v-if="selected.scan && withoutNetwork && !scanKept(selected)" class="folder-app__muted">
+						<p v-if="selected.scan && withoutNetwork && !scanKept(selected)" class="folder-app__muted folder-app__off-stage">
 							{{ t('cantoria', 'The scan is not available without a network.') }}
 						</p>
 						<ScanFrame v-else-if="selected.scan"
 							:key="selected.id"
-							class="no-print"
+							class="no-print folder-app__off-stage"
 							collection="folder"
 							:piece-key="String(selected.id)"
 							:title="selected.title" />
@@ -624,6 +726,7 @@ onBeforeUnmount(() => {
 						</NcEmptyContent>
 						<ExcerptViewer v-else-if="scoreStatus === 'ready'"
 							:key="selected.id"
+							ref="viewer"
 							v-model:unsaved-recording="recordingUnsaved"
 							:xml="scoreXml"
 							:title="selected.title"
@@ -633,20 +736,45 @@ onBeforeUnmount(() => {
 							:can-play="selected.canPlay"
 							:play-reason="selected.reason"
 							:practice-key="selected.practiceKey"
-							:offline="withoutNetwork">
-							<template v-if="neighbours.next" #bar>
-								<NcButton variant="secondary"
+							:offline="withoutNetwork"
+							:stage="stageOn"
+							:focus-on-ready="focusScore"
+							:printable="selected.print === true">
+							<template v-if="neighbours.next || stageOn" #bar>
+								<!-- In the stage view "Previous" moves into the bar, named by its icon -->
+								<NcButton v-if="stageOn && neighbours.previous"
+									variant="tertiary"
+									:aria-label="t('cantoria', 'Previous: {title}', { title: neighbours.previous.title })"
+									:title="t('cantoria', 'Previous: {title}', { title: neighbours.previous.title })"
+									@click="select(neighbours.previous)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiArrowLeft" />
+									</template>
+								</NcButton>
+								<!-- At the end of the piece the pedal offers the next one: it says so in the bar, not only by the focus (U37) -->
+								<NcButton v-if="neighbours.next"
+									ref="nextButton"
+									:variant="offerNext ? 'primary' : 'secondary'"
 									:aria-label="t('cantoria', 'Next: {title}', { title: neighbours.next.title })"
 									@click="select(neighbours.next)">
 									<template #icon>
 										<NcIconSvgWrapper :path="mdiArrowRight" />
 									</template>
-									{{ t('cantoria', 'Next') }}
+									{{ offerNext ? t('cantoria', 'Next: {title}', { title: neighbours.next.title }) : t('cantoria', 'Next') }}
+								</NcButton>
+								<NcButton v-if="stageOn"
+									variant="tertiary"
+									:aria-label="t('cantoria', 'Leave the stage view')"
+									:title="t('cantoria', 'Leave the stage view')"
+									@click="toggleStageView">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiFullscreenExit" />
+									</template>
 								</NcButton>
 							</template>
 						</ExcerptViewer>
-						<!-- At the end of the notes: on to the next piece without scrolling up -->
-						<div v-if="neighbours.next" class="folder-app__end no-print">
+						<!-- Without notes in view: on to the next piece at the end -->
+						<div v-if="neighbours.next && scoreStatus !== 'ready'" class="folder-app__end no-print">
 							<NcButton ref="nextButton"
 								variant="primary"
 								@click="select(neighbours.next)">
@@ -669,7 +797,7 @@ onBeforeUnmount(() => {
 				</div>
 
 				<section v-if="offlineOn || state.offline" class="folder-app__device-section no-print" :aria-labelledby="deviceHeadingId">
-					<h2 :id="deviceHeadingId" class="folder-app__concert-title">
+					<h2 :id="deviceHeadingId" ref="deviceHeading" class="folder-app__concert-title">
 						{{ t('cantoria', 'Without a network') }}
 					</h2>
 					<template v-if="offlineOn">
@@ -685,21 +813,12 @@ onBeforeUnmount(() => {
 							</template>
 						</p>
 						<p v-if="homeScreen && keptCount > 0" class="folder-app__muted">
-							{{ t('cantoria', 'Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.') }}
+							{{ homeScreenHint('folder') }}
 						</p>
-						<div class="folder-app__device-buttons">
-							<NcButton v-if="!confirmingDelete" variant="secondary" @click="confirmingDelete = true">
-								{{ t('cantoria', 'Delete everything on this device') }}
-							</NcButton>
-							<template v-else>
-								<NcButton variant="error" @click="deleteDevice">
-									{{ t('cantoria', 'Delete kept pieces, passages and settings') }}
-								</NcButton>
-								<NcButton variant="tertiary" @click="confirmingDelete = false">
-									{{ t('cantoria', 'Cancel') }}
-								</NcButton>
-							</template>
-						</div>
+						<p class="folder-app__muted">
+							{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
+						</p>
+						<RemoveFromDevice :consequence="deleteConsequence" :remove="deleteDevice" @removed="focusAfterUpdate(deviceHeading)" />
 					</template>
 					<p v-else class="folder-app__muted">
 						{{ t('cantoria', 'This browser cannot keep pieces for practising without a network.') }}
@@ -793,7 +912,8 @@ onBeforeUnmount(() => {
 	max-width: 100%;
 }
 
-/* Stage view: only the piece, on the whole screen where the browser can */
+/* Stage view: only the piece, on the whole screen where the browser can
+   (the whole page is on the screen, so that dialogs stay visible) */
 .folder-app--stage .folder-app__programmes,
 .folder-app--stage .folder-app__device-section,
 .folder-app--stage .folder-app__intro,
@@ -805,11 +925,29 @@ onBeforeUnmount(() => {
 	display: block;
 }
 
-.folder-app__piece:fullscreen {
-	box-sizing: border-box;
-	overflow-y: auto;
-	padding: calc(2 * var(--default-grid-baseline));
-	background-color: var(--color-main-background);
+/* In the stage view with the notes in view: only the bar and the notes,
+   the title in one line above them (D27) */
+.folder-app__piece--notes-on-stage .folder-app__off-stage {
+	display: none !important;
+}
+
+.folder-app__piece--notes-on-stage .folder-app__piece-name {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.folder-app__piece--notes-on-stage .folder-app__piece-title {
+	overflow: hidden;
+	font-size: 1em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.folder-app__missing ul {
+	margin: 0;
+	padding-inline-start: 1.5em;
+	list-style: disc;
+	color: var(--color-text-maxcontrast);
 }
 
 .folder-app__piece-head {
@@ -921,17 +1059,17 @@ onBeforeUnmount(() => {
 	border-top: 1px solid var(--color-border);
 }
 
-.folder-app__device-buttons {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--default-grid-baseline);
-}
-
 /* Touch: targets of at least 44 pixels */
 @media (pointer: coarse) {
 	.folder-app {
 		--default-clickable-area: 44px;
 	}
+}
+
+/* larger targets at the music stand, also on touch (D32): after the rule
+   for touch, with two classes */
+.folder-app.folder-app--stage {
+	--default-clickable-area: 48px;
 }
 
 /* Printing: the piece only, black on white */
@@ -949,5 +1087,16 @@ onBeforeUnmount(() => {
 	.folder-app__muted {
 		color: #000;
 	}
+}
+</style>
+
+<style>
+/* Stage view: the header of Nextcloud goes, too */
+body:has(.folder-app--stage) {
+	--header-height: 0px;
+}
+
+body:has(.folder-app--stage) #header {
+	display: none;
 }
 </style>

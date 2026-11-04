@@ -117,7 +117,7 @@ const distributions = computed<Distribution[]>(() => [
 		</NcNoteCard>
 
 		<div v-if="report.notInCsv.length > 0">
-			<ReportList :summary="n('cantoria', '%n copy is no longer in the CSV', '%n copies are no longer in the CSV', report.notInCsv.length)"
+			<ReportList :summary="n('cantoria', '%n copy is no longer in the import file', '%n copies are no longer in the import file', report.notInCsv.length)"
 				:items="report.notInCsv"
 				inline
 				:open-up-to="40" />

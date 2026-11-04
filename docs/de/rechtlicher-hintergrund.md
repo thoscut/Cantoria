@@ -8,7 +8,7 @@
 
 Diese Seite erklärt, auf welchen Regeln die Rechteprüfung von Cantoria
 beruht und wo ihre Grenzen liegen. Sie beschreibt deutsches Recht, Stand
-Oktober 2026 (App-Version 0.11).
+November 2026 (App-Version 0.16.1 mit den Änderungen bis Meilenstein 0.20).
 
 > [!IMPORTANT]
 > Das ist **keine Rechtsberatung**. Die App macht Vorschläge und warnt; sie
@@ -74,13 +74,42 @@ vertraglich binden. Darum bewertet die App die **Fassung**, nicht das Werk.
 
 ### Volkslieder und traditionelle Melodien
 
-Eine Melodie ohne bekannte Urheberschaft ist frei. Eine **unwesentliche
+Eine Melodie oder ein Text ohne bekannte Urheberschaft ist nicht schon
+deshalb frei. Das Recht an einem anonymen Werk erlischt 70 Jahre nach seiner
+Veröffentlichung (§ 66 Abs. 1 Satz 1 UrhG), oder 70 Jahre nach seiner
+Schaffung, wenn es nicht innerhalb dieser 70 Jahre veröffentlicht wurde
+(Satz 2). Wird die Urheberschaft innerhalb der Frist offenbart, etwa weil
+die Person sich zu erkennen gibt oder ihr Name bekannt wird, gilt wieder die
+Regel 70 Jahre nach dem Tod (§ 66 Abs. 2 in Verbindung mit § 64 UrhG). Eine
+traditionelle Melodie ist also frei, wenn ihre Entstehung oder erste
+Veröffentlichung mehr als 70 Jahre zurückliegt und das belegt ist, zum
+Beispiel durch eine alte Volksliedsammlung. Die App fragt dafür kein Jahr
+ab: Notiere die Sammlung mit ihrem Jahr unter „Notizen“; die Person, die
+den Rechtestatus bestätigt, prüft den Beleg (Leitlinie 1). Dasselbe gilt
+für einen Text, der als „Traditionell (ohne bekannte Urheberschaft)“
+markiert ist. Viele „Volksweisen“ in
+Sammlungen des 20. Jahrhunderts sind in Wahrheit Kompositionen mit
+bekanntem oder ermittelbarem Urheber. Eine **unwesentliche
 Bearbeitung** eines nicht geschützten Werks der Musik ist keine eigene
 Bearbeitung (§ 3 Satz 2 UrhG), etwa das bloße Aussetzen einer Melodie mit
 einfachen Akkorden. Ein ausgearbeiteter Chorsatz ist dagegen meist eine
 Bearbeitung mit eigenem Schutz. Markiert Melodie oder Text nur mit Beleg als
 „traditionell“, zum Beispiel aus einer Volksliedsammlung, und erfasst die
-Bearbeitung trotzdem.
+Bearbeitung trotzdem. Die App schlägt eine traditionelle Melodie nur dann
+als gemeinfrei vor, wenn die Bearbeitung erfasst ist oder die Art der
+Fassung „Original“ lautet; sonst lautet der Vorschlag „unbekannt“.
+„Original“ heißt dabei: Niemand hat das Werk bearbeitet, es ist die
+Komposition, wie sie geschrieben wurde, oder die Melodie ohne eigenen Satz.
+Die Originalausgabe eines Chorsatzes ist kein „Original“ in diesem Sinn,
+sondern eine „Bearbeitung“.
+
+Dasselbe gilt für jede Bearbeitung, nicht nur von Volksliedern: Ein
+Choralsatz oder ein Arrangement eines klassischen Werks ist nach § 3 UrhG
+eine Bearbeitung mit eigenem Schutz, auch wenn die Komposition längst
+gemeinfrei ist. Ist die Art der Fassung „Bearbeitung“ oder „Einrichtung“
+und keine Person mit der Rolle „Bearbeitung“ erfasst, lautet ein Vorschlag
+„gemeinfrei“ stattdessen „unbekannt“. Das ist vor allem nach einem Import
+wichtig, wenn die Tabelle nur eine Spalte für die Komposition hatte.
 
 ## Fotokopien von Noten
 
@@ -104,6 +133,14 @@ nichts.
 - Die **GEMA** vergibt die Rechte für Aufführungen (Konzerte; dafür die
   Musikfolge) und für Aufnahmen. Eine GEMA-Lizenz für ein Konzert erlaubt
   keine Kopien der Noten.
+- **Aufnahmen** haben neben den Rechten am Werk eigene Rechte: die der
+  Mitwirkenden (§§ 73, 77, 78 UrhG) und die des Herstellers der Aufnahme
+  (§ 85 UrhG), für Jahrzehnte nach der Aufnahme oder ihrem Erscheinen
+  (§§ 82, 85 Abs. 3 UrhG), auch wenn das Werk gemeinfrei ist. Eine
+  Aufnahme aus dem Handel braucht die Einwilligung des Labels, eine
+  Aufnahme eurer Chorleitung oder eurer Begleitung deren Einwilligung. Die
+  GEMA vergibt die Rechte an einer geschützten Komposition, nicht die an
+  der Aufnahme.
 
 ## Erhaltungskopien
 
@@ -148,7 +185,19 @@ braucht dieselbe Einwilligung wie ein Scan (Nutzung „Digitalisierung“).
   sind. Die App verlangt darum für jedes Teilen eine bestätigte
   Gemeinfreiheit oder eine Lizenz für genau diese Nutzung: Chorportal,
   Selbstausdruck, Übe-Audio, Online-Veröffentlichung, Online-Wiedergabe
-  (Audio), Download und Ausdruck durch Mitglieder.
+  (Audio) sowie Download, Ausdruck und Kopien auf Geräten durch Mitglieder
+  (Scan in Links, Konzertmappe, Übergabeordner).
+- **MusicXML ist eine vollständige Ausgabe.** Aus einer MusicXML-Datei
+  lassen sich neue Noten und Stimmen machen; eine Lizenz zum Ausdrucken
+  eines PDF deckt ihre Weitergabe nicht. Für den Übergabeordner an ein
+  Chorsystem verlangt die App darum bestätigte Gemeinfreiheit oder eine
+  Lizenz „Weitergabe digitaler Notendateien (MusicXML) an Chormitglieder“,
+  und sie schreibt die Dateien bereinigt (ohne Kodierer, Notizen und
+  Kommentare).
+- **Aufnahmen im Übergabeordner** brauchen neben den Rechten am Werk
+  (Gemeinfreiheit oder Übe-Audio) in jedem Fall eine Lizenz „Weitergabe von
+  Aufnahmen an Chormitglieder“, denn Mitwirkende und Hersteller haben eigene
+  Rechte (siehe „Wer welche Rechte vergibt“).
 - **Ein Ausschnitt zählt wie das ganze Blatt.** Auch ein paar Takte sind ein
   Teil des Werks; die App teilt darum nur freigegebene Fassungen.
 - **Was im Browser ankommt, lässt sich speichern.** Die öffentlichen Seiten
@@ -162,12 +211,79 @@ braucht dieselbe Einwilligung wie ein Scan (Nutzung „Digitalisierung“).
   weiter.
 - **Interne Wiedergabe.** Für die Rollen des Archivs genügt zum Abspielen
   ein importierter, noch nicht bestätigter Status „gemeinfrei“. Das ist
-  intern vertretbar; geteilt wird nur, was bestätigt ist.
+  intern vertretbar; geteilt wird nur, was bestätigt ist, und nur das spielt
+  für Chormitglieder und auf öffentlichen Links.
 - **IMSLP und CPDL.** Die öffentliche Repertoireseite verlinkt nur auf die
   Seite des Werks. Nicht jede Ausgabe, die dort angeboten wird, ist in
   Deutschland frei, etwa Bearbeitungen oder Ausgaben, die nur in Kanada oder
   den USA frei sind. Für Links ohne Gewinnabsicht ist das Haftungsrisiko
   gering (EuGH, C-160/15, *GS Media*).
+
+## Ohne Netz üben und die Konzertmappe
+
+Ein Stück, das „ohne Netz verfügbar“ ist, ist eine Kopie auf dem Gerät des
+Chormitglieds oder der Chorleitung (§ 16 UrhG), nicht nur eine Anzeige. Die
+App erlaubt sie nur, wo Chormitglieder ohnehin eine Kopie behalten dürfen:
+bestätigte Gemeinfreiheit oder eine gültige Lizenz „Download, Ausdruck und
+Kopien auf Geräten durch Chormitglieder“ oder für den Selbstausdruck.
+Interne Erhaltungskopien kommen nie auf ein Gerät.
+
+- Jeder Start mit Netz prüft die gespeicherten Stücke beim Server: Was nicht
+  mehr geteilt ist oder nicht mehr behalten werden darf, verschwindet vom
+  Gerät. Nach 30 Tagen ohne Netz sind die Stücke gesperrt, bis die Seite
+  einmal mit Netz geöffnet wird.
+- Eine Lizenz, die endet, erreicht die Geräte darum erst bei ihrer nächsten
+  Prüfung mit Netz. Verlangt eine Lizenz das Löschen zu einem festen Tag,
+  sagt es den Mitgliedern, und denkt daran, dass Aufnahmen und Übe-Dateien,
+  die sie als Datei gespeichert haben, bei ihnen bleiben.
+- Die Konzertmappe hält das Programm für Probe und Konzert auf dem Gerät der
+  Chorleitung; es gelten dieselben Regeln.
+
+## Mikrofon, Aufnahmen und Speicher im Browser
+
+- **Mikrofon.** „Meine Tonhöhe zeigen“ und „Selbst aufnehmen“ nutzen das
+  Mikrofon erst nach einem Tippen und der Erlaubnis des Browsers. Die
+  Stimme wird im Browser verarbeitet; nichts geht an den Server. Eine
+  Aufnahme bleibt im Speicher der Seite, bis die Person sie als Datei
+  speichert oder die Seite verlässt.
+- **Eigene Aufnahmen weitergeben.** Eine Aufnahme von sich selbst mit der
+  Begleitung eines geschützten Stücks ist eine Vervielfältigung des Werks,
+  und die Stimmen anderer darin haben Leistungsschutzrechte. Sie
+  weiterzugeben, etwa in einer Chatgruppe, braucht Rechte, die die App nicht
+  prüft.
+- **Speichern auf dem Gerät (§ 25 TDDDG).** Die App setzt keine eigenen
+  Cookies (die Nextcloud setzt die Sitzungs-Cookies, die sie zum Arbeiten
+  braucht). Sie merkt sich Einstellungen im Browser (`localStorage`: Größe
+  der Noten, Einzähler, Passagen, Übe-Einstellungen wie Tempo und Mischpult,
+  eingeklappte Filter) und legt auf Tippen Stücke im Cache Storage ab. Für
+  geteilte Geräte merkt sie sich einen Hash des angemeldeten Kontos in
+  IndexedDB, damit Stücke eines anderen Kontos oder von vor dem Abmelden
+  entfernt werden (eine Sicherheitsmaßnahme;
+  [SECURITY.md](../../SECURITY.md), englisch).
+  Drei Speicherungen geschehen ohne Zutun der Person: Den Hash des Kontos
+  schreibt jede Seite der App bei jedem Aufruf, auch im Archiv und ohne das
+  Modul „Üben ohne Netz“; „Mit mir geteilt“ merkt sich bei jedem Aufruf die
+  Kennungen der gesehenen Links und die Zeit, je Konto als Hash, für die
+  Markierung „Neu“ (`localStorage`); und mit dem Modul „Üben ohne Netz“
+  meldet jede Seite beim Öffnen einen Service Worker im Browser an (auf
+  einem öffentlichen Link, sobald das Stück behalten werden darf), der
+  Inhalte erst ablegt, wenn jemand etwas gespeichert hat.
+  Speichern auf einem Gerät braucht eine Einwilligung, außer es ist
+  unbedingt erforderlich für einen Dienst, den die Person ausdrücklich
+  gewünscht hat (§ 25 Abs. 2 Nr. 2 TDDDG; die Vorschrift gilt unabhängig
+  davon, ob Daten personenbezogen sind). Ein Stück auf Tippen zu behalten
+  und der Hash des Kontos als Schutz dieser Stücke sind das in der Regel.
+  Übe-Einstellungen für den nächsten Besuch, die Neu-Markierung, der Hash
+  auf Seiten ohne gespeicherte Stücke und der Service Worker vor dem ersten
+  Speichern sind Komfort oder Vorbereitung und nach strenger Lesart der
+  Aufsichtsbehörden einwilligungsbedürftig, also ein Grenzfall. Das
+  praktische Risiko ist gering, weil nichts das Gerät verlässt; die
+  Textbausteine nennen die Ausnahme darum nur mit Vorbehalt. Nichts davon erreicht den Server oder Dritte; „Alles auf
+  diesem Gerät löschen“ entfernt es (auf einem öffentlichen Link: „Ohne Netz
+  verfügbar“ ausschalten und die Websitedaten im Browser löschen), und das
+  Abmelden bei Nextcloud meist auch. Nennt es in den Datenschutzhinweisen,
+  statt „keine Cookies“ zuzusagen; Textbausteine stehen in den
+  [Datenschutz-Vorlagen](datenschutz-vorlagen.md).
 
 ## Öffentliche Seiten: Impressum und Datenschutz
 
@@ -201,3 +317,28 @@ oder löscht, steht im
 [Administrationshandbuch, Abschnitt 10](administrationshandbuch.md#10-datenschutz);
 Muster für das Verzeichnis von Verarbeitungstätigkeiten und die Information
 der Mitglieder in den [Datenschutz-Vorlagen](datenschutz-vorlagen.md).
+
+- **Löschfrist des Protokolls.** Das Protokoll ist der Nachweis gegenüber
+  Rechteinhabern, was der Chor mit einem Stück und auf welche Lizenz getan
+  hat. Ansprüche aus dem Urheberrecht verjähren drei Jahre nach dem Ende des
+  Jahres, in dem die Berechtigten davon erfahren, spätestens zehn Jahre nach
+  ihrer Entstehung (§ 102 UrhG i. V. m. §§ 195, 199 BGB). Konto und Namen so
+  lange zu behalten, stützt sich auf Art. 17 Abs. 3 lit. e DSGVO
+  (Rechtsansprüche). Danach genügt die Rolle: Nach zehn Jahren (Voreinstellung)
+  entfernt die App Konto und Namen aus den Protokolleinträgen und behält die
+  Rolle (Einstellung `audit_retention_years`, Administrationshandbuch,
+  Abschnitt 10). Das gilt auch für die Werte der Einträge, in denen ein
+  Konto oder ein Name steht, etwa wer einen Rechtestatus bestätigt, eine
+  Person geprüft oder eine Fassung als gültig gesetzt hat; die Auskunft
+  findet ein Konto auch dort, und Löschen auf Antrag sowie ein gelöschtes
+  Konto entfernen es dort ebenso.
+- **Übe-Dateien von Chormitgliedern** werden nur mit der Rolle und dem Tag
+  protokolliert, ohne Konto, Namen und Uhrzeit. In einer kleinen
+  Stimmgruppe kann ein solcher Eintrag mit anderem Wissen trotzdem auf eine
+  Person deuten; er ist dann pseudonym, nicht anonym (Erwägungsgrund 26
+  DSGVO).
+- **Auskunft (Art. 15 DSGVO)** umfasst alles, was über eine Person
+  festgehalten ist: Die Auskunft nennt auch die Aufgaben, Vorschläge,
+  Prüfpunkte, Links, Konzerte, Bestätigungen und Prüfungen, in denen Konto
+  oder Name als die Person steht, die sie angelegt, entschieden oder
+  bestätigt hat.

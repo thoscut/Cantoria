@@ -18,6 +18,21 @@ export const CACHE_PREFIX = 'cantoria-'
 export const SHELL_PREFIX = 'cantoria-shell-'
 /** Kept pieces are locked after this many days without a check with the server */
 export const MAX_DAYS_UNCHECKED = 30
+/**
+ * The header of a score, a scan or the page of a public link with which the
+ * server says whether it may stay on the device ('1'); the worker and the
+ * pages keep nothing without it (OfflineController::KEEP_HEADER, S N5)
+ */
+export const KEEP_HEADER = 'X-Cantoria-Keep'
+
+/**
+ * Whether the server allows an answer to stay on the device.
+ *
+ * @param headers - the headers of the answer
+ */
+export function mayStay(headers: Pick<Headers, 'get'>): boolean {
+	return headers.get(KEEP_HEADER) === '1'
+}
 
 /**
  * The pages that keep pieces, each with a cache of its own: "Shared with
@@ -49,6 +64,8 @@ export const COLLECTIONS: Record<CollectionName, Collection> = {
 
 /** The account of the pieces kept from public links: there is none */
 export const PUBLIC_ACCOUNT = 'public'
+/** The pages whose kept pieces belong to an account: all but public links */
+export const ACCOUNT_COLLECTIONS: CollectionName[] = ['member', 'folder']
 
 /** A piece kept on the device */
 export interface KeptPiece {
@@ -72,6 +89,13 @@ export interface Catalog {
 	/** last check with the server (ISO time) */
 	checked: string
 	pieces: Record<string, KeptPiece>
+	/**
+	 * The browser remembered this account when the list was written
+	 * (marker.ts). Once that memory is gone, the browser's storage was
+	 * cleared since, as Nextcloud's login page does after signing out
+	 * (S N6); a list without it (older versions) never counts as signed out.
+	 */
+	signedIn?: true
 }
 
 /** What the server says about keeping a piece (a link of the page, a programme item) */
@@ -94,6 +118,52 @@ export interface WorkerRequest {
 	kind: RequestKind
 	collection?: CollectionName
 	key?: string
+}
+
+/**
+ * The addresses a kept piece has on the device, relative to the scope of
+ * the worker: its notes (the page of a public link) and its scan.
+ *
+ * @param name - the collection
+ * @param key - token of the link or id of the programme item
+ */
+export function pieceAddresses(name: CollectionName, key: string): { notes: string, scan: string } {
+	switch (name) {
+	case 'member':
+		return { notes: `api/member/links/${key}/score`, scan: `api/member/links/${key}/scan` }
+	case 'folder':
+		return { notes: `api/concert-folder/items/${key}/score`, scan: `api/concert-folder/items/${key}/scan` }
+	default:
+		return { notes: `p/${key}`, scan: `p/${key}/scan` }
+	}
+}
+
+/**
+ * The scripts and styles of the pages that keep pieces, from the list of
+ * the build (Vite's manifest, vite.config.ts): the files of the entries
+ * and of everything they import, also later (the notation engine).
+ *
+ * @param manifest - the manifest of the build
+ * @param entries - the source files of the entries, e.g. "src/member.ts"
+ */
+export function shellFiles(manifest: Record<string, { file: string, imports?: string[], dynamicImports?: string[], css?: string[], assets?: string[] }>, entries: string[]): string[] {
+	const files = new Set<string>()
+	const seen = new Set<string>()
+	const visit = (key: string) => {
+		const chunk = manifest[key]
+		if (!chunk || seen.has(key)) {
+			return
+		}
+		seen.add(key)
+		for (const file of [chunk.file, ...(chunk.css ?? []), ...(chunk.assets ?? [])]) {
+			files.add(file)
+		}
+		for (const next of [...(chunk.imports ?? []), ...(chunk.dynamicImports ?? [])]) {
+			visit(next)
+		}
+	}
+	entries.forEach(visit)
+	return [...files].sort()
 }
 
 /** Paths that never come from the device: login, the session, the APIs of Nextcloud, avatars */
@@ -227,7 +297,7 @@ export function parseCatalog(text: string | null, key: RegExp = TOKEN): Catalog 
 				}
 			}
 		}
-		return { v: 1, account: parsed.account, checked: parsed.checked, pieces }
+		return { v: 1, account: parsed.account, checked: parsed.checked, pieces, ...(parsed.signedIn === true ? { signedIn: true as const } : {}) }
 	} catch {
 		return null
 	}
@@ -260,4 +330,65 @@ export function syncCatalog(catalog: Catalog, fresh: PieceForDevice[], now: Date
 		pieces[key] = { title: server.title, composer: server.composer, expires: server.expires, scan, kept: piece.kept }
 	}
 	return { catalog: { ...catalog, checked: now.toISOString(), pieces }, removed, scansRemoved }
+}
+
+/** Why the kept pieces of an account must go: another account, or someone signed out since */
+export type StaleReason = 'account' | 'signedOut'
+
+/**
+ * Whether the kept pieces of a page with an account must go before anything
+ * of them is shown (S N6): another account uses the app in this browser
+ * now or did since, or the browser's storage was cleared since the pieces
+ * were kept, as Nextcloud's login page does after signing out (it deletes
+ * IndexedDB, but not Cache Storage). A page knows its account; the service
+ * worker and a page without signing in know only the remembered one.
+ *
+ * @param catalog - the list of kept pieces of a page with an account
+ * @param remembered - the account the browser remembers (marker.ts); null: none; undefined: it cannot be read, then only the account decides
+ * @param account - the account of the page (accountKey); null: not known (the worker, a page without signing in)
+ */
+export function staleCatalog(catalog: Catalog, remembered: string | null | undefined, account: string | null): StaleReason | null {
+	if ((account ?? remembered ?? catalog.account) !== catalog.account) {
+		return 'account'
+	}
+	return remembered === null && catalog.signedIn === true ? 'signedOut' : null
+}
+
+/** What a page cleans up at its start, before it shows anything (S N6) */
+export interface DeviceCleanUp {
+	/** the collections whose pieces go, with the reason */
+	remove: Partial<Record<CollectionName, StaleReason>>
+	/** the passages and settings for practising in this browser are another account's */
+	forgetPractising: boolean
+	/** the account to remember in the browser from now on; null: nothing to write */
+	remember: string | null
+}
+
+/**
+ * What a page of the app cleans up at its start in this browser (S N6): the
+ * kept pieces of another account or of a signed-out one, and the passages
+ * and settings of another account. A page without signing in (a public
+ * link) removes only what was kept before someone signed out: a session
+ * that simply ended is no reason to take the pieces of the account.
+ *
+ * @param catalogs - the lists of kept pieces of the pages with an account
+ * @param remembered - the account the browser remembers; null: none; undefined: it cannot be read
+ * @param account - the account of the page; null without signing in
+ */
+export function deviceCleanUp(catalogs: Partial<Record<CollectionName, Catalog | null>>, remembered: string | null | undefined, account: string | null): DeviceCleanUp {
+	const remove: Partial<Record<CollectionName, StaleReason>> = {}
+	for (const name of ACCOUNT_COLLECTIONS) {
+		const catalog = catalogs[name]
+		const reason = catalog ? staleCatalog(catalog, remembered, account) : null
+		if (reason !== null) {
+			remove[name] = reason
+		}
+	}
+	// a page kept from before signing out is no sign-in of its account
+	const signedOut = Object.values(remove).includes('signedOut')
+	return {
+		remove,
+		forgetPractising: account !== null && typeof remembered === 'string' && remembered !== account,
+		remember: account !== null && remembered !== undefined && remembered !== account && !signedOut ? account : null,
+	}
 }

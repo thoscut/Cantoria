@@ -9,7 +9,7 @@ Nextcloud, die Seiten „Mit mir geteilt“ für Chormitglieder und die
 öffentlichen Seiten (öffentliche Links und die Repertoireseite).
 [English](../accessibility.md)
 
-## Ziel und Stand
+## Ziel und Prüfungen
 
 Die App zielt auf **WCAG 2.2, Stufe AA**. Sie ist **teilweise konform**: Die
 unten genannten Teile erfüllen das Ziel noch nicht. Die Erklärung ist eine
@@ -22,12 +22,13 @@ weit jeder Teil geprüft ist:
 | Werkverzeichnis, Rechte, Konzerte, Teilen und Einstellungen (bis Meilenstein 0.12) | in Nextcloud 33 mit axe-core, reiner Tastaturbedienung, 320 px Breite, 200 % Zoom und vergrößerten Textabständen, im hellen und im dunklen Design |
 | Üben in der Notenansicht: Anfangstöne, Metronom, Transponieren, Mischpult, Text, Tonhöhen-Anzeige, gemerkte Stellen, Selbst aufnehmen (0.13, 0.14) | gebaut und getestet im Testaufbau; noch nicht in einem echten Nextcloud und nicht mit einem Screenreader geprüft |
 | Üben ohne Netz und die Konzertmappe (0.15, 0.16) | im Testaufbau und in der Nachbildung von Handys und Tablets im Browser; noch nicht auf echten Geräten |
-| Die Seite für Chormitglieder, ein Programm teilen, die Wahl für den Chor in den Einstellungen (0.19) | im Testaufbau bei 360 bis 1280 px, mit der Tastatur, im Kontrastmodus von Windows und im Druck; noch nicht in einem echten Nextcloud |
+| Die Seite für Chormitglieder, ein Programm teilen, die Wahl für den Chor in den Einstellungen (0.19) | von Hand im Testaufbau bei 360 bis 1280 px und mit der Tastatur; noch nicht in einem echten Nextcloud. Kontrastmodus von Windows und Druck sind noch nicht mit Protokoll geprüft; [tools/screenshots](../../tools/screenshots/README.md) kann beides jetzt mit axe-core aufnehmen, ist für diese Version aber noch nicht gelaufen |
 
 Was die App tut:
 
-- Jede Funktion lässt sich mit der Tastatur bedienen; der Fokus springt in
-  einen Dialog oder die Seitenleiste und zurück dorthin, wo er herkam.
+- Jede Funktion lässt sich mit der Tastatur bedienen, außer wo die bekannten
+  Einschränkungen etwas anderes sagen; der Fokus springt in einen Dialog oder
+  die Seitenleiste und zurück dorthin, wo er herkam.
 - Schaltflächen, Felder und Symbole sind für Screenreader beschriftet;
   Listen und Ergebnisse, die sich ändern, werden angesagt.
 - Der Kontrast reicht im hellen und im dunklen Design; Informationen stehen
@@ -44,8 +45,9 @@ Was die App tut:
 - Ausdrucke tragen eine Kopfzeile mit Ansicht, Filtern und Datum. Gedruckte
   Noten zeigen nur das Notenbild, schwarz auf weiß, die hervorgehobene
   Stimme fett statt farbig.
-- Im Kontrastmodus von Windows übernehmen Notenbild, Tonhöhen-Anzeige und
-  die Plaketten der Rechte die Systemfarben.
+- Im Kontrastmodus von Windows sollen Notenbild, Tonhöhen-Anzeige und die
+  Plaketten der Rechte die Systemfarben übernehmen (siehe die bekannten
+  Einschränkungen).
 
 ## Bekannte Einschränkungen
 
@@ -64,9 +66,23 @@ Was die App tut:
 - **Mikrofon und Aufnahme** brauchen die Erlaubnis des Browsers. Die
   Aufnahme ist eine Tondatei, die sich nur anhören lässt; eine Abschrift
   gibt es nicht.
-- **Ohne Netz** stehen manche Zustände (gespeichert, gesperrt, abgeglichen)
+- **Ohne Netz** stehen manche Zustände (verfügbar, gesperrt, abgeglichen)
   als Text da und werden angesagt, sie sind aber noch nicht mit
   Screenreadern auf Handys ausprobiert.
+- Die **Bühnenansicht** (in der Konzertmappe und unter „Mit mir geteilt“)
+  füllt den Bildschirm; Dialoge und Auswahllisten der Seite öffnen sich
+  darüber und behalten den Fokus. Auf dem iPhone bietet der Browser der
+  Seite keinen Vollbildmodus, die Bühnenansicht bleibt dort eine vergrößerte
+  Ansicht im Browser.
+- Der **Scan** öffnet sich am Handy in einer eigenen Ansicht. Auf dem Tablet
+  und auf größeren Bildschirmen öffnet er sich in einem Rahmen, in dem
+  Zoomen und Blättern vom Browser abhängen; öffne den Scan dann besser in
+  einem eigenen Tab. Wie die Browser unter Android ein PDF im Rahmen zeigen,
+  ist noch nicht auf echten Geräten geprüft.
+- Im **Kontrastmodus von Windows** entfernt der Browser Schatten und ersetzt
+  Hintergrundfarben. Die App markiert die gewählte Zeile und Karte mit einem
+  Rahmen in der Systemfarbe; Bausteine von Nextcloud in der App (Knöpfe,
+  Schalter, Dialoge) übernehmen die Systemfarben auf ihre eigene Art.
 - **Seitenzahlen** in Ausdrucken hängen vom Browser ab (zum Beispiel Chrome
   und Edge; Firefox druckt ohne).
 - **Teile von Nextcloud** (Navigation, Dateiauswahl, Dialoge, der Kalender

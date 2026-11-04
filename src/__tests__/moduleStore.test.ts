@@ -33,6 +33,7 @@ function librarian(modules?: Record<string, boolean>, personalView?: unknown): M
 		roleLabels: {},
 		fields: { work: {}, version: {}, copy: {} },
 		licenseUses: {},
+		freeOnlyWays: [],
 		personFields: {},
 		contributionRoles: {},
 		archive: { id: 1, path: '/Archiv', user: 'lena' },

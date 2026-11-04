@@ -6,7 +6,7 @@
 import type { Catalog } from '../offline/rules.ts'
 
 import { describe, expect, it } from 'vitest'
-import { COLLECTIONS, localDay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, requestKind, syncCatalog, usable } from '../offline/rules.ts'
+import { ACCOUNT_COLLECTIONS, COLLECTIONS, deviceCleanUp, KEEP_HEADER, localDay, mayStay, MAX_DAYS_UNCHECKED, pageCollection, parseCatalog, pieceAddresses, requestKind, shellFiles, staleCatalog, syncCatalog, usable } from '../offline/rules.ts'
 
 const SCOPE = '/index.php/apps/cantoria/'
 const TOKEN = 'a'.repeat(32)
@@ -130,5 +130,97 @@ describe('pieces kept on the device', () => {
 
 	it('expire at the end of their last day on the device', () => {
 		expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+	})
+})
+
+describe('a shared device (S N6)', () => {
+	const anna = (signedIn: boolean): Catalog => ({ ...catalog('2026-10-01T00:00:00.000Z'), account: 'anna', ...(signedIn ? { signedIn: true as const } : {}) })
+
+	it('keeps in the list whether the browser remembered its account', () => {
+		expect(parseCatalog(JSON.stringify(anna(true)))?.signedIn).toBe(true)
+		expect(parseCatalog(JSON.stringify(anna(false)))).not.toHaveProperty('signedIn')
+		expect(parseCatalog(JSON.stringify({ ...anna(false), signedIn: 'yes' }))).not.toHaveProperty('signedIn')
+	})
+
+	it('removes the pieces of another account', () => {
+		expect(staleCatalog(anna(true), 'anna', 'ben')).toBe('account')
+		// another account used the app since, as the worker sees it
+		expect(staleCatalog(anna(true), 'ben', null)).toBe('account')
+		expect(staleCatalog(anna(true), 'anna', 'anna')).toBeNull()
+		expect(staleCatalog(anna(true), 'anna', null)).toBeNull()
+	})
+
+	it('removes the pieces kept before someone signed out, which cleared what the browser remembers', () => {
+		expect(staleCatalog(anna(true), null, null)).toBe('signedOut')
+		expect(staleCatalog(anna(true), null, 'anna')).toBe('signedOut')
+		// a list of an older version never counts as signed out, nor a browser that cannot remember
+		expect(staleCatalog(anna(false), null, null)).toBeNull()
+		expect(staleCatalog(anna(true), undefined, null)).toBeNull()
+		expect(staleCatalog(anna(true), undefined, 'ben')).toBe('account')
+	})
+
+	it('cleans up at the start of a page with another account, and remembers it', () => {
+		const plan = deviceCleanUp({ member: anna(true), folder: { ...anna(false), account: 'ben' } }, 'anna', 'ben')
+		expect(plan).toEqual({ remove: { member: 'account' }, forgetPractising: true, remember: 'ben' })
+		expect(deviceCleanUp({ member: anna(true) }, 'anna', 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('without signing in removes only what was kept before signing out, never because a session ended', () => {
+		expect(deviceCleanUp({ member: anna(true), folder: null }, null, null)).toEqual({ remove: { member: 'signedOut' }, forgetPractising: false, remember: null })
+		// the session ended, nobody signed out: the pieces of the account stay
+		expect(deviceCleanUp({ member: anna(true) }, 'anna', null)).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('does not remember the account of a page kept from before signing out', () => {
+		// the page "Shared with me" from the device, after signing out: its account is not signed in
+		expect(deviceCleanUp({ member: anna(true) }, null, 'anna')).toEqual({ remove: { member: 'signedOut' }, forgetPractising: false, remember: null })
+	})
+
+	it('adopts the pieces of an older version, and decides nothing where the browser cannot remember', () => {
+		expect(deviceCleanUp({ member: anna(false) }, null, 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: 'anna' })
+		expect(deviceCleanUp({ member: anna(true) }, undefined, 'anna')).toEqual({ remove: {}, forgetPractising: false, remember: null })
+	})
+
+	it('never touches the pieces of public links, which belong to the browser', () => {
+		expect(ACCOUNT_COLLECTIONS).toEqual(['member', 'folder'])
+		const visitor = { ...anna(true), account: 'public' }
+		expect(deviceCleanUp({ public: visitor }, null, 'ben').remove).toEqual({})
+	})
+})
+
+describe('what may stay on the device (S N5)', () => {
+	it('only an answer the server marks with X-Cantoria-Keep: 1', () => {
+		expect(KEEP_HEADER).toBe('X-Cantoria-Keep')
+		expect(mayStay(new Headers({ 'X-Cantoria-Keep': '1' }))).toBe(true)
+		expect(mayStay(new Headers({ 'X-Cantoria-Keep': '0' }))).toBe(false)
+		expect(mayStay(new Headers())).toBe(false)
+	})
+
+	it('names the notes and the scan of a piece as the worker and the pages ask for them', () => {
+		for (const name of ['member', 'folder', 'public'] as const) {
+			const key = name === 'folder' ? '42' : TOKEN
+			const { notes, scan } = pieceAddresses(name, key)
+			expect(requestKind(SCOPE + scan, SCOPE, '', false), name).toEqual({ kind: 'scan', collection: name, key })
+			expect(requestKind(SCOPE + notes, SCOPE, name === 'public' ? 'document' : '', name === 'public'), name)
+				.toEqual(name === 'public' ? { kind: 'page', collection: name, key } : { kind: 'score', collection: name, key })
+		}
+	})
+})
+
+describe('the scripts of the pages that keep pieces (A1)', () => {
+	const manifest = {
+		'src/member.ts': { file: 'js/cantoria-member.mjs', imports: ['_shared.js'], dynamicImports: ['node_modules/verovio/index.js'], css: ['css/member.css'] },
+		'src/public.ts': { file: 'js/cantoria-public.mjs', imports: ['_shared.js'] },
+		'src/main.ts': { file: 'js/cantoria-main.mjs', imports: ['_archive.js'] },
+		'_shared.js': { file: 'js/shared.chunk.mjs', imports: ['_shared.js'], assets: ['img/note.svg'] },
+		'_archive.js': { file: 'js/archive.chunk.mjs' },
+		'node_modules/verovio/index.js': { file: 'js/verovio.chunk.mjs' },
+	}
+
+	it('come from the manifest of the build, with what they import later, and nothing of the archive', () => {
+		expect(shellFiles(manifest, ['src/member.ts', 'src/public.ts'])).toEqual([
+			'css/member.css', 'img/note.svg', 'js/cantoria-member.mjs', 'js/cantoria-public.mjs', 'js/shared.chunk.mjs', 'js/verovio.chunk.mjs',
+		])
+		expect(shellFiles(manifest, ['src/unknown.ts'])).toEqual([])
 	})
 })

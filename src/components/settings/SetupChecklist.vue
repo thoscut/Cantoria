@@ -5,8 +5,8 @@
 <script setup lang="ts">
 /**
  * The setup in six steps at the top of the settings page: archive folder,
- * roles and groups, access to the archive folder, the functions for the
- * choir, import, file sync. Each
+ * the functions for the choir, roles and groups (the roles these functions
+ * need), access to the archive folder, import, file sync. Each
  * step shows its state in words and with an icon (never by colour alone),
  * says what to do and links the place where it is done. The states are
  * derived from what the page has loaded; nothing is stored.
@@ -21,6 +21,7 @@ import { computed } from 'vue'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import GuideLink from '../GuideLink.vue'
 import { ADMIN_GUIDE, adminGuideUrl } from '../../docs.ts'
+import { translateLabel } from '../../format.ts'
 import { SETTINGS_SECTIONS, setupSteps } from '../../settings.ts'
 
 const props = defineProps<{
@@ -91,18 +92,35 @@ function statusIcon(status: StepStatus): string {
 }
 
 /**
+ * Names of roles as one text, as the role settings show them.
+ *
+ * @param roles - role keys
+ */
+function roleNames(roles: string[]): string {
+	return roles.map((role) => translateLabel(props.settings.roleLabels[role] ?? role)).join(', ')
+}
+
+/**
  * What to do for a step that is not done.
  *
  * @param step - the step
  */
 function hint(step: SetupStep): string {
+	const without = step.rolesWithoutGroup ?? []
 	switch (step.key) {
 	case 'archive':
 		return t('cantoria', 'Choose the folder in Nextcloud that holds the score files.')
 	case 'roles':
-		return step.status === 'problem'
-			? t('cantoria', 'A group of a role no longer exists. Choose another group for the role.')
-			: t('cantoria', 'Give at least the catalog role (music librarians) a group.')
+		if (step.status === 'problem') {
+			return t('cantoria', 'A group of a role no longer exists. Choose another group for the role.')
+		}
+		if (without.includes('member')) {
+			return t('cantoria', 'Give the role "Choir members" a group. Otherwise nobody sees what the conductor shares with the choir.')
+		}
+		if (without.some((role) => role !== 'librarian')) {
+			return t('cantoria', 'The functions you chose need a group for these roles: {roles}.', { roles: roleNames(without) })
+		}
+		return t('cantoria', 'Give at least the catalog role (music librarians) a group.')
 	case 'access':
 		if (step.status === 'missing') {
 			return t('cantoria', 'Choose the archive folder first.')
@@ -113,7 +131,7 @@ function hint(step: SetupStep): string {
 	case 'modules':
 		return t('cantoria', 'Choose what Cantoria should do for your choir: keep the archive in order, plan concerts, let the singers practise, or publish pages.')
 	case 'import':
-		return t('cantoria', 'A music librarian imports the catalog in the app: Archive management → Import catalog.')
+		return t('cantoria', 'A music librarian imports the catalog (Archive management → Import catalog, with a template) or starts without one, with the first new accession.')
 	default:
 		return t('cantoria', 'A music librarian links the files in the app: Archive management → Run file sync.')
 	}

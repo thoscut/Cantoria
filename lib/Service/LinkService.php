@@ -42,7 +42,16 @@ use OCP\IUserManager;
  * measures must exist in the score. A link for them may also offer a PDF
  * scan of the copy (`scan_file_id`): it needs the same release as the notes
  * (guideline 2: an excerpt counts as much as the whole, a scan as much as
- * the notes).
+ * the notes), and for the scan the rights to hand out a copy: for choir
+ * members a license for download and printing, for the public a license for
+ * the download of the scan on public links (RightsPolicy::publicScanDenial).
+ *
+ * How long a link lasts (milestone 0.18): at most MAX_DAYS from the day it
+ * is made or extended, at most MAX_AGE_DAYS after it was made, and never
+ * beyond the last day of the license that releases the piece for its circle
+ * (RightsPolicy::releaseEnd). Extending never shortens a link. An expired
+ * public link gets a new token when it is extended, so that an address from
+ * an old message or a proxy log does not open it again.
  *
  * Tokens (milestone 0.11): the table holds their hashes (LinkTokens). The
  * token of a link for choir members or the public, a secret that opens the
@@ -52,11 +61,16 @@ use OCP\IUserManager;
  * account.
  *
  * @psalm-type LinkView = array<string, string|int|bool|null>
- * @psalm-type CircleOption = array{available: bool, allowed: bool, reason: ?string, scan: bool, scanReason: ?string, playback: bool, practiceAudio: bool, offline: ?bool}
+ * @psalm-type CircleOption = array{available: bool, allowed: bool, reason: ?string, scan: bool, scanReason: ?string, playback: bool, practiceAudio: bool, offline: ?bool,
+ *     until: ?string, quantity: ?array{licensed: int, members: int}}
  * @psalm-type ScanOption = array{id: int, name: string}
  */
 class LinkService {
 	public const MAX_DAYS = 183;
+	/** Days after it was made that a link ends at the latest, however often it is extended */
+	public const MAX_AGE_DAYS = 365;
+	/** Days after their last day that expired links stay in the lists, to be extended (U40) */
+	public const RECENTLY_EXPIRED_DAYS = 30;
 	/** Roles that make, extend and share links */
 	public const CREATORS = [Roles::LIBRARIAN, Roles::CONDUCTOR, Roles::OPERATIONS];
 	/** Fields a request may set when creating a link */
@@ -90,8 +104,9 @@ class LinkService {
 
 	/**
 	 * @param array<array-key, mixed> $data field => value (request data)
+	 * @param int|null $programme the programme shared as a whole with the choir members (ProgrammeShareService); never from a request
 	 */
-	public function create(int $copyId, array $data, string $uid): ExcerptLink {
+	public function create(int $copyId, array $data, string $uid, ?int $programme = null): ExcerptLink {
 		$values = Input::values($data);
 		$circle = $values['circle'] ?? ExcerptLink::CIRCLE_INTERNAL;
 		if (!is_string($circle) || !in_array($circle, ExcerptLink::CIRCLES, true)) {
@@ -132,7 +147,7 @@ class LinkService {
 			if (!$shared) {
 				throw new InvalidInputException('Only links for choir members and public links offer the scan; the archive roles see it beside the score.');
 			}
-			$scanDenial = $circle === ExcerptLink::CIRCLE_MEMBERS ? $this->policy->memberScanDenial($version, $today, $copy) : null;
+			$scanDenial = $this->scanDenial($circle, $version, $today, $copy);
 			if ($scanDenial !== null) {
 				throw new AccessDeniedException($scanDenial);
 			}
@@ -140,7 +155,7 @@ class LinkService {
 		} else {
 			$scanFileId = null;
 		}
-		$expires = self::expiry($values['expires'] ?? null, $today);
+		$expires = self::expiry($values['expires'] ?? null, $today, $shared ? $this->policy->releaseEnd($version, $circle, false, $today) : null);
 
 		$link = new ExcerptLink();
 		$this->tokens->issue($link);
@@ -188,6 +203,7 @@ class LinkService {
 			}
 		}
 		$link->setScanFileId($scanFileId);
+		$link->setEventId($circle === ExcerptLink::CIRCLE_MEMBERS ? $programme : null);
 		$link->setCircle($circle);
 		$link->setCreatedBy($uid);
 		$link->setCreated($this->time->getTime());
@@ -205,27 +221,76 @@ class LinkService {
 	}
 
 	/**
-	 * The last day of a link: given, between today and MAX_DAYS from today,
-	 * or else the latest.
+	 * The last day of a link: given, between today and MAX_DAYS from today
+	 * (and not after `$cap`, the end of the license or the age limit of the
+	 * link), or else the latest.
 	 *
+	 * @param string|null $cap the last day allowed besides MAX_DAYS; null: none
 	 * @throws InvalidInputException
 	 */
-	public static function expiry(mixed $value, string $today): string {
-		$latest = self::latestExpiry($today);
+	public static function expiry(mixed $value, string $today, ?string $cap = null): string {
+		$latest = self::latestExpiry($today, $cap);
 		if ($value === null || $value === '') {
 			return $latest;
 		}
 		if (!is_string($value) || !FieldValue::isDate($value) || $value < $today || $value > $latest) {
+			if ($latest !== self::latestExpiry($today)) {
+				throw new InvalidInputException('The expiry date must lie between today and %s: the license that releases the piece, or the age of the link, allows no later day.', [$latest]);
+			}
 			throw new InvalidInputException('The expiry date must lie between today and six months from now.');
 		}
 		return $value;
 	}
 
 	/**
-	 * The latest last day a link made today may have.
+	 * The latest last day a link made or extended today may have; with a
+	 * cap (end of the license, age limit) not after it.
 	 */
-	public static function latestExpiry(string $today): string {
-		return (new \DateTimeImmutable($today))->modify('+' . self::MAX_DAYS . ' days')->format('Y-m-d');
+	public static function latestExpiry(string $today, ?string $cap = null): string {
+		$latest = (new \DateTimeImmutable($today))->modify('+' . self::MAX_DAYS . ' days')->format('Y-m-d');
+		return $cap !== null && $cap < $latest ? $cap : $latest;
+	}
+
+	/**
+	 * The last day a link may last because of its age: MAX_AGE_DAYS after
+	 * the day it was made, in the time zone of the server.
+	 */
+	public static function ageLimit(ExcerptLink $link): string {
+		return (new \DateTimeImmutable('@' . $link->getCreated()))->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+			->modify('+' . self::MAX_AGE_DAYS . ' days')->format('Y-m-d');
+	}
+
+	/**
+	 * The last day a link may get today when it is extended: MAX_DAYS from
+	 * today, the age limit and, beyond the archive roles, the end of the
+	 * license that releases the piece; null when the age limit has passed.
+	 */
+	public function extensionLimit(ExcerptLink $link, WorkVersion $version, string $today): ?string {
+		return $this->extensionBound($link, $version, $today)['until'];
+	}
+
+	/**
+	 * The last day a link may get today when it is extended (extensionLimit)
+	 * and what sets it (U41): `six_months` (MAX_DAYS from today), `age`
+	 * (MAX_AGE_DAYS after the link was made; `until` null once that has
+	 * passed) or `license` (the end of the license that releases it).
+	 *
+	 * @return array{until: ?string, limit: 'six_months'|'age'|'license'}
+	 */
+	public function extensionBound(ExcerptLink $link, WorkVersion $version, string $today): array {
+		$age = self::ageLimit($link);
+		if ($age < $today) {
+			return ['until' => null, 'limit' => 'age'];
+		}
+		$end = isset(self::CIRCLE_MODULES[$link->getCircle()]) ? $this->policy->releaseEnd($version, $link->getCircle(), false, $today) : null;
+		$months = self::latestExpiry($today);
+		$until = min($months, $age, $end ?? $months);
+		$limit = match (true) {
+			$until === $months => 'six_months',
+			$until === $end => 'license',
+			default => 'age',
+		};
+		return ['until' => $until, 'limit' => $limit];
 	}
 
 	/**
@@ -233,12 +298,23 @@ class LinkService {
 	 * what choir members keep on their devices stays, and a link sent by
 	 * message keeps working. For the creator and the catalog librarian; the
 	 * rights are checked again as when the link was made. An expired link
-	 * can be extended, a revoked one not.
+	 * can be extended, a revoked one not; an expired public link gets a new
+	 * token (milestone 0.18). The new last day lies within MAX_DAYS from
+	 * today, MAX_AGE_DAYS after the link was made and the end of the license
+	 * that releases it, and never before the current one.
+	 *
+	 * `$changes` (sharing a programme): `note`, a new note for choir members
+	 * (empty: the note stays), and `scan_file_id`, a scan to offer from now
+	 * on, with the same checks as when a link is made. A link that offers a
+	 * scan the rights of today no longer allow is not extended: a new link
+	 * without the scan is needed. `programme`: the programme the link is
+	 * shared with now, for "Shared with me" (U24; choir members only).
 	 *
 	 * @param mixed $expires the new last day; empty: the latest
+	 * @param array{note?: ?string, scan_file_id?: ?int, programme?: int} $changes
 	 * @throws UserFacingException
 	 */
-	public function extend(int $linkId, mixed $expires, string $uid): ExcerptLink {
+	public function extend(int $linkId, mixed $expires, string $uid, array $changes = []): ExcerptLink {
 		$this->roles->requireRole($uid, self::CREATORS);
 		try {
 			$link = $this->links->find($linkId);
@@ -264,14 +340,71 @@ class LinkService {
 				throw new AccessDeniedException($denial);
 			}
 		}
-		$new = self::expiry($expires, $today);
+		$latest = $this->extensionLimit($link, $version, $today);
+		if ($latest === null) {
+			throw new InvalidInputException('This link was made more than a year ago and cannot be extended any more. Please make a new one.');
+		}
 		$old = $link->getExpires();
+		// the same last day again (a programme shared once more): it stays, even beyond a later limit
+		$new = $old !== null && $expires === $old && $old >= $today ? $old : self::expiry($expires, $today, $latest);
+		if ($old !== null && $new < $old) {
+			throw new InvalidInputException('The link is valid until %s already. Extending never shortens a link; to end it earlier, revoke it.', [$old]);
+		}
+		$note = self::text($changes['note'] ?? null, 2000);
+		$scanFileId = $changes['scan_file_id'] ?? null;
+		$operation = $this->audit->newOperation();
+		$changed = false;
+		if ($note !== null && $note !== $link->getNote()) {
+			if ($circle !== ExcerptLink::CIRCLE_MEMBERS) {
+				throw new InvalidInputException('A public link has no note, because everyone could read it. Please leave the note empty.');
+			}
+			$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'note', $link->getNote(), $note);
+			$link->setNote($note);
+			$changed = true;
+		}
+		if ($scanFileId === null && $link->getScanFileId() !== null && $module !== null) {
+			// the scan it offers needs the rights of today, too
+			$scanDenial = $this->scanDenial($circle, $version, $today, $copy);
+			if ($scanDenial !== null) {
+				throw new AccessDeniedException($scanDenial);
+			}
+		}
+		if ($scanFileId !== null && $scanFileId !== $link->getScanFileId()) {
+			if ($module === null) {
+				throw new InvalidInputException('Only links for choir members and public links offer the scan; the archive roles see it beside the score.');
+			}
+			$scanDenial = $this->scanDenial($circle, $version, $today, $copy);
+			if ($scanDenial !== null) {
+				throw new AccessDeniedException($scanDenial);
+			}
+			$scanFileId = $this->checkScan($link->getCopyId(), $scanFileId, $uid);
+			$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'scan_file_id', $link->getScanFileId(), $scanFileId);
+			$link->setScanFileId($scanFileId);
+			$changed = true;
+		}
+		$programme = $changes['programme'] ?? null;
+		if ($programme !== null && $circle === ExcerptLink::CIRCLE_MEMBERS && $programme !== $link->getEventId()) {
+			// where "Shared with me" lists it; no question of rights, so not in the audit log
+			$link->setEventId($programme);
+			$changed = true;
+		}
+		if ($circle === ExcerptLink::CIRCLE_PUBLIC && $old !== null && $old < $today) {
+			// The old address may be in messages and logs: it stays closed.
+			$this->tokens->issue($link);
+			$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'token', null, 'new');
+			$changed = true;
+		}
 		if ($new !== $old) {
 			$link->setExpires($new);
-			$link = $this->links->update($link);
-			$this->audit->record($this->audit->newOperation(), $uid, 'link', $linkId, 'extended', 'expires', $old, $new);
+			$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'expires', $old, $new);
+			$licenseEnd = $module === null ? null : $this->policy->releaseEnd($version, $circle, false, $today);
+			if ($licenseEnd !== null) {
+				// evidence for the rights holder: until when the license carries the link
+				$this->audit->record($operation, $uid, 'link', $linkId, 'extended', 'license_until', null, $licenseEnd);
+			}
+			$changed = true;
 		}
-		return $link;
+		return $changed ? $this->links->update($link) : $link;
 	}
 
 	/**
@@ -335,12 +468,14 @@ class LinkService {
 	private function circleOption(string $circle, WorkVersion $version, Copy $copy, bool $hasScore, string $today): array {
 		if (!$this->modules->isEnabled(self::CIRCLE_MODULES[$circle] ?? '')) {
 			return ['available' => false, 'allowed' => false, 'reason' => self::SWITCHED_OFF, 'scan' => false, 'scanReason' => null, 'playback' => false,
-				'practiceAudio' => false, 'offline' => null];
+				'practiceAudio' => false, 'offline' => null, 'until' => null, 'quantity' => null];
 		}
 		$members = $circle === ExcerptLink::CIRCLE_MEMBERS;
 		$denial = $this->shareDenial($circle, $version, $today, $copy) ?? ($hasScore ? null : self::NO_SCORE);
 		$playDenial = $members ? $this->policy->memberPlayDenial($version, $today, $copy) : $this->policy->publicPlayDenial($version, $today, $copy);
-		$scanDenial = $denial ?? ($members ? $this->policy->memberScanDenial($version, $today, $copy) : null);
+		$scanDenial = $denial ?? $this->scanDenial($circle, $version, $today, $copy);
+		$licensed = $members && $denial === null ? $this->policy->licensedQuantity($version, $circle, $today) : null;
+		$memberCount = $licensed === null ? 0 : $this->roles->memberCount();
 		return [
 			'available' => true,
 			'allowed' => $denial === null,
@@ -350,10 +485,24 @@ class LinkService {
 			'playback' => $denial === null && $playDenial === null,
 			'practiceAudio' => $members && $denial === null && $playDenial === null && $this->modules->isEnabled(Modules::MEMBER_PRACTICE_AUDIO)
 				&& $this->policy->memberPracticeAudioDenial($version, $today, $copy) === null,
-			// whether the recipients can keep it on their device (milestone 0.19); null: the module is off
+			// whether the recipients can keep it on their device (milestone 0.19, the one rule of RightsPolicy); null: the module is off
 			'offline' => !$this->modules->isEnabled(Modules::OFFLINE) ? null
-				: $denial === null && ($members ? $scanDenial === null : $version->getRightsStatus() === 'public_domain' && $version->isConfirmed()),
+				: $denial === null && $this->policy->deviceDenial($circle, $version, $today, $copy) === null,
+			// the last day of the license that releases it; null: no end
+			'until' => $denial === null ? $this->policy->releaseEnd($version, $circle, false, $today) : null,
+			// a hint, no barrier: more choir members than the licenses are for (W B17)
+			'quantity' => $licensed !== null && $memberCount > $licensed ? ['licensed' => $licensed, 'members' => $memberCount] : null,
 		];
+	}
+
+	/**
+	 * Why a link of a circle may not offer the scan of a version, with the
+	 * next step; null when it may.
+	 */
+	private function scanDenial(string $circle, WorkVersion $version, string $day, Copy $copy): ?string {
+		return $circle === ExcerptLink::CIRCLE_PUBLIC
+			? $this->policy->publicScanDenial($version, $day, $copy)
+			: $this->policy->memberScanDenial($version, $day, $copy);
 	}
 
 	/**
@@ -476,35 +625,41 @@ class LinkService {
 	}
 
 	/**
-	 * Active links (not revoked, not expired), optionally of one copy, as
-	 * view() shows them. Links to copies the account may not view (internal
-	 * preservation copies) are left out.
+	 * Active links (not revoked, not expired) and, so that they can still be
+	 * extended (U40), those that ended in the last RECENTLY_EXPIRED_DAYS
+	 * days; optionally of one copy, as view() shows them. Links to copies the
+	 * account may not view (internal preservation copies) are left out.
+	 *
+	 * For the links the account may extend (its own; the catalog librarian:
+	 * all), `extend_until` is the latest last day the server allows today
+	 * and `extend_limit` what sets it (extensionBound, U41); null for the
+	 * others.
 	 *
 	 * @return list<LinkView>
 	 */
 	public function active(?int $copyId, string $uid): array {
 		$today = $this->rights->today($uid);
+		$since = (new \DateTimeImmutable($today))->modify('-' . self::RECENTLY_EXPIRED_DAYS . ' days')->format('Y-m-d');
 		$mayViewPreservation = $this->policy->mayViewPreservationCopies($uid);
-		$versions = $mayViewPreservation ? [] : $this->versions->findAllById();
+		$librarian = $this->roles->hasAnyRole($uid, [Roles::LIBRARIAN]);
+		$versions = $this->versions->findAllById();
 		$copies = [];
-		if (!$mayViewPreservation) {
-			foreach ($this->copies->findAll() as $copy) {
-				$copies[$copy->getId()] = $copy;
-			}
+		foreach ($this->copies->findAll() as $copy) {
+			$copies[$copy->getId()] = $copy;
 		}
 		$rows = [];
 		foreach ($this->links->findByCopy($copyId) as $link) {
-			if ($link->getRevoked() !== null || ($link->getExpires() !== null && $link->getExpires() < $today)) {
+			if ($link->getRevoked() !== null || ($link->getExpires() !== null && $link->getExpires() < $since)) {
 				continue;
 			}
-			if (!$mayViewPreservation) {
-				$copy = $copies[$link->getCopyId()] ?? null;
-				$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
-				if ($copy === null || $version === null || RightsPolicy::isPreservationCopy($version, $copy)) {
-					continue;
-				}
+			$copy = $copies[$link->getCopyId()] ?? null;
+			$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
+			if (!$mayViewPreservation && ($copy === null || $version === null || RightsPolicy::isPreservationCopy($version, $copy))) {
+				continue;
 			}
-			$rows[] = $this->view($link, $uid);
+			$bound = $version !== null && ($librarian || $link->getCreatedBy() === $uid)
+				? $this->extensionBound($link, $version, $today) : ['until' => null, 'limit' => null];
+			$rows[] = $this->view($link, $uid) + ['extend_until' => $bound['until'], 'extend_limit' => $bound['limit']];
 		}
 		return $rows;
 	}

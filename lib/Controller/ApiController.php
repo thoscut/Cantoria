@@ -168,8 +168,9 @@ class ApiController extends Controller {
 	public function import(int $fileId, bool $dryRun = true): JSONResponse {
 		return $this->run(function (string $uid) use ($fileId, $dryRun) {
 			$this->roles->requireRole($uid, [Roles::LIBRARIAN]);
+			// CSV, .xlsx or .ods: the same limit for every format (U32)
 			$file = $this->userFiles->read($uid, $fileId, UserFiles::MAX_IMPORT_BYTES,
-				new InvalidInputException('The selected CSV file is not accessible.'));
+				new InvalidInputException('The selected file is not accessible.'));
 			$report = $this->import->import($file['content'], $file['name'], $uid, $dryRun);
 			return ['warnings' => $this->translateWarnings($report['warnings'])] + $report;
 		});
@@ -198,7 +199,9 @@ class ApiController extends Controller {
 	}
 
 	/**
-	 * Plain download link, therefore without CSRF token. Read-only.
+	 * Plain download link, therefore without CSRF token. Read-only. Without
+	 * accounts; internal preservation copies only for the roles that may
+	 * view them (ExportService::csvFor).
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -210,7 +213,28 @@ class ApiController extends Controller {
 		}
 		$today = $this->time->getDateTime('now', $this->timeZone->getTimeZone(false, $this->userId));
 		$name = $today->format('Ymd') . '_catalog' . ($extended === 1 ? '_full' : '') . '.csv';
-		$response = new DataDownloadResponse($this->export->csv($extended === 1), $name, 'text/csv; charset=utf-8');
+		$response = new DataDownloadResponse($this->export->csvFor($this->userId, $extended === 1), $name, 'text/csv; charset=utf-8');
+		$response->addHeader('X-Content-Type-Options', 'nosniff');
+		return $response;
+	}
+
+	/**
+	 * The import template: the catalog columns with one example row, as CSV
+	 * or ODS. Plain download link, therefore without CSRF token. Read-only;
+	 * for the catalog role, which imports.
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[UserRateLimit(limit: 30, period: 600)]
+	#[FrontpageRoute(verb: 'GET', url: '/api/import/template')]
+	public function importTemplate(string $format = 'csv'): Response {
+		if ($this->userId === null || !$this->roles->hasAnyRole($this->userId, [Roles::LIBRARIAN])) {
+			return new JSONResponse(['error' => $this->l->t('This requires one of these roles: %s', [$this->l->t(Roles::LABELS[Roles::LIBRARIAN])])], Http::STATUS_FORBIDDEN);
+		}
+		$ods = $format === 'ods';
+		$response = new DataDownloadResponse($this->export->importTemplate($ods ? 'ods' : 'csv'),
+			'cantoria_import_template.' . ($ods ? 'ods' : 'csv'),
+			$ods ? 'application/vnd.oasis.opendocument.spreadsheet' : 'text/csv; charset=utf-8');
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
 		return $response;
 	}

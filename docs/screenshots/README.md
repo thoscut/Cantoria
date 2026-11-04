@@ -70,6 +70,29 @@ The App Store shows the files marked with a number, in this order
 | `annual-snapshots.png` | The view "Annual snapshots" with two snapshots and their comparison: a confirmation added and a new license. |
 | `revisions.png` | Sidebar of copy 2-2, tab "Files", section "Revisions of this version": revision 2 (a correction in the app, current since the day of the pictures) and revision 1 (first recorded), the comparison of both with its difference and the note for choir members. |
 
+## Prepared, not taken yet
+
+[`tools/screenshots`](../../tools/screenshots/README.md) has recipes for these
+pictures of milestones 0.13 to 0.19, the phone, the contrast mode and
+print. They need a run against a Nextcloud with the demo data (with
+`--axe` for the record of the accessibility check); no guide shows them yet.
+
+| File | Window | Shows |
+|---|---|---|
+| `practice-tools.png` | 1600 × 1000 | The score viewer of copy 2-1 with "Voice, measures and practising" and "More for practising" open. |
+| `concert-folder.png` | 1600 × 1000 | The concert folder of the conductor with the concert of the demo and its first piece. |
+| `stage-view.png` | 1280 × 800 | The stage view of the concert folder. |
+| `keep-offline.png` | 390 × 844 | "Shared with me" on a phone with the switch "Available without a network". |
+| `programme-share.png` | 1600 × 1000, dialog | The dialog "Share with the choir" of the concert. |
+| `phone-shared-with-me.png` | 390 × 844 | "Shared with me" on a phone with the practising tools open. |
+| `phone-concert-folder.png` | 360 × 780 | The concert folder on a small phone. |
+| `phone-landscape-stage.png` | 844 × 390 | The stage view on a phone in landscape. |
+| `catalog-contrast.png` | 1600 × 1000 | The catalog with the rights of copy 2-1 in the contrast mode of Windows. |
+| `phone-catalog-contrast.png` | 390 × 844 | The selected copy in the card list of a phone in the contrast mode. |
+| `score-contrast.png` | 1600 × 1000 | The score viewer in the contrast mode. |
+| `score-print.png` | 1600 × 1000 | The score viewer with the print styles. |
+| `concert-print.png` | 1600 × 1000 | The concert with the print styles. |
+
 ## German interface (informal)
 
 The German guides show only these pictures (checked by

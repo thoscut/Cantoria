@@ -214,6 +214,7 @@ export function normalizeMeta(meta: Meta): Meta {
 		roleLabels: meta.roleLabels && !Array.isArray(meta.roleLabels) ? meta.roleLabels : {},
 		fields,
 		licenseUses: meta.licenseUses && !Array.isArray(meta.licenseUses) ? meta.licenseUses : {},
+		freeOnlyWays: Array.isArray(meta.freeOnlyWays) ? meta.freeOnlyWays.filter((way): way is string => typeof way === 'string') : [],
 		personFields: normalizeFieldMap(meta.personFields),
 		contributionRoles: meta.contributionRoles && !Array.isArray(meta.contributionRoles) ? meta.contributionRoles : {},
 		archive: meta.archive ?? { id: 0, path: '', user: '' },
@@ -385,6 +386,15 @@ export async function fetchFileSyncStatus(): Promise<FileSyncStatus> {
  */
 export function exportUrl(extended: boolean): string {
 	return apiUrl('/export') + '?extended=' + (extended ? '1' : '0')
+}
+
+/**
+ * Download URL of the import template: the catalog columns with one example row.
+ *
+ * @param format - 'csv' (the format of the import) or 'ods' (for a spreadsheet program)
+ */
+export function importTemplateUrl(format: 'csv' | 'ods'): string {
+	return apiUrl('/import/template') + '?format=' + format
 }
 
 export async function storeExport(): Promise<string> {

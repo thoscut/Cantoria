@@ -125,6 +125,24 @@ final class ReviewServiceTest extends TestCase {
 		self::assertSame([$point], $this->service($point, [Roles::READER], version: self::version(false))->forVersion(3, 'anna')['points']);
 	}
 
+	/**
+	 * One rule (RightsPolicy): a version whose copy is of the kind
+	 * "Preservation copy" counts as one, also without the mark on the
+	 * version.
+	 */
+	public function testThePointsOfAVersionWithACopyOfThePreservationKindAreOnlyForItsViewers(): void {
+		$copy = new \OCA\Cantoria\Db\Copy();
+		$copy->setId(5);
+		$copy->setVersionId(3);
+		$copy->setKind(\OCA\Cantoria\Service\RightsPolicy::PRESERVATION_COPY_KIND);
+		$copies = $this->createStub(CopyMapper::class);
+		$copies->method('findByVersion')->willReturn([$copy]);
+		$point = self::point(Roles::CONDUCTOR);
+		self::assertSame([$point], $this->service($point, [Roles::CONDUCTOR], copies: $copies, version: self::version(false))->forVersion(3, 'anna')['points']);
+		$this->expectException(AccessDeniedException::class);
+		$this->service($point, [Roles::READER], copies: $copies, version: self::version(false))->forVersion(3, 'anna');
+	}
+
 	public function testCorrectionOrdersOfAPreservationCopyAreOnlyForItsViewers(): void {
 		$point = self::point(Roles::CONDUCTOR, ReviewPoint::CORRECT);
 		self::assertSame([], $this->service($point, [Roles::READER], version: self::version(true))->orders('anna'));
@@ -247,5 +265,39 @@ final class ReviewServiceTest extends TestCase {
 		self::assertNull(ReviewService::catalogField('version.unknown_field'));
 		self::assertNull(ReviewService::catalogField('Lieblingsfarbe'));
 		self::assertNull(ReviewService::catalogField('oc_users.password'));
+	}
+
+	/**
+	 * A checksum that cannot be computed is logged without the account
+	 * (S N20).
+	 */
+	public function testAFailedChecksumIsLoggedWithoutTheAccount(): void {
+		$settings = $this->createStub(AppSettings::class);
+		$settings->method('archiveInfo')->willReturn(['id' => 7, 'path' => 'Archiv', 'user' => 'lena-archive']);
+		$root = $this->createStub(IRootFolder::class);
+		$root->method('getUserFolder')->willThrowException(new \RuntimeException('not available'));
+		$logged = [];
+		$logger = $this->createStub(LoggerInterface::class);
+		$logger->method('info')->willReturnCallback(function (string|\Stringable $message) use (&$logged): void {
+			$logged[] = (string)$message;
+		});
+		$service = new ReviewService($this->createStub(IDBConnection::class), $this->createStub(ReviewPointMapper::class),
+			$this->createStub(TranscriptionReportMapper::class), $this->createStub(CopyMapper::class), $this->createStub(WorkVersionMapper::class),
+			$this->createStub(WorkMapper::class), $this->createStub(ArchiveFileMapper::class), $this->createStub(AuditLog::class),
+			$this->createStub(Roles::class), $this->modulesWithout([]), $this->createStub(NotificationService::class),
+			$this->createStub(ProposalService::class), $this->createStub(TaskService::class), $settings, $root,
+			$this->createStub(IUserManager::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
+			$this->createStub(IL10N::class), $logger);
+		$file = new \OCA\Cantoria\Db\ArchiveFile();
+		$file->setId(4);
+		$file->setFileId(40);
+		$checksum = new \ReflectionMethod(ReviewService::class, 'checksum');
+		self::assertNull($checksum->invoke($service, $file, 'kim-reporter'));
+		self::assertCount(2, $logged);
+		foreach ($logged as $message) {
+			self::assertStringNotContainsString('lena-archive', $message);
+			self::assertStringNotContainsString('kim-reporter', $message);
+			self::assertStringContainsString('checksum of file 4', $message);
+		}
 	}
 }

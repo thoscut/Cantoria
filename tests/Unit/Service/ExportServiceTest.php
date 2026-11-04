@@ -14,10 +14,12 @@ use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\WorkMapper;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Service\AppSettings;
+use OCA\Cantoria\Service\CatalogCsv;
 use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\FullBackupService;
 use OCA\Cantoria\Service\OdsWriter;
 use OCA\Cantoria\Service\PersonService;
+use OCA\Cantoria\Service\Roles;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -25,6 +27,7 @@ use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * The complete backup goes into the backup folder (outside the archive
@@ -73,7 +76,8 @@ final class ExportServiceTest extends TestCase {
 		$person->method('table')->willReturn([['name'], []]);
 		$service = new ExportService($this->createStub(WorkMapper::class), $this->createStub(WorkVersionMapper::class),
 			$this->createStub(CopyMapper::class), $settings, $time, $this->createStub(IDateTimeZone::class),
-			$this->createStub(AuditEntryMapper::class), $this->createStub(OdsWriter::class), $person, $backup, $config);
+			$this->createStub(AuditEntryMapper::class), $this->createStub(OdsWriter::class), $person, $backup, $config,
+			$this->createStub(Roles::class), $this->createStub(LoggerInterface::class));
 
 		$result = $service->storeBackup('weekly', 'lena');
 
@@ -87,6 +91,27 @@ final class ExportServiceTest extends TestCase {
 			'20260901-030000_backup_weekly.json', '20260901-030000_catalog_weekly.csv', '20260901-030000_catalog_weekly.ods',
 			'20260902-030000_backup_weekly.json', '20260902-030000_catalog_weekly.csv', '20260902-030000_catalog_weekly.ods',
 		], $deleted);
+	}
+
+	public function testTheImportTemplateIsTheCatalogFormatOrOneSheet(): void {
+		$sheets = null;
+		$ods = $this->createStub(OdsWriter::class);
+		$ods->method('write')->willReturnCallback(function (array $written) use (&$sheets): string {
+			$sheets = $written;
+			return 'ods';
+		});
+		$service = new ExportService($this->createStub(WorkMapper::class), $this->createStub(WorkVersionMapper::class),
+			$this->createStub(CopyMapper::class), $this->createStub(AppSettings::class), $this->createStub(ITimeFactory::class),
+			$this->createStub(IDateTimeZone::class), $this->createStub(AuditEntryMapper::class), $ods,
+			$this->createStub(PersonService::class), $this->createStub(FullBackupService::class), $this->createStub(IAppConfig::class),
+			$this->createStub(Roles::class), $this->createStub(LoggerInterface::class));
+		$template = CatalogCsv::template();
+
+		self::assertSame(CatalogCsv::write($template['header'], $template['rows']), $service->importTemplate('csv'));
+		self::assertSame('ods', $service->importTemplate('ods'));
+		self::assertSame([['name' => 'Werkverzeichnis', 'rows' => [$template['header'], ...$template['rows']], 'text' => [2]]], $sheets,
+			'the sheet named like the format, the column "Signatur" (third) formatted as text (U44)');
+		self::assertSame('Signatur', $template['header'][2]);
 	}
 
 	public function testABackupHoldsNoLinkTokensAndASnapshotNoAccounts(): void {

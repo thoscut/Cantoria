@@ -15,11 +15,15 @@ use OCP\ITempManager;
 /**
  * Reads the cell values of an .xlsx workbook (Office Open XML) without
  * external libraries: shared strings, inline strings and numbers. Formulas
- * are read as their cached values; formatting is ignored.
+ * are read as their cached values. Of the formatting only one thing counts
+ * (W B24): a number in a cell formatted as a date is a day, and comes back
+ * as ISO date (`2026-11-03`, with ` 14:30` when the format shows a time of
+ * day), as the OpenDocument reader does; Excel stores it as a serial number.
  *
  * Uploaded workbooks are untrusted: the reader refuses document type
  * declarations (no entities, no external loading), unpacks at most a bounded
- * size per part and in total (ZIP bombs), and limits columns and cells, so
+ * size per part and in total (ZIP bombs), and limits columns, cells and the
+ * text of all cells together (one shared string can fill many cells), so
  * that a small file cannot exhaust the memory of the server.
  */
 class XlsxReader {
@@ -37,8 +41,29 @@ class XlsxReader {
 	public const MAX_COLUMNS = 16384;
 	/** Cells of all sheets together, including filled gaps; an empty row counts as one */
 	public const MAX_CELLS = 1000000;
+	/** Text of all cells together (bytes): as much as a CSV file for an import may hold */
+	public const MAX_TEXT_BYTES = UserFiles::MAX_IMPORT_BYTES;
+	/**
+	 * Elements of one XML part. libxml keeps a DOM outside the memory limit
+	 * of PHP, about 130 bytes per element; 16 MiB of empty elements would
+	 * take more than 500 MB. The elements are therefore counted with
+	 * XMLReader, in constant memory, before the part becomes a DOM (S N18).
+	 * A sheet needs two or three elements per cell with content, so this
+	 * leaves room for several hundred thousand cells.
+	 */
+	public const MAX_ELEMENTS = 1000000;
+
+	/**
+	 * Built-in number formats that show a date (ECMA-376, 18.8.30): true
+	 * with a time of day. 14 to 17 and 22 everywhere; 27 to 31, 36, 50 to 54,
+	 * 57 and 58 are dates in East Asian versions of Excel.
+	 */
+	private const BUILT_IN_DATE_FORMATS = [14 => false, 15 => false, 16 => false, 17 => false, 22 => true,
+		27 => false, 28 => false, 29 => false, 30 => false, 31 => false, 36 => false,
+		50 => false, 51 => false, 52 => false, 53 => false, 54 => false, 57 => false, 58 => false];
 
 	private int $cells = 0;
+	private int $bytes = 0;
 
 	public function __construct(
 		private ITempManager $tempManager,
@@ -57,6 +82,7 @@ class XlsxReader {
 			throw new InvalidInputException('The file is not an Excel workbook (.xlsx).');
 		}
 		$this->cells = 0;
+		$this->bytes = 0;
 		$zip = BoundedZip::open($this->tempManager, $content, self::MAX_ENTRIES, self::MAX_PART_BYTES, self::MAX_TOTAL_BYTES,
 			self::tooLarge(), new InvalidInputException('The Excel workbook is damaged.'));
 		if ($zip === null) {
@@ -68,6 +94,8 @@ class XlsxReader {
 			}
 			$shared = $this->sharedStrings($zip);
 			$workbook = self::xpath($zip->part('xl/workbook.xml') ?? self::damaged());
+			$dates = $this->dateStyles($zip);
+			$date1904 = in_array(strtolower((self::elements($workbook, '/m:workbook/m:workbookPr')[0] ?? null)?->getAttribute('date1904') ?? ''), ['1', 'true'], true);
 			$rels = self::xpath($zip->part('xl/_rels/workbook.xml.rels') ?? self::damaged());
 			$targets = [];
 			foreach (self::elements($rels, '/p:Relationships/p:Relationship') as $rel) {
@@ -79,7 +107,7 @@ class XlsxReader {
 				$target = str_starts_with($target, 'xl/') ? $target : 'xl/' . $target;
 				$data = $zip->part($target);
 				if ($data !== null) {
-					$sheets[] = ['name' => $sheet->getAttribute('name'), 'rows' => $this->rows(self::xpath($data), $shared)];
+					$sheets[] = ['name' => $sheet->getAttribute('name'), 'rows' => $this->rows(self::xpath($data), $shared, $dates, $date1904)];
 				}
 			}
 			return $sheets;
@@ -120,10 +148,86 @@ class XlsxReader {
 	}
 
 	/**
+	 * The cell styles (`s` of a cell, an index into `cellXfs`) whose number
+	 * format shows a date: true when it shows a time of day, too.
+	 *
+	 * @return array<int, bool>
+	 */
+	private function dateStyles(BoundedZip $zip): array {
+		$data = $zip->part('xl/styles.xml');
+		if ($data === null) {
+			return [];
+		}
+		$xpath = self::xpath($data);
+		$formats = self::BUILT_IN_DATE_FORMATS;
+		foreach (self::elements($xpath, '/m:styleSheet/m:numFmts/m:numFmt') as $format) {
+			$kind = self::dateFormat($format->getAttribute('formatCode'));
+			$id = (int)$format->getAttribute('numFmtId');
+			if ($kind === null) {
+				unset($formats[$id]);
+			} else {
+				$formats[$id] = $kind;
+			}
+		}
+		$styles = [];
+		foreach (self::elements($xpath, '/m:styleSheet/m:cellXfs/m:xf') as $index => $xf) {
+			$kind = $formats[(int)$xf->getAttribute('numFmtId')] ?? null;
+			if ($kind !== null) {
+				$styles[$index] = $kind;
+			}
+		}
+		return $styles;
+	}
+
+	/**
+	 * Whether a number format code shows a date (false) or a date with a
+	 * time of day (true); null for anything else, a time alone included.
+	 * Text in quotes, escaped characters and sections in brackets (colors,
+	 * locales, elapsed hours) do not count.
+	 */
+	public static function dateFormat(string $code): ?bool {
+		$code = preg_replace('/"[^"]*"|\\\\.|\[[^\]]*\]|_.|\*./', '', explode(';', $code)[0]) ?? '';
+		$code = strtolower($code);
+		if (preg_match('/[dy]/', $code) !== 1) {
+			return null;
+		}
+		return preg_match('/[hs]/', $code) === 1;
+	}
+
+	/**
+	 * A serial number of Excel as ISO date: days since 30 December 1899
+	 * (Excel counts a 29 February 1900 that never was, so the days before
+	 * 1 March 1900 are one day off), or since 1 January 1904 in a workbook
+	 * of the 1904 date system; the fraction is the time of day.
+	 */
+	public static function serialDate(string $value, bool $withTime, bool $date1904 = false): ?string {
+		if (preg_match('/^\d+(\.\d+)?([eE][-+]?\d+)?$/', $value) !== 1) {
+			return null;
+		}
+		$serial = (float)$value;
+		$days = (int)floor($serial);
+		if ($date1904) {
+			$base = new \DateTimeImmutable('1904-01-01', new \DateTimeZone('UTC'));
+		} else {
+			if ($days < 1 || $days === 60) {
+				return null;
+			}
+			$base = new \DateTimeImmutable($days < 60 ? '1899-12-31' : '1899-12-30', new \DateTimeZone('UTC'));
+		}
+		$date = $base->modify('+' . $days . ' days');
+		if (!$withTime) {
+			return $date->format('Y-m-d');
+		}
+		$minutes = (int)round(($serial - floor($serial)) * 1440.0);
+		return $date->modify('+' . $minutes . ' minutes')->format($minutes === 0 ? 'Y-m-d' : 'Y-m-d H:i');
+	}
+
+	/**
 	 * @param list<string> $shared
+	 * @param array<int, bool> $dates cell styles that show a date (dateStyles)
 	 * @return list<list<string>>
 	 */
-	private function rows(\DOMXPath $sheet, array $shared): array {
+	private function rows(\DOMXPath $sheet, array $shared, array $dates = [], bool $date1904 = false): array {
 		$rows = [];
 		foreach (self::elements($sheet, '/m:worksheet/m:sheetData/m:row') as $row) {
 			$cells = [];
@@ -135,8 +239,14 @@ class XlsxReader {
 				$cells[$index] = match ($cell->getAttribute('t')) {
 					's' => $shared[(int)self::firstText($sheet, 'm:v', $cell)] ?? '',
 					'inlineStr' => implode('', array_map(fn (\DOMElement $is): string => self::text($sheet, $is), self::elements($sheet, 'm:is', $cell))),
+					'', 'n' => self::number(self::firstText($sheet, 'm:v', $cell),
+						$cell->hasAttribute('s') ? ($dates[(int)$cell->getAttribute('s')] ?? null) : null, $date1904),
 					default => self::firstText($sheet, 'm:v', $cell),
 				};
+				$this->bytes += strlen($cells[$index]);
+				if ($this->bytes > self::MAX_TEXT_BYTES) {
+					throw self::tooLarge();
+				}
 			}
 			$max = $cells === [] ? -1 : max(array_keys($cells));
 			// Counted before the gaps are filled, so that one far-away cell
@@ -152,6 +262,14 @@ class XlsxReader {
 			$rows[] = $filled;
 		}
 		return $rows;
+	}
+
+	/**
+	 * A number as it is stored, or as ISO date in a cell formatted as a date
+	 * (`$date`: whether with the time of day; null: no date).
+	 */
+	private static function number(string $value, ?bool $date, bool $date1904): string {
+		return $date === null || $value === '' ? $value : (self::serialDate($value, $date, $date1904) ?? $value);
 	}
 
 	/**
@@ -191,12 +309,39 @@ class XlsxReader {
 		throw new InvalidInputException('The Excel workbook is damaged.');
 	}
 
+	/**
+	 * Throws $tooLarge when an XML part has more than $limit elements,
+	 * counted with XMLReader (streaming, constant memory) before the part
+	 * is loaded as a DOM (MAX_ELEMENTS). A part that is not well-formed is
+	 * left to the DOM, which refuses it as damaged.
+	 */
+	public static function limitElements(string $data, InvalidInputException $tooLarge, int $limit = self::MAX_ELEMENTS): void {
+		$reader = new \XMLReader();
+		$previous = libxml_use_internal_errors(true);
+		try {
+			if (!$reader->XML($data, null, LIBXML_NONET)) {
+				return;
+			}
+			$elements = 0;
+			while ($reader->read()) {
+				if ($reader->nodeType === \XMLReader::ELEMENT && ++$elements > $limit) {
+					throw $tooLarge;
+				}
+			}
+		} finally {
+			$reader->close();
+			libxml_clear_errors();
+			libxml_use_internal_errors($previous);
+		}
+	}
+
 	private static function xpath(string $data): \DOMXPath {
 		// Spreadsheets never need a document type declaration; refusing it
 		// rules out entity expansion and external entities (XXE) altogether.
 		if ($data === '' || stripos($data, '<!DOCTYPE') !== false) {
 			self::damaged();
 		}
+		self::limitElements($data, self::tooLarge());
 		$document = new \DOMDocument();
 		$previous = libxml_use_internal_errors(true);
 		try {

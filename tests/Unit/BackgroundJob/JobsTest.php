@@ -106,7 +106,7 @@ final class JobsTest extends TestCase {
 			$works, $this->createStub(CopyMapper::class), $rights, $notifications, $config, $events,
 			$persons, $this->modulesWithout($off), $folderBook ?? $this->createStub(FolderBookService::class),
 			$printMirror ?? $this->createStub(PrintMirrorService::class), $export ?? $this->createStub(ExportService::class),
-			$this->createStub(HandoverService::class));
+			$this->createStub(HandoverService::class), $this->createStub(\OCA\Cantoria\Service\PrivacyService::class));
 	}
 
 	public function testABackupOlderThanEightDaysIsNotifiedOnce(): void {

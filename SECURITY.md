@@ -45,7 +45,7 @@ below explain the reasons.
 
 | Promise | Tested by |
 |---|---|
-| Every route needs a logged-in account, except the public pages of the sharing modules | CS `testOnlyTheSharingPagesArePublic` |
+| Every route needs a logged-in account, except the public pages of the sharing modules and the service worker of the core | CS `testOnlyTheSharingPagesArePublic` |
 | Every route belongs to the core or names its module; a switched-off module answers 404 | CS `testEveryRouteIsCoreOrBelongsToAModule`, `testRoutesOfASwitchedOffModuleAnswer404`, `testASwitchedOffPartOfAnActionAnswers404` |
 | Only the settings are restricted to administrators, and only they can be delegated | CS `testOnlyTheSettingsLackNoAdminRequired`, `testTheSettingsCanBeDelegatedAndNothingElse`, `testTheSettingsRefuseWhomTheyWereNotGiven`; `settings_access_test` |
 | Delegated settings give no role to an own group, do not move the archive folder and switch on no module that opens the archive; such changes are logged | CS `testDelegatedSettingsCannotGrantRolesOrMoveTheArchiveFolder`; `ModuleSettingsTest::testOnlyAdministratorsSwitchOnWhatOpensTheArchive`, `testEveryChangedSwitchIsRecorded` |
@@ -61,35 +61,45 @@ below explain the reasons.
 | Practice audio of choir members stays within the link and is recorded with the role only, without account or name | `SharingTest::testChoirMembersMakePracticeAudioOfTheirExcerptOnly`, `testTheAuditLogNamesOnlyTheRoleOfAChoirMember` |
 | The repertoire page lists only public-domain works and links only to `cpdl.org` and `imslp.org` over https | `SharingTest::testTheRepertoirePageShowsChosenPublicDomainWorksOnly`, `testLinksToCpdlAndImslpMustBeHttpsToTheirSite` |
 | The API for agents needs its module, a role and a limit on every route, and decides nothing | CS `testEveryApiV1RouteNeedsTheInterfaceItsModuleARoleAndALimit`, `testNoApiV1RouteDecidesOrCorrects`, `testASwitchedOffApiV1RouteAnswers404WithOcsMeta`; agent run in `tools/ci/integration-demo.sh` |
-| The scan in links for choir members needs a license for copies unless public domain is confirmed; public playback of protected versions a license for online playback | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testPublicLinks`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
-| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages and the API for agents, for every role | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies` |
+| The scan in links for choir members needs a license for copies unless public domain is confirmed; playback outside the archive needs confirmed public domain or a license (online playback for public links, practice audio for choir members) | `RightsPolicyTest::testTheScanForChoirMembersNeedsALicenseForCopies`, `testLinksForChoirMembers`, `testPublicLinks`, `testARightsConflictClosesPublicLinksWithoutALicense`; `SharingTest::testTheDialogLearnsWhatTheRecipientsGet` |
+| Internal preservation copies (a version marked as one, or a copy of that kind) are listed and refused alike by the app's pages, the API for agents, the CSV export and the task lists, for every role; programmes follow below | `PreservationCopyParityTest::testBothInterfacesListTheSameCopies`, `testBothInterfacesRefuseTheSameCopies`, `testTheExportHoldsTheCopiesOfTheListAndNoAccounts`, `testTaskListsHoldTheSameCopies`, `testATaskAboutAPreservationCopyStaysWithTheRolesThatMayViewIt` |
+| Exports in the archive folder (`_cantoria-app`) hold no accounts and no internal preservation copies; the complete state before an import goes into the backup folder | `PreservationCopyParityTest::testTheExportFolderHoldsNoPreservationCopiesAndNoAccounts` |
+| In a programme (concert detail, API for agents, options for sharing it) an internal preservation copy shows shelf mark, ids and warnings only to the roles that may view it | `PreservationCopyParityTest::testProgrammesShowPreservationCopiesOnlyToTheRolesThatMayViewThem`; `ProgrammeShareTest::testAPreservationCopyShowsNeitherShelfMarkNorCopyToOtherRoles`; `LinkRolesTest::testTheOptionsHideAPreservationCopyFromTheOperationsRole` |
+| Sharing a programme and extending links only by the roles that make links, with the rights of today, rate limited | `LinkRolesTest::testOnlyTheRolesThatMakeLinksShareAProgrammeAndExtendLinks`, `testExtendingChecksTheRightsOfTodayForEveryCircleAndTheScan`; CS `testExpensiveEndpointsAreRateLimited` |
+| A link lasts at most 183 days from the day it is made or extended, at most a year after it was made and never beyond the license that releases it; extending never shortens a link, and an expired public link gets a new token | `SharingTest::testALinkIsExtendedOnlyByItsCreatorOrTheLibrarianAndWithTheRightsOfToday`, `testALinkLastsAtMostUntilTheLicenseEnds`, `testAnExpiredPublicLinkGetsANewTokenWhenExtended`; `ProgrammeShareTest::testALinkIsNeverShortened`, `testAPieceLastsAtMostUntilItsLicenseEnds`; `RightsPolicyTest::testALinkLastsAtMostAsLongAsItsLicense` |
+| The scan of a public link needs a license for its download unless public domain is confirmed; online publication alone is not enough | `RightsPolicyTest::testTheScanOfAPublicLinkNeedsItsOwnLicense`; `SharingTest::testThePublicScanNeedsItsOwnLicense`, `testAPublicLinkShowsTheWholePieceAndItsScanUnderTheSameRules` |
+| A rights conflict (confirmed public domain, but the persons recorded now say protected) closes public links that no license carries | `RightsPolicyTest::testARightsConflictClosesPublicLinksWithoutALicense` |
 | Answers of the API for agents name no accounts; preservation copies only for the roles that may view them | `ApiV1ControllerTest::testACopyWithoutAccountNamesAndAPreservationCopyOnlyForItsRoles`, `testTheReviewOfACopyHasNoAccountNamesAndComesInPages`, `testPreservationCopiesOnlyForRolesThatMayViewThem` |
 | The MCP server never shows the app password and sends nothing in read-only mode | `tools/mcp/test`: "never appear in tool results" (secrets), "send nothing in read-only mode", "leaves out the writing tools in read-only mode" |
 | Files are read through the user's own view; nobody gets a file they could not open | `UserFilesTest::testRefusesAFileTheUserCannotSee`; `ScoreServiceTest::testAScoreInAnArchiveFolderThatIsNotSharedSaysWhatToDo`; `files_integration_test` |
 | Size limits are enforced while reading, not only by the size in the file cache | `UserFilesTest::testRefusesContentAboveTheLimitWhenTheRecordedSizeIsWrong`; `ScoreServiceTest::testReadsNoMoreThanTheLimitWhenTheRecordedSizeIsWrong`, `testRefusesACompressedScoreThatUnpacksTooLarge` |
 | Score files reach the browser only as real MusicXML, as an attachment with `nosniff` | CS `testScoreFilesAreNeverShownInline`; `ScoreServiceTest::testRefusesAFileThatOnlyPretendsToBeMusicXml`, `testRightsPolicyComesFirst` |
-| Spreadsheets are read without document type declarations and with limits against ZIP bombs | `XlsxReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testAFarCellCannotInflateTheWorkbook` |
+| Spreadsheets (XLSX and ODS) are read without document type declarations and with limits against ZIP bombs; repeated cells and rows of an ODS file count against the limits before they are filled in | `XlsxReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testAFarCellCannotInflateTheWorkbook`; `OdsReaderTest::testRefusesDocumentTypeDeclarations`, `testRefusesAPartThatUnpacksTooLarge`, `testRepeatsCannotInflateTheSpreadsheet` |
 | A rights notice in a MusicXML file never sets a rights status | `RightsNoticeServiceTest::testANoticeBecomesAtMostAProposal`, `testTheDoctypeOfMusicXmlIsAcceptedButNoInternalSubset`; `archive_extras_test` |
 | The print station never writes into the archive folder and replaces only files it wrote itself | `print_mirror_test`; CS `testThePrintStationIsSyncedByTheCatalogLibrarianAndAdministrators` |
-| The hand-over to a choir system never writes into the archive folder or the folder of the print station and hands over only what choir members may have | `handover_test`; CS `testTheHandOverIsSyncedByTheCatalogLibrarianAndAdministrators` |
-| Backups and annual snapshots lie outside the archive folder | `workflow_test` ("the backup lies in the backup folder"), `archive_extras_test` ("the snapshot lies outside the archive folder"), `notifications_test` |
+| The hand-over to a choir system never writes into the archive folder or the folder of the print station and hands over only what choir members may have; MusicXML only cleaned and with a license for digital score files, recordings only with a license for passing them on | `handover_test`; CS `testTheHandOverIsSyncedByTheCatalogLibrarianAndAdministrators`; `HandoverContentTest::testMusicXmlGoesInCleaned`, `testAFileThatIsNoScoreStaysOut`; `RightsPolicyTest::testTheHandOverNeedsUsesForDigitalScoresAndRecordings` |
+| Backups and annual snapshots lie outside the archive folder, in a folder that only the account that set the archive folder can open; a shared folder stops the backup | `workflow_test` ("the backup lies in the backup folder"), `archive_extras_test` ("the snapshot lies outside the archive folder"), `notifications_test`; `AppSettingsTest::testAFolderOfTheAccountThatIsSharedIsNotTakenOver`, `testTheStoredFolderStopsTheBackupOnceItIsShared` |
+| Every download of the complete backup is in the audit log | `FullBackupDownloadTest::testEveryDownloadIsRecorded`, `testARefusedDownloadIsNotRecorded` |
 | The database holds link tokens only as hash and encrypted; tokens of links for choir members and public links only for their creator and the catalog librarian, no account names in link lists | `LinkTokensTest::testTheTableHoldsTheHashAndTheEncryptedTokenOnly`, `testTheTokenIsReadBackOnlyWithTheSecretOfTheInstance`, `testOnlyTheCreatorAndTheLibrarianSeeTokensThatOpenALinkToOthers` |
-| Excerpts and whole pieces for choir members and the public carry no encoder, miscellaneous fields, comments or processing instructions | `MusicXmlExcerptTest::testNamesAndNotesOutsideTheMusicDoNotLeaveTheServer` |
+| Excerpts and whole pieces for choir members and the public, and MusicXML in the hand-over folder, carry no encoder, miscellaneous fields, comments or processing instructions | `MusicXmlExcerptTest::testNamesAndNotesOutsideTheMusicDoNotLeaveTheServer`; `HandoverContentTest::testMusicXmlGoesInCleaned` |
 | The rights notice is not read from documents with an internal DTD subset, however long the prolog | `RightsNoticeServiceTest::testTheDoctypeOfMusicXmlIsAcceptedButNoInternalSubset` |
 | Backups hold no link tokens; a restore brings links back revoked | `ExportServiceTest::testABackupHoldsNoLinkTokensAndASnapshotNoAccounts`; `backup_test` |
-| A deleted account leaves no account in the folder book and the audit log; access and erasure for one person record no name | `PrivacyTest::testADeletedAccountLeavesNoAccountBehind`, `testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName`, `testTheReportNamesLoansEntriesAndPersonsOfAnAccountOrAName` |
+| A deleted account leaves no account in the folder book and the audit log; access and erasure for one person record no name; the access report knows every field with an account | `PrivacyTest::testADeletedAccountLeavesNoAccountBehind`, `testErasureAnonymisesTheLoansAndTheAuditEntriesAndRecordsNoName`, `testTheReportNamesLoansEntriesAndPersonsOfAnAccountOrAName`, `testTheReportKnowsEveryFieldWithAnAccount` |
+| After the retention period (default ten years) audit entries keep their roles, not account and name | `PrivacyTest::testTheAuditLogLosesAccountsAfterTheRetentionPeriod` |
 | Folders that never come back lose their holder after 36 months; persons without a known death keep only the year of birth | `FolderBookServiceTest::testFoldersThatNeverComeBackLoseTheHolderAfterThreeYears`; `PrivacyTest::testPersonsWithoutAKnownDeathKeepOnlyTheYearOfBirth` |
 | Of the weekly backups the newest eight are kept | `ExportServiceTest::testOnlyTheNewestWeeklyBackupsAreKept` |
 | Annual snapshots name nobody: no accounts, folder book, audit log or links | `ExportServiceTest::testABackupHoldsNoLinkTokensAndASnapshotNoAccounts`; `backup_test`, `archive_extras_test`; CS `testAnnualSnapshotsCheckTheRolesOnTheServer` |
-| A restore writes only into an empty catalog, checks every value against its column and writes nothing when it fails | `backup_test`; `FullBackupServiceTest::testColumnValue`, `testRefusesDeeplyNestedJson`, `testRefusesWhatIsNoBackup` |
+| A restore writes only into an empty catalog, checks every value against its column and writes nothing when it fails, also not from a file without a known table | `backup_test`; `FullBackupServiceTest::testColumnValue`, `testRefusesDeeplyNestedJson`, `testRefusesWhatIsNoBackup`, `testRefusesABackupWithoutAKnownTable` |
 | The folder book is read and written only by its roles; its entries of the audit log are hidden from others | CS `testTheFolderBookIsReadByTheArchiveRolesAndMaintainedByTheLibrarians`, `testFolderBookEntriesOfTheAuditLogAreHiddenFromOtherRoles`; `folder_book_test` |
 | After the retention period names and notes of a loan are removed, also from the audit log | `FolderBookServiceTest::testExpiredLoansLoseTheirPersonalDataAlsoInTheAuditLog`; `folder_book_test` |
 | The search of Nextcloud answers only catalog roles, in pages, without preservation copies for others | `CatalogSearchProviderTest::testAccountsWithoutACatalogRoleFindNothing`, `testPreservationCopiesOnlyForTheRolesThatMayViewThem`, `testResultsComeInPages` |
 | CSV files for people neutralise formulas; the catalog CSV keeps its cells for the round trip | `CatalogCsvTest::testWriteForPeopleNeutralizesHeaderAndCells`, `testCatalogCsvKeepsFormulaLikeCellsForTheRoundTrip`; `StatisticsCsvTest::testCellsThatLookLikeFormulasAreNeutralized` |
 | Clients and notifications get no internal error texts | `NotifierTest::testExportFailureShowsNoInternalDetails`, `testLinksStayInsideTheApp`; `ApiV1ControllerTest::testErrorsBecomeOcsExceptions` |
 | The app page allows WebAssembly and nothing else beyond Nextcloud's policy | CS `testTheAppPageAllowsWebAssemblyButNoScriptEval` |
-| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
+| Pieces are kept on a device only where choir members may save them, a public link only for confirmed public domain, the concert folder only with the module `offline`, a license or confirmed public domain, and never an internal preservation copy; the service worker holds no data, removes itself when its modules are off and never answers an expired or unchecked piece from the device | `SharingTest::testChoirMembersSeeTheirLinksAndOnlyTheMeasures`, `testAPublicLinkShowsOnlyTheExcerptAndNothingInternal`; `ConcertFolderTest`; CS `testTheOfflineWorkerIsAScriptOfTheAppOrRemovesItself`, `testTheOfflineWorkerGetsOnlyAPlainPathOfThisServer`, `testOnlyTheSharingPagesArePublic`, `testTheConcertFolderIsForTheConductorAndTheLibrarianOnly`; `offline.test.ts` |
+| After signing out on Nextcloud's login page, or when another account uses the app in the same browser, the pieces of an account kept on the device are removed before anything of them is shown; the page of a list ("Shared with me", the concert folder) comes from the device only when the network fails, never because it is slow; a public link opened without signing in removes only what was kept before signing out. Not covered: whoever holds the device without a network after a session that ended without signing out (see "A shared device") | `offline.test.ts` (a shared device), `sharedDevice.test.ts`, `workerNetwork.test.ts`; on devices not tested |
 | The audit log has no route to change or delete entries | review: the route list of CS `testEveryRouteIsCoreOrBelongsToAModule` names every route |
+| The signed archive of the app store differs from the archive that the CI built from the tag and tested only by `appinfo/signature.json` | review: the job `rebuild` of `.github/workflows/release.yml` builds the tag again and compares the bytes; `tools/release/sign.sh` signs that archive without a build and checks the result with `tools/release/compare.sh`, which anyone can run against the draft release |
 
 ## Design notes
 
@@ -97,9 +107,10 @@ below explain the reasons.
 
 - Every API request checks the caller's role on the server; the user
   interface only hides what the server would refuse anyway. Every route
-  needs a logged-in Nextcloud account, except the two public pages of the
-  sharing modules (a public link and the public repertoire page, see below),
-  which are off unless switched on.
+  needs a logged-in Nextcloud account, except the public pages of the
+  sharing modules (a public link with its scan and the public repertoire
+  page, see below), which are off unless switched on, and the script of the
+  offline worker, which holds no data.
 - Only instance settings (role groups, archive folder, modules, repertoire
   thresholds, the access check of the archive folder, the target folder of
   the print station and the retention period of the folder book) are restricted by
@@ -110,7 +121,10 @@ below explain the reasons.
   Those groups cannot give a role to a group they belong to, cannot set or
   change the archive folder and cannot switch on the modules that open the
   archive to the outside (agents, choir members, the public, the print
-  station); these stay with administrators. Changes of roles and groups and
+  station); these stay with administrators. A group admin (sub-admin) of
+  Nextcloud with the settings cannot give a role to a group they manage
+  either, as they could add themselves to it
+  (CS `testDelegatedSettingsCannotGrantRolesOrMoveTheArchiveFolder`). Changes of roles and groups and
   of the archive folder are in the audit log with the old and the new
   value, as are changes of modules.
   Admins write catalog data only if they also hold a role; restoring a
@@ -122,7 +136,7 @@ below explain the reasons.
   through their own workflow, never through a generic update. Requests that
   create tasks, links or accessions also refuse unknown fields.
 - Write requests require Nextcloud's CSRF token. Only plain GET downloads
-  skip it (app page, CSV export, full backup, song order, the CSV files of the
+  skip it (app page, CSV export, import template, full backup, song order, the CSV files of the
   statistics and the annual report, the calendar files of concerts); they do
   not change state. Adding concerts to a calendar keeps the check.
 - A unit test (`tests/Unit/Controller/ControllerSecurityTest`) checks these
@@ -149,10 +163,12 @@ navigation leaves them out.
   account without a role. The navigation entry and the app page appear for
   choir members only while `member_links` is on, and show only "Shared with
   me".
-- A choir member reaches exactly the app page and the three routes of
+- A choir member reaches exactly the app page and the four routes of
   `MemberController` (the score of a link, its scan, permission for a
-  practice file); the unit test keeps that list and checks that no other
-  controller serves choir members. An account with an archive role always
+  practice file, and with the module `offline` the list of their links,
+  against which the page checks what is kept on the device); the unit test
+  keeps that list and checks that no other controller serves choir
+  members. An account with an archive role always
   gets the archive.
 - They see title and composer of the work, the measures (or "whole
   piece"), voice, verse, tempo, note and expiry of each link and whether it
@@ -194,19 +210,29 @@ made and on every call the server checks:
   portal);
 - for the public the release for publication (publication status "free",
   set by the catalog librarian) and confirmed public domain or a valid
-  license with the use "online publication";
+  license with the use "online publication"; a version confirmed as public
+  domain whose protection proposal says protected by the persons recorded
+  now (a rights conflict) is published only with such a license until the
+  catalog librarian has checked it (milestone 0.18);
 - never an internal preservation copy;
 - the same for the whole piece, an excerpt and the scan: legally an excerpt
   counts as much as the whole piece and a scan as much as the notes
   (guideline 2), so none of them has a release of its own; the scan in a
   link for choir members, which they can save and print, additionally needs
   confirmed public domain or a license for download and printing by
-  members (or self-printing);
-- on public links, playback of a protected version needs a license for
-  online playback (audio); a license for practice audio covers the choir;
-- playback and practice audio as in the archive (public domain or a license
-  for practice audio; practice audio files additionally a confirmed status
-  or that license). Every practice file of a choir member is recorded in the
+  members (or self-printing); the scan of a public link, which everyone can
+  save and print, confirmed public domain or a license with the use
+  "Download of the scan on public links" (`online_download`, milestone
+  0.18): a license for online publication covers showing the notes, not
+  handing out the sheet;
+- on public links, playback needs confirmed public domain (without a
+  rights conflict) or a license for online playback (audio); a license for
+  practice audio covers the choir;
+- for choir members, playback needs confirmed public domain or a license
+  for practice audio, and so do practice audio files (R B15, milestone
+  0.18: an unconfirmed status "public domain" plays only inside the
+  archive, also when a license for the singers' portal or for online
+  publication shows the notes). Every practice file of a choir member is recorded in the
   audit log with the role `member` only (no account, no name; since 0.11,
   older entries were anonymised on the update), measures, voice, mode and
   format; for an excerpt the measures of the link, whatever the request
@@ -222,13 +248,15 @@ public links stop working at once.
 
 **The public pages.**
 
-- Exactly three routes are public (`#[PublicPage]`), the only routes of
+- Exactly four routes are public (`#[PublicPage]`), the only routes of
   their controllers: `GET /apps/cantoria/p/{token}`, the scan of a public
-  link `GET /apps/cantoria/p/{token}/scan` and
-  `GET /apps/cantoria/repertoire`. All are plain GET requests, limited
-  per address (60 in 10 minutes, the scan 30) and per account, protected by
-  Nextcloud's brute-force protection and need their module; the unit test
-  checks this.
+  link `GET /apps/cantoria/p/{token}/scan`, `GET /apps/cantoria/repertoire`
+  and the script of the offline worker `GET /apps/cantoria/offline-worker`,
+  which holds no data (see "Practising without a network" below). All are
+  plain GET requests, limited per address (a public link 60 in 10 minutes,
+  its scan 30) and per account and protected by Nextcloud's brute-force
+  protection; the first three need their module. The unit test checks this
+  list.
 - Tokens are 32 alphanumeric characters from Nextcloud's secure random
   generator. The database holds only their SHA-256 hash, by which a link is
   found, and the token encrypted with the secret of the instance, so that
@@ -267,6 +295,21 @@ public links stop working at once.
 - Links can be passed on. They expire after at most 183 days and can be
   revoked at any time by their creator or the catalog librarian; calls are
   counted without recording who made them.
+- **Extending a link** (milestone 0.19, bounded in 0.18) is for its creator
+  and the catalog librarian, with the rights of today, as when it was made,
+  including the scan it offers. The new last day lies at most 183 days
+  ahead, at most a year after the link was made, however often it is
+  extended, and never after the last day of the license that releases the
+  piece for its circle (`RightsPolicy::releaseEnd`; the audit log records
+  that day with the extension). Extending never shortens a link. An expired
+  public link gets a new token when it is extended: the old address from a
+  message or a log stays closed. The route is rate limited per account.
+  Sharing a programme (`POST /api/events/{id}/share`) goes through the same
+  checks per piece; a link that lasts longer already stays as it is.
+- Choir members learn until when a kept piece may stay on their device
+  (`keepUntil`: the end of the license for download and printing); the
+  device treats the piece as expired from then on, even while the link
+  lasts longer.
 - The token is part of the address (`/p/{token}`). The access log of the
   web server records addresses, and so does Nextcloud's log when a request
   fails with an internal error. Whoever reads these logs can open the
@@ -286,19 +329,25 @@ public links stop working at once.
   the service worker does not answer from the device for an expired link or
   30 days after the last check. Kept like a saved scan, a copy can still be
   taken out of the browser's storage by whoever controls the device; the
-  rules above make it end, not impossible. Signing out of Nextcloud does
-  not delete it (the logout is outside the scope of the worker); the page
-  offers "Delete everything on this device", and another account opening
-  the page removes the pieces of the previous one. The worker
+  rules above make it end, not impossible. What signing out leaves is
+  under "A shared device" below. The worker
   (`GET /offline-worker`) is a script of the app without data, served from
   the app's path with `connect-src 'self'` to everybody (a public page
-  registers it, too, so it is a public route of the core); the pages allow
+  registers it, too, so it is a public route of the core). The server puts
+  only the version of the app and the path of its files into it, and a
+  path that is not a plain path of this server goes in empty
+  (`OfflineController::fillWorker`, tested without a build of `js/`); the
+  pages allow
   `worker-src 'self'` only on "Shared with me", the concert folder and a
   public link, and frames only from `blob:`, for a kept scan shown from the
   browser's memory. It caches nothing for the pages of the archive, only
   scripts fetched by one of these pages, and never writing requests or the
   APIs of Nextcloud. Each page has a cache of its own; a page that answers
   without its header (another account, no role) removes only its pieces.
+  The worker stores a score, a scan or a public page only when the server
+  marks the answer with `X-Cantoria-Keep: 1` (the same rights check as the
+  lists), and removes the piece for `0`; it exists only with the module
+  `offline`.
 - A public link (module `offline`) is kept on a device only for a version
   whose public domain is confirmed: visitors have no license, and a license
   for online publication covers the showing, not a copy. Visitors have no
@@ -312,6 +361,45 @@ public links stop working at once.
   license for download or self-printing); the same check at every start
   with a network and the same lock after 30 days apply. Without the module
   it keeps nothing. It only reads.
+- **A shared device** (S N6, milestone 0.18). What signing out of
+  Nextcloud leaves on the device was read in the source code of Nextcloud
+  33 and 34, not tried on devices:
+  - Nextcloud answers the logout with `Clear-Site-Data: "cache",
+    "storage"` only when it sees HTTPS, and not to Chrome, to desktop
+    browsers built on it (Brave, Opera, Vivaldi) and to Android browsers
+    whose user agent names Chrome (`LoginController::logout`). Browsers
+    that follow the header (Firefox, Safari, Edge) then delete Cache
+    Storage, the service worker, localStorage and IndexedDB of the server:
+    everything Cantoria kept.
+  - In every browser, Nextcloud's login page after signing out
+    (`/login?clear=1`) deletes localStorage, sessionStorage and IndexedDB,
+    but not Cache Storage: passages and settings for practising go, the
+    kept pieces (caches `cantoria-offline`, `cantoria-folder`,
+    `cantoria-public`, `cantoria-shell-*`) and the service worker stay.
+  - Therefore Cantoria remembers the account (a hash) in IndexedDB and
+    marks each list of kept pieces of an account that it writes while it
+    does. Once that memory is gone, the service worker removes the pieces
+    of the account at their next request, before it answers anything of
+    them, and so does every page of the app at its start, also without a
+    network (`rules.ts`, `staleCatalog` and `deviceCleanUp`). Until then
+    they stay in the browser's storage, readable with the tools of the
+    browser by whoever controls the device. Lists kept before 0.18 get the
+    mark at their next check with the server.
+  - A page with another account removes the pieces of the previous one,
+    and its passages and settings. A public link opened without signing in
+    removes only what was kept before signing out: a session that simply
+    ended is no reason to take the pieces of the account.
+  - Not covered: a logout that does not end on Nextcloud's login page (some
+    single sign-on setups), a browser that cannot use IndexedDB, and a
+    session that ended without signing out. There whoever holds the device
+    sees the kept page "Shared with me" without a network, with the name,
+    the notes and the pieces of the account (the links themselves do not
+    open without signing in). Pieces of public links belong to the browser,
+    not to an account, and stay.
+  - "Delete everything on this device" at the end of "Shared with me" and
+    of the concert folder, and the same button at their top while pieces
+    are kept, delete at once what the page kept and the
+    passages and settings ("Shared with me": everything of the app).
 
 ### Interface for agents
 
@@ -341,7 +429,9 @@ these rules:
 - **Data minimisation.** Answers contain no account names (who confirmed or
   chose something) and no file contents. Internal preservation copies are
   left out of the search for roles that may not view them and refused
-  (403) as a copy, text reference or target of a task.
+  (403) as a copy, text reference or target of a task. The same holds for
+  the task lists and the CSV export of the app's pages, and a task about a
+  preservation copy can only be addressed to the roles that may view it.
 - **Limits.** Every route is rate limited per account (30 to 300 requests
   in 10 minutes); internal errors are logged and answered with a generic
   message.
@@ -417,10 +507,13 @@ account can do; it offers a stable, documented and limited contract.
 - Uploaded files for imports are limited to 20 MB, backups for a restore to
   64 MB, score files to 32 MB; the content is read with that limit, not only
   checked against the size in the file cache.
-- Spreadsheets (`.xlsx`) are parsed without document type declarations
-  (no entities, no external loading, no network) and with limits against ZIP
-  bombs: at most 10,000 entries, 16 MB unpacked per part, 48 MB in total,
-  16,384 columns and one million cells.
+- Spreadsheets (`.xlsx` and `.ods`) are parsed without document type
+  declarations (no entities, no external loading, no network) and with
+  limits against ZIP bombs: at most 10,000 entries, 16 MB unpacked per part,
+  48 MB in total, 16,384 columns, one million cells and 20 MB of cell text,
+  as much as a CSV file may hold. An ODS file writes runs of equal cells and
+  rows once with a repeat count; the runs are counted against these limits
+  before they are filled in (`OdsReaderTest`).
 
 ### Backups
 
@@ -429,13 +522,30 @@ account can do; it offers a stable, documented and limited contract.
   identifiers unchecked), and checks every value against the type, length and
   nullability of its column. It runs in one transaction; the check that the
   catalog is empty is part of that transaction. JSON nesting is limited.
+  Tables are named logically in the file (format 2; format 1 with the
+  database names is still read); a file without any known table is refused.
+- The backup folder is used only while it is private to the account that
+  set the archive folder: its owner, no shares, not mounted from elsewhere
+  (`AppSettings::privateFolder`, failing closed). A stored folder that was
+  shared or moved stops the backup with a message; a folder of the same
+  name that is not private is never taken over.
 - The complete backup (download and the weekly file) contains the whole
   catalog including the audit log, tasks, the register of persons and the
   folder book. The roles that read all of it in the app (catalog,
   operations, conductor, read only) and admins may download it; the role
-  "Proposals (tools)" may not, as it does not read the folder book. Backups
+  "Proposals (tools)" may not, as it does not read the folder book. Admins
+  without a role thus get the names of the folder book through the backup,
+  although the routes of the folder book refuse them (403): backup and
+  restore stay with the administration, which can read the database
+  anyway. Every download is recorded in the audit log (account, time, file
+  name), as the copy is out of reach of the retention periods. Backups
   hold no link tokens: after a restore every link is revoked. Of the weekly
   backups the newest eight are kept.
+- The catalog CSV of the app's pages and the exports in `_cantoria-app`,
+  which everyone with the archive folder can read, contain no accounts;
+  internal preservation copies only in the download of the roles that may
+  view them, never in `_cantoria-app`. The state before an import is kept
+  complete in the backup folder.
 - Annual snapshots (module `annual_snapshot`) are kept for years and name
   nobody: they hold the catalog tables without accounts, without the folder
   book, audit log, tasks, proposals, links and reviews, plus a list of
@@ -455,8 +565,15 @@ account can do; it offers a stable, documented and limited contract.
 - After a retention period set by the administration (default 12 months
   after the return) the daily background job removes name, account and
   notes of the loan, in the loan and in its own entries of the audit log,
-  also while the module is switched off. This is the only change the app
-  ever makes to the audit log; it notes the removal without the name.
+  also while the module is switched off. It notes the removal without the
+  name.
+- The audit log keeps account and name for a retention period (default ten
+  years, `audit_retention_years`; claims of rights holders are time-barred
+  after ten years at the latest); then the daily job removes them and keeps
+  the roles. Entries of choir members are written without account and name
+  and with the day only. Besides this, the app changes the audit log only
+  for the folder book retention, a deleted account and the erasure for one
+  person.
 - Backups made before still contain the names until the weekly backups are
   rotated out after eight weeks; backups stored by hand or downloaded, the
   trash bin and file versions of Nextcloud and server backups keep them
@@ -497,8 +614,8 @@ account can do; it offers a stable, documented and limited contract.
   brute-force protection.
 - Expensive endpoints (imports, file sync, exports, backups, restore, practice
   audio, statistics, calendar files and entries, the preview and sync of the
-  print station) and the writing routes of the folder book are rate limited
-  per user;
+  print station, sharing a programme and extending a link) and the writing
+  routes of the folder book are rate limited per user;
   Nextcloud answers with HTTP 429 when a limit is reached.
 - Clients only see translated messages meant for users; internal errors are
   answered with a generic message and logged by Nextcloud. Notifications
@@ -523,3 +640,37 @@ account can do; it offers a stable, documented and limited contract.
 - The audit log is append-only; there is no API to change or delete entries.
   The only change is the removal of personal data of the folder book after
   its retention period, done by the background job, never through a route.
+
+### Releases
+
+The steps are in [docs/release.md](docs/release.md).
+
+- The archive is built by the CI, never on the machine with the key. For a
+  tag `v<version>`, the workflow **Release** runs the whole CI: its job
+  `archive` builds the archive with `tools/release/package.sh` from the
+  committed files of the tag (with all checks of a final version: tag,
+  `CHANGELOG.md` entry, clean checkout, frozen migrations, the app store
+  schema, `reuse lint`), and the integration tests install exactly that
+  archive. The job `rebuild` builds it again on a fresh runner and compares
+  the bytes; only then the job `draft` creates a draft release with
+  `cantoria-<version>-unsigned.tar.gz` and `SHA256SUMS`. npm installs the
+  dependencies without their install scripts (`--ignore-scripts`) in every
+  build, and reuse comes with pinned hashes of all its dependencies.
+- The maintainer signs the archive of the draft release with
+  `tools/release/sign.sh`, which builds nothing and runs no npm package: it
+  checks the archive against `SHA256SUMS`, writes the code signature with
+  `occ integrity:sign-app`, packs it again in the same reproducible way,
+  checks with `tools/release/compare.sh` that only `appinfo/signature.json`
+  was added, and checks the signature of the archive against the
+  certificate. `occ` comes from an unpacked Nextcloud server archive that
+  is not installed, so no app runs next to the key (the script warns about
+  `occ` of an installed instance). Keep the key on a machine or token of its
+  own.
+- The signature proves who signed, not what was built. That the signed
+  archive is the one the CI built and tested from the tag can be checked by
+  anyone: `tools/release/compare.sh` with the unsigned archive of the
+  release (checked against `SHA256SUMS`) and the archive of the app store
+  reports any difference apart from `appinfo/signature.json`, and
+  `tools/release/package.sh` on a checkout of the tag builds the same bytes
+  as the unsigned archive. Nextcloud checks the code signature of every file
+  at installation and update.

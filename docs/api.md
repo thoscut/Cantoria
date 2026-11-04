@@ -19,7 +19,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 |---|---|
 | `POST /api/import`, `POST /api/persons/import`, `POST /api/performances/import` | 30 in 10 minutes |
 | `POST /api/file-sync` | 10 in 10 minutes |
-| `GET /api/export` | 30 in 10 minutes |
+| `GET /api/export`, `GET /api/import/template` | 30 in 10 minutes |
 | `POST /api/export/store`, `POST /api/backup` | 10 in 10 minutes |
 | `GET /api/backup/full` | 10 in 10 minutes |
 | `POST /api/backup/restore` | 5 in 10 minutes |
@@ -32,6 +32,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 | `GET /api/events/{id}/ics`, `GET /api/events/upcoming/ics` | 60 in 10 minutes |
 | `POST /api/events/{id}/calendar`, `POST /api/events/upcoming/calendar` | 30 in 10 minutes |
 | `POST /api/events/{id}/share` | 30 in 10 minutes |
+| `POST /api/links/{id}/extend` | 60 in 10 minutes |
 | `GET /api/nextcloud-files/{fileId}/copy` | 120 in 10 minutes |
 | `GET /api/settings/access` | 20 in 10 minutes |
 | `GET /api/member/links/{token}/score` | 120 in 10 minutes |
@@ -111,13 +112,17 @@ the archive roles"), while `member_links` is active; otherwise 403.
   "archive": { "id": 123, "path": "/Notenarchiv", "user": "admin" },
   "archiveAccessible": true,
   "modules": { "rights": true, "concerts": true, "statistics": false, "agent_api": false, "...": "..." },
+  "freeOnlyWays": ["public_device", "public_print", "public_repertoire"],
   "personalView": { "navigation": ["statistics"], "cards": ["proposals"] },
   "siteName": "Liederkranz Musterstadt"
 }
 ```
 
 `modules` tells which modules are active (see "Modules and the personal
-view" at the end); `personalView` what the account has hidden; `siteName`
+view" at the end); `freeOnlyWays` the ways out that only confirmed public
+domain opens, never a license (`RightsPolicy::FREE_ONLY_WAYS`: a public
+link on a device and printed, the public repertoire page), for the dialog
+that confirms the rights; `personalView` what the account has hidden; `siteName`
 is the name of the Nextcloud (Theming) for the header of printouts.
 `canChangeSettings` is true for admins and for members of the groups the
 administration has given the settings page (see "Settings"); it gives no
@@ -226,7 +231,12 @@ than `active` requires `status_reason` in the same request.
 
 ## Archive management (role librarian)
 
-`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report:
+`POST /api/import` `{ "fileId": 4711, "dryRun": true }` returns a report.
+The file may be CSV, an Excel workbook (`.xlsx`) or an OpenDocument
+spreadsheet (`.ods`, milestone 0.20), with the same columns; the extension
+of the file name says which. Of a workbook the first sheet with the column
+`Signatur` is read (a warning names it when there are more), at most 20 MB
+of file and of cell text, as for a CSV file:
 
 ```json
 { "dryRun": true, "source": "…csv", "sha256": "…", "operation": null, "restore": true,
@@ -269,21 +279,31 @@ the catalog. Paths are relative to the archive folder without a leading slash.
 exactly as stored (also cells starting with `=`, `+`, `-` or `@`), because it
 must survive an import followed by an export byte for byte; see SECURITY.md.
 
+`GET /api/import/template?format=csv|ods` downloads the import template
+(role `librarian`, otherwise 403): the columns of the legacy catalog format in
+their order and one invented example row, as CSV in the format of the import
+or as ODS. It holds no data of the catalog. The columns are described in the
+administration guide ("The columns of the catalog file").
+
 Performance imports (`.xlsx`) are refused with 400
 `The Excel workbook is too large to import.` above 10,000 archive entries,
 16 MB unpacked per part, 48 MB unpacked in total, column XFD or one million
 cells, and with `The Excel workbook is damaged.` when a part contains a
 document type declaration.
 
-**Complete backup.** `GET /api/backup/full` (any role, plain download without
-CSRF token) returns all app tables as JSON
-(`{ "format": "cantoria-backup", "formatVersion": 1, "appVersion", "created", "tables": { "cantoria_works": [ … ] } }`).
-`POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or admin) restores
-such a file into an empty catalog and returns
+**Complete backup.** `GET /api/backup/full` (the roles that read the folder
+book and admins, plain download without CSRF token; every download is
+recorded in the audit log as `download_backup`) returns all app tables as
+JSON, named by their logical names without the prefix of the database
+(`{ "format": "cantoria-backup", "formatVersion": 2, "appVersion", "created", "tables": { "works": [ … ], "mirror_files": [ … ] } }`).
+Backups of format version 1 (tables named `cantoria_works` and so on) are
+still read. `POST /api/backup/restore` `{ "fileId": 4711 }` (librarian or
+admin) restores such a file into an empty catalog and returns
 `{ "restored": { "cantoria_works": 120, … } }`. Errors (400):
 `A backup can only be restored into an empty catalog.`, `The file is not a
-backup of the music archive.`, `The backup was made with a newer version of
-the app. Please update the app first.` and
+backup of the music archive.`, `The file contains no table of the music
+archive. Is it a backup of Cantoria?`, `The backup was made with a newer
+version of the app. Please update the app first.` and
 `The backup contains an invalid value in %1$s, row %2$s, column %3$s.`
 (table, row number from 1, column). Only columns that exist in the installed
 schema are written; others are left out.
@@ -316,6 +336,8 @@ config API (`getAuthorizedAppConfig()` is empty).
   "repertoire": { "current": 3, "dormant": 10 },
   "catalog": { "copies": 23, "files": 30 },
   "modulesChosen": true,
+  "concertFolder": true,
+  "memberLinks": false,
   "admin": true,
   "catalogEmpty": false }
 ```
@@ -330,6 +352,9 @@ check, the page derives the setup steps from it (nothing of it is stored).
 `modulesChosen` (milestone 0.19): the modules were changed once from the
 settings or the command line (a scenario, a preset or a switch; app config
 `modules_chosen`), the step "Functions for your choir" of the setup.
+`concertFolder` and `memberLinks` tell whether these modules are active: then
+the step "Roles and groups" also needs a group for the role `conductor` or
+`member`.
 `admin` tells whether the caller is an admin; only then does the page offer
 the complete backup and restore, and only then is `catalogEmpty` (whether a
 restore is possible: every table of the app is empty) a boolean, otherwise
@@ -518,7 +543,8 @@ role; `members` for the choir members and `public` for everyone, see
 { "id": 9, "token": "32 alphanumeric characters", "copy_id": 35, "file_id": 78, "file_etag": "…",
   "measure_from": "62", "measure_to": "66", "voice": "Tenor II", "verse": null, "tempo": 80,
   "note": "…", "task_id": 4, "circle": "internal", "own": true, "created_by_name": "Anna Beispiel",
-  "created": 1761150000, "expires": "2027-04-23", "revoked": null, "hits": 3, "scan_file_id": null }
+  "created": 1761150000, "expires": "2027-04-23", "revoked": null, "hits": 3, "scan_file_id": null,
+  "event_id": null }
 ```
 
 `token` of a link for choir members or a public link is only sent to its
@@ -531,7 +557,10 @@ them.
 
 A link without `measure_from` and `measure_to` points to the whole piece.
 `scan_file_id` (`files[].id` of a PDF scan) is only set for links for choir
-members and public links that offer the scan.
+members and public links that offer the scan. `event_id` (milestone 0.20) is
+only set for links for choir members made or extended with "Share the
+programme with the choir": the programme they were last shared with, for
+the order of "Shared with me"; a request cannot set it (400 `Unknown field`).
 
 Opening a link (`GET /api/links/{token}`) additionally returns `shelfmark`,
 `createdByName` and `changed` (`true` when the MusicXML changed since the link
@@ -935,7 +964,10 @@ would say `free` becomes `unknown` with reason `composer_missing` or
 `lyricist_missing` when no person has the role `composer` or `lyricist` and
 the part is not marked `traditional` (or `none`). A version without persons
 whose parts are both marked and that has no special case gets `free` with
-reason `traditional`. Confirming public domain against a proposal that is
+reason `traditional`. A proposal that would say `free` becomes `unknown`
+with reason `arranger_missing` when no person has the role `arranger` and
+the kind of the version is `arrangement` or `adaptation`, or the melody is
+traditional and the kind is not `original`. Confirming public domain against a proposal that is
 not `free` stays possible; the UI asks to tick that the proposal was
 checked.
 
@@ -1404,7 +1436,7 @@ other check of the app. The routes and their modules:
 | `member_practice_audio` | `POST /api/member/links/{token}/practice-audio` (and `member_links`) |
 | `public_links` | `GET /p/{token}` (the 404 page of the public pages instead of the JSON message); `POST /api/copies/{id}/links` with `circle: "public"` |
 | `public_repertoire` | `GET /repertoire` (the 404 page of the public pages); setting `work.public_repertoire` to `true` |
-| `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` and `concert_folder` are both off |
+| `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` is off (the concert folder keeps nothing without it) |
 | `concert_folder` | `GET /concert-folder` (the page), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
 | `files_integration` | `GET /api/nextcloud-files/{fileId}/copy` (and the script of the Files app is not loaded) |
 | `tasks` | `GET /api/tasks`, `POST /api/copies/{id}/tasks`, `POST /api/tasks/{id}/answer`, `…/close` |
@@ -2132,15 +2164,24 @@ recipients cannot play it. `playback`: the recipients can play it;
 `public`). `scan`: the rights allow the link to offer the scan; for choir
 members a version that is not confirmed public domain needs a license with
 the use `member_download` or `self_print` (milestone 0.11), and
-`scanReason` (translated) says so. `scans`: the PDF scans of the copy (role
+`scanReason` (translated) says so; for `public` it needs a license with
+the use `online_download` (download of the scan on public links,
+milestone 0.18), as a license for online publication covers showing the
+notes only. `until` (milestone 0.18): the last day of the license that
+releases the piece for the circle, after which no link lasts; `null`
+without an end. `quantity` (only `members`): `{ licensed, members }` when
+the group of the choir members has more accounts than the licenses valid
+today were bought for (a hint, nothing is blocked), else `null`.
+`scans`: the PDF scans of the copy (role
 `score_pdf`, still found) that an allowed link may offer; the dialog offers
 "Include the scan (PDF)" only when there is one and `scan` is true. A
 public link plays a protected version only with a license with the use
 `online_audio`; `practice_audio` covers the choir only. `offline`
 (milestone 0.19): whether the recipients can keep the piece on their
-device; `null` while the module `offline` is off, for `members` the release
-for downloading or self-printing (`RightsPolicy::deviceCopyDenial`), for
-`public` confirmed public domain.
+device (`RightsPolicy::deviceDenial`, the rule of the pages); `null` while
+the module `offline` is off: for `members` a license for downloading or
+self-printing and, for the notes, `digital_scores`, for `public` confirmed
+public domain without a rights conflict.
 
 ### Sharing a programme and extending links
 
@@ -2156,8 +2197,8 @@ the programme what sharing would do, struck items left out:
 ```json
 { "expires": "2027-01-24", "latest": "2027-04-30",
   "items": [{ "id": 12, "title": "Ave verum corpus", "shelfmark": "1-03", "allowed": true, "reason": null,
-              "scan": true, "offline": true, "existing": { "id": 40, "expires": "2026-12-01" },
-              "copyId": 7, "scanFileId": 81 }] }
+              "scan": true, "offline": true, "existing": { "id": 40, "expires": "2026-12-01", "scan": false, "limit": "2027-09-30" },
+              "copyId": 7, "scanFileId": 81, "until": "2027-03-31", "quantity": null }] }
 ```
 
 `expires`: the suggested last day, 14 days after the concert and at most
@@ -2168,23 +2209,39 @@ for choir members to the whole piece (`GET /api/copies/{id}/link-options`);
 a copy. `scan` and `offline` as there. `existing`: an active link for
 choir members to the whole piece that the account may extend (its own, or
 any for the librarian), the one that lasts longest; sharing extends it
-instead of making a second one.
+instead of making a second one. `existing.scan`: it offers a scan already;
+`existing.limit`: the last day its age allows (a year after it was made;
+older links are not extended, a new one is made). `until` and `quantity`
+as in the link options. An internal preservation copy shows neither
+`shelfmark` nor `copyId` to the roles that may not view it, and its
+`reason` is `Not available.` (milestone 0.18).
 
 `POST /api/events/{id}/share` with `{ items: [itemId, …], expires?, note?,
 scan? }` shares the chosen items: each one goes through `POST
 /api/copies/{id}/links` with `circle: "members"`, the whole piece and, with
 `scan: true`, the scan where `scan` is true; an `existing` link is extended
-to `expires` (its note stays). The answer is `{ created, extended, failed:
-[{ id, title, reason }] }`; one piece that fails does not stop the others.
-No item: 400 `Please choose at least one piece.`.
+to `expires`, never shortened, and takes the note (when one is given) and
+the scan too (milestone 0.18). Each piece lasts at most until its `until`.
+The answer is `{ created, extended, kept, failed: [{ id, title, reason }],
+limited: [{ id, title, expires }] }`: `kept` counts links that lasted
+longer already, `limited` names the pieces whose license ends before
+`expires`. One piece that fails does not stop the others; only the chosen
+items are checked. No item: 400 `Please choose at least one piece.`.
 
 `POST /api/links/{id}/extend` with `{ expires? }` (no date: the latest)
 sets a new last day for the creator of the link or the librarian (else 403
 `Only the creator or the catalog librarian can extend this link.`). A
 revoked link is refused (400 `A revoked link cannot be extended. Please
-make a new one.`); an expired one can be extended. The module of the circle
-and the rights are checked again as for a new link. The audit log records
-`extended` with the old and the new day.
+make a new one.`); an expired one can be extended, an expired public link
+gets a new token (the answer carries it; milestone 0.18). The module of
+the circle and the rights are checked again as for a new link, including
+the scan the link offers. The new day lies at most 183 days ahead, at
+most a year after the link was made and never after the end of the
+license that releases it (400 `The expiry date must lie between today and
+%s: …`, or `This link was made more than a year ago …`), and never before
+the current one (400 `The link is valid until %s already. …`). The audit
+log records `extended` with the old and the new day and, beyond the
+archive roles, the last day of the license (`license_until`).
 
 ### The page of the choir members
 
@@ -2197,20 +2254,43 @@ role (module `member_links`) returns the page "Shared with me" (template
 { "links": [{ "token": "…", "title": "Abendlied", "composer": "J. Rheinberger", "measure_from": null, "measure_to": null,
               "voice": "Alto", "verse": null, "tempo": null, "note": "Please practise until Thursday.",
               "expires": "2027-04-23", "canPlay": true, "canExportAudio": false, "reason": null, "scan": true,
-              "scanSize": 2400000, "offline": true, "practiceKey": "2922db9b58cb760f1724",
-              "credits": [{ "role": "lyricist", "name": "Matthias Claudius" }], "notices": ["By kind permission of …"] }],
+              "scanSize": 2400000, "offline": true, "keepUntil": null, "practiceKey": "2922db9b58cb760f1724",
+              "credits": [{ "role": "lyricist", "name": "Matthias Claudius" }], "notices": ["By kind permission of …"],
+              "programmes": [{ "key": "…20 hex…", "title": "Adventskonzert", "date": "2026-12-13", "order": 0, "position": 2 }] }],
   "offline": { "enabled": true, "version": "0.15.0" } }
 ```
 
+`programmes` (milestone 0.20): the programmes the page lists the link under,
+each shared with the choir as a whole ("Share the programme with the
+choir") and holding the piece among its items not struck. `key` names the
+programme on the page (a hash, not its id), `order` its place on the page
+(the next programme first, then the later ones, past programmes from the
+latest, those without a date last) and `position` the place of the piece in
+it. A piece of two shared programmes is listed under both; where a
+programme has a link of its own for a piece, other links to the piece stay
+out of it. Links with an empty list follow below the programmes. Which
+pieces are new since the last visit the browser remembers by itself
+(`localStorage`, hashes of the tokens only); the server knows nothing of
+it.
+
 `offline` (milestone 0.15) of a link: it may be kept on the device, with the
-module `offline` and where choir members may save and print the notes (the
-rule of `scan`, `RightsPolicy::memberScanDenial`). `scanSize` (milestone
+module `offline` and where the rights allow a copy on the device
+(`RightsPolicy::deviceDenial`, one rule for members, the concert folder and
+public links): confirmed public domain, or a license `member_download` or
+`self_print` and, for the notes kept as MusicXML, `digital_scores`. `print`
+follows `RightsPolicy::printDenial` (the same without `digital_scores`). `scanSize` (milestone
 0.19): the size of the scan in bytes as the file sync last saw it, for the
 switch "With the scan (PDF, 2.4 MB)"; `null` without a scan or when unknown.
+`keepUntil` (milestone 0.18): the last day the licenses for the copy allow
+it on the device (`RightsPolicy::deviceEnd`), `null` without an end; the page keeps
+the piece on the device only until then or the end of the link, whichever
+comes first. A public link offers its scan (`scan`) only with confirmed
+public domain or a license with the use `online_download`.
 `practiceKey`: the key
 under which the browser remembers the passages and settings for practising
-of the version, the same for every link to it, a hash without catalog ids;
-the public page has it, too. `offline` of the page: the module is on, and
+of the version, the same for every link to it, an HMAC with the secret of
+the instance, so that it reveals no catalog id (the `key` of a programme
+likewise); the public page has it, too. `offline` of the page: the module is on, and
 the version of the app names the cache of the scripts. The page answers with
 the header `X-Cantoria-Page: member` (a page the service worker may keep)
 and allows `worker-src 'self'` and frames from `blob:` only: a scan is shown
@@ -2287,9 +2367,17 @@ pieces: "Shared with me", the concert folder and the page of a public link
 'self'`), built into `js/cantoria-offline-worker.js` and registered with
 the app's path as scope. The browser fetches it itself, also on a public
 page, so the route skips login and the CSRF check (`#[PublicPage]`, core:
-always on); it contains no data. With the modules `offline` and
-`concert_folder` both off it is a worker that deletes the caches of the app
-(`cantoria-…`) and unregisters itself. Each page keeps its pieces in a
+always on); it contains no data. With the module `offline` off (also while
+`concert_folder` is on) it is a worker that deletes the caches of the app
+(`cantoria-…`) and unregisters itself. The build lists the scripts and
+styles of the three pages from Vite's manifest; while a page keeps pieces, a
+new worker loads them into `cantoria-shell-<version>` before it takes over,
+so that a new version of the app opens without a network. A score, a scan
+or the page of a public link stays on the device only when the answer
+carries `X-Cantoria-Keep: 1` (`GET /api/member/links/{token}/score`,
+`…/scan`, `GET /api/concert-folder/items/{id}/score`, `…/scan`,
+`GET /p/{token}` and `GET /p/{token}/scan`, from the same check as
+`offline` in their lists); with `0` the piece is removed from the device. Each page keeps its pieces in a
 cache of its own (`cantoria-offline`, `cantoria-folder`,
 `cantoria-public`, with a list `…-catalog.json`) and the scripts in
 `cantoria-shell-<version>`; a page whose module is off removes its cache,
@@ -2320,6 +2408,7 @@ page (`worker-src 'self'`, `frame-src blob:`). Initial state `folder`:
                  "items": [{ "id": 31, "position": 1, "title": "Abendlied", "composer": "J. Rheinberger", "shelfmark": "1-03",
                              "participation": null, "note": null, "encore": false, "duration": 180, "score": true, "scan": true,
                              "scanSize": 2400000, "canPlay": true, "reason": null, "offline": true, "offlineReason": null,
+                             "keepUntil": "2027-03-31", "print": true,
                              "practiceKey": "2922db9b58cb760f1724" }] }],
   "version": "0.15.0", "offline": true }
 ```
@@ -2333,9 +2422,13 @@ in the folder (milestone 0.19: `reason` says so, and the score and scan
 routes answer 403). `scanSize` as on the member page. `canPlay` and
 `reason` (translated) as in the score view. `offline`: the item may be kept
 on the device: the module `offline` is on, and the rights allow a copy on
-the device (`RightsPolicy::deviceCopyDenial`: confirmed public domain or a
-license `member_download` or `self_print`); otherwise `offlineReason`
-(translated), which is `null` while the module is off. `offline` of the
+the device (`RightsPolicy::deviceDenial`, the rule of the member page:
+confirmed public domain or a license `member_download` or `self_print`, and
+`digital_scores` where the item has notes); otherwise `offlineReason`
+(translated), which is `null` while the module is off. `keepUntil`
+(milestone 0.18): the last day these licenses allow the copy, `null`
+without an end; the device drops the piece then. `print`:
+`RightsPolicy::printDenial`. `offline` of the
 page: the module `offline` is on; without it the page keeps nothing on the
 device.
 
@@ -2425,8 +2518,9 @@ them while `public_repertoire` is active):
 
 The three columns are in `cantoria_works`; links for choir members and
 public links use the column `circle` of `cantoria_links`, the scan of a
-link `cantoria_links.scan_file_id` (nullable, no default); a whole piece
-needs no column.
+link `cantoria_links.scan_file_id` (nullable, no default), the programme
+of a link for choir members `cantoria_links.event_id` (nullable, no default,
+milestone 0.20); a whole piece needs no column.
 ## Folder book (module `folder_book`, milestone 0.7)
 
 Which choir folder is out with whom since when. Read by `librarian`,
@@ -2572,12 +2666,19 @@ Audit log: object type `choir_handover`, the same actions.
 Status, preview and sync answer as for the print station. What is written:
 
 - For every active copy of a version on the list (never internal
-  preservation copies): the PDF scans and MusicXML files if choir members
-  may save and print them (`RightsPolicy::memberScanDenial`, otherwise
-  reason `no_download`), and the audio files of the archive folder if
-  practice audio is allowed (`RightsPolicy::handoverAudioDenial`, otherwise
-  `no_practice_audio`). Names `<shelf mark> <title>.pdf`, `….musicxml` or
-  `.mxl`, recordings `<shelf mark> <title> - <file name>.<ext>`.
+  preservation copies): the PDF scans if choir members may save and print
+  them (`RightsPolicy::memberScanDenial`, otherwise reason `no_download`);
+  the MusicXML files with confirmed public domain or a license with the use
+  `digital_scores` (`RightsPolicy::handoverScoreDenial`, otherwise
+  `no_digital_scores`), checked like a score (otherwise `not_musicxml`)
+  and cleaned like the score of a link (`MusicXmlExcerpt::whole`: no
+  encoder, `miscellaneous`, comments or processing instructions; always
+  uncompressed); and the audio files of the archive folder if practice
+  audio is allowed and a license has the use `recording_sharing`, as a
+  recording has rights of performers and producer of its own
+  (`RightsPolicy::handoverAudioDenial`, otherwise `no_practice_audio`).
+  Names `<shelf mark> <title>.pdf`, `….musicxml`, recordings
+  `<shelf mark> <title> - <file name>.<ext>`.
 - `Liste.csv` (semicolon, UTF-8 with BOM, cells that start like a formula
   get a leading apostrophe): file, shelf mark, title, composer, version (kind and
   arranger), revision, revision valid since, rights status, license notice

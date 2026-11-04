@@ -44,7 +44,10 @@ use Psr\Log\LoggerInterface;
  *   preservation copies, named `<shelf mark> <title>.pdf`, and a
  *   `LIESMICH.txt` with the date and a note.
  * - Missing files are copied, changed scans replaced, files no longer
- *   released removed. The manifest (table cantoria_mirror_files: name, file
+ *   released removed: also a file whose version is still on the list but
+ *   whose rights no longer allow it (isRightsReason, A22). A file skipped
+ *   for a technical reason (not readable at the moment, an invalid name)
+ *   stays as it is. The manifest (table cantoria_mirror_files: name, file
  *   id, SHA-256 of what was written) tells which files the app wrote: only
  *   those are replaced or removed, and only while their content is still
  *   the one written. Other files in the folder stay as they are.
@@ -312,12 +315,19 @@ class PrintMirrorService {
 
 		foreach ($this->wanted($account) as $entry) {
 			$name = $entry['name'];
-			$keep[$name] = true;
 			$item = ['name' => $name, 'shelfmark' => $entry['shelfmark'], 'reason' => null];
 			if ($entry['skip'] !== null || $entry['node'] === null) {
-				$report['skipped'][] = ['reason' => $entry['skip'] ?? self::NOT_ACCESSIBLE] + $item;
+				$reason = $entry['skip'] ?? self::NOT_ACCESSIBLE;
+				$report['skipped'][] = ['reason' => $reason] + $item;
+				// A file the rights no longer allow is removed below, like one that left
+				// the list; one skipped for a technical reason stays as it is (A22).
+				if (!$this->isRightsReason($reason)) {
+					$keep[$name] = true;
+				}
 				continue;
 			}
+			// kept only once it has been checked
+			$keep[$name] = true;
 			$row = $manifest[$name] ?? null;
 			$existing = $target->nodeExists($name) ? $target->get($name) : null;
 			if ($existing !== null && ($row === null || !$existing instanceof File || $existing->getId() !== $row->getFileId())) {
@@ -415,6 +425,15 @@ class PrintMirrorService {
 	}
 
 	/**
+	 * Whether a reason for skipping a file is one of the rights: then a file
+	 * the app wrote earlier under its name is removed (A22). Here an
+	 * internal preservation copy; the hand-over adds its own.
+	 */
+	protected function isRightsReason(string $reason): bool {
+		return $reason === self::PRESERVATION;
+	}
+
+	/**
 	 * File name without extension: `<shelf mark> <title>`, without the
 	 * characters Windows and Nextcloud do not allow, shortened.
 	 */
@@ -507,15 +526,12 @@ class PrintMirrorService {
 		if ($source === null) {
 			return;
 		}
-		$handle = $source->fopen('r');
-		if ($handle === false) {
-			throw new \RuntimeException('cannot read ' . $source->getPath());
-		}
+		$handle = $this->content($entry['archiveFile'], $source);
 		try {
 			$file = $target->newFile($name, $handle);
 		} finally {
 			// newFile() may close the stream itself
-			if (get_resource_type($handle) === 'stream') {
+			if (is_resource($handle) && get_resource_type($handle) === 'stream') {
 				fclose($handle);
 			}
 		}
@@ -540,15 +556,12 @@ class PrintMirrorService {
 		if ($source === null) {
 			return;
 		}
-		$handle = $source->fopen('r');
-		if ($handle === false) {
-			throw new \RuntimeException('cannot read ' . $source->getPath());
-		}
+		$handle = $this->content($entry['archiveFile'], $source);
 		try {
 			$existing->putContent($handle);
 		} finally {
 			// putContent() may close the stream itself
-			if (get_resource_type($handle) === 'stream') {
+			if (is_resource($handle) && get_resource_type($handle) === 'stream') {
 				fclose($handle);
 			}
 		}
@@ -559,6 +572,20 @@ class PrintMirrorService {
 		$row->setWritten($this->time->getTime());
 		$this->mirrorFiles->update($row);
 		$this->audit->record($operation, $uid, $this->objectType(), $entry['copyId'], 'mirror_replaced', 'file', $row->getName(), $row->getName());
+	}
+
+	/**
+	 * What is written for a file of the archive folder: here the file
+	 * itself, as a stream; a subclass may write a cleaned copy instead.
+	 *
+	 * @return resource|string
+	 */
+	protected function content(ArchiveFile $file, File $source) {
+		$handle = $source->fopen('r');
+		if ($handle === false) {
+			throw new \RuntimeException('cannot read archive file ' . $file->getId());
+		}
+		return $handle;
 	}
 
 	/**
