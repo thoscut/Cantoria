@@ -39,7 +39,7 @@ use OCP\IDBConnection;
  * only once they are resolved.
  *
  * @psalm-type Sheet = array{sheet: string, header: list<string>, rows: list<list<string>>}
- * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, snapshot: ?string, events: int, songLists: int, items: int, certain: int, ambiguous: int, notInCatalog: int, counted: int, ownChoir: ?string, unknownShelfmarks: list<string>, sheets: list<string>}
+ * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, snapshot: ?string, events: int, songLists: int, items: int, certain: int, ambiguous: int, notInCatalog: int, counted: int, keptAssignments: int, ownChoir: ?string, unknownShelfmarks: list<string>, sheets: list<string>}
  */
 class PerformanceImportService {
 	private const PROGRAMME_HEADER = ['Datum', 'Anlass', 'Titel laut Programm', 'Signatur'];
@@ -94,6 +94,10 @@ class PerformanceImportService {
 		}
 
 		$copies = $this->copies->findAllByShelfmark();
+		$copyIds = [];
+		foreach ($copies as $copy) {
+			$copyIds[$copy->getId()] = true;
+		}
 		$versions = $this->versions->findAllById();
 		$sheetNames = [];
 		foreach ([$programme, $songLists] as $found) {
@@ -103,7 +107,7 @@ class PerformanceImportService {
 		}
 		$report = ['dryRun' => $dryRun, 'source' => $fileName, 'sha256' => hash('sha256', $content), 'snapshot' => null,
 			'events' => 0, 'songLists' => 0, 'items' => 0, 'certain' => 0, 'ambiguous' => 0, 'notInCatalog' => 0,
-			'counted' => 0, 'ownChoir' => null, 'unknownShelfmarks' => [], 'sheets' => $sheetNames];
+			'counted' => 0, 'keptAssignments' => 0, 'ownChoir' => null, 'unknownShelfmarks' => [], 'sheets' => $sheetNames];
 
 		if (!$dryRun) {
 			$report['snapshot'] = $this->export->snapshot('before-performance-import', $uid);
@@ -114,7 +118,7 @@ class PerformanceImportService {
 		$this->db->beginTransaction();
 		try {
 			if ($programme !== null) {
-				$this->removeImported(Event::CONCERT);
+				$beforeConcerts = $this->removeImported(Event::CONCERT);
 				$ownChoir ??= self::mostFrequent($programme, 'Mitwirkung');
 				$report['ownChoir'] = $ownChoir;
 				/** @var array<string, non-empty-list<array<string, string>>> $groups */
@@ -148,6 +152,7 @@ class PerformanceImportService {
 						$item->setValue('composer_text', self::cut($r['Komponist/Satz laut Programm'] ?? null, 1000));
 						$item->setValue('participation', self::cut($r['Mitwirkung'] ?? null, 255));
 						$item->setValue('state', self::cut($r['Stand'] ?? null, 255));
+						self::keepResolved($event, $item, $beforeConcerts, $copyIds, $report);
 						$item->setCounts($item->getAssignment() === EventItem::CERTAIN
 							&& self::countsByRule($item->getParticipation(), $item->getState(), $ownChoir));
 						$this->items->insert($item);
@@ -157,7 +162,7 @@ class PerformanceImportService {
 			}
 
 			if ($songLists !== null) {
-				$this->removeImported(Event::SONG_LIST);
+				$beforeLists = $this->removeImported(Event::SONG_LIST);
 				// Lists in order of appearance; the name stays a value (a list "2024" must not become an integer key).
 				/** @var list<array{period: string, lines: non-empty-list<array<string, string>>}> $lists */
 				$lists = [];
@@ -197,6 +202,7 @@ class PerformanceImportService {
 							$r['Zuordnung'] ?? '', $copies, $versions, $report);
 						$item->setValue('title_text', self::cut($r['Titel wie gedruckt'] ?? null, 1000));
 						$item->setValue('note', $r['Bemerkung'] ?? null);
+						self::keepResolved($event, $item, $beforeLists, $copyIds, $report);
 						$item->setCounts(false);
 						$this->items->insert($item);
 					}
@@ -271,13 +277,60 @@ class PerformanceImportService {
 		return $item;
 	}
 
-	private function removeImported(string $kind): void {
+	/**
+	 * Deletes the imported events of a kind and returns their lines by
+	 * line key, so that an assignment made by hand afterwards
+	 * (EventService::resolveItem) survives a new import of the same file.
+	 *
+	 * @return array<string, EventItem>
+	 */
+	private function removeImported(string $kind): array {
+		$before = [];
 		foreach ($this->events->findImported() as $event) {
 			if ($event->getKind() === $kind) {
+				foreach ($this->items->findByEvent($event->getId()) as $item) {
+					$before[self::lineKey($event, $item)] = $item;
+				}
 				$this->items->deleteByEvent($event->getId());
 				$this->events->delete($event);
 			}
 		}
+		return $before;
+	}
+
+	/**
+	 * What identifies a line across imports: its event (kind, date, title,
+	 * place, list), its position and its title as printed.
+	 */
+	private static function lineKey(Event $event, EventItem $item): string {
+		return implode("\0", [$event->getKind(), (string)$event->getEventDate(), (string)$event->getTitle(), (string)$event->getLocation(),
+			(string)$event->getPeriod(), (string)$item->getPosition(), (string)$item->getTitleText()]);
+	}
+
+	/**
+	 * A line the import could not assign for certain takes over the
+	 * assignment of the same line before, if that differs (someone resolved
+	 * it by hand) and its copy still exists; the counts of the report follow.
+	 *
+	 * @param array<string, EventItem> $before
+	 * @param array<int, true> $copyIds copies that exist
+	 * @param Report $report
+	 */
+	private static function keepResolved(Event $event, EventItem $item, array $before, array $copyIds, array &$report): void {
+		$old = $before[self::lineKey($event, $item)] ?? null;
+		if ($old === null || $item->getAssignment() === EventItem::CERTAIN || $old->getAssignment() === $item->getAssignment()) {
+			return;
+		}
+		if ($old->getAssignment() === EventItem::CERTAIN && !isset($copyIds[(int)$old->getCopyId()])) {
+			return;
+		}
+		$report[$item->getAssignment() === EventItem::AMBIGUOUS ? 'ambiguous' : 'notInCatalog']--;
+		$report[$old->getAssignment() === EventItem::CERTAIN ? 'certain' : ($old->getAssignment() === EventItem::AMBIGUOUS ? 'ambiguous' : 'notInCatalog')]++;
+		$item->setAssignment($old->getAssignment());
+		$item->setValue('copy_id', $old->getCopyId());
+		$item->setValue('version_id', $old->getVersionId());
+		$item->setValue('work_id', $old->getWorkId());
+		$report['keptAssignments']++;
 	}
 
 	/**

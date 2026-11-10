@@ -289,7 +289,7 @@ class TaskService {
 		if ($value === null || $value === '') {
 			return null;
 		}
-		$int = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+		$int = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => FieldValue::MAX_NUMBER]]);
 		if ($int === false) {
 			throw new InvalidInputException('"%s" must be a whole number.', [$label]);
 		}

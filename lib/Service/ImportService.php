@@ -182,7 +182,8 @@ class ImportService {
 					// from "Mappe" and "Nr" (W B25)
 					$rawShelfmark = $binder . '-' . $number;
 				}
-				if (!preg_match('/^0*(\d+)-0*(\d+)$/', $rawShelfmark, $parts)) {
+				// at most nine digits each: binder and number are 32-bit columns
+				if (!preg_match('/^0*(\d{1,9})-0*(\d{1,9})$/', $rawShelfmark, $parts)) {
 					if (FieldValue::isDate($rawShelfmark)) {
 						// a spreadsheet program made a date of 1-3
 						$warnings[] = ['Row %s: shelf mark "%s" is a date, not binder and number, and was skipped. Please format the column "Signatur" as text and type the shelf mark again.', [$row, $rawShelfmark]];

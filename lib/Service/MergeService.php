@@ -377,6 +377,10 @@ class MergeService {
 			$clusters = $bySurname === [] ? [$withoutComposer] : array_values($bySurname);
 			if (count($clusters) === 1 && $bySurname !== []) {
 				$clusters[0] = array_merge($clusters[0], $withoutComposer);
+			} elseif (count($clusters) > 1) {
+				// several composers: the works without one are a group of
+				// their own, not belonging to any of them
+				$clusters[] = $withoutComposer;
 			}
 			foreach ($clusters as $cluster) {
 				if (count($cluster) < 2) {
@@ -400,8 +404,13 @@ class MergeService {
 		return Sort::byKeys($groups, $groupKeys);
 	}
 
+	/**
+	 * Title for comparing: like the search (CatalogSearch::normalize), so a
+	 * decomposed "Ä" from macOS or an accent ("Ave María") does not hide a
+	 * duplicate; punctuation counts as a space.
+	 */
 	public static function normalizeTitle(?string $title): string {
-		$text = mb_strtolower(trim((string)$title));
+		$text = CatalogSearch::normalize((string)$title);
 		$text = (string)preg_replace('/[^\p{L}\p{N}]+/u', ' ', $text);
 		return trim($text);
 	}
@@ -411,7 +420,7 @@ class MergeService {
 	 * Zelter (1758-1832)" → "zelter", "Friedrich Silcher, op. 26" → "silcher".
 	 */
 	public static function surname(?string $composer): string {
-		$text = mb_strtolower(trim((string)$composer));
+		$text = CatalogSearch::normalize((string)$composer);
 		$text = (string)preg_replace('/\(.*?\)/u', ' ', $text);
 		$text = explode(',', $text)[0];
 		$text = (string)preg_replace('/[^\p{L}\s-]+/u', ' ', $text);

@@ -181,13 +181,35 @@ class EventService {
 		foreach ($this->items->findByEvent($eventId) as $item) {
 			$items[$item->getId()] = $item;
 		}
-		if (count($itemIds) !== count($items) || array_diff($itemIds, array_keys($items)) !== []) {
+		if (!self::isPermutation($itemIds, array_keys($items))) {
 			throw new InvalidInputException('The new order must contain every item exactly once.');
 		}
-		foreach ($itemIds as $index => $id) {
-			$items[$id]->setPosition($index + 1);
-			$this->items->update($items[$id]);
+		$this->db->beginTransaction();
+		try {
+			foreach ($itemIds as $index => $id) {
+				$items[$id]->setPosition($index + 1);
+				$this->items->update($items[$id]);
+			}
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
 		}
+	}
+
+	/**
+	 * Whether $order holds every id of $ids exactly once, nothing more: a
+	 * repeated id (e.g. [11, 11, 12] for 11, 12, 13) would leave one item at
+	 * its old position and give two items the same one.
+	 *
+	 * @param list<int> $order
+	 * @param list<int> $ids
+	 */
+	public static function isPermutation(array $order, array $ids): bool {
+		return count($order) === count($ids)
+			&& count(array_unique($order)) === count($order)
+			&& array_diff($order, $ids) === []
+			&& array_diff($ids, $order) === [];
 	}
 
 	public function setFixed(int $eventId, string $uid): void {

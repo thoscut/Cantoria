@@ -197,6 +197,17 @@ final class FolderBookServiceTest extends TestCase {
 			self::message(fn () => $service->updateFolder(7, ['status' => 'retired', 'statusReason' => 'torn'], 'librarian')));
 	}
 
+	public function testAFolderComesBackIntoServiceOnlyWithAFreeLabel(): void {
+		$folders = $this->createStub(FolderMapper::class);
+		$folders->method('find')->willReturn($this->folder(7, Folder::RETIRED));
+		// meanwhile a new folder 12 is in service
+		$folders->method('findAll')->willReturn([$this->folder(7, Folder::RETIRED), $this->folder(8)]);
+		self::assertSame('A folder in service is already called "12". Please choose another number or name, or take the other folder out of service first.',
+			self::message(fn () => $this->service(['folders' => $folders])->updateFolder(7, ['status' => 'active'], 'librarian')));
+		self::assertNull(self::message(fn () => $this->service(['folders' => $folders])->updateFolder(7, ['status' => 'active', 'label' => '12a'], 'librarian')),
+			'with a new label it may come back');
+	}
+
 	public function testContentsAreCopiesWithANumber(): void {
 		$copy = new Copy();
 		$copy->setId(35);

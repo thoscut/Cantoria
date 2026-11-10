@@ -125,10 +125,17 @@ class ProgrammeShareService {
 		$withScan = ($data['scan'] ?? false) === true;
 		$this->event($eventId);
 		$result = ['created' => 0, 'extended' => 0, 'kept' => 0, 'failed' => [], 'limited' => []];
+		// copy id => true once this run made or extended its link: a piece
+		// sung twice (in the programme and as an encore) gets one link
+		$done = [];
 		foreach ($this->describeAll($eventId, $uid, $today, $chosen) as $option) {
 			if (!$option['allowed'] || $option['copyId'] === null) {
 				$result['failed'][] = ['id' => $option['id'], 'title' => $option['title'],
 					'reason' => $option['reason'] ?? ['message' => 'This piece cannot be shared.', 'parameters' => []]];
+				continue;
+			}
+			if (isset($done[$option['copyId']])) {
+				$result['kept']++;
 				continue;
 			}
 			// at most until the license ends
@@ -155,6 +162,7 @@ class ProgrammeShareService {
 					$result['created']++;
 					$lasts = $until;
 				}
+				$done[$option['copyId']] = true;
 				if ($lasts < $expires) {
 					$result['limited'][] = ['id' => $option['id'], 'title' => $option['title'], 'expires' => $lasts, 'reason' => $why];
 				}

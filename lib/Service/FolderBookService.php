@@ -255,6 +255,8 @@ class FolderBookService {
 			}
 			$values['status_since'] = $this->rights->today($uid);
 		} elseif ($status === Folder::ACTIVE && $folder->getStatus() === Folder::RETIRED) {
+			// meanwhile another folder in service may carry its label
+			$this->requireFreeLabel($values['label'] ?? $folder->getLabel(), $folder->getId());
 			$values['status_reason'] = null;
 			$values['status_since'] = $this->rights->today($uid);
 		} elseif (!array_key_exists('status', $values)) {
@@ -538,6 +540,21 @@ class FolderBookService {
 	}
 
 	/**
+	 * No two folders in service share a number or name (upper and lower case
+	 * count as the same); `$except` is the folder being changed.
+	 *
+	 * @throws InvalidInputException
+	 */
+	private function requireFreeLabel(string $label, ?int $except): void {
+		foreach ($this->folders->findAll() as $other) {
+			if ($other->getId() !== $except && $other->getStatus() === Folder::ACTIVE
+				&& mb_strtolower($other->getLabel()) === mb_strtolower($label)) {
+				throw new InvalidInputException('A folder in service is already called "%s". Please choose another number or name, or take the other folder out of service first.', [$label]);
+			}
+		}
+	}
+
+	/**
 	 * The checked values of a folder from request data (column => value).
 	 *
 	 * @param array<array-key, mixed> $data
@@ -554,12 +571,7 @@ class FolderBookService {
 			if (mb_strlen($label) > 64) {
 				throw new InvalidInputException('The number or name of the folder may have at most 64 characters.');
 			}
-			foreach ($this->folders->findAll() as $other) {
-				if ($other->getId() !== $current?->getId() && $other->getStatus() === Folder::ACTIVE
-					&& mb_strtolower($other->getLabel()) === mb_strtolower($label)) {
-					throw new InvalidInputException('A folder in service is already called "%s". Please choose another number or name, or take the other folder out of service first.', [$label]);
-				}
-			}
+			$this->requireFreeLabel($label, $current?->getId());
 			$values['label'] = $label;
 		}
 		if (array_key_exists('voice', $data)) {
