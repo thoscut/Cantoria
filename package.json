@@ -20,7 +20,8 @@
     "watch": "vite --mode development build --watch",
     "l10n": "node tools/l10n/extract.mjs . > tools/l10n/strings.json && node tools/l10n/generate.mjs . tools/l10n/strings.json",
     "score-check": "node tools/score-check/check.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
@@ -46,6 +47,7 @@
     "@nextcloud/stylelint-config": "^3.1.1",
     "@nextcloud/vite-config": "^2.5.2",
     "@vitejs/plugin-vue": "^6.0.10",
+    "@vitest/coverage-v8": "^5.0.3",
     "@vue/test-utils": "^2.5.1",
     "@vue/tsconfig": "^0.9.1",
     "eslint-plugin-vuejs-accessibility": "^2.6.2",

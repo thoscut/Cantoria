@@ -207,6 +207,11 @@ jobs:
         run: sh .github/scripts/install-composer.sh
       - name: Validate composer.json and lock file
         run: composer validate --no-check-publish
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Composer's download cache; composer install still installs exactly the lock files
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
       - name: Install dependencies
         run: composer install --no-progress
       - name: Audit dependencies of the app and the tools
@@ -232,10 +237,17 @@ jobs:
         run: sh .github/scripts/install-php-extensions.sh
       - name: Install Composer
         run: sh .github/scripts/install-composer.sh
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Composer's download cache; composer install still installs exactly the lock files
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
       - name: Install dependencies
         run: composer install --no-progress
       - name: Static analysis
         run: vendor/bin/psalm --no-cache --no-progress --threads=2 --output-format=compact
+      - name: Static analysis of the unit tests (psalm-tests.xml)
+        run: vendor/bin/psalm -c psalm-tests.xml --no-cache --no-progress --threads=2 --output-format=compact
 
   cs-check:
     name: Coding standard
@@ -256,6 +268,11 @@ jobs:
         run: sh .github/scripts/install-php-extensions.sh
       - name: Install Composer
         run: sh .github/scripts/install-composer.sh
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Composer's download cache; composer install still installs exactly the lock files
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
       - name: Install dependencies
         run: composer install --no-progress
       - name: Check the coding standard
@@ -284,6 +301,11 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Install Composer
         run: sh .github/scripts/install-composer.sh
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Composer's download cache; composer install still installs exactly the lock files
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
       - name: Install dependencies
         run: composer install --no-progress
       - name: Generate openapi.json (nextcloud/openapi-extractor)
@@ -312,6 +334,8 @@ jobs:
             image: php:8.2-cli@sha256:a76ea7d3dd8f65eefff85e9c883f4d146808e0075c30ae6bccbb2a3753d373b8
           - php: '8.3'
             image: php:8.3-cli@sha256:600bce7c7acf524756e5aac989f4a763aed709960d7326970bb670f46efee53a
+            # line coverage of lib/ with pcov, as a summary of the job and an artifact
+            coverage: true
           - php: '8.4'
             image: php:8.4-cli@sha256:7e7413ed31b8c42b31c939cc83b3758b1cd618f7bf3803f5a0c39f98d4adcbee
     container:
@@ -324,12 +348,39 @@ jobs:
           persist-credentials: false
       - name: Install the PHP extensions the app requires (composer.json)
         run: sh .github/scripts/install-php-extensions.sh
+      - name: Install pcov for the coverage
+        if: matrix.coverage
+        run: pecl install pcov >/dev/null && docker-php-ext-enable pcov
       - name: Install Composer
         run: sh .github/scripts/install-composer.sh
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Composer's download cache; composer install still installs exactly the lock files
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
       - name: Install dependencies
         run: composer install --no-progress
       - name: Unit tests (without Nextcloud server)
+        if: ${{ !matrix.coverage }}
         run: vendor/bin/phpunit -c tests/phpunit.xml --colors=never
+      - name: Unit tests with coverage of lib/
+        if: matrix.coverage
+        run: |
+          vendor/bin/phpunit -c tests/phpunit.xml --colors=never \
+            --coverage-clover build/coverage/clover.xml --coverage-text=build/coverage/summary.txt --only-summary-for-coverage-text
+          {
+            echo '### Coverage of lib/ by the unit tests'
+            echo
+            echo '```'
+            cat build/coverage/summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: matrix.coverage
+        with:
+          name: coverage-php
+          path: build/coverage/
+          retention-days: 14
 
   npm-audit:
     # A job of its own, so that a newly published advisory does not hide the
@@ -384,11 +435,24 @@ jobs:
       - name: Type check
         # vue-tsc: TypeScript and the templates of the Vue components
         run: npm run typecheck
-      - name: Unit tests
+      - name: Unit tests with coverage of src/
         # vitest: score logic, catalog filters, text references, start parameters, durations,
         # maintenance helpers, MXL limits, SVG cleaning, focus voice emphasis,
-        # start page labels in singular and plural, access to the inbox
-        run: npm test
+        # start page labels in singular and plural, access to the inbox,
+        # mounted components; the coverage goes into the summary of the job
+        # (bash: pipefail, so a failing test is not hidden by tee)
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:coverage | tee build-coverage.txt
+          {
+            echo '### Coverage of src/ by the unit tests'
+            echo
+            echo '```'
+            sed -n '/Coverage summary/,/^=*$/p' build-coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          rm build-coverage.txt
       - name: Build
         run: npm run build
       - name: Translations complete
@@ -480,7 +544,7 @@ jobs:
     # required check as passed.
     name: CI result
     if: always()
-    needs: [changes, reuse, docs, appinfo, php-lint, composer, psalm, cs-check, openapi, phpunit, npm-audit, node, archive, mcp, integration]
+    needs: [changes, reuse, docs, appinfo, php-lint, composer, psalm, cs-check, openapi, phpunit, npm-audit, node, archive, mcp, integration, upgrade]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     container:
@@ -494,13 +558,140 @@ jobs:
           NEEDS: ${{ toJSON(needs) }}
         run: node .github/scripts/ci-result.mjs
 
+  upgrade:
+    # The upgrade from the base branch (M1): Nextcloud 35 with MariaDB and
+    # with PostgreSQL gets the app as it is on the base (for a pull request
+    # its base commit, for a push to main the commit before), runs the
+    # integration tests of that version (they leave the demo data and what
+    # the tests made), then the release archive of this run replaces the app
+    # and tools/ci/upgrade-check.sh runs the upgrade and the migrations and
+    # checks that no table lost rows. So a new migration meets data before
+    # it reaches an instance.
+    name: Upgrade from the base branch, ${{ matrix.database }}
+    needs: archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        database: ['MariaDB', 'PostgreSQL']
+    container:
+      image: php:8.3-cli@sha256:600bce7c7acf524756e5aac989f4a763aed709960d7326970bb670f46efee53a
+    services:
+      mariadb:
+        image: mariadb:11.8@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd
+        env:
+          # Throwaway database of this job only
+          MARIADB_ROOT_PASSWORD: nextcloud-ci
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+      postgres:
+        image: postgres:17@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1
+        env:
+          # Throwaway database of this job only
+          POSTGRES_PASSWORD: nextcloud-ci
+          POSTGRES_DB: nextcloud
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      NEXTCLOUD_ROOT: /opt/nextcloud
+      NEXTCLOUD: '35'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install job tools and the PHP extensions Nextcloud needs
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends git curl bzip2 ca-certificates libpng-dev libfreetype-dev libzip-dev libicu-dev libpq-dev >/dev/null
+          docker-php-ext-configure gd --with-freetype >/dev/null
+          docker-php-ext-install -j"$(nproc)" gd intl pdo_mysql pdo_pgsql zip >/dev/null
+          echo 'memory_limit = 1G' > /usr/local/etc/php/conf.d/zz-ci.ini
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # the base commit must be in the history
+          fetch-depth: 0
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Check out the base in a worktree
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="${PR_BASE:-}"
+          if [ -z "$base" ] && [ -n "${BEFORE:-}" ] && ! printf '%s' "$BEFORE" | grep -qE '^0+$'; then
+            base="$BEFORE"
+          fi
+          # a manual run or a tag: the commit before
+          base="${base:-$(git rev-parse HEAD^)}"
+          git worktree add "$RUNNER_TEMP/base" "$base"
+          echo "base: $(git -C "$RUNNER_TEMP/base" log -1 --oneline)"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-archive
+          path: ${{ runner.temp }}/release
+      - name: Build the app, demo data and MCP server of the base
+        working-directory: ${{ runner.temp }}/base
+        run: |
+          tools/release/package.sh --unreleased
+          node tools/demo/build.mjs
+          npm ci --prefix tools/mcp --no-audit --no-fund
+          npm run build --prefix tools/mcp
+      - name: Download Nextcloud and check its checksum
+        run: |
+          tarball="latest-$NEXTCLOUD.tar.bz2"
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "https://download.nextcloud.com/server/releases/$tarball.sha512"
+          curl -fsSLO "https://download.nextcloud.com/server/releases/$tarball"
+          grep " $tarball\$" "$tarball.sha512" | sha512sum -c -
+          tar -xjf "$tarball" -C "$(dirname "$NEXTCLOUD_ROOT")"
+      - name: Install Nextcloud with ${{ matrix.database }}
+        env:
+          DATABASE: ${{ matrix.database }}
+        run: |
+          admin_pass="$(head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
+          case "$DATABASE" in
+            MariaDB) database=(--database=mysql --database-host=mariadb --database-port=3306 --database-user=root) ;;
+            PostgreSQL) database=(--database=pgsql --database-host=postgres --database-port=5432 --database-user=postgres) ;;
+            *) echo "unknown database $DATABASE" >&2; exit 1 ;;
+          esac
+          php "$NEXTCLOUD_ROOT/occ" maintenance:install --no-interaction \
+            "${database[@]}" --database-name=nextcloud --database-pass=nextcloud-ci \
+            --admin-user=admin --admin-pass="$admin_pass" \
+            --data-dir="$NEXTCLOUD_ROOT/data"
+      - name: Install the base version and run its integration tests
+        run: |
+          archives=("$RUNNER_TEMP"/base/build/release/cantoria-*.tar.gz)
+          [ "${#archives[@]}" = 1 ]
+          tar -xzf "${archives[0]}" -C "$NEXTCLOUD_ROOT/apps" --no-same-owner
+          php "$NEXTCLOUD_ROOT/occ" app:enable cantoria
+          bash "$RUNNER_TEMP/base/tools/ci/integration-demo.sh" "$NEXTCLOUD_ROOT"
+      - name: Upgrade to the release archive of this run
+        run: |
+          cd "$RUNNER_TEMP/release"
+          sha256sum -c SHA256SUMS
+          archives=(cantoria-*.tar.gz)
+          [ "${#archives[@]}" = 1 ]
+          bash "$GITHUB_WORKSPACE/tools/ci/upgrade-check.sh" "$NEXTCLOUD_ROOT" "$RUNNER_TEMP/release/${archives[0]}" demo-librarian
+
   integration:
     # The integration tests in tests/Integration against a freshly installed
     # Nextcloud, the app from the release archive of the job "archive" and
     # the public demo data (tools/demo). The oldest and the newest supported
     # Nextcloud (appinfo/info.xml), each with MariaDB and with PostgreSQL
-    # (the database of Nextcloud All-in-One). Both database services start
-    # in every job; the matrix chooses which one Nextcloud uses.
+    # (the database of Nextcloud All-in-One), and the oldest with MySQL 8.0.
+    # All database services start in every job; the matrix chooses which one
+    # Nextcloud uses.
     name: Integration tests, Nextcloud ${{ matrix.nextcloud }}, ${{ matrix.database }}
     needs: archive
     runs-on: ubuntu-latest
@@ -510,6 +701,10 @@ jobs:
       matrix:
         nextcloud: ['33', '35']
         database: ['MariaDB', 'PostgreSQL']
+        # MySQL 8.0, the oldest database info.xml names, on the oldest Nextcloud (M2)
+        include:
+          - nextcloud: '33'
+            database: MySQL
     container:
       image: php:8.3-cli@sha256:600bce7c7acf524756e5aac989f4a763aed709960d7326970bb670f46efee53a
     services:
@@ -521,6 +716,16 @@ jobs:
           MARIADB_ROOT_PASSWORD: nextcloud-ci
         options: >-
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+      mysql:
+        image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+        env:
+          # Throwaway database of this job only
+          MYSQL_ROOT_PASSWORD: nextcloud-ci
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -pnextcloud-ci"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 30
@@ -605,6 +810,7 @@ jobs:
           admin_pass="$(head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
           case "$DATABASE" in
             MariaDB) database=(--database=mysql --database-host=mariadb --database-port=3306 --database-user=root) ;;
+            MySQL) database=(--database=mysql --database-host=mysql --database-port=3306 --database-user=root) ;;
             PostgreSQL) database=(--database=pgsql --database-host=postgres --database-port=5432 --database-user=postgres) ;;
             *) echo "unknown database $DATABASE" >&2; exit 1 ;;
           esac

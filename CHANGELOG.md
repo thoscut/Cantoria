@@ -94,6 +94,17 @@ All notable changes to this app are documented in this file. The format follows
   - "Remove from this device" at the top of "Shared with me" and the
     concert folder, with the number of kept pieces; notes on shared
     devices in the guides.
+- **Optimisation round 2 (10 November 2026): tests and CI.** A new CI job
+  installs the app as it is on the base branch, runs that version's
+  integration tests, then upgrades to the archive of the change and checks
+  that every table kept its rows (`tools/ci/upgrade-check.sh`, MariaDB and
+  PostgreSQL). The integration tests also run on MySQL 8.0, the oldest
+  database `info.xml` names. Psalm also checks the unit tests
+  (`psalm-tests.xml`, `composer psalm:tests`) and found a test message
+  that lost its period to string interpolation. The CI shows the line
+  coverage of `lib/` and `src/` (`npm run test:coverage`), caches
+  Composer's downloads, and `.github/CODEOWNERS` asks the maintainer for
+  every review.
 
 ### Changed
 

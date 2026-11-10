@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
+  - SPDX-License-Identifier: CC0-1.0
+-->
+<!--
+  Static analysis of the unit tests (composer psalm:tests, job "Psalm" in
+  the CI). Less strict than psalm.xml for lib/ (errorLevel 5): test code
+  builds values on purpose that the types of lib/ refuse, and test doubles
+  change state that the analysis cannot follow. It still finds what matters
+  in tests: undefined variables and methods, wrong arguments, calls with too
+  few arguments, string interpolation that swallows a character.
+
+  Like psalm.xml without a baseline; the issue handlers below only cover
+  what the analysis cannot see, each with its reason.
+-->
+<psalm
+	errorLevel="5"
+	phpVersion="8.2"
+	resolveFromConfigFile="true"
+	findUnusedCode="false"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="https://getpsalm.org/schema/config"
+	xsi:schemaLocation="https://getpsalm.org/schema/config vendor-bin/psalm/vendor/vimeo/psalm/config.xsd"
+>
+	<projectFiles>
+		<directory name="tests/Unit"/>
+	</projectFiles>
+	<extraFiles>
+		<directory name="lib"/>
+		<directory name="vendor/nextcloud/ocp"/>
+		<directory name="vendor-bin/phpunit/vendor/phpunit/phpunit/src"/>
+	</extraFiles>
+	<stubs>
+		<file name="tests/stubs/oc_hooks_emitter.php" preloadClasses="true"/>
+		<file name="tests/stubs/oca_files_events.php" preloadClasses="true"/>
+	</stubs>
+	<issueHandlers>
+		<!-- getData() of an (OCS) DataResponse is typed as array|object; the tests read the array the controller returned. -->
+		<UndefinedMethod>
+			<errorLevel type="suppress">
+				<referencedMethod name="stdClass::offsetGet"/>
+			</errorLevel>
+		</UndefinedMethod>
+		<!-- Properties filled by callbacks of test doubles ($this->inserted, $this->stored) look empty to the analysis. -->
+		<EmptyArrayAccess>
+			<errorLevel type="suppress">
+				<directory name="tests/Unit"/>
+			</errorLevel>
+		</EmptyArrayAccess>
+		<!-- PHPUnit itself, read for its types only -->
+		<MissingOverrideAttribute>
+			<errorLevel type="suppress">
+				<directory name="vendor-bin"/>
+			</errorLevel>
+		</MissingOverrideAttribute>
+	</issueHandlers>
+</psalm>

@@ -64,7 +64,8 @@ final class MusicXmlExcerptTest extends TestCase {
 		$nodes = $xpath->query($query);
 		self::assertNotFalse($nodes, $query);
 		self::assertSame(1, $nodes->length, $query);
-		return trim((string)$nodes->item(0)?->textContent);
+		$node = $nodes->item(0);
+		return trim($node instanceof \DOMNode ? (string)$node->textContent : '');
 	}
 
 	/**

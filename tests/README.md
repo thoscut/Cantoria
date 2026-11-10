@@ -321,7 +321,8 @@ missing arguments end with exit code 2.
 
 The CI job `integration` runs all twenty scripts against a freshly installed
 Nextcloud 33 and 35 (release archives from download.nextcloud.com, checked
-against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17, and PHP 8.3. The job
+against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17,
+Nextcloud 33 also with MySQL 8.0, and PHP 8.3. The job
 installs the app with its built frontend, builds the public demo data
 (`node tools/demo/build.mjs`, see `tools/demo/README.md`) and calls
 
@@ -418,10 +419,45 @@ empty it, run the script with an account of its own, then empty the catalog
 again, restore the backup (`occ cantoria:restore`), delete the account and
 set the archive folder and the roles back.
 
+### Upgrade from the base branch in CI
+
+The CI job `upgrade` (Nextcloud 35, MariaDB and PostgreSQL) installs the
+app as it is on the base branch: for a pull request its base commit, for a
+push to `main` the commit before. It builds that version with its own
+`tools/release/package.sh --unreleased` and runs its own
+`tools/ci/integration-demo.sh`, so the instance holds the demo catalog and
+everything the tests of that version left behind. Then the release archive
+of the run replaces the app, and
+
+```sh
+bash tools/ci/upgrade-check.sh /path/to/nextcloud cantoria-<version>.tar.gz demo-librarian
+```
+
+saves a complete backup, runs `occ upgrade` and the pending migrations
+(`occ migrations:migrate cantoria`, since a pull request usually keeps the
+version number), checks that the app is enabled with the new version,
+compares a second backup table by table (no table may disappear or lose
+rows) and runs the file sync and the module list on the migrated data. A
+new migration thus meets real data before it reaches an instance.
+
+## Coverage
+
+```sh
+npm run test:coverage                                   # src/, summary in the terminal
+vendor/bin/phpunit -c tests/phpunit.xml --coverage-text # lib/, needs pcov or Xdebug
+```
+
+The CI writes both summaries into the summary of the jobs "Frontend" and
+"Unit tests 8.3" and keeps the PHP report (Clover) as the artifact
+`coverage-php` for 14 days. There is no threshold: the figure shows where
+tests are missing; the tests themselves are measured by mutations of the
+code they guard (see the reviews).
+
 ## Static analysis and coding standard
 
 ```sh
 composer psalm      # Psalm, see psalm.xml (no baseline)
+composer psalm:tests # Psalm over tests/Unit, see psalm-tests.xml (errorLevel 5)
 composer cs:check   # PHP-CS-Fixer with the Nextcloud coding standard, dry run
 composer cs:fix     # apply the coding standard
 composer lint       # php -l on all PHP files
@@ -432,7 +468,7 @@ tests on PHP 8.2, 8.3 and 8.4, the frontend checks, the REUSE check, the
 check that `openapi.json` is current (`composer run openapi`, then
 `git diff --exit-code`), the build and tests of the MCP server and the
 integration tests with the demo data and the agent run on Nextcloud 33 and
-35. Its first job, `changes`, skips build and tests when only
+35, and the upgrade from the base branch. Its first job, `changes`, skips build and tests when only
 documentation changed (`docs/`, Markdown, `tools/screenshots/`, the GitHub
 templates); the checks of the documentation and REUSE always run. Its last
 job, **CI result** (`ci-ok`), is the required check of `main`: green only

@@ -34,6 +34,7 @@
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"psalm": "psalm --no-cache --threads=1",
+		"psalm:tests": "psalm -c psalm-tests.xml --no-cache --threads=1",
 		"test:unit": "phpunit -c tests/phpunit.xml",
 		"openapi": "generate-spec",
 		"rector": "rector && composer cs:fix"

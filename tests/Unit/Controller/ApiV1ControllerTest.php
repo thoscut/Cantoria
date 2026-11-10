@@ -372,6 +372,7 @@ final class ApiV1ControllerTest extends TestCase {
 		self::assertSame(['2-1'], self::shelfmarks($second));
 		self::assertSame(['1-2'], self::shelfmarks($controller->tasks('all', copy_id: 2)->getData()));
 		$this->expectException(OCSBadRequestException::class);
+		/** @psalm-suppress InvalidArgument a value the API refuses, on purpose */
 		$controller->tasks('everything');
 	}
 

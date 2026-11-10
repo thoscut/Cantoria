@@ -42,7 +42,7 @@ final class OdsReaderTest extends TestCase {
 	/**
 	 * content.xml with the given sheets (table:name => XML of the rows).
 	 *
-	 * @param array<string, string> $tables
+	 * @param array<array-key, string> $tables (a sheet called 2024 becomes an integer key)
 	 */
 	private static function content(array $tables): string {
 		$xml = '<?xml version="1.0" encoding="UTF-8"?><office:document-content ' . self::NAMESPACES . ' office:version="1.3">'
@@ -54,7 +54,7 @@ final class OdsReaderTest extends TestCase {
 	}
 
 	/**
-	 * @param array<string, string> $tables
+	 * @param array<array-key, string> $tables
 	 */
 	private function ods(array $tables, string $mimetype = OdsReader::MIMETYPE): string {
 		return $this->zip(['mimetype' => $mimetype, 'content.xml' => self::content($tables)]);

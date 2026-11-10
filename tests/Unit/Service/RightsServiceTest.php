@@ -145,7 +145,7 @@ final class RightsServiceTest extends TestCase {
 	#[DataProvider('releases')]
 	public function testReleaseDenials(array $versionValues, array $licenseSpecs, ?string $portal, ?string $printStation): void {
 		$version = self::version($versionValues);
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		self::assertSame($portal, $this->service->portalDenial($version, $licenses, self::TODAY));
 		self::assertSame($printStation, $this->service->printStationDenial($version, $licenses, self::TODAY));
 	}

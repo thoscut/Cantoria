@@ -19,6 +19,7 @@ use OCP\IUser;
 use OCP\Notification\IManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -33,7 +34,7 @@ final class NotificationServiceTest extends TestCase {
 	/**
 	 * @param list<string> $off modules switched off
 	 */
-	private function service(IManager $manager, array $off): NotificationService {
+	private function service(IManager&Stub $manager, array $off): NotificationService {
 		$user = $this->createStub(IUser::class);
 		$user->method('getUID')->willReturn('lena');
 		$group = $this->createStub(IGroup::class);
