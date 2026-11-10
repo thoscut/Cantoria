@@ -132,6 +132,11 @@ All notable changes to this app are documented in this file. The format follows
   browser remembers the voice a choir member chose and opens the next piece
   with it, unless its link names a voice ("Tenor" also finds "Tenor 1").
   "Delete everything on this device" forgets it too.
+- **Hired material (optimisation round 3).** Copies record who they are hired
+  from and the day they must be back (copy fields `hired_from` and
+  `return_date`, migration `Version001700Date20261110120000`); the start page
+  of the music librarians counts the copies due back within 30 days or
+  overdue (card `hired_return`), and the catalog filters them.
 
 ### Changed
 

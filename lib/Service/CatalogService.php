@@ -195,6 +195,7 @@ class CatalogService {
 				'binder' => $copy->getBinder(),
 				'number' => $copy->getNumber(),
 				'status' => $copy->getStatus(),
+				'return_date' => $copy->getReturnDate(),
 				'title' => $work?->getTitle(),
 				'composer' => $work?->getComposer(),
 				'work_no' => $work?->getWorkNo(),

@@ -416,6 +416,9 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 					<NcCheckboxRadioSwitch v-if="isModuleActive('transcription_review')" v-model="filters.reviewOpen">
 						{{ t('cantoria', 'Open review points') }}
 					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch v-model="filters.hiredReturn">
+						{{ t('cantoria', 'Hired material to return (30 days)') }}
+					</NcCheckboxRadioSwitch>
 					<NcCheckboxRadioSwitch v-if="isModuleActive('rights')" v-model="filters.copiesUnlicensed">
 						{{ t('cantoria', 'Photocopies without a license') }}
 					</NcCheckboxRadioSwitch>

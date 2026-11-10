@@ -204,6 +204,14 @@ Sorted by **Sung longest ago**, the pieces not sung for the longest time come
 first, a good start for bringing one back; **Sung most recently** is the
 other way round. Pieces never sung stand at the end of both.
 
+**Hired material.** For scores hired from a publisher or borrowed from
+another choir, enter **Hired from** and **Return by** on the copy (fields of
+the copy, for the music librarians and operations). From 30 days before the
+day, and when it has passed, the start page of the music librarians shows
+the card for hired copies to return, and **More filters** → **Hired material
+to return (30 days)** lists them. Once the material is back, set the copy to
+**Retired** (or clear **Return by**).
+
 The **rights badge** always shows a text and a symbol, never only a colour:
 
 | Badge | Meaning |

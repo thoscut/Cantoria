@@ -9,6 +9,8 @@
  */
 import type { Entry, FilterContext, Filters, SortOrder } from './types.ts'
 
+import { toIsoDate } from './format.ts'
+
 /**
  * Lower case, without diacritics, so "schoner" also finds "schöner".
  *
@@ -69,6 +71,7 @@ export const DEFAULT_FILTERS: Readonly<Filters> = Object.freeze({
 	scoring: null,
 	language: null,
 	maxMinutes: null,
+	hiredReturn: false,
 })
 
 /**
@@ -91,6 +94,7 @@ export function moreFiltersActive(filters: Filters): number {
 		filters.scoring !== null,
 		filters.language !== null,
 		filters.maxMinutes !== null,
+		filters.hiredReturn,
 	].filter(Boolean).length
 }
 
@@ -225,6 +229,7 @@ export function hasActiveFilters(filters: Filters): boolean {
 		|| filters.scoring !== null
 		|| filters.language !== null
 		|| filters.maxMinutes !== null
+		|| filters.hiredReturn
 }
 
 /**
@@ -248,7 +253,27 @@ export function activeFilterCount(filters: Filters): number {
 		filters.scoring !== null,
 		filters.language !== null,
 		filters.maxMinutes !== null,
+		filters.hiredReturn,
 	].filter(Boolean).length
+}
+
+/** Days ahead in which hired material counts as to return (as the start page) */
+export const HIRED_RETURN_DAYS = 30
+
+/**
+ * Whether a copy is hired material to return within HIRED_RETURN_DAYS or
+ * overdue.
+ *
+ * @param entry - catalog entry
+ * @param today - today (YYYY-MM-DD)
+ */
+export function hiredToReturn(entry: Entry, today: string): boolean {
+	if (!entry.return_date || entry.status === 'retired') {
+		return false
+	}
+	const limit = new Date(today + 'T12:00:00')
+	limit.setDate(limit.getDate() + HIRED_RETURN_DAYS)
+	return entry.return_date <= toIsoDate(limit)
 }
 
 /**
@@ -342,6 +367,9 @@ export function filterEntries(entries: Entry[], filters: Filters, index: Map<num
 			return false
 		}
 		if (filters.language !== null && filterKey(entry.language) !== filterKey(filters.language)) {
+			return false
+		}
+		if (filters.hiredReturn && !hiredToReturn(entry, context.today ?? toIsoDate(new Date()))) {
 			return false
 		}
 		if (filters.maxMinutes !== null && !(typeof entry.duration === 'number' && entry.duration > 0 && entry.duration <= filters.maxMinutes * 60)) {

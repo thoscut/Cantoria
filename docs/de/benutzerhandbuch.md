@@ -216,6 +216,15 @@ die Stücke vorn, die am längsten nicht gesungen wurden: ein guter Anfang, um
 eines wieder aufzunehmen; **Zuletzt gesungen** ist die umgekehrte Richtung.
 Nie gesungene Stücke stehen bei beiden am Ende.
 
+**Leihmaterial.** Für Noten, die von einem Verlag gemietet oder von einem
+anderen Chor geliehen sind, trägst du am Exemplar **Geliehen von** und
+**Zurück bis** ein (Felder des Exemplars, für Archivverwaltung und
+Organisation). Ab 30 Tage vor dem Tag und danach zeigt die Startseite der
+Archivverwaltung die Karte der geliehenen Exemplare, die zurückzugeben sind,
+und **Weitere Filter** → **Leihmaterial zurückzugeben (30 Tage)** listet sie.
+Ist das Material zurück, setze das Exemplar auf **Ausgemustert** (oder leere
+**Zurück bis**).
+
 Das **Rechte-Kennzeichen** zeigt immer Text und Symbol, nie nur eine Farbe:
 
 | Kennzeichen | Bedeutung |

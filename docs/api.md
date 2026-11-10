@@ -160,7 +160,8 @@ Choice keys:
    "has_musicxml": true, "files": 9, "pdfs": 3 }]
 ```
 
-`scoring`, `language` and `duration` (seconds) are those of the version,
+`return_date` is the day hired material must be back (copy field, with
+`hired_from`). `scoring`, `language` and `duration` (seconds) are those of the version,
 for finding repertoire (filters "Scoring", "Language" and "At most … minutes").
 
 `GET /api/entries/{id}` returns everything about one copy:
@@ -594,7 +595,8 @@ Creating a task or a link refuses fields other than the ones listed below
 
 Start page card keys: `tasks_open`, `tasks_answered`, `ambiguous_items`,
 `proposals`, `portal_remove`, `portal_add`, `confirm_current`, `rule1_current`,
-`licenses_expiring`, `valid_missing`. The `label` is translated, always in the
+`licenses_expiring`, `valid_missing`, `hired_return` (librarian: copies with
+`return_date` within 30 days or past, not retired; core). The `label` is translated, always in the
 plural; the UI shows its own label in singular or plural for the keys it knows
 (`src/dueLabels.ts`) and the server's label for new keys.
 

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Service;
 
+use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\Event;
 use OCA\Cantoria\Db\EventItem;
@@ -126,6 +127,15 @@ class DueService {
 			}
 			if ($expiring > 0) {
 				$cards[] = ['key' => 'licenses_expiring', 'count' => $expiring, 'label' => 'Licenses ending or ended'];
+			}
+		}
+		if ($isLibrarian) {
+			// hired material (round 3, November 2026): to return within 30 days or overdue, core
+			$soon = (new \DateTimeImmutable($this->rights->today($uid)))->modify('+30 days')->format('Y-m-d');
+			$hired = count(array_filter($this->copies->findAll(), fn (Copy $copy): bool => $copy->getReturnDate() !== null
+				&& $copy->getReturnDate() <= $soon && $copy->getStatus() !== 'retired'));
+			if ($hired > 0) {
+				$cards[] = ['key' => 'hired_return', 'count' => $hired, 'label' => 'Hired material to return'];
 			}
 		}
 		if ($isConductor && $active['valid_version']) {

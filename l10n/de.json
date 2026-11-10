@@ -347,6 +347,7 @@
         "Internal preservation copies only": "Nur interne Erhaltungskopien",
         "No version valid for the choir": "Keine Fassung gilt für den Chor",
         "Open review points": "Offene Prüfpunkte",
+        "Hired material to return (30 days)": "Leihmaterial zurückzugeben (30 Tage)",
         "Photocopies without a license": "Fotokopien ohne Lizenz",
         "Songbook of the first {count} hits …": "Liederbuch der ersten {count} Treffer …",
         "Releases": "Freigaben",
@@ -2116,6 +2117,7 @@
         "Current repertoire: check originals of preservation copies": "Aktuelles Repertoire: Originale der Erhaltungskopien prüfen",
         "Current repertoire: photocopies without a license": "Aktuelles Repertoire: Fotokopien ohne Lizenz",
         "Licenses ending or ended": "Lizenzen, die enden oder abgelaufen sind",
+        "Hired material to return": "Leihmaterial zurückzugeben",
         "Current repertoire: no valid version chosen": "Aktuelles Repertoire: keine geltende Fassung gewählt",
         "The new order must contain every item exactly once.": "Die neue Reihenfolge muss jeden Punkt genau einmal enthalten.",
         "Only concerts can be cancelled.": "Nur Konzerte lassen sich absagen.",
@@ -2192,6 +2194,8 @@
         "Kind of copy": "Art des Exemplars",
         "Title source": "Titelquelle",
         "Pages": "Seiten",
+        "Hired from": "Geliehen von",
+        "Return by": "Zurück bis",
         "Versions (catalog)": "Fassungen (Werkverzeichnis)",
         "PDF files (catalog)": "PDF-Dateien (Werkverzeichnis)",
         "Formats of original scans": "Formate der Originalscans",
@@ -3134,6 +3138,10 @@
         "_Current repertoire: version with photocopies without a license_::_Current repertoire: versions with photocopies without a license_": [
             "Aktuelles Repertoire: Fassung mit Fotokopien ohne Lizenz",
             "Aktuelles Repertoire: Fassungen mit Fotokopien ohne Lizenz"
+        ],
+        "_Hired copy to return_::_Hired copies to return_": [
+            "Geliehenes Exemplar zurückzugeben",
+            "Geliehene Exemplare zurückzugeben"
         ],
         "_Current repertoire: work without a chosen valid version_::_Current repertoire: works without a chosen valid version_": [
             "Aktuelles Repertoire: Werk ohne gewählte geltende Fassung",

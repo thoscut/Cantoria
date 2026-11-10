@@ -12,6 +12,7 @@ import {
 	distinctValues,
 	EMPTY_CONTEXT,
 	filterEntries,
+	hiredToReturn,
 	activeFilterCount,
 	hasActiveFilters,
 	isEntryConfirmed,
@@ -249,5 +250,18 @@ describe('finding repertoire', () => {
 		expect(lastPerformed(pieces[2]!)).toBe('')
 		expect(ids(sortEntries(pieces, 'performedLongAgo'))).toEqual([2, 4, 1, 3])
 		expect(ids(sortEntries(pieces, 'performedRecently'))).toEqual([1, 4, 2, 3])
+	})
+})
+
+describe('hired material', () => {
+	it('counts what is due back within 30 days or overdue, not what was returned', () => {
+		const today = '2026-11-10'
+		expect(hiredToReturn(entry({ return_date: '2026-10-01' }), today)).toBe(true)
+		expect(hiredToReturn(entry({ return_date: '2026-12-10' }), today)).toBe(true)
+		expect(hiredToReturn(entry({ return_date: '2026-12-11' }), today)).toBe(false)
+		expect(hiredToReturn(entry({ return_date: null }), today)).toBe(false)
+		expect(hiredToReturn(entry({ return_date: '2026-10-01', status: 'retired' }), today)).toBe(false)
+		const list = [entry({ id: 1, return_date: '2026-11-15' }), entry({ id: 2 })]
+		expect(filterEntries(list, filters({ hiredReturn: true }), new Map(), { worksWithValidVersion: new Set(), today }).map((e) => e.id)).toEqual([1])
 	})
 })

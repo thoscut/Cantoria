@@ -3620,9 +3620,15 @@ export const singular = {
 	'Possibly in the catalog already. If it is the same piece, a further copy or version may be the better way:': 'Vielleicht schon im Werkverzeichnis. Ist es dasselbe Stück, ist ein weiteres Exemplar oder eine weitere Fassung vielleicht der bessere Weg:',
 	// ---- round 3, November 2026: the voice of a choir member remembered ----
 	'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages and voice, the settings for practising and the marks "New".': 'In diesem Browser löscht das die ohne Netz verfügbaren Stücke aller Seiten von Cantoria, die gemerkten Übe-Stellen und die gemerkte Stimme, die Übe-Einstellungen und die Markierungen „Neu“.',
+	// ---- round 3, November 2026: hired material ----
+	'Hired material to return (30 days)': 'Leihmaterial zurückzugeben (30 Tage)',
+	'Hired material to return': 'Leihmaterial zurückzugeben',
+	'Hired from': 'Geliehen von',
+	'Return by': 'Zurück bis',
 }
 
 export const plural = {
+	'Hired copy to return|Hired copies to return': ['Geliehenes Exemplar zurückzugeben', 'Geliehene Exemplare zurückzugeben'],
 	'At most %n minute|At most %n minutes': ['Höchstens %n Minute', 'Höchstens %n Minuten'],
 	'Songbook of %n hit …|Songbook of %n hits …': ['Liederbuch aus %n Treffer …', 'Liederbuch aus %n Treffern …'],
 	'Make a songbook of %n piece|Make a songbook of %n pieces': ['Liederbuch aus %n Stück erstellen', 'Liederbuch aus %n Stücken erstellen'],

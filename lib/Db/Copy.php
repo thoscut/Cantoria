@@ -52,6 +52,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setScanFormats(?string $scanFormats)
  * @method string|null getScanFiles()
  * @method void setScanFiles(?string $scanFiles)
+ * @method string|null getHiredFrom()
+ * @method void setHiredFrom(?string $hiredFrom)
+ * @method string|null getReturnDate()
+ * @method void setReturnDate(?string $returnDate)
  * @method int getCreated()
  * @method void setCreated(int $created)
  * @method int getModified()
@@ -78,6 +82,9 @@ class Copy extends Entity implements JsonSerializable {
 	protected ?string $pdfFiles = null;
 	protected ?string $scanFormats = null;
 	protected ?string $scanFiles = null;
+	/** hired material (round 3, November 2026): who it is hired from, and the day it must be back */
+	protected ?string $hiredFrom = null;
+	protected ?string $returnDate = null;
 	protected int $created = 0;
 	protected int $modified = 0;
 
@@ -86,7 +93,7 @@ class Copy extends Entity implements JsonSerializable {
 			$this->addType($field, 'integer');
 		}
 		foreach (['shelfmark', 'status', 'statusReason', 'statusSince', 'kind', 'lastCounted', 'titleSource', 'pages',
-			'versionsCount', 'pdfFiles', 'scanFormats', 'scanFiles'] as $field) {
+			'versionsCount', 'pdfFiles', 'scanFormats', 'scanFiles', 'hiredFrom', 'returnDate'] as $field) {
 			$this->addType($field, 'string');
 		}
 	}

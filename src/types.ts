@@ -114,6 +114,8 @@ export interface Entry {
 	copies_unlicensed?: boolean
 	publication: string | null
 	valid_since: string | null
+	/** hired material: the day it must be back (YYYY-MM-DD) */
+	return_date?: string | null
 	/** scoring, language and duration (seconds) of the version, for finding repertoire */
 	scoring?: string | null
 	language?: string | null
@@ -1161,12 +1163,16 @@ export interface Filters {
 	language: string | null
 	/** at most this many minutes long (pieces without a duration are left out) */
 	maxMinutes: number | null
+	/** hired material to return within 30 days or overdue */
+	hiredReturn: boolean
 }
 
 /** Facts the filters need beyond the entry itself. */
 export interface FilterContext {
 	/** ids of works that have a valid version */
 	worksWithValidVersion: Set<number>
+	/** today (YYYY-MM-DD), for hired material to return; the browser's day if missing */
+	today?: string
 }
 
 // ---- milestone 0.5: maintaining the catalog ----------------------------------
