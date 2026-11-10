@@ -50,6 +50,27 @@ class EventItemMapper extends QBMapper {
 	}
 
 	/**
+	 * The number of items per event, counted by the database (the list of
+	 * concerts needs no items).
+	 *
+	 * @return array<int, int> event id => items
+	 */
+	public function countPerEvent(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('event_id')
+			->selectAlias($qb->func()->count('id'), 'cnt')
+			->from($this->getTableName())
+			->groupBy('event_id');
+		$result = $qb->executeQuery();
+		$counts = [];
+		foreach ($result->fetchAllAssociative() as $row) {
+			$counts[Row::int($row['event_id'])] = Row::int($row['cnt']);
+		}
+		$result->closeCursor();
+		return $counts;
+	}
+
+	/**
 	 * @return list<EventItem>
 	 */
 	public function findByAssignment(string $assignment): array {

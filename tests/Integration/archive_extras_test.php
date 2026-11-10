@@ -16,7 +16,8 @@ declare(strict_types=1);
  *   person, preservation copies, accounts without a role, module off,
  * - the report of gaps in the shelf marks against the next free shelf mark,
  * - the rights notice of a MusicXML file (information, never a status),
- * - two annual snapshots and their comparison.
+ * - two annual snapshots and their comparison,
+ * - hired material: lender and return date of a copy, and the count of copies due back.
  *
  * Usage (as the web server user):
  *   php tests/Integration/archive_extras_test.php <nextcloud-root> <uid>
@@ -331,6 +332,19 @@ try {
 	$check('an unknown snapshot is refused', $throws(fn () => $snapshots->compare($uid, '1999_19990101-000000', $second['name'])) !== null);
 	$check('a reader without the librarian role cannot make one',
 		$throws(fn () => $snapshots->createManually('cantoria-no-such-account')) !== null);
+
+	// ---- hired material (round 3, November 2026): the columns of the migration and the count of the start page
+	$allCopies = $copies->findAll();
+	$hiredBefore = $copies->countReturnDue('2999-12-31');
+	$hired = $allCopies[0];
+	$hired->setHiredFrom('Verlag Beispiel (Leihmaterial)');
+	$hired->setReturnDate('2000-01-15');
+	$copies->update($hired);
+	$check('a hired copy keeps lender and return date', $copies->find($hired->getId())->getReturnDate() === '2000-01-15'
+		&& $copies->find($hired->getId())->getHiredFrom() === 'Verlag Beispiel (Leihmaterial)');
+	$check('the database counts it as due back', $copies->countReturnDue('2000-01-15') >= 1
+		&& $copies->countReturnDue('2999-12-31') === $hiredBefore + ($hired->getStatus() === 'retired' ? 0 : 1));
+	$check('nothing is due back before its day', $copies->countReturnDue('2000-01-14') === 0 || $hiredBefore > 0);
 } catch (Throwable $e) {
 	IntegrationTest::unexpected($e);
 } finally {

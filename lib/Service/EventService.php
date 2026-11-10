@@ -57,6 +57,9 @@ class EventService {
 	private const EVENT_FIELDS = ['title', 'event_date', 'start_time', 'end_time', 'location', 'period', 'is_public', 'board_agreed', 'notes'];
 	private const ITEM_FIELDS = ['duration', 'note', 'encore', 'struck'];
 
+	/** @var array<int, ?string> names of persons read during this request */
+	private array $personNames = [];
+
 	public function __construct(
 		private IDBConnection $db,
 		private EventMapper $events,
@@ -493,10 +496,7 @@ class EventService {
 	 * @return list<array<string, mixed>>
 	 */
 	public function list(?string $kind): array {
-		$counts = [];
-		foreach ($this->items->findAll() as $item) {
-			$counts[$item->getEventId()] = ($counts[$item->getEventId()] ?? 0) + 1;
-		}
+		$counts = $this->items->countPerEvent();
 		return array_map(fn (Event $e): array => $e->jsonSerialize() + ['items' => $counts[$e->getId()] ?? 0], $this->events->findByKind($kind));
 	}
 
@@ -572,9 +572,17 @@ class EventService {
 	private function namesByRole(int $versionId): array {
 		$names = [];
 		foreach ($this->contributions->findByVersion($versionId) as $contribution) {
-			try {
-				$names[$contribution->getRole()][] = $this->persons->find($contribution->getPersonId())->getName();
-			} catch (DoesNotExistException) {
+			$personId = $contribution->getPersonId();
+			// one query per person, not per contribution: the same composer stands in many pieces
+			if (!array_key_exists($personId, $this->personNames)) {
+				try {
+					$this->personNames[$personId] = $this->persons->find($personId)->getName();
+				} catch (DoesNotExistException) {
+					$this->personNames[$personId] = null;
+				}
+			}
+			if ($this->personNames[$personId] !== null) {
+				$names[$contribution->getRole()][] = $this->personNames[$personId];
 			}
 		}
 		return array_map(fn (array $list): string => implode('; ', $list), $names);

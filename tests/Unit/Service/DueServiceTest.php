@@ -66,7 +66,8 @@ final class DueServiceTest extends TestCase {
 		$proposals = $this->createStub(ProposalMapper::class);
 		$proposals->method('countOpen')->willReturn(2);
 		$copyMapper = $this->createStub(CopyMapper::class);
-		$copyMapper->method('findAll')->willReturn($copies);
+		$copyMapper->method('countReturnDue')->willReturnCallback(fn (string $until): int => count(array_filter($copies,
+			fn (Copy $copy): bool => $copy->getReturnDate() !== null && $copy->getReturnDate() <= $until && $copy->getStatus() !== 'retired')));
 		return new DueService($roleService, $tasks, $proposals,
 			$this->createStub(ReleaseListService::class), $this->createStub(LicenseMapper::class), $this->createStub(WorkVersionMapper::class),
 			$this->createStub(WorkMapper::class), $rights, $this->createStub(RepertoireService::class), $this->createStub(EventItemMapper::class),

@@ -64,4 +64,21 @@ class CopyMapper extends QBMapper {
 			->addOrderBy('number');
 		return $this->findEntities($qb);
 	}
+
+	/**
+	 * Hired copies due back on or before a day (YYYY-MM-DD), retired copies
+	 * (returned) left out: counted by the database.
+	 */
+	public function countReturnDue(string $until): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select($qb->func()->count('id', 'cnt'))
+			->from($this->getTableName())
+			->where($qb->expr()->isNotNull('return_date'))
+			->andWhere($qb->expr()->lte('return_date', $qb->createNamedParameter($until)))
+			->andWhere($qb->expr()->neq('status', $qb->createNamedParameter('retired')));
+		$result = $qb->executeQuery();
+		$count = Row::int($result->fetchOne());
+		$result->closeCursor();
+		return $count;
+	}
 }
