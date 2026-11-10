@@ -57,8 +57,14 @@ echo "new version: $new_version"
 
 step "3. Upgrade and migrations"
 occ upgrade
+# Nextcloud registers the migration commands only in debug mode.
+debug_before="$(occ config:system:get debug || true)"
+occ config:system:set debug --value=true --type=boolean
 occ migrations:status cantoria
 occ migrations:migrate cantoria
+if [ "$debug_before" != "true" ]; then
+	occ config:system:delete debug
+fi
 
 step "4. App enabled with the new version"
 enabled="$(occ app:list --enabled --output=json | "$PHP" -r '$a = json_decode(stream_get_contents(STDIN), true); echo $a["enabled"]["cantoria"] ?? "";')"

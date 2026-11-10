@@ -371,7 +371,12 @@ try {
 			$last?->parentNode?->removeChild($last);
 		}
 	});
-	$listing = fn (): array => array_map(fn ($n) => $n->getName(), $folder->getDirectoryListing());
+	// sorted: the order of a directory listing is not fixed (PostgreSQL returns it in any order)
+	$listing = function () use ($folder): array {
+		$names = array_map(fn ($n) => $n->getName(), $folder->getDirectoryListing());
+		sort($names);
+		return $names;
+	};
 	$before = $listing();
 	$check('a changed note value is refused', $throws(fn () => $corrections->correct($versionId, $fileId, $longer, [], null, $uid)) !== null);
 	$check('an added note is refused', $throws(fn () => $corrections->correct($versionId, $fileId, $addedNote, [], null, $uid)) !== null);
