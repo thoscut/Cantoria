@@ -1733,8 +1733,8 @@ Versionsgeschichte wieder her, dann verschwindet die Markierung. Wähle
 
 **Archivverwaltung** → **Sicherung** → **Vollständige Sicherung jetzt
 ablegen** schreibt das Werkverzeichnis als CSV, eine Tabelle mit dem
-Protokoll und die vollständige JSON-Sicherung in den Archivordner; das macht
-die App jede Woche von selbst. **Vollständige Sicherung und
+Protokoll und die vollständige JSON-Sicherung in den Sicherungsordner, der
+außerhalb des Archivordners liegt; das macht die App jede Woche von selbst. **Vollständige Sicherung und
 Wiederherstellung** lädt die vollständige Sicherung herunter und stellt sie
 in einem leeren Werkverzeichnis wieder her. Siehe das
 [Administrationshandbuch](administrationshandbuch.md#5-sicherung-und-wiederherstellung).

@@ -12,6 +12,11 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Added
 
+- **Quick start in English** (`docs/quick-start.md`), next to the German
+  one, and an architecture overview for developers
+  (`docs/architecture.md`). The guides now say that the weekly backup goes
+  into the backup folder outside the archive folder.
+
 - **PostgreSQL.** The app now installs on PostgreSQL as well as on MySQL
   and MariaDB, and so also in Nextcloud All-in-One. The integration tests
   run in the CI on Nextcloud 33 and 35, each with MariaDB 11.8 and with
@@ -140,6 +145,12 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Changed
 
+- **Optimisation round 4 (10 November 2026): faster with a large archive.**
+  The list of concerts counts the pieces in the database instead of reading
+  every programme item; the start page counts the hired copies due back in
+  the database; a few tasks, merging works and moving a copy read only the
+  copies and programme items concerned; names of persons are read once per
+  request; the app starts the catalog and the start parameters together.
 - **One panel for practising.** Voice, measures and tempo with the loop,
   and the further tools are one panel in the score view and on a shared
   view, in the order of the most frequent way of practising. Size, lyrics,

@@ -1,6 +1,6 @@
 # Schnellstart
 
-[English](../user-guide.md) | **Deutsch**
+[English](../quick-start.md) | **Deutsch**
 
 Diese Kurzanleitung zeigt der Archivverwaltung und der Chorleitung die ersten
 Schritte in Cantoria. Ausführlich beschreiben es das
@@ -151,14 +151,18 @@ Startseite.
 2. Wähle die **Archivmappe**. Die App schlägt die nächste freie Nummer vor;
    Nummern werden nie wieder vergeben.
 3. Trage Titel, Komposition, Titelquelle, Zugangsdatum und Herkunft ein.
+   Hat das Werkverzeichnis schon ein Stück mit gleichem oder ähnlichem
+   Titel derselben Komposition, nennt das Formular es; so prüfst du vor dem
+   Erfassen, ob es eine Dublette ist.
 4. Wähle **Zugang erfassen**. Das Etikett kommt auf den Etikettenbogen
    darunter.
 
 ### Sicherung
 
-Die App legt jede Woche eine vollständige Sicherung in den Archivordner. Vor
-größeren Änderungen wählst du unten in der Navigation **Archivverwaltung** und
-dort **Vollständige Sicherung jetzt ablegen**.
+Die App legt jede Woche eine vollständige Sicherung in den Sicherungsordner
+außerhalb des Archivordners. Vor größeren Änderungen wählst du unten in der
+Navigation **Archivverwaltung** und dort **Vollständige Sicherung jetzt
+ablegen**.
 
 ## Für die Chorleitung
 
@@ -261,11 +265,15 @@ Die Archivverwaltung übernimmt die Antwort danach ins Werkverzeichnis.
 3. Prüfe die Warnungen: Erhaltungskopie, ungeklärte Rechte, keine oder eine
    andere geltende Fassung, geschützt ohne Lizenz.
 4. **Programm festlegen**, wenn es steht.
-5. Nach dem Konzert: **Gesungen bestätigen** und die Stücke anhaken, die
+5. Nach dem Konzert: **Gesungenes bestätigen** und die Stücke anhaken, die
    nicht gesungen wurden. **Liederfolge (CSV)** liefert die Liste für
    Verwertungsgesellschaft und Programmheft.
 
 Die App erinnert dich 10, 8 und 6 Wochen vor dem Konzert an die Fristen.
+**Neues Programm mit diesen Stücken …** beginnt das nächste Konzert mit
+diesem, und **Liederbuch (PDF) …** fasst die Scans der Stücke, deren Rechte
+es erlauben, zu einem PDF zum Drucken zusammen, mit Titelblatt,
+Inhaltsverzeichnis und Seitenzahlen.
 
 ### Kalender, Dashboard und Dateien
 

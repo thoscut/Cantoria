@@ -1614,7 +1614,8 @@ a file from a backup or from the version history, and the mark disappears.
 
 **Archive management** → **Backup** → **Store a complete backup now** writes
 the catalog as CSV, a spreadsheet with the audit log, and the complete JSON
-backup into the archive folder; the app does this every week by itself.
+backup into the backup folder, which lies outside the archive folder; the
+app does this every week by itself.
 **Complete backup and restore** downloads the complete backup and restores
 it into an empty catalog. See the
 [administration guide](admin-guide.md#5-backups-and-restore).

@@ -781,6 +781,34 @@ den App Store, die noch `package.sh --sign` nennt (T3).*
   Font-Ausnahme ausweisen, mit Lizenztext und Quellverweis; bestätigt sich
   GPL-2.0, ist der Punkt hoch (R B25).
 
+*Ergänzt am 10. November 2026: fünf Optimierungsrunden über alle Aspekte
+(PR #18), umgesetzt.*
+
+- **Keine verlorenen Eingaben:** Dialoge behalten das Getippte, wenn das
+  Speichern scheitert, und die Seite warnt vor dem Verlassen mit
+  ungespeicherten Änderungen.
+- **CI mit Upgrade-Test:** ein Job aktualisiert eine Instanz mit dem Stand
+  des Zielzweigs und dessen Testdaten auf das neue Archiv, führt die
+  Migrationen aus und prüft, dass keine Tabelle Zeilen verliert.
+- **Liederbuch:** aus einem Programm oder einer Auswahl im Werkverzeichnis
+  ein PDF mit Titelblatt, Inhaltsverzeichnis und Seitenzahlen, nur mit
+  Stücken, deren Rechte Kopien für die Mappen oder die Druckstation
+  erlauben; jedes Liederbuch steht im Protokoll (Modul „Liederbücher“).
+- **Repertoire finden und wiederverwenden:** Filter nach Besetzung, Sprache
+  und Höchstdauer, Sortierung nach „lange nicht gesungen“; ein neues
+  Programm aus einem bestehenden.
+- **Bestand pflegen:** Hinweis auf mögliche Dubletten beim Neuzugang;
+  Leihmaterial mit Verleiher und Rückgabedatum und einer Karte auf der
+  Startseite, wenn die Rückgabe naht.
+- **Chormitglieder:** die gewählte Stimme bleibt auf dem Gerät gemerkt und
+  wird mit den übrigen Übe-Daten gelöscht.
+- **Performance:** Zählen in der Datenbank statt alle Programmpunkte zu
+  lesen; Aufgaben und Zusammenführungen lesen nur die betroffenen
+  Exemplare und Programmpunkte; der Start lädt Werkverzeichnis und
+  Startparameter parallel.
+- **Dokumentation:** englischer Schnellstart, Architekturübersicht für die
+  Entwicklung, Angaben zum Sicherungsordner berichtigt.
+
 ### 0.18 Rechte auf allen neuen Wegen
 
 *Geplant (Review 29. Oktober 2026); der erste Punkt ist auf `main`

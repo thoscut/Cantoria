@@ -328,8 +328,8 @@ or add a language.
 - [Administration guide](docs/admin-guide.md): installation, roles, archive
   folder, import, backups and restore, managed hosting
   ([Administrationshandbuch](docs/de/administrationshandbuch.md), German)
-- [Schnellstart](docs/de/schnellstart.md): German quick start for the archive
-  management and the conductor
+- [Quick start](docs/quick-start.md): the first steps for music librarians
+  and conductors ([Schnellstart](docs/de/schnellstart.md), German)
 - [Cantoria alongside a choir system](docs/alongside-a-choir-system.md): who
   keeps what, the hand-over folder and the comparison with the choir system's
   export ([Neben einem Chorsystem](docs/de/neben-einem-chorsystem.md), German)
