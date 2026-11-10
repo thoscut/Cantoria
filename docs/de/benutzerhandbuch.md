@@ -207,6 +207,15 @@ viele. **Suche und Filter zurücksetzen** hebt sie auf. Die Liste lässt sich
 nach Reihenfolge im Werkverzeichnis, Signatur oder Titel sortieren; auf dem
 Smartphone zeigt sie eine Karte je Exemplar.
 
+**Repertoire finden.** Unter **Weitere Filter** bieten **Besetzung** und
+**Sprache** die Werte an, die bei den Fassungen eingetragen sind (nur in
+Groß- und Kleinschreibung verschieden, zählen sie als einer), und **Dauer**
+behält die Stücke von höchstens ein paar Minuten (Stücke ohne eingetragene
+Dauer fallen heraus). Nach **Am längsten nicht gesungen** sortiert, stehen
+die Stücke vorn, die am längsten nicht gesungen wurden: ein guter Anfang, um
+eines wieder aufzunehmen; **Zuletzt gesungen** ist die umgekehrte Richtung.
+Nie gesungene Stücke stehen bei beiden am Ende.
+
 Das **Rechte-Kennzeichen** zeigt immer Text und Symbol, nie nur eine Farbe:
 
 | Kennzeichen | Bedeutung |
@@ -1121,6 +1130,12 @@ Chorleitung und Archivverwaltung planen Konzerte:
    Konzert auf dem Tablet steht. **Liederbuch (PDF) …** setzt die Scans zu
    einem PDF zum Drucken zusammen (siehe [Liederbuch aus einem Programm oder
    einer Auswahl](#liederbuch-aus-einem-programm-oder-einer-auswahl)).
+
+**Neues Programm mit diesen Stücken …** beginnt das nächste Konzert oder die
+nächste Notenliste mit diesem Programm, auch mit einem Konzert von vor Jahren:
+Die Stücke kommen in ihrer Reihenfolge mit Dauer, Notiz und Zugabe,
+gestrichene Stücke bleiben draußen, und das neue Programm ist ein Entwurf mit
+eigenem Datum.
 
 Benachrichtigungen zu den Fristen gehen 10, 8 und 6 Wochen vor dem Konzert an
 Chorleitung und Archivverwaltung. Findet ein Konzert nicht statt, wähle

@@ -155,9 +155,13 @@ Choice keys:
    "title": "…", "composer": "…", "work_no": null, "arranger_text": "…",
    "rights_status": "public_domain", "rights_confirmed": null, "confirmed_at": null,
    "preservation_copy": false, "publication": "zu klären",
-   "valid_since": null, "repertoire": "aktuell", "last_performed": "2025-12-06",
+   "valid_since": null, "scoring": "SATB", "language": "Latin", "duration": 180,
+   "repertoire": "aktuell", "last_performed": "2025-12-06",
    "has_musicxml": true, "files": 9, "pdfs": 3 }]
 ```
+
+`scoring`, `language` and `duration` (seconds) are those of the version,
+for finding repertoire (filters "Scoring", "Language" and "At most … minutes").
 
 `GET /api/entries/{id}` returns everything about one copy:
 
@@ -739,6 +743,7 @@ valid version).
 | `GET /api/events/{id}` | – | any role |
 | `POST /api/events` | `{ kind, event: { title, event_date, start_time, end_time, location, period, is_public, board_agreed, notes } }` | conductor, librarian |
 | `PATCH /api/events/{id}` | `{ event: { …changed fields } }` | conductor, librarian |
+| `POST /api/events/{id}/copy` | `{ kind, event: { … as above } }`: a new draft with the pieces of `{id}` in their order (duration, note, encore; struck items left out, nothing of the performance), in one transaction | conductor, librarian |
 | `POST /api/events/{id}/items` | `{ copyId }` | conductor, librarian |
 | `PATCH /api/event-items/{id}` | `{ item: { duration?, note?, encore?, struck? } }` | conductor, librarian |
 | `DELETE /api/event-items/{id}` | – | conductor, librarian (not for sung/imported) |

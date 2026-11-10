@@ -206,6 +206,10 @@ class CatalogService {
 				'copies_unlicensed' => $version !== null && $unlicensed[$version->getId()],
 				'publication' => $version?->getPublication(),
 				'valid_since' => $version?->getValue('valid_since'),
+				// for finding repertoire: scoring, language and duration (seconds) of the version
+				'scoring' => $version?->getValue('scoring'),
+				'language' => $version?->getValue('language'),
+				'duration' => $version?->getValue('duration'),
 				'repertoire' => $work?->getValue('repertoire_import'),
 				'last_performed' => $work?->getValue('last_performed_import'),
 				...self::repertoireFigures($work, $derived),

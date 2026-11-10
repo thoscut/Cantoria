@@ -3605,9 +3605,22 @@ export const singular = {
 	'A songbook needs confirmed public domain or a license for copies for the binders or for the print station. The catalog librarian records it on the tab "Rights".': 'Ein Liederbuch braucht bestätigte Gemeinfreiheit oder eine Lizenz für Kopien für die Chormappen oder die Druckstation. Die Archivverwaltung trägt sie im Reiter „Rechte“ ein.',
 	'Please choose the copies for the songbook.': ['Bitte wähle die Exemplare für das Liederbuch.', 'Bitte wählen Sie die Exemplare für das Liederbuch.'],
 	'A songbook holds at most %s pieces. Please narrow the list.': ['Ein Liederbuch fasst höchstens %s Stücke. Bitte grenze die Liste ein.', 'Ein Liederbuch fasst höchstens %s Stücke. Bitte grenzen Sie die Liste ein.'],
+	// ---- round 3, November 2026: finding repertoire ----
+	'Sung longest ago': 'Am längsten nicht gesungen',
+	'Sung most recently': 'Zuletzt gesungen',
+	'Any scoring': 'Jede Besetzung',
+	'Any language': 'Jede Sprache',
+	'Any duration': 'Jede Dauer',
+	// ---- round 3, November 2026: a new programme from an existing one ----
+	'The new programme "{title}" has been created.': 'Das neue Programm „{title}“ ist angelegt.',
+	'New programme with these pieces …': 'Neues Programm mit diesen Stücken …',
+	'New concert with these pieces': 'Neues Konzert mit diesen Stücken',
+	'New song list with these pieces': 'Neue Notenliste mit diesen Stücken',
+	'The new programme gets the pieces of this one in their order, with duration, note and encore; struck pieces are left out. It starts as a draft.': 'Das neue Programm bekommt die Stücke dieses Programms in ihrer Reihenfolge, mit Dauer, Notiz und Zugabe; gestrichene Stücke bleiben draußen. Es beginnt als Entwurf.',
 }
 
 export const plural = {
+	'At most %n minute|At most %n minutes': ['Höchstens %n Minute', 'Höchstens %n Minuten'],
 	'Songbook of %n hit …|Songbook of %n hits …': ['Liederbuch aus %n Treffer …', 'Liederbuch aus %n Treffern …'],
 	'Make a songbook of %n piece|Make a songbook of %n pieces': ['Liederbuch aus %n Stück erstellen', 'Liederbuch aus %n Stücken erstellen'],
 	'The scan of %n piece could not be read (damaged or protected by a password) and was left out:|The scans of %n pieces could not be read (damaged or protected by a password) and were left out:': [

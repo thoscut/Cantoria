@@ -60,7 +60,7 @@ import { useIsMobile } from '@nextcloud/vue/composables/useIsMobile'
 import SongbookDialog from './SongbookDialog.vue'
 import { generateUrl } from '@nextcloud/router'
 import { adminSettingsUrl } from '../api.ts'
-import { moreFiltersActive, REPERTOIRE_CLASSES } from '../catalog.ts'
+import { distinctValues, moreFiltersActive, REPERTOIRE_CLASSES } from '../catalog.ts'
 import { translateLabel } from '../format.ts'
 import { repertoireClassLabel } from '../labels.ts'
 import { helpUrl } from '../docs.ts'
@@ -229,6 +229,14 @@ const binderSelectOptions = computed<Option<number>[]>(() => binderOptions.value
 	label: t('cantoria', 'Binder {binder}', { binder }),
 })))
 
+/** Finding repertoire: the scorings and languages recorded in the catalog, and lengths */
+const scoringOptions = computed(() => distinctValues(entries.value, 'scoring'))
+const languageOptions = computed(() => distinctValues(entries.value, 'language'))
+const durationSelectOptions = computed<Option<number>[]>(() => [2, 3, 4, 5, 7, 10, 15].map((minutes) => ({
+	id: minutes,
+	label: n('cantoria', 'At most %n minute', 'At most %n minutes', minutes),
+})))
+
 const rightsSelectOptions = computed<Option<string>[]>(() => {
 	const options = fieldInfo('version', 'rights_status')?.options ?? {
 		public_domain: 'public domain',
@@ -365,6 +373,21 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 				</NcButton>
 
 				<div v-show="moreFiltersOpen" id="catalog-more-filters" class="catalog-filters__more">
+					<NcSelect v-if="scoringOptions.length > 0"
+						v-model="filters.scoring"
+						:input-label="t('cantoria', 'Scoring')"
+						:placeholder="t('cantoria', 'Any scoring')"
+						:options="scoringOptions" />
+					<NcSelect v-if="languageOptions.length > 0"
+						v-model="filters.language"
+						:input-label="t('cantoria', 'Language')"
+						:placeholder="t('cantoria', 'Any language')"
+						:options="languageOptions" />
+					<NcSelect v-model="filters.maxMinutes"
+						:input-label="t('cantoria', 'Duration')"
+						:placeholder="t('cantoria', 'Any duration')"
+						:options="durationSelectOptions"
+						:reduce="reduceId" />
 					<NcSelect v-model="filters.binder"
 						:input-label="t('cantoria', 'Archive binder')"
 						:placeholder="t('cantoria', 'All binders')"

@@ -9,11 +9,13 @@ import { describe, expect, it } from 'vitest'
 import {
 	canonicalShelfmark,
 	DEFAULT_FILTERS,
+	distinctValues,
 	EMPTY_CONTEXT,
 	filterEntries,
 	activeFilterCount,
 	hasActiveFilters,
 	isEntryConfirmed,
+	lastPerformed,
 	normalizeText,
 	parseShelfmark,
 	rightsLevel,
@@ -216,5 +218,36 @@ describe('song lists of an entry', () => {
 	it('accepts a count from an older server', () => {
 		expect(songListCount(entry({ song_lists: 3 }))).toBe(3)
 		expect(songListNames(entry({ song_lists: 3 }))).toEqual([])
+	})
+})
+
+describe('finding repertoire', () => {
+	const pieces = [
+		entry({ id: 1, title: 'Ave verum', scoring: 'SATB', language: 'Latin', duration: 150, last_performed_on: '2024-12-01' }),
+		entry({ id: 2, title: 'Abendlied', scoring: 'satb ', language: 'Deutsch', duration: 400, last_performed: '2019' }),
+		entry({ id: 3, title: 'Bruder Jakob', scoring: 'TTBB', language: null, duration: null, last_performed: 'vor langer Zeit' }),
+		entry({ id: 4, title: 'Cantate', scoring: null, language: 'Latin', duration: 240, last_performed: '12.5.2022' }),
+	]
+	const ids = (list: Entry[]): number[] => list.map((piece) => piece.id)
+
+	it('offers each scoring and language once, without case', () => {
+		expect(distinctValues(pieces, 'scoring')).toEqual(['SATB', 'TTBB'])
+		expect(distinctValues(pieces, 'language')).toEqual(['Deutsch', 'Latin'])
+	})
+
+	it('filters by scoring, language and length', () => {
+		expect(ids(filterEntries(pieces, filters({ scoring: 'SATB' }), new Map()))).toEqual([1, 2])
+		expect(ids(filterEntries(pieces, filters({ language: 'latin' }), new Map()))).toEqual([1, 4])
+		expect(ids(filterEntries(pieces, filters({ maxMinutes: 4 }), new Map()))).toEqual([1, 4])
+		expect(ids(filterEntries(pieces, filters({ scoring: 'SATB', maxMinutes: 3 }), new Map()))).toEqual([1])
+		expect(hasActiveFilters(filters({ maxMinutes: 5 }))).toBe(true)
+		expect(activeFilterCount(filters({ scoring: 'SATB', language: 'Latin' }))).toBe(2)
+	})
+
+	it('sorts by the last performance, never sung at the end', () => {
+		expect(lastPerformed(pieces[3]!)).toBe('2022-05-12')
+		expect(lastPerformed(pieces[2]!)).toBe('')
+		expect(ids(sortEntries(pieces, 'performedLongAgo'))).toEqual([2, 4, 1, 3])
+		expect(ids(sortEntries(pieces, 'performedRecently'))).toEqual([1, 4, 2, 3])
 	})
 })

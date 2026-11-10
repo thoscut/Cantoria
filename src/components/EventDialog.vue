@@ -8,6 +8,10 @@
  * ("2025/1", "2018-Advent") instead of a date and are no proof of
  * performance. A concert may have a start and an end time (local time at
  * the venue) for calendar entries.
+ *
+ * With `copyOf` (round 3, November 2026) the dialog makes a new programme
+ * with the pieces of an existing one, struck pieces left out: title,
+ * location and notes are taken over to change, the date is left empty.
  */
 import type { ChoirEvent, EventInput, EventKind } from '../types.ts'
 
@@ -18,12 +22,14 @@ import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import ActionDialog from './ActionDialog.vue'
 import DateField from './DateField.vue'
-import { createEvent, errorMessage, updateEvent } from '../api.ts'
+import { createEvent, duplicateEvent, errorMessage, updateEvent } from '../api.ts'
 
 const props = defineProps<{
 	kind: EventKind
 	/** event to edit; missing for a new one */
 	event?: ChoirEvent | null
+	/** a new event with the pieces of this one */
+	copyOf?: ChoirEvent | null
 }>()
 
 const emit = defineEmits<{
@@ -31,16 +37,18 @@ const emit = defineEmits<{
 	close: []
 }>()
 
+const base = props.event ?? props.copyOf ?? null
+const copying = !props.event && !!props.copyOf
 const draft = reactive({
-	title: props.event?.title ?? '',
-	date: props.event?.event_date ?? '',
-	startTime: props.event?.start_time ?? '',
-	endTime: props.event?.end_time ?? '',
-	location: props.event?.location ?? '',
-	period: props.event?.period ?? '',
-	isPublic: props.event?.is_public ?? true,
-	boardAgreed: props.event?.board_agreed ?? false,
-	notes: props.event?.notes ?? '',
+	title: base?.title ?? '',
+	date: copying ? '' : (base?.event_date ?? ''),
+	startTime: copying ? '' : (base?.start_time ?? ''),
+	endTime: copying ? '' : (base?.end_time ?? ''),
+	location: base?.location ?? '',
+	period: copying ? '' : (base?.period ?? ''),
+	isPublic: base?.is_public ?? true,
+	boardAgreed: copying ? false : (base?.board_agreed ?? false),
+	notes: base?.notes ?? '',
 })
 
 const busy = ref(false)
@@ -67,7 +75,9 @@ async function save(): Promise<void> {
 	busy.value = true
 	error.value = ''
 	try {
-		const saved = props.event ? await updateEvent(props.event.id, input) : await createEvent(props.kind, input)
+		const saved = props.event
+			? await updateEvent(props.event.id, input)
+			: (props.copyOf ? await duplicateEvent(props.copyOf.id, props.kind, input) : await createEvent(props.kind, input))
 		emit('saved', saved)
 	} catch (caught) {
 		error.value = errorMessage(caught)
@@ -80,12 +90,17 @@ async function save(): Promise<void> {
 <template>
 	<ActionDialog :name="event
 			? (kind === 'concert' ? t('cantoria', 'Edit concert') : t('cantoria', 'Edit song list'))
-			: (kind === 'concert' ? t('cantoria', 'New concert') : t('cantoria', 'New song list'))"
+			: copying
+				? (kind === 'concert' ? t('cantoria', 'New concert with these pieces') : t('cantoria', 'New song list with these pieces'))
+				: (kind === 'concert' ? t('cantoria', 'New concert') : t('cantoria', 'New song list'))"
 		:submit-label="t('cantoria', 'Save')"
 		:busy="busy"
 		:error="error"
 		@submit="save"
 		@close="emit('close')">
+		<p v-if="copying" class="action-dialog__hint">
+			{{ t('cantoria', 'The new programme gets the pieces of this one in their order, with duration, note and encore; struck pieces are left out. It starts as a draft.') }}
+		</p>
 		<NcTextField v-model="draft.title" :label="t('cantoria', 'Title (required)')" required />
 		<div class="event-dialog__row">
 			<DateField v-model="draft.date" :label="t('cantoria', 'Date')" />

@@ -13,7 +13,7 @@
  * columns to tick off) and song list (singers' portal or paper only).
  */
 import type { CalendarMessage } from '../calendar.ts'
-import type { EventDetail, EventItem, Entry } from '../types.ts'
+import type { ChoirEvent, EventDetail, EventItem, Entry } from '../types.ts'
 
 import {
 	mdiAlertCircleOutline,
@@ -26,6 +26,7 @@ import {
 	mdiCalendarPlusOutline,
 	mdiCalendarRemoveOutline,
 	mdiCheckAll,
+	mdiContentCopy,
 	mdiDeleteOutline,
 	mdiDownload,
 	mdiFolderMusicOutline,
@@ -143,6 +144,20 @@ const sharing = ref(false)
 /** A songbook of the programme to print (round 3, November 2026) */
 const canMakeSongbook = computed(() => items.value.length > 0 && isModuleActive('songbook') && hasAnyRole(['librarian', 'conductor']))
 const makingSongbook = ref(false)
+/** A new programme with these pieces (round 3, November 2026) */
+const canCopyProgramme = computed(() => canPlanEvents.value && event.value !== null && items.value.some((item) => item.struck !== true))
+const copyingProgramme = ref(false)
+
+/**
+ * Opens the new programme made from this one.
+ *
+ * @param created - the new concert or song list
+ */
+function onProgrammeCopied(created: ChoirEvent): void {
+	copyingProgramme.value = false
+	showSuccess(t('cantoria', 'The new programme "{title}" has been created.', { title: created.title ?? '' }))
+	navigate('event', { eventId: created.id })
+}
 
 const canConfirmSung = computed(() => editable.value && isConcert.value
 	&& event.value?.event_date !== null && event.value?.event_date !== undefined && event.value.event_date <= today)
@@ -527,6 +542,12 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Share with the choir …') }}
 						</NcButton>
+						<NcButton v-if="canCopyProgramme" :disabled="busy" @click="copyingProgramme = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiContentCopy" />
+							</template>
+							{{ t('cantoria', 'New programme with these pieces …') }}
+						</NcButton>
 						<NcButton v-if="canMakeSongbook" :disabled="busy" @click="makingSongbook = true">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiBookMusicOutline" />
@@ -804,6 +825,11 @@ function revisionText(item: EventItem): string {
 			</section>
 		</template>
 
+		<EventDialog v-if="copyingProgramme && event"
+			:kind="event.kind"
+			:copy-of="event"
+			@saved="onProgrammeCopied"
+			@close="copyingProgramme = false" />
 		<EventDialog v-if="editingEvent && event"
 			:kind="event.kind"
 			:event="event"

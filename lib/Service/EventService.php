@@ -100,6 +100,52 @@ class EventService {
 	}
 
 	/**
+	 * A new programme from an existing one (round 3, November 2026): a
+	 * concert or song list of the kind chosen, as a draft, with the pieces
+	 * of the source in their order, duration, note and encore. Struck pieces
+	 * (not sung) are left out; what was recorded about the performance (sung,
+	 * the revision sung) stays with the source. Any programme can be the
+	 * source, also an imported, sung or cancelled one.
+	 *
+	 * @param array<array-key, mixed> $data fields of the new event (request data)
+	 */
+	public function duplicate(int $sourceId, string $kind, array $data, string $uid): Event {
+		$this->roles->requireRole($uid, self::PLANNERS);
+		try {
+			$source = $this->events->find($sourceId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException('Not found.');
+		}
+		$this->db->beginTransaction();
+		try {
+			$event = $this->create($kind, $data, $uid);
+			$position = 0;
+			foreach ($this->items->findByEvent($sourceId) as $old) {
+				if ($old->getStruck() === true) {
+					continue;
+				}
+				$item = new EventItem();
+				$item->setEventId($event->getId());
+				$item->setPosition(++$position);
+				foreach (['copy_id', 'version_id', 'work_id', 'title_text', 'composer_text', 'participation', 'candidates', 'duration', 'note'] as $field) {
+					$item->setValue($field, $old->getValue($field));
+				}
+				$item->setAssignment($old->getAssignment());
+				$item->setEncore($old->getEncore() === true);
+				$item->setCounts(false);
+				$this->items->insert($item);
+			}
+			$this->audit->record($this->audit->newOperation(), $uid, 'event', $event->getId(), 'copied_from', 'event', null,
+				(string)$source->getTitle());
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+		return $event;
+	}
+
+	/**
 	 * @param array<array-key, mixed> $data field => value (request data)
 	 */
 	public function update(int $eventId, array $data, string $uid): Event {

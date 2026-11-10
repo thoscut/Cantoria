@@ -740,6 +740,19 @@ export function linkUrl(token: string, circle: string = 'internal'): string {
 }
 
 /**
+ * A new concert or song list with the pieces of an existing one (struck
+ * pieces left out), as a draft.
+ *
+ * @param sourceId - the programme to copy
+ * @param kind - kind of the new one
+ * @param event - its fields
+ */
+export async function duplicateEvent(sourceId: number, kind: EventKind, event: EventInput): Promise<ChoirEvent> {
+	const { data } = await axios.post<ChoirEvent>(apiUrl('/events/{id}/copy', { id: sourceId }), { kind, event })
+	return data
+}
+
+/**
  * Ask the server before making practice audio files: it checks the rights
  * and records the export. Throws with the server's reason when refused.
  *

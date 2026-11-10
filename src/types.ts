@@ -114,6 +114,10 @@ export interface Entry {
 	copies_unlicensed?: boolean
 	publication: string | null
 	valid_since: string | null
+	/** scoring, language and duration (seconds) of the version, for finding repertoire */
+	scoring?: string | null
+	language?: string | null
+	duration?: number | null
 	repertoire: string | null
 	last_performed: string | null
 	has_musicxml: boolean
@@ -1129,7 +1133,8 @@ export interface ModuleSettingsResult extends ModuleSettings {
 }
 
 /** Sort orders of the catalog list. */
-export type SortOrder = 'catalog' | 'shelfmark' | 'title'
+/** performedLongAgo: sung longest ago first (never sung last); performedRecently: the other way */
+export type SortOrder = 'catalog' | 'shelfmark' | 'title' | 'performedLongAgo' | 'performedRecently'
 
 /** Filter state of the navigation. Empty string / false = no filter. */
 export interface Filters {
@@ -1150,6 +1155,12 @@ export interface Filters {
 	reviewOpen: boolean
 	/** photocopies not covered by a license for the binders (milestone 0.11) */
 	copiesUnlicensed: boolean
+	/** scoring of the version, as written (e.g. "SATB"); compared without case */
+	scoring: string | null
+	/** language of the version */
+	language: string | null
+	/** at most this many minutes long (pieces without a duration are left out) */
+	maxMinutes: number | null
 }
 
 /** Facts the filters need beyond the entry itself. */

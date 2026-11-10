@@ -196,6 +196,14 @@ filters under **More filters** are active, the button says how many.
 **Reset search and filters** clears them. The list can be sorted by catalog
 order, shelf mark or title; on a phone it shows one card per copy.
 
+**Finding repertoire.** Under **More filters**, **Scoring** and **Language**
+offer the values recorded for the versions (written differently only in
+upper and lower case, they count as one), and **Duration** keeps the pieces
+of at most a few minutes (pieces without a recorded duration are left out).
+Sorted by **Sung longest ago**, the pieces not sung for the longest time come
+first, a good start for bringing one back; **Sung most recently** is the
+other way round. Pieces never sung stand at the end of both.
+
 The **rights badge** always shows a text and a symbol, never only a colour:
 
 | Badge | Meaning |
@@ -1047,6 +1055,11 @@ Conductors and music librarians plan concerts:
    the concert. **Songbook (PDF) …** puts the scans together into one PDF
    to print (see [Songbook from a programme or a
    selection](#songbook-from-a-programme-or-a-selection)).
+
+**New programme with these pieces …** starts the next concert or song list
+from this one, also from a concert sung years ago: the pieces come in their
+order with duration, note and encore, struck pieces stay out, and the new
+programme is a draft with a date of its own.
 
 Deadline notifications go to the conductor and the music librarians 10, 8
 and 6 weeks before the concert. If a concert does not take place, **Cancel

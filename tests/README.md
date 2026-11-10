@@ -95,6 +95,7 @@ What is covered:
 | `Service/HandoverContentTest` | the hand-over folder: MusicXML cleaned like the score of a link, a file that is no score left out, scans and recordings as they are |
 | `Service/ChoirSystemCompareServiceTest` | the export of a choir system against the list of the singers' portal: differences become proposals, dry run, no proposal twice, separator of the first line |
 | `Service/SharingTest` | links for choir members and the public: making, opening, extending (creator or librarian, rights of today, license end, a new token for an expired public link), practice audio of choir members, the public repertoire page and its links to CPDL and IMSLP |
+| `Service/ProgrammeCopyTest` | a new programme from an existing one: a draft of the kind chosen, the pieces in their order without the struck ones and without what was recorded about the performance, all or nothing |
 | `Service/ProgrammeShareTest` | sharing a whole programme: one link per piece through the same checks, an existing link extended instead of a second one, one link for a piece sung twice, never shortened, a reason for every piece left out |
 | `Service/LinkTokensTest` | link tokens only as hash and encrypted, read back only with the secret of the instance, shown only to the creator and the catalog librarian |
 | `Service/MusicXmlExcerptTest` | the measures of a link in every part with the attributes and tempo valid at its start, repeats and endings, nothing outside the excerpt (demo scores of `tools/demo`) |

@@ -115,6 +115,15 @@ All notable changes to this app are documented in this file. The format follows
   every piece left out says why. The PDF is made in the browser (pdf-lib);
   the server hands out only the scans allowed and records every songbook in
   the audit log. New module "Songbooks" (on in "Standard" and "Complete").
+- **Finding repertoire (optimisation round 3).** The catalog filters by
+  scoring, language and duration ("at most … minutes") of the version, and
+  sorts by the last performance ("Sung longest ago", "Sung most recently";
+  never sung at the end). `GET /api/entries` carries `scoring`, `language`
+  and `duration`.
+- **A new programme from an existing one (optimisation round 3).** "New
+  programme with these pieces …" in a concert or song list makes a draft
+  with its pieces in their order, struck pieces left out
+  (`POST /api/events/{id}/copy`).
 
 ### Changed
 
