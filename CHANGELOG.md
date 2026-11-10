@@ -225,6 +225,31 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Fixed
 
+- **Optimisation round 1 (10 November 2026): nothing typed gets lost, no
+  wrong data.** Fields being edited in the sidebar, counts typed in the
+  inventory and corrections in the correction dialog are no longer thrown
+  away without a question when another copy, another binder or Escape
+  comes; the browser asks before the page is left. The score view of the
+  archive asks before a recording of oneself is discarded. A list that
+  fails to reload says so above the old list instead of showing a
+  switched filter over stale rows, and a slow answer no longer replaces a
+  newer one (tasks, programmes, release lists, links, proposals,
+  protection terms, a programme, a person, the inventory). A person who
+  could not be loaded is no longer shown with the buttons of the person
+  before. Retrying a score no longer creates a second engraving toolkit.
+  After printing the binder list, printing again prints the programme.
+  Sharing a programme with a piece sung twice makes one link, not two. A
+  new order of a programme with a repeated item is refused instead of
+  giving two items the same position. A role change can no longer give a
+  person the same role twice in a version. A folder taken out of service
+  comes back only if no folder in service has its label. Merge proposals
+  compare titles without accents and in every Unicode form, and works
+  without a composer form a group of their own next to several composers.
+  Whole numbers are limited to 0 to 2,147,483,647, so a negative count or a
+  shelf mark like 99999999999-1 is refused with a clear message instead of
+  a database error. Importing the performances again keeps the lines
+  assigned to a copy by hand. The archive management dialog is no longer
+  part of every account's main bundle.
 - After the second review round of 3 November 2026: the pedal no longer
   skips a piece while the next one loads, and a link to a piece puts the
   focus into the notes. A public page with a piece that may not be kept no

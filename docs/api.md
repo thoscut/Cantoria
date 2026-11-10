@@ -755,9 +755,12 @@ valid version).
 | `POST /api/performances/import` | `{ fileId, dryRun, ownChoir? }` | librarian; `.xlsx` or `.csv` |
 
 Performance import report: `{ dryRun, source, sha256, snapshot, events,
-songLists, items, certain, ambiguous, notInCatalog, counted, ownChoir,
-unknownShelfmarks, sheets }`. A repeated import replaces the previously
-imported events of the same kind; planned events are never touched.
+songLists, items, certain, ambiguous, notInCatalog, counted,
+keptAssignments, ownChoir, unknownShelfmarks, sheets }`. A repeated import
+replaces the previously imported events of the same kind; planned events
+are never touched. A line the import cannot assign for certain keeps the
+assignment made by hand after the last import (same event, position and
+title, copy still there); `keptAssignments` counts them.
 
 Start page card: `ambiguous_items`. Notifications: `concert_deadline` (10, 8
 and 6 weeks before, to conductor and librarian; link `?event={id}`) and
