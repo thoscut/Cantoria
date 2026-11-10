@@ -1446,7 +1446,10 @@ it into review points instead of linking it as a score file.
 2. Choose the binder. The app suggests the next free number; numbers are never
    reused, not even those of retired copies.
 3. Fill in title, composer, title source, accession date and origin; **More
-   details** holds arranger, publisher, rights and counts.
+   details** holds arranger, publisher, rights and counts. While you type the
+   title, the form names the copies that may be the same piece already (same
+   title, also with another article or accents, and the same composer where
+   both are given); a click opens one. Recording it is still up to you.
 4. Optionally **Link a file (optional) …** from the archive folder.
 5. **Record accession**. Work, version and copy are created, and the label
    is added to the sheet below.

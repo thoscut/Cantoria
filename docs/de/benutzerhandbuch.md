@@ -1549,7 +1549,11 @@ ihn als Prüfpunkte ein, statt ihn als Notendatei zu verknüpfen.
    Exemplaren.
 3. Trage Titel, Komposition, Titelquelle, Zugangsdatum und Herkunft ein;
    unter **Weitere Angaben (Bearbeitung, Verlag, Rechte, Anzahl)** stehen
-   Bearbeitung, Verlag, Rechte und Anzahl.
+   Bearbeitung, Verlag, Rechte und Anzahl. Schon beim Tippen des Titels nennt
+   das Formular die Exemplare, die vielleicht dasselbe Stück sind (gleicher
+   Titel, auch mit anderem Artikel oder Akzenten, und gleiche Komposition, wo
+   beide angegeben sind); ein Klick öffnet eines. Ob du erfasst, entscheidest
+   weiter du.
 4. Wähle auf Wunsch mit **Datei verknüpfen (optional) …** eine Datei aus dem
    Archivordner.
 5. **Zugang erfassen**. Werk, Fassung und Exemplar werden angelegt, und das

@@ -8,9 +8,9 @@
  * shelf marks typed by a user and the counts of an inventory. No Vue, no
  * server access, easy to test.
  */
-import type { CountInput } from './types.ts'
+import type { CountInput, Entry } from './types.ts'
 
-import { parseShelfmark } from './catalog.ts'
+import { normalizeText, parseShelfmark } from './catalog.ts'
 
 /** Avery 3653 and compatible: 2 columns × 7 rows of 105 × 42.3 mm on A4. */
 export const LABELS_PER_SHEET = 14
@@ -175,4 +175,62 @@ export function countPayload(rows: CountRow[], drafts: Record<number, CountDraft
 		counts.push(count)
 	}
 	return { counts, invalid }
+}
+
+/**
+ * A title as compared for duplicates: without accents, case, punctuation
+ * and leading articles.
+ *
+ * @param title - title
+ */
+function titleKey(title: string | null | undefined): string {
+	return normalizeText(title)
+		.replace(/[^\p{L}\p{N}]+/gu, ' ')
+		.trim()
+		.replace(/^(der|die|das|ein|eine|the|a|an|le|la|les|il|lo|el)\s+/, '')
+}
+
+/**
+ * The last word of a composer's name, compared without accents and case.
+ *
+ * @param composer - composer
+ */
+function surnameKey(composer: string | null | undefined): string {
+	const words = normalizeText(composer).replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ')
+	return words[words.length - 1] ?? ''
+}
+
+/**
+ * Copies already in the catalog that may be the piece being recorded (round
+ * 3, November 2026): the same title, or one title containing the other
+ * (from five letters on), with the composer's surname agreeing where both
+ * are given. Only a hint; the librarian decides. At most `limit`, those
+ * with the same title first.
+ *
+ * @param entries - the catalog
+ * @param title - title typed
+ * @param composer - composer typed
+ * @param limit - most hits
+ */
+export function similarEntries(entries: Entry[], title: string, composer: string, limit = 5): Entry[] {
+	const wanted = titleKey(title)
+	if (wanted.length < 3) {
+		return []
+	}
+	const surname = surnameKey(composer)
+	const hits: { entry: Entry, exact: boolean }[] = []
+	for (const entry of entries) {
+		const key = titleKey(entry.title)
+		const exact = key === wanted
+		const contains = !exact && Math.min(key.length, wanted.length) >= 5 && (key.includes(wanted) || wanted.includes(key))
+		if (!exact && !contains) {
+			continue
+		}
+		const theirs = surnameKey(entry.composer)
+		if (surname !== '' && theirs !== '' && theirs !== surname) {
+			continue
+		}
+		hits.push({ entry, exact })
+	}
+	return hits.sort((a, b) => Number(b.exact) - Number(a.exact)).slice(0, limit).map((hit) => hit.entry)
 }

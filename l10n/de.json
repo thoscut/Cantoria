@@ -56,6 +56,7 @@
         "Number (required)": "Nummer (Pflichtfeld)",
         "Next free number: {number}": "Nächste freie Nummer: {number}",
         "Shelf mark": "Signatur",
+        "Possibly in the catalog already. If it is the same piece, a further copy or version may be the better way:": "Vielleicht schon im Werkverzeichnis. Ist es dasselbe Stück, ist ein weiteres Exemplar oder eine weitere Fassung vielleicht der bessere Weg:",
         "More details (arranger, publisher, rights, counts)": "Weitere Angaben (Bearbeitung, Verlag, Rechte, Anzahl)",
         "Choose another file …": "Andere Datei wählen …",
         "Link a file (optional) …": "Datei verknüpfen (optional) …",

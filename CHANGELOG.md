@@ -124,6 +124,10 @@ All notable changes to this app are documented in this file. The format follows
   programme with these pieces …" in a concert or song list makes a draft
   with its pieces in their order, struck pieces left out
   (`POST /api/events/{id}/copy`).
+- **Recorded twice? (optimisation round 3).** While a new accession is typed,
+  the form names copies that may be the same piece (same title without
+  article, accents or punctuation, and the same composer where both are
+  given), each a click away. Only a hint.
 
 ### Changed
 

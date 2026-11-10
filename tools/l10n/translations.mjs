@@ -3617,6 +3617,7 @@ export const singular = {
 	'New concert with these pieces': 'Neues Konzert mit diesen Stücken',
 	'New song list with these pieces': 'Neue Notenliste mit diesen Stücken',
 	'The new programme gets the pieces of this one in their order, with duration, note and encore; struck pieces are left out. It starts as a draft.': 'Das neue Programm bekommt die Stücke dieses Programms in ihrer Reihenfolge, mit Dauer, Notiz und Zugabe; gestrichene Stücke bleiben draußen. Es beginnt als Entwurf.',
+	'Possibly in the catalog already. If it is the same piece, a further copy or version may be the better way:': 'Vielleicht schon im Werkverzeichnis. Ist es dasselbe Stück, ist ein weiteres Exemplar oder eine weitere Fassung vielleicht der bessere Weg:',
 }
 
 export const plural = {
