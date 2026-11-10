@@ -89,7 +89,7 @@ class MergeService {
 				$this->audit->record($operation, $uid, Fields::VERSION, $version->getId(), 'merged', 'work_id', $sourceWorkId, $targetWorkId, $reason);
 			}
 			$movedItems = [];
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByWork($sourceWorkId) as $item) {
 				if ($item->getWorkId() === $sourceWorkId) {
 					$item->setValue('work_id', $targetWorkId);
 					$this->items->update($item);
@@ -147,7 +147,7 @@ class MergeService {
 			$this->copies->update($copy);
 			$this->audit->record($operation, $uid, Fields::COPY, $copyId, 'merged', 'version_id', $fromVersionId, $targetVersionId, $reason);
 			$movedItems = [];
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByCopy($copyId) as $item) {
 				if ($item->getCopyId() === $copyId) {
 					$movedItems[] = ['id' => $item->getId(), 'version' => $item->getVersionId(), 'work' => $item->getWorkId()];
 					$item->setValue('version_id', $targetVersionId);
@@ -212,7 +212,7 @@ class MergeService {
 					$this->versions->update($version);
 					$this->audit->record($operation, $uid, Fields::VERSION, $version->getId(), 'merge_undone', 'work_id', $target->getId(), $source->getId(), $reason);
 				}
-				foreach ($this->items->findAll() as $item) {
+				foreach ($this->items->findByWork($target->getId()) as $item) {
 					$itemVersionId = $item->getVersionId();
 					$followsVersion = $itemVersionId !== null && isset($versions[$itemVersionId]);
 					$recordedWorkOnly = $itemVersionId === null && in_array($item->getId(), $movedItems, true);
@@ -251,7 +251,7 @@ class MergeService {
 			foreach ($moved['eventItems'] as $entry) {
 				$recorded[$entry['id']] = $entry;
 			}
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByCopy($copy->getId()) as $item) {
 				if ($item->getCopyId() === $copy->getId() && $item->getVersionId() === $merge->getTargetId()) {
 					$entry = $recorded[$item->getId()] ?? null;
 					$item->setValue('version_id', $entry === null ? $from->getId() : $entry['version']);
