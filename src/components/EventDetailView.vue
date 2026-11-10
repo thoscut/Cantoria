@@ -36,7 +36,7 @@ import {
 import { showSuccess } from '@nextcloud/dialogs'
 import { generateUrl } from '@nextcloud/router'
 import { n, t } from '../l10n.ts'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
@@ -83,15 +83,26 @@ const error = ref('')
 const busy = ref(false)
 const announcement = ref('')
 
+/** Counter of the loads: Back and Forward between two events show the later one */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		data.value = await fetchEvent(props.eventId)
+		const result = await fetchEvent(props.eventId)
+		if (run === loadRun) {
+			data.value = result
+		}
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -379,6 +390,13 @@ async function print(mode: 'programme' | 'binders' | 'songlist'): Promise<void> 
 	await nextTick()
 	window.print()
 }
+
+/** After printing, Ctrl+P prints the programme again, not the list printed last */
+function afterPrint(): void {
+	printMode.value = 'programme'
+}
+onMounted(() => window.addEventListener('afterprint', afterPrint))
+onBeforeUnmount(() => window.removeEventListener('afterprint', afterPrint))
 
 /**
  * Whether the version of an item is in the singers' portal.

@@ -20,6 +20,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import ViewHeader from './ViewHeader.vue'
+import ReloadError from './ReloadError.vue'
 import { errorMessage, fetchProtectionReview } from '../api.ts'
 import { formatDate } from '../format.ts'
 import { choiceLabel, openEntry } from '../store.ts'
@@ -29,16 +30,28 @@ const loaded = ref(false)
 const loading = ref(false)
 const error = ref('')
 
+/** Counter of the loads: only the answer to the latest one counts (a filter switched quickly) */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		rows.value = await fetchProtectionReview()
+		const result = await fetchProtectionReview()
+		if (run !== loadRun) {
+			return
+		}
+		rows.value = result
 		loaded.value = true
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -91,6 +104,7 @@ function dateText(row: ProtectionReviewRow): string {
 			:loading="loading"
 			@reload="load" />
 		<div class="protection-view__content">
+			<ReloadError v-if="loaded && error" :error="error" @retry="load()" />
 			<NcEmptyContent v-if="!loaded && loading" :name="t('cantoria', 'Loading …')">
 				<template #icon>
 					<NcLoadingIcon :size="64" />

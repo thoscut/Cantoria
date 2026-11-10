@@ -28,7 +28,6 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import AppNotices from './components/AppNotices.vue'
-import ArchiveManagement from './components/ArchiveManagement.vue'
 import CatalogList from './components/CatalogList.vue'
 import CatalogNavigation from './components/CatalogNavigation.vue'
 import CopySidebar from './components/CopySidebar.vue'
@@ -67,6 +66,8 @@ import {
 import { viewTitle } from './viewTitles.ts'
 
 // Views other than the start page and the catalog are loaded when needed
+// only for the archive roles, after the dialog is opened: not in everyone's main bundle
+const ArchiveManagement = defineAsyncComponent(() => import('./components/ArchiveManagement.vue'))
 const TasksView = defineAsyncComponent(() => import('./components/TasksView.vue'))
 const ProposalsView = defineAsyncComponent(() => import('./components/ProposalsView.vue'))
 const ReleaseListView = defineAsyncComponent(() => import('./components/ReleaseListView.vue'))

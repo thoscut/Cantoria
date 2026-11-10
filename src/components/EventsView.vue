@@ -22,6 +22,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import CalendarDialog from './CalendarDialog.vue'
+import ReloadError from './ReloadError.vue'
 import EventDialog from './EventDialog.vue'
 import ViewHeader from './ViewHeader.vue'
 import { calendarFileUrl, errorMessage, fetchEvents } from '../api.ts'
@@ -43,16 +44,28 @@ const error = ref('')
 const showImported = ref(true)
 const creating = ref(false)
 
+/** Counter of the loads: only the answer to the latest one counts (a filter switched quickly) */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		events.value = await fetchEvents(props.kind)
+		const result = await fetchEvents(props.kind)
+		if (run !== loadRun) {
+			return
+		}
+		events.value = result
 		loaded.value = true
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -176,6 +189,7 @@ function onCreated(event: ChoirEvent): void {
 		</section>
 
 		<div class="events-view__content">
+			<ReloadError v-if="loaded && error" :error="error" @retry="load()" />
 			<NcEmptyContent v-if="!loaded && loading" :name="t('cantoria', 'Loading …')">
 				<template #icon>
 					<NcLoadingIcon :size="64" />

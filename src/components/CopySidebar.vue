@@ -47,7 +47,7 @@ import { repertoireClassLabel, repertoireSourceLabel } from '../labels.ts'
 import { showError } from '../toasts.ts'
 import {
 	choiceLabel,
-	closeEntry,
+	requestCloseEntry,
 	detail,
 	detailError,
 	detailLoading,
@@ -142,7 +142,7 @@ watch([sidebarName, detail, detailLoading], labelSidebar, { flush: 'post' })
 /**
  * Opened from a row or link: the focus moves to the name of the copy in the
  * sidebar, so that keyboard and screen reader users are where the content
- * is. closeEntry() takes it back to the row.
+ * is. requestCloseEntry() takes it back to the row.
  */
 function takeFocus(): void {
 	if (!sidebarTakesFocus.value || detailLoading.value) {
@@ -257,7 +257,7 @@ async function onSaved(): Promise<void> {
 		:empty="!detail && !detailLoading && detailError !== ''"
 		force-tabs
 		@update:active="activeTab = $event"
-		@close="closeEntry">
+		@close="requestCloseEntry">
 		<template #description>
 			<div v-if="detail" class="copy-sidebar__description">
 				<RightsBadge :rights-status="detail.version.rights_status"

@@ -868,6 +868,8 @@ export interface PerformanceImportReport {
 	ambiguous: number
 	notInCatalog: number
 	counted: number
+	/** lines that keep the assignment made by hand after the last import */
+	keptAssignments: number
 	ownChoir: string | null
 	unknownShelfmarks: string[]
 	sheets: string[]

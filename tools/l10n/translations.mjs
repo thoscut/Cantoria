@@ -3559,9 +3559,29 @@ export const singular = {
 	'The OpenDocument spreadsheet is too large to import.': 'Die OpenDocument-Tabelle ist zu groß für den Import.',
 	'More pieces': 'Weitere Stücke',
 	New: 'Neu',
+	// ---- round 1, November 2026: unsaved input and reloads ----
+	'This person could not be loaded: {error}': 'Diese Person konnte nicht geladen werden: {error}',
+	'The list could not be updated and may be out of date: {error}': 'Die Liste konnte nicht aktualisiert werden und ist vielleicht nicht mehr aktuell: {error}',
+	'Your recording is not saved. If you close the score now, it is gone.': [
+		'Deine Aufnahme ist nicht gespeichert. Wenn du die Noten jetzt schließt, ist sie weg.',
+		'Ihre Aufnahme ist nicht gespeichert. Wenn Sie die Noten jetzt schließen, ist sie weg.',
+	],
+	'Discard and close': 'Verwerfen und schließen',
+	'Discard your changes?': ['Änderungen verwerfen?', 'Änderungen verwerfen?'],
+	'You have changes that are not saved. If you go on, they are gone.': [
+		'Du hast Änderungen, die nicht gespeichert sind. Wenn du weitermachst, sind sie weg.',
+		'Sie haben Änderungen, die nicht gespeichert sind. Wenn Sie weitermachen, sind sie weg.',
+	],
+	'Keep editing': 'Weiter bearbeiten',
+	'Discard changes': 'Änderungen verwerfen',
+	'"%s" must be a whole number from 0 to 2147483647.': '„%s“ muss eine ganze Zahl von 0 bis 2147483647 sein.',
 }
 
 export const plural = {
+	'%n line keeps the copy you assigned by hand after the last import.|%n lines keep the copy you assigned by hand after the last import.': {
+		du: ['%n Zeile behält das Exemplar, das du nach dem letzten Import von Hand zugeordnet hast.', '%n Zeilen behalten das Exemplar, das du nach dem letzten Import von Hand zugeordnet hast.'],
+		sie: ['%n Zeile behält das Exemplar, das Sie nach dem letzten Import von Hand zugeordnet haben.', '%n Zeilen behalten das Exemplar, das Sie nach dem letzten Import von Hand zugeordnet haben.'],
+	},
 	'Ends in %n day|Ends in %n days': ['Endet in %n Tag', 'Endet in %n Tagen'],
 	'%n piece is in the choir system but not recorded as in the portal|%n pieces are in the choir system but not recorded as in the portal': [
 		'%n Stück ist im Chorsystem, aber nicht als im Portal vermerkt',
