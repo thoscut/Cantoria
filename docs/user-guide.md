@@ -1044,7 +1044,9 @@ Conductors and music librarians plan concerts:
    (see [Sharing a whole programme with the
    choir](#sharing-a-whole-programme-with-the-choir)); **Open in the concert
    folder** shows the programme as it is on the tablet at the rehearsal and
-   the concert.
+   the concert. **Songbook (PDF) …** puts the scans together into one PDF
+   to print (see [Songbook from a programme or a
+   selection](#songbook-from-a-programme-or-a-selection)).
 
 Deadline notifications go to the conductor and the music librarians 10, 8
 and 6 weeks before the concert. If a concert does not take place, **Cancel
@@ -1068,6 +1070,33 @@ with columns to tick and the song list, also in large print. With the
 module "Revisions of a version" each piece keeps the
 [revision](#revisions-of-a-version) that was sung, and the programme, the
 printed lists and the song order name it.
+
+### Songbook from a programme or a selection
+
+With the module "Songbooks", conductors and music librarians put the scans
+(PDF) of several pieces together into one PDF to print: for a concert, a
+retreat or a singing afternoon.
+
+1. In a concert or song list, choose **Songbook (PDF) …**. For any other
+   selection, search and filter the catalog; under the filters the
+   navigation offers a songbook of the hits (at most the first 200).
+2. The list says per piece whether it can go in. A songbook is a printed
+   copy for the choir: a piece goes in with confirmed public domain or a
+   license for copies for the binders or for the print station, and it needs
+   a scan (PDF) linked to its copy. Internal preservation copies never go
+   in. The reason stands next to every piece left out.
+3. Untick pieces you do not want, and set the **Title on the cover** and the
+   **Line under the title (optional)**, for example the date.
+4. **Order**: **As in the programme** (or **As in the list**), **By title** or
+   **By shelf mark**.
+5. **Parts**: **Cover**, **Contents with page numbers**, **Page numbers at
+   the bottom** and, for double-sided printing, **Each piece on a right-hand
+   page (double-sided printing)**.
+
+The PDF is made in your browser and downloaded at once; the scans keep their
+pages as they are. A scan that cannot be read (damaged or protected by a
+password) is left out, and the dialog names it. Every songbook made is
+recorded in the audit log with the shelf marks in it.
 
 ### Concert folder
 

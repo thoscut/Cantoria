@@ -38,6 +38,7 @@
     "@nextcloud/router": "^3.2.0",
     "@nextcloud/vue": "^9.8.2",
     "dompurify": "^3.4.17",
+    "pdf-lib": "1.17.1",
     "verovio": "6.3.0",
     "vue": "^3.5.41"
   },

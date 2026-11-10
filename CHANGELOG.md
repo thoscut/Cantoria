@@ -105,6 +105,16 @@ All notable changes to this app are documented in this file. The format follows
   coverage of `lib/` and `src/` (`npm run test:coverage`), caches
   Composer's downloads, and `.github/CODEOWNERS` asks the maintainer for
   every review.
+- **Songbooks (optimisation round 3).** Conductors and music librarians make
+  one PDF to print from the scans of a concert, a song list or the catalog
+  as filtered (at most 200 pieces): with a cover, the contents with the page
+  of each piece, page numbers (also on rotated scans), a choice of order
+  and, for double-sided printing, each piece on a right-hand page. Only
+  pieces with confirmed public domain or a license for copies for the
+  binders or the print station go in, never an internal preservation copy;
+  every piece left out says why. The PDF is made in the browser (pdf-lib);
+  the server hands out only the scans allowed and records every songbook in
+  the audit log. New module "Songbooks" (on in "Standard" and "Complete").
 
 ### Changed
 

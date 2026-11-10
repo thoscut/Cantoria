@@ -451,6 +451,29 @@ export interface ProgrammeShareItem {
 	quantity?: { licensed: number, members: number } | null
 }
 
+/** A piece of a songbook as the server describes it */
+export interface SongbookPiece {
+	/** null for a programme line without a copy or a copy the account may not see */
+	copyId: number | null
+	shelfmark: string | null
+	title: string
+	composer: string | null
+	arranger: string | null
+	/** e.g. "Encore" */
+	note: string | null
+	scanFileId: number | null
+	allowed: boolean
+	/** why it cannot go in */
+	reason: string | null
+}
+
+export interface SongbookPlan {
+	/** the title of the programme, empty for a list of copies */
+	title: string
+	date: string | null
+	pieces: SongbookPiece[]
+}
+
 export interface ProgrammeShareOptions {
 	/** suggested last day: two weeks after the concert */
 	expires: string

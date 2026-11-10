@@ -1118,7 +1118,9 @@ Chorleitung und Archivverwaltung planen Konzerte:
    einmal (siehe [Ein ganzes Programm mit dem Chor
    teilen](#so-teilst-du-ein-ganzes-programm-mit-dem-chor)); **In der
    Konzertmappe öffnen** zeigt das Programm so, wie es bei der Probe und im
-   Konzert auf dem Tablet steht.
+   Konzert auf dem Tablet steht. **Liederbuch (PDF) …** setzt die Scans zu
+   einem PDF zum Drucken zusammen (siehe [Liederbuch aus einem Programm oder
+   einer Auswahl](#liederbuch-aus-einem-programm-oder-einer-auswahl)).
 
 Benachrichtigungen zu den Fristen gehen 10, 8 und 6 Wochen vor dem Konzert an
 Chorleitung und Archivverwaltung. Findet ein Konzert nicht statt, wähle
@@ -1143,6 +1145,37 @@ Programm, die Liste für die Konzertmappen mit Spalten zum Abhaken und die
 Notenliste, auch in Großdruck. Mit dem Modul „Stände einer Fassung“ behält
 jedes Stück den [Stand](#stände-einer-fassung), der gesungen wurde, und das
 Programm, die gedruckten Listen und die Liederfolge nennen ihn.
+
+### Liederbuch aus einem Programm oder einer Auswahl
+
+Mit dem Modul „Liederbücher“ setzen Chorleitung und Archivverwaltung die
+Scans (PDF) mehrerer Stücke zu einem PDF zum Drucken zusammen: für ein
+Konzert, ein Probenwochenende oder einen Singnachmittag.
+
+1. Wähle in einem Konzert oder einer Notenliste **Liederbuch (PDF) …**. Für
+   jede andere Auswahl suchst und filterst du das Werkverzeichnis; unter den
+   Filtern bietet die Navigation ein Liederbuch aus den Treffern an
+   (höchstens die ersten 200).
+2. Die Liste sagt je Stück, ob es hineinkommt. Ein Liederbuch ist eine
+   gedruckte Kopie für den Chor: Ein Stück kommt hinein mit bestätigter
+   Gemeinfreiheit oder einer Lizenz für Kopien für die Chormappen oder für
+   die Druckstation, und es braucht einen Scan (PDF) an seinem Exemplar.
+   Interne Erhaltungskopien kommen nie hinein. Bei jedem fehlenden Stück
+   steht der Grund.
+3. Nimm die Haken bei Stücken weg, die du nicht willst, und trage den
+   **Titel auf dem Deckblatt** und die **Zeile unter dem Titel (optional)**
+   ein, etwa das Datum.
+4. **Reihenfolge**: **Wie im Programm** (oder **Wie in der Liste**), **Nach
+   Titel** oder **Nach Signatur**.
+5. **Bestandteile**: **Deckblatt**, **Inhaltsverzeichnis mit Seitenzahlen**,
+   **Seitenzahlen unten** und für den beidseitigen Druck **Jedes Stück auf
+   einer rechten Seite (beidseitiger Druck)**.
+
+Das PDF entsteht in deinem Browser und wird gleich heruntergeladen; die
+Scans behalten ihre Seiten, wie sie sind. Ein Scan, der sich nicht lesen
+lässt (beschädigt oder mit Passwort geschützt), bleibt draußen, und der
+Dialog nennt ihn. Jedes erstellte Liederbuch steht mit seinen Signaturen im
+Protokoll.
 
 ### Konzertmappe
 

@@ -21,6 +21,7 @@ import {
 	mdiArrowDown,
 	mdiArrowLeft,
 	mdiArrowUp,
+	mdiBookMusicOutline,
 	mdiCalendarExportOutline,
 	mdiCalendarPlusOutline,
 	mdiCalendarRemoveOutline,
@@ -51,6 +52,7 @@ import AppNotices from './AppNotices.vue'
 import CalendarDialog from './CalendarDialog.vue'
 import EventDialog from './EventDialog.vue'
 import ProgrammeShareDialog from './ProgrammeShareDialog.vue'
+import SongbookDialog from './SongbookDialog.vue'
 import {
 	addEventItem,
 	calendarFileUrl,
@@ -138,6 +140,9 @@ const concertFolderUrl = computed(() => {
 	return generateUrl('/apps/cantoria/concert-folder') + (first ? '?item=' + first.id : '')
 })
 const sharing = ref(false)
+/** A songbook of the programme to print (round 3, November 2026) */
+const canMakeSongbook = computed(() => items.value.length > 0 && isModuleActive('songbook') && hasAnyRole(['librarian', 'conductor']))
+const makingSongbook = ref(false)
 
 const canConfirmSung = computed(() => editable.value && isConcert.value
 	&& event.value?.event_date !== null && event.value?.event_date !== undefined && event.value.event_date <= today)
@@ -522,6 +527,12 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Share with the choir …') }}
 						</NcButton>
+						<NcButton v-if="canMakeSongbook" :disabled="busy" @click="makingSongbook = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiBookMusicOutline" />
+							</template>
+							{{ t('cantoria', 'Songbook (PDF) …') }}
+						</NcButton>
 						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiFolderMusicOutline" />
@@ -834,6 +845,9 @@ function revisionText(item: EventItem): string {
 			:event-id="event.id"
 			:title="event.title || t('cantoria', '(no title)')"
 			@close="sharing = false" />
+		<SongbookDialog v-if="makingSongbook && event"
+			:event-id="event.id"
+			@close="makingSongbook = false" />
 		<CalendarDialog v-if="calendarDialogOpen && event"
 			:event-id="event.id"
 			:deadlines="withDeadlines && !event.imported"

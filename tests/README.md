@@ -103,6 +103,7 @@ What is covered:
 | `Service/ConcertFolderTest` | the concert folder: programmes still to be sung in their order, the rights of the score view, kept on a device only with the module `offline` and the rights for a copy, no preservation copy, only conductor and librarian |
 | `Service/PrivacyTest` | access and erasure for one person, a deleted account, the retention period of the audit log, the year of birth of persons without a known death, every field with an account in the report |
 | `Service/PersonTableTest` | the register of persons in the export folder without the account that checked a person |
+| `Service/SongbookServiceTest` | songbooks: the pieces of a programme in its order without struck ones, a reason for every piece left out (rights, no scan, no copy, preservation copy), scans only after the same checks, only for the catalog librarian and the conductor, recorded in the audit log |
 | `Service/ContributionRolesTest` | a person has each role at most once in a version, also when a role is changed |
 | `Service/MergeCandidatesTest` | proposals for merging works: titles compared without accents and in every Unicode form, works without a composer as a group of their own next to several composers |
 | `Service/PerformanceReimportTest` | importing the performances again keeps the lines assigned to a copy by hand, unless the line changed or the copy is gone |

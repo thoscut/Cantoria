@@ -16,6 +16,7 @@ import {
 	mdiArchiveClockOutline,
 	mdiArchiveOutline,
 	mdiArchivePlusOutline,
+	mdiBookMusicOutline,
 	mdiBookOpenPageVariantOutline,
 	mdiCalendarClockOutline,
 	mdiCalendarStarOutline,
@@ -56,6 +57,7 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwit
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import { useIsMobile } from '@nextcloud/vue/composables/useIsMobile'
+import SongbookDialog from './SongbookDialog.vue'
 import { generateUrl } from '@nextcloud/router'
 import { adminSettingsUrl } from '../api.ts'
 import { moreFiltersActive, REPERTOIRE_CLASSES } from '../catalog.ts'
@@ -91,6 +93,16 @@ import {
 const settingsUrl = adminSettingsUrl()
 /** The concert folder is a page of its own, also without a network (milestone 0.15). */
 const concertFolderUrl = generateUrl('/apps/cantoria/concert-folder')
+/** A songbook of the catalog as filtered (round 3, November 2026), at most 200 pieces */
+const canMakeSongbook = computed(() => filtersActive.value && isModuleActive('songbook') && (isConductor.value || isLibrarian.value)
+	&& visibleEntries.value.length > 0)
+const songbookCopies = ref<number[] | null>(null)
+const SONGBOOK_MAX = 200
+
+function openSongbook(): void {
+	songbookCopies.value = visibleEntries.value.slice(0, SONGBOOK_MAX).map((entry) => entry.id)
+}
+
 const showConcertFolder = computed(() => isModuleActive('concert_folder') && (isConductor.value || isLibrarian.value))
 
 const isMobile = useIsMobile()
@@ -395,6 +407,17 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 					</template>
 					{{ t('cantoria', 'Reset search and filters') }}
 				</NcButton>
+				<NcButton v-if="canMakeSongbook"
+					variant="tertiary"
+					wide
+					@click="openSongbook">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiBookMusicOutline" />
+					</template>
+					{{ visibleEntries.length > SONGBOOK_MAX
+						? t('cantoria', 'Songbook of the first {count} hits …', { count: SONGBOOK_MAX })
+						: n('cantoria', 'Songbook of %n hit …', 'Songbook of %n hits …', visibleEntries.length) }}
+				</NcButton>
 			</li>
 			<NcAppNavigationItem v-for="entry in archiveViews"
 				:key="entry.view"
@@ -485,6 +508,9 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 				</NcAppNavigationItem>
 			</NcAppNavigationList>
 		</template>
+		<SongbookDialog v-if="songbookCopies !== null"
+			:copy-ids="songbookCopies"
+			@close="songbookCopies = null" />
 	</NcAppNavigation>
 </template>
 

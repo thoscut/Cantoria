@@ -64,6 +64,10 @@ function objectLabel(type: string): string {
 		return t('cantoria', 'Hand-over to the choir system')
 	case 'export':
 		return t('cantoria', 'Export')
+	case 'event':
+		return t('cantoria', 'Concert')
+	case 'songbook':
+		return t('cantoria', 'Songbook')
 	default:
 		return type
 	}
@@ -118,6 +122,8 @@ function actionLabel(action: string): string {
 		return t('cantoria', 'Revision recorded')
 	case 'state_current':
 		return t('cantoria', 'Current revision set')
+	case 'songbook_made':
+		return t('cantoria', 'Songbook made')
 	default:
 		return action
 	}

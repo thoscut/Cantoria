@@ -641,4 +641,30 @@ final class RightsPolicyTest extends TestCase {
 		self::assertSame(self::PUBLIC_NO_AUDIO, $build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicPlayDenial($confirmed, self::TODAY));
 		self::assertNull($build(ProtectionTerm::PROTECTED, [self::license('online_publication,online_audio')])->publicPlayDenial($confirmed, self::TODAY));
 	}
+
+	// ---- songbooks ----
+
+	public function testASongbookNeedsConfirmedPublicDomainOrALicenseForPrintedCopies(): void {
+		$denied = 'A songbook needs confirmed public domain or a license for copies for the binders or for the print station. The catalog librarian records it on the tab "Rights".';
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
+		$unconfirmed = self::version(['rights_status' => 'public_domain']);
+		$protected = self::version(['rights_status' => 'protected']);
+		self::assertNull($this->policy(true, false)->songbookDenial($confirmed, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false)->songbookDenial($unconfirmed, self::TODAY), 'public domain counts only when confirmed');
+		self::assertSame($denied, $this->policy(true, false)->songbookDenial($protected, self::TODAY));
+		self::assertNull($this->policy(true, false, [self::license('binder')])->songbookDenial($protected, self::TODAY));
+		self::assertNull($this->policy(true, false, [self::license('print_station')])->songbookDenial($protected, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false, [self::license('portal,member_download')])->songbookDenial($protected, self::TODAY),
+			'downloads by single members are not copies printed for the choir');
+		self::assertSame($denied, $this->policy(true, false, [self::license('binder', null, '2026-01-31')])->songbookDenial($protected, self::TODAY),
+			'a license that has ended');
+		self::assertSame($denied, $this->policy(true, false, [self::license('binder', '2099-01-01')])->songbookDenial($protected, self::TODAY),
+			'a license not yet valid');
+	}
+
+	public function testAPreservationCopyNeverGoesIntoASongbook(): void {
+		$version = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'preservation_copy' => true]);
+		self::assertSame('Internal preservation copy: it does not go into a songbook.',
+			$this->policy(true, true, [self::license('binder')], false)->songbookDenial($version, self::TODAY));
+	}
 }

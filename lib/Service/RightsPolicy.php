@@ -89,6 +89,8 @@ class RightsPolicy {
 		ExcerptLink::CIRCLE_MEMBERS => ['notes' => ['portal'], 'scan' => ['member_download', 'self_print']],
 		ExcerptLink::CIRCLE_PUBLIC => ['notes' => ['online_publication'], 'scan' => [self::PUBLIC_SCAN_USE]],
 	];
+	/** License uses under which a piece goes into a songbook printed for the choir (one is enough) */
+	public const SONGBOOK_USES = ['binder', 'print_station'];
 	/** The circle of the concert folder: the device of the conductor or the catalog librarian, signed in (milestone 0.19) */
 	public const CIRCLE_FOLDER = 'folder';
 	/** License use for passing on MusicXML files: the hand-over folder and every MusicXML kept on a device (R B26) */
@@ -326,6 +328,29 @@ class RightsPolicy {
 	 */
 	public function printDenial(string $circle, WorkVersion $version, string $day, ?Copy $copy = null): ?string {
 		return $this->copyDenial($circle, $version, $day, $copy, false);
+	}
+
+	/**
+	 * Whether a piece may go into a songbook (a PDF of several scans with a
+	 * cover and contents, printed for the choir): that is a copy on paper
+	 * for many people, like the copies for the binders. Never an internal
+	 * preservation copy; otherwise confirmed public domain, or a license for
+	 * copies for the binders or for the print station today.
+	 *
+	 * @param string $day today (YYYY-MM-DD), for the validity of licenses
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function songbookDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
+		if (self::isPreservationCopy($version, $copy)) {
+			return 'Internal preservation copy: it does not go into a songbook.';
+		}
+		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+			return null;
+		}
+		if ($this->coversOne($this->licensesOf($version), self::SONGBOOK_USES, $day)) {
+			return null;
+		}
+		return 'A songbook needs confirmed public domain or a license for copies for the binders or for the print station. The catalog librarian records it on the tab "Rights".';
 	}
 
 	/**
