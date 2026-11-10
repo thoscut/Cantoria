@@ -3618,6 +3618,8 @@ export const singular = {
 	'New song list with these pieces': 'Neue Notenliste mit diesen Stücken',
 	'The new programme gets the pieces of this one in their order, with duration, note and encore; struck pieces are left out. It starts as a draft.': 'Das neue Programm bekommt die Stücke dieses Programms in ihrer Reihenfolge, mit Dauer, Notiz und Zugabe; gestrichene Stücke bleiben draußen. Es beginnt als Entwurf.',
 	'Possibly in the catalog already. If it is the same piece, a further copy or version may be the better way:': 'Vielleicht schon im Werkverzeichnis. Ist es dasselbe Stück, ist ein weiteres Exemplar oder eine weitere Fassung vielleicht der bessere Weg:',
+	// ---- round 3, November 2026: the voice of a choir member remembered ----
+	'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages and voice, the settings for practising and the marks "New".': 'In diesem Browser löscht das die ohne Netz verfügbaren Stücke aller Seiten von Cantoria, die gemerkten Übe-Stellen und die gemerkte Stimme, die Übe-Einstellungen und die Markierungen „Neu“.',
 }
 
 export const plural = {

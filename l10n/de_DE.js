@@ -1923,7 +1923,7 @@ OC.L10N.register(
         "\"{title}\" is available without a network.": "„{title}“ ist ohne Netz verfügbar.",
         "More pieces": "Weitere Stücke",
         "Everything Cantoria kept on this device is deleted.": "Alles, was Cantoria auf diesem Gerät behalten hatte, ist gelöscht.",
-        "In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages, the settings for practising and the marks \"New\".": "In diesem Browser löscht das die ohne Netz verfügbaren Stücke aller Seiten von Cantoria, die gemerkten Übe-Stellen, die Übe-Einstellungen und die Markierungen „Neu“.",
+        "In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages and voice, the settings for practising and the marks \"New\".": "In diesem Browser löscht das die ohne Netz verfügbaren Stücke aller Seiten von Cantoria, die gemerkten Übe-Stellen und die gemerkte Stimme, die Übe-Einstellungen und die Markierungen „Neu“.",
         "Playback: yes": "Abspielen: ja",
         "Playback: no": "Abspielen: nein",
         "Practice files: yes": "Übe-Dateien: ja",

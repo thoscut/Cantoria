@@ -94,10 +94,10 @@ export function storePracticeSettings(practiceKey: string, settings: PracticeSet
 
 /**
  * Forget the passages and settings for practising of every piece in this
- * browser.
+ * browser, and the voice remembered for choir members.
  *
  * @return the number of pieces forgotten
  */
 export function forgetPractising(): number {
-	return removeStoredStarting(['marks.', PREFIX])
+	return removeStoredStarting(['marks.', PREFIX, 'member.voice'])
 }

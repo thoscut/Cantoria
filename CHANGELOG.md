@@ -128,6 +128,10 @@ All notable changes to this app are documented in this file. The format follows
   the form names copies that may be the same piece (same title without
   article, accents or punctuation, and the same composer where both are
   given), each a click away. Only a hint.
+- **My voice remembered (optimisation round 3).** On "Shared with me" the
+  browser remembers the voice a choir member chose and opens the next piece
+  with it, unless its link names a voice ("Tenor" also finds "Tenor 1").
+  "Delete everything on this device" forgets it too.
 
 ### Changed
 
