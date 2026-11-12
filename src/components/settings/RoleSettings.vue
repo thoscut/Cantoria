@@ -24,10 +24,15 @@ import { ADMIN_GUIDE, adminGuideUrl } from '../../docs.ts'
 import { translateLabel } from '../../format.ts'
 import { catalogRoleEmpty, roleChanges } from '../../settings.ts'
 import { showError } from '../../toasts.ts'
+import { useUnsavedGuard } from '../../unsaved.ts'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
 	settings: Settings
-}>()
+	/** in the guided setup "Save and continue" is the main action: the button of the form steps back */
+	embedded?: boolean
+}>(), {
+	embedded: false,
+})
 
 const emit = defineEmits<{
 	/** the roles were saved; the settings as the server has them now */
@@ -92,17 +97,31 @@ const changes = computed(() => roleChanges(props.settings.roles, draft).map((cha
 })))
 const noCatalogRole = computed(() => catalogRoleEmpty(draft))
 
-async function save(): Promise<void> {
+/** Groups are chosen but not saved */
+const dirty = computed(() => changes.value.length > 0)
+// Leaving the page asks first; the guided setup saves with "Save and continue"
+useUnsavedGuard(dirty)
+
+/**
+ * Save the roles.
+ *
+ * @return whether they were saved
+ */
+async function save(): Promise<boolean> {
 	saving.value = true
 	try {
 		emit('saved', await saveSettings({ roles: { ...draft } }))
 		showSuccess(t('cantoria', 'The roles have been saved.'))
+		return true
 	} catch (error) {
 		showError(errorMessage(error))
+		return false
 	} finally {
 		saving.value = false
 	}
 }
+
+defineExpose({ dirty, save })
 </script>
 
 <template>
@@ -150,7 +169,7 @@ async function save(): Promise<void> {
 		</NcNoteCard>
 
 		<div class="settings-block__actions">
-			<NcButton type="submit" variant="primary" :disabled="saving">
+			<NcButton type="submit" :variant="embedded ? 'secondary' : 'primary'" :disabled="saving">
 				<template v-if="saving" #icon>
 					<NcLoadingIcon />
 				</template>

@@ -27,8 +27,9 @@ import { focusAfterDialog, focusAfterUpdate } from '../../focus.ts'
 import { translateLabel } from '../../format.ts'
 import { accessRows } from '../../settings.ts'
 import { showError } from '../../toasts.ts'
+import { useUnsavedGuard } from '../../unsaved.ts'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
 	archive: ArchiveInfo
 	/** the backup folder outside the archive folder */
 	backups: Settings['backups']
@@ -36,7 +37,11 @@ const props = defineProps<{
 	admin: boolean
 	/** role key => English label */
 	roleLabels: Record<string, string>
-}>()
+	/** in the guided setup "Save and continue" is the main action: the button of the form steps back */
+	embedded?: boolean
+}>(), {
+	embedded: false,
+})
 
 const emit = defineEmits<{
 	/** the archive folder was saved; the settings as the server has them now */
@@ -45,6 +50,11 @@ const emit = defineEmits<{
 
 const pending = ref<{ id: number, path: string } | null>(null)
 const saving = ref(false)
+
+/** A folder is chosen but not saved */
+const dirty = computed(() => pending.value !== null)
+// Leaving the page asks first; the guided setup saves with "Save and continue"
+useUnsavedGuard(dirty)
 
 /** Access check of the chosen folder, before it is saved */
 const check = ref<AccessReport | null>(null)
@@ -124,15 +134,22 @@ async function choose(): Promise<void> {
 	await focusAfterDialog(saveButton)
 }
 
-async function save(): Promise<void> {
+/**
+ * Save the chosen folder.
+ *
+ * @return whether it was saved
+ */
+async function save(): Promise<boolean> {
 	if (!pending.value) {
-		return
+		return false
 	}
 	saving.value = true
+	let saved = false
 	try {
 		emit('saved', await saveSettings({ archiveFolderId: pending.value.id }))
 		pending.value = null
 		check.value = null
+		saved = true
 		showSuccess(t('cantoria', 'The archive folder has been saved.'))
 	} catch (error) {
 		showError(errorMessage(error))
@@ -141,7 +158,10 @@ async function save(): Promise<void> {
 	}
 	// The buttons to save or cancel are gone (or were disabled)
 	await focusAfterUpdate(() => (pending.value ? saveButton.value : chooseButton.value))
+	return saved
 }
+
+defineExpose({ dirty, save })
 </script>
 
 <template>
@@ -167,7 +187,7 @@ async function save(): Promise<void> {
 			{{ t('cantoria', 'No archive folder has been chosen yet.') }}
 		</NcNoteCard>
 		<p class="settings-block__text settings-block__muted">
-			{{ t('cantoria', 'Everyone with a role needs access to this folder in their own Nextcloud, e.g. through a share or a group folder. "Access to the archive folder" below shows who cannot open it.') }}
+			{{ t('cantoria', 'Everyone with a role needs access to this folder in their own Nextcloud, e.g. through a share or a group folder. "Access to the archive folder" shows who cannot open it.') }}
 		</p>
 
 		<div class="settings-block__actions">
@@ -216,7 +236,7 @@ async function save(): Promise<void> {
 					<GuideLink :href="adminGuideUrl(ADMIN_GUIDE.sharing)" :label="t('cantoria', 'Sharing the archive folder (administration guide)')" />
 				</NcNoteCard>
 				<NcNoteCard v-else-if="noRoleGroups" type="info">
-					{{ t('cantoria', 'No group has a role yet. Give the roles their groups below; then check access.') }}
+					{{ t('cantoria', 'No group has a role yet. Give the roles their groups; then check access.') }}
 				</NcNoteCard>
 				<NcNoteCard v-else-if="check" type="success">
 					{{ t('cantoria', 'Every checked account of the role groups can open this folder.') }}
@@ -228,7 +248,7 @@ async function save(): Promise<void> {
 					{{ t('cantoria', 'Cancel') }}
 				</NcButton>
 				<NcButton ref="saveButton"
-					variant="primary"
+					:variant="embedded ? 'secondary' : 'primary'"
 					:disabled="saving"
 					@click="save">
 					<template v-if="saving" #icon>

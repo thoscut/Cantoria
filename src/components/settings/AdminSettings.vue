@@ -12,13 +12,20 @@
  * For admins and the groups the administration has given the page under
  * Administration privileges. It needs no catalog and loads only the
  * settings (its own small bundle, without the score viewer).
+ *
+ * The guided setup opens by itself on an untouched instance (no archive
+ * folder, no functions, no copies) unless it was put off in this browser,
+ * and with the hash #cantoria-setup-wizard (link from the app); the button
+ * in the first section opens it at any time. While it is open the sections
+ * below are not shown: it uses the same forms, and two of each on one page
+ * would share their ids and their unsaved input.
  */
 import type { AccessReport, RepertoireThresholds, Settings } from '../../types.ts'
 
-import { mdiArrowRight } from '@mdi/js'
+import { mdiArrowRight, mdiMapMarkerPath } from '@mdi/js'
 import { t } from '../../l10n.ts'
 import { generateUrl } from '@nextcloud/router'
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
@@ -29,9 +36,12 @@ import ArchiveFolderSettings from './ArchiveFolderSettings.vue'
 import RepertoireSettings from './RepertoireSettings.vue'
 import RoleSettings from './RoleSettings.vue'
 import SetupChecklist from './SetupChecklist.vue'
+import SetupWizard from './SetupWizard.vue'
 import { errorMessage, fetchSettings } from '../../api.ts'
 import { ADMIN_GUIDE, adminGuideUrl } from '../../docs.ts'
-import { SETTINGS_SECTIONS } from '../../settings.ts'
+import { focusAfterDialog, focusElement } from '../../focus.ts'
+import { SETTINGS_SECTIONS, settingsStepsOpen, setupSteps, WIZARD_HASH, WIZARD_STORAGE_KEY, wizardOpensByItself } from '../../settings.ts'
+import { readStored, writeStored } from '../../storage.ts'
 import BackupRestore from '../BackupRestore.vue'
 import FolderBookSettings from '../FolderBookSettings.vue'
 import ModuleSettings from '../ModuleSettings.vue'
@@ -44,6 +54,12 @@ const loadError = ref('')
 const accessReport = ref<AccessReport | null>(null)
 /** Opened through the link of the app: run the access check right away */
 const accessRequested = window.location.hash === '#' + SETTINGS_SECTIONS.access
+/** Opened through the link "Set up step by step" of the app */
+const wizardRequested = window.location.hash === '#' + WIZARD_HASH
+const wizardOpen = ref(false)
+const wizardButton = useTemplateRef('wizardButton')
+/** While archive folder, functions or roles are open, the guided setup is the main action of the page */
+const setupOpen = computed(() => settings.value !== null && settingsStepsOpen(setupSteps(settings.value, accessReport.value)))
 
 const appUrl = generateUrl('/apps/cantoria/')
 const sections = SETTINGS_SECTIONS
@@ -82,11 +98,58 @@ async function load(): Promise<void> {
 	loading.value = settings.value === null
 	loadError.value = ''
 	try {
-		apply(await fetchSettings())
+		const value = await fetchSettings()
+		// Decided before the sections are shown, so that they do not load only to make way
+		if (settings.value === null && wizardOpensByItself(value, readStored(WIZARD_STORAGE_KEY), wizardRequested)) {
+			wizardOpen.value = true
+		}
+		apply(value)
 	} catch (error) {
 		loadError.value = errorMessage(error)
 	} finally {
 		loading.value = false
+	}
+}
+
+/**
+ * The guided setup was closed: remember it in this browser, so that it does
+ * not open by itself again, and give the focus back to its button.
+ *
+ * @param finished - "Finish" on the last page, not "Later"
+ */
+function closeWizard(finished: boolean): void {
+	leaveWizard(finished)
+	focusAfterDialog(wizardButton)
+}
+
+/**
+ * Close the guided setup and remember it. The hash that opened it goes, so
+ * that loading the page again does not open it once more.
+ *
+ * @param finished - "Finish" on the last page
+ */
+function leaveWizard(finished: boolean): void {
+	wizardOpen.value = false
+	writeStored(WIZARD_STORAGE_KEY, finished ? 'done' : 'later')
+	if (window.location.hash === '#' + WIZARD_HASH) {
+		window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+	}
+}
+
+/**
+ * From the guided setup to a section of the page.
+ *
+ * @param section - the section
+ */
+async function wizardToSection(section: keyof typeof SETTINGS_SECTIONS): Promise<void> {
+	leaveWizard(false)
+	// The sections come back only now
+	await nextTick()
+	const target = document.getElementById(SETTINGS_SECTIONS[section])
+	target?.scrollIntoView({ block: 'start' })
+	// The focus follows (WCAG 2.4.3): into the section, else to the button of the guided setup
+	if (!focusElement(target)) {
+		focusElement(wizardButton.value)
 	}
 }
 
@@ -108,12 +171,23 @@ onMounted(async () => {
 			:doc-url="adminGuideUrl(ADMIN_GUIDE.setup)">
 			<div class="cantoria-settings__intro">
 				<SetupChecklist v-if="settings" :settings="settings" :report="accessReport" />
-				<NcButton :href="appUrl">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiArrowRight" />
-					</template>
-					{{ t('cantoria', 'Open Cantoria') }}
-				</NcButton>
+				<div class="cantoria-settings__buttons">
+					<NcButton v-if="settings"
+						ref="wizardButton"
+						:variant="setupOpen ? 'primary' : 'secondary'"
+						@click="wizardOpen = true">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiMapMarkerPath" />
+						</template>
+						{{ t('cantoria', 'Set up step by step') }}
+					</NcButton>
+					<NcButton :href="appUrl">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiArrowRight" />
+						</template>
+						{{ t('cantoria', 'Open Cantoria') }}
+					</NcButton>
+				</div>
 				<p v-if="settings?.admin" class="cantoria-settings__muted">
 					{{ t('cantoria', 'Administrators can give this page to a group, e.g. the music librarians, under Administration privileges. That gives no role; complete backup and restore stay with administrators.') }}
 				</p>
@@ -131,7 +205,7 @@ onMounted(async () => {
 			</NcButton>
 		</NcNoteCard>
 
-		<template v-if="settings">
+		<template v-if="settings && !wizardOpen">
 			<NcSettingsSection :id="sections.archive"
 				:name="t('cantoria', 'Archive folder')"
 				:doc-url="adminGuideUrl(ADMIN_GUIDE.archive)">
@@ -199,6 +273,15 @@ onMounted(async () => {
 				<BackupRestore :catalog-filled="settings.catalogEmpty === false" @restored="load" />
 			</NcSettingsSection>
 		</template>
+
+		<SetupWizard v-if="settings && wizardOpen"
+			v-model:report="accessReport"
+			:settings="settings"
+			@close="closeWizard"
+			@saved="apply"
+			@roles-saved="onRolesSaved"
+			@modules-changed="load"
+			@section="wizardToSection" />
 	</div>
 </template>
 
@@ -213,6 +296,12 @@ onMounted(async () => {
 .cantoria-settings__intro p {
 	max-width: 70ch;
 	margin: 0;
+}
+
+.cantoria-settings__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(2 * var(--default-grid-baseline));
 }
 
 .cantoria-settings__muted {

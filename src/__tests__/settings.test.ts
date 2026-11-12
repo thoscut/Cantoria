@@ -17,6 +17,14 @@ import {
 	neededRoles,
 	roleChanges,
 	setupSteps,
+	WIZARD_STEPS,
+	wizardOpensByItself,
+	wizardStartStep,
+	settingsStepsOpen,
+	wizardStepKeys,
+	wizardStepNumber,
+	wizardStepOf,
+	WIZARD_STEP_COUNT,
 } from '../settings.ts'
 
 /** An access check as the server sends it (invented accounts and groups). */
@@ -249,6 +257,69 @@ describe('setup in six steps', () => {
 		expect(roles({ roles: { librarian: ['archive'], conductor: ['conductors'], member: ['singers'] }, concertFolder: true, memberLinks: true }))
 			.toMatchObject({ status: 'done', rolesWithoutGroup: [] })
 		expect(neededRoles(normalizeSettings({ memberLinks: true }))).toEqual(['librarian', 'member'])
+	})
+})
+
+describe('guided setup', () => {
+	/**
+	 * Page the guided setup starts on.
+	 *
+	 * @param raw - raw settings
+	 * @param report - access check, if it ran
+	 */
+	function start(raw: Record<string, unknown>, report: unknown = null): string {
+		const settings = normalizeSettings(raw)
+		return wizardStartStep(settings, setupSteps(settings, report === null ? null : normalizeAccessReport(report)))
+	}
+
+	const ready = { archive: { id: 4711 }, roles: { librarian: ['archive'] }, modulesChosen: true }
+
+	it('opens by itself only on an untouched instance that was not put off in this browser', () => {
+		const fresh = normalizeSettings({ archive: { id: 0 } })
+		expect(wizardOpensByItself(fresh, null, false)).toBe(true)
+		expect(wizardOpensByItself(fresh, 'later', false)).toBe(false)
+		expect(wizardOpensByItself(fresh, 'done', false)).toBe(false)
+		// Something was set up already: the list "Setting up" is enough
+		expect(wizardOpensByItself(normalizeSettings({ archive: { id: 1 } }), null, false)).toBe(false)
+		expect(wizardOpensByItself(normalizeSettings({ modulesChosen: true }), null, false)).toBe(false)
+		expect(wizardOpensByItself(normalizeSettings({ catalog: { copies: 3 } }), null, false)).toBe(false)
+		// The link from the app always opens it
+		expect(wizardOpensByItself(normalizeSettings(ready), 'done', true)).toBe(true)
+	})
+
+	it('starts with the welcome, then on the first step that is not done', () => {
+		expect(start({})).toBe('welcome')
+		expect(start({ modulesChosen: true })).toBe('archive')
+		expect(start({ archive: { id: 1 } })).toBe('modules')
+		expect(start({ archive: { id: 1 }, modulesChosen: true, concertFolder: true, roles: { librarian: ['archive'] } })).toBe('roles')
+		// The access check is unknown until it runs: no reason to start there, a problem is
+		expect(start(ready)).toBe('catalog')
+		expect(start(ready, REPORT)).toBe('access')
+		expect(start({ ...ready, catalog: { copies: 2, files: 0 } })).toBe('catalog')
+		expect(start({ ...ready, catalog: { copies: 2, files: 5 } })).toBe('done')
+	})
+
+	it('has a page for every setup step', () => {
+		expect(WIZARD_STEPS).toEqual(['welcome', 'archive', 'modules', 'roles', 'access', 'catalog', 'done'])
+		const covered = WIZARD_STEPS.flatMap((page) => wizardStepKeys(page))
+		expect(covered).toEqual(setupSteps(normalizeSettings({}), null).map((step) => step.key))
+		for (const key of covered) {
+			expect(wizardStepKeys(wizardStepOf(key))).toContain(key)
+		}
+	})
+
+	it('numbers the five steps; welcome and overview frame them', () => {
+		expect(WIZARD_STEPS.map((page) => wizardStepNumber(page))).toEqual([null, 1, 2, 3, 4, 5, null])
+		expect(WIZARD_STEP_COUNT).toBe(5)
+	})
+
+	it('is the main action of the page while archive folder, functions or roles are open', () => {
+		const open = (raw: Record<string, unknown>) => settingsStepsOpen(setupSteps(normalizeSettings(raw), null))
+		expect(open({})).toBe(true)
+		expect(open({ ...ready, roles: {} })).toBe(true)
+		expect(open({ ...ready, modulesChosen: false })).toBe(true)
+		// The access check, import and file sync do not count: they are not forms of the page
+		expect(open(ready)).toBe(false)
 	})
 })
 

@@ -35,10 +35,13 @@ const props = withDefaults(defineProps<{
 	archive: ArchiveInfo
 	/** role key => English label */
 	roleLabels: Record<string, string>
-	/** run the check right away (link from the app) */
+	/** run the check right away (link from the app, guided setup) */
 	autoStart?: boolean
+	/** in the guided setup "Continue" is the main action: the button of the form steps back */
+	embedded?: boolean
 }>(), {
 	autoStart: false,
+	embedded: false,
 })
 
 /** The result; the page shows it in the setup steps, too */
@@ -164,7 +167,7 @@ function roleLabel(role: string): string {
 		</NcNoteCard>
 
 		<div class="settings-block__actions">
-			<NcButton variant="primary" :disabled="busy || archive.id === 0" @click="check(true)">
+			<NcButton :variant="embedded ? 'secondary' : 'primary'" :disabled="busy || archive.id === 0" @click="check(true)">
 				<template #icon>
 					<NcLoadingIcon v-if="busy" />
 					<NcIconSvgWrapper v-else :path="mdiFolderAccountOutline" />
