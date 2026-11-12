@@ -694,7 +694,7 @@ final class RightsPolicyTest extends TestCase {
 	// ---- large-print parts for singers with a visual impairment (November 2026) ----
 
 	public function testALargePrintPartNeedsConfirmedPublicDomainALicenseOrTheConfirmationOfTheLibrarian(): void {
-		$denied = 'A large-print part is a printed copy: unless public domain is confirmed, it needs a license for an accessible format or for printed copies for singers. Without one, the catalog librarian can confirm that the part is made for a person with a visual impairment (§ 45b UrhG).';
+		$denied = 'A large-print part is a printed copy and needs confirmed public domain or a license for it. Without a license, the catalog librarian can confirm an accessible copy (§ 45b UrhG).';
 		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
 		$unconfirmed = self::version(['rights_status' => 'public_domain']);
 		$protected = self::version(['rights_status' => 'protected']);

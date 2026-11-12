@@ -356,6 +356,9 @@ class RightsPolicy {
 	/** The use a license must grant for printing lyrics in a programme booklet */
 	public const BOOKLET_USE = 'publication';
 
+	/** What allows a large-print part (largePrintBasis): confirmed public domain, or a license */
+	public const BASIS_FREE = 'free';
+	public const BASIS_LICENSE = 'license';
 	/** Who makes a large-print part: the catalog librarian and the conductor */
 	public const LARGE_PRINT_MAKERS = [Roles::LIBRARIAN, Roles::CONDUCTOR];
 	/** License uses that cover a printed copy of one voice for a singer (Fields::LICENSE_USES) */
@@ -382,7 +385,7 @@ class RightsPolicy {
 		if ($this->largePrintBasis($version, $day) !== null || $accessible) {
 			return null;
 		}
-		return 'A large-print part is a printed copy: unless public domain is confirmed, it needs a license for an accessible format or for printed copies for singers. Without one, the catalog librarian can confirm that the part is made for a person with a visual impairment (§ 45b UrhG).';
+		return 'A large-print part is a printed copy and needs confirmed public domain or a license for it. Without a license, the catalog librarian can confirm an accessible copy (§ 45b UrhG).';
 	}
 
 	/**
@@ -393,9 +396,9 @@ class RightsPolicy {
 	 */
 	public function largePrintBasis(WorkVersion $version, string $day): ?string {
 		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
-			return 'free';
+			return self::BASIS_FREE;
 		}
-		return $this->coversOne($this->licensesOf($version), self::LARGE_PRINT_USES, $day) ? 'license' : null;
+		return $this->coversOne($this->licensesOf($version), self::LARGE_PRINT_USES, $day) ? self::BASIS_LICENSE : null;
 	}
 
 	/**

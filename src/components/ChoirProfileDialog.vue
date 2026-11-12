@@ -130,7 +130,8 @@ async function reset(): Promise<void> {
 		@submit="submit"
 		@close="emit('close')">
 		<p class="profile__intro">
-			{{ t('cantoria', 'The voice groups of the choir and the ranges they sing: comfortable, and still possible. The profile describes groups, never single singers. Pieces in the catalog are compared with it, and the app suggests a transposition when a piece fits better higher or lower.') }}
+			{{ t('cantoria', 'The ranges the voice groups of the choir sing: comfortable, and still possible. The profile describes groups, never single singers.') }}
+			{{ t('cantoria', 'Pieces in the catalog are compared with it, and the app suggests a transposition when a piece fits better higher or lower.') }}
 		</p>
 		<p v-if="scoreFacts && !scoreFacts.profile.custom" class="profile__hint">
 			{{ t('cantoria', 'These are the values for a mixed amateur choir. Adjust them to your choir.') }}

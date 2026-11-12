@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 			{{ check.reason }}
 		</NcNoteCard>
 		<NcCheckboxRadioSwitch v-if="check && !check.allowed && check.canConfirm" v-model="accessible" type="checkbox">
-			{{ t('cantoria', 'I confirm as catalog librarian: this part is made for a singer with a visual impairment and stays with that person (§ 45b UrhG). The confirmation is recorded, without the name of the singer.') }}
+			{{ t('cantoria', 'I confirm as catalog librarian: this part is for a singer with a visual impairment and stays with that person (§ 45b UrhG). The confirmation is recorded without a name.') }}
 		</NcCheckboxRadioSwitch>
 		<NcNoteCard v-if="printed" type="success">
 			{{ t('cantoria', 'The part has been recorded in the history of the copy.') }}
