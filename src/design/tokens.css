@@ -1,0 +1,90 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Thomas Scheel and Cantoria contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+/*
+ * Design tokens of Cantoria (docs/design.md). Everything else comes from the
+ * Nextcloud theme (--color-primary-element, --border-radius-large, …).
+ *
+ * Voice colours: one colour per voice group, always shown together with
+ * its letter (S, A, T, B), never alone. Each colour has at least 4.5:1
+ * against the main background in the light and in the dark theme; in the
+ * contrast mode of the system (forced colours) they become CanvasText.
+ */
+:root {
+	--cantoria-voice-s: #b0124f;
+	--cantoria-voice-a: #9a4a00;
+	--cantoria-voice-t: #046c4e;
+	--cantoria-voice-b: #33449e;
+	--cantoria-voice-none: #5c5c5c;
+	--cantoria-motion: 180ms;
+	--cantoria-ease: cubic-bezier(0.2, 0, 0, 1);
+	--cantoria-shadow: 0 1px 2px rgb(0 0 0 / 8%), 0 4px 16px rgb(0 0 0 / 6%);
+}
+
+body[data-themes*='dark'] {
+	--cantoria-voice-s: #f792b8;
+	--cantoria-voice-a: #f5b65a;
+	--cantoria-voice-t: #5fd3a6;
+	--cantoria-voice-b: #a5b1f2;
+	--cantoria-voice-none: #b4b4b4;
+	--cantoria-shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+}
+
+@media (prefers-color-scheme: dark) {
+	body[data-themes*='default'],
+	body:not([data-themes]) {
+		--cantoria-voice-s: #f792b8;
+		--cantoria-voice-a: #f5b65a;
+		--cantoria-voice-t: #5fd3a6;
+		--cantoria-voice-b: #a5b1f2;
+		--cantoria-voice-none: #b4b4b4;
+		--cantoria-shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--cantoria-motion: 0ms;
+	}
+}
+
+@media (forced-colors: active) {
+	:root {
+		--cantoria-voice-s: CanvasText;
+		--cantoria-voice-a: CanvasText;
+		--cantoria-voice-t: CanvasText;
+		--cantoria-voice-b: CanvasText;
+		--cantoria-voice-none: CanvasText;
+		--cantoria-shadow: none;
+	}
+}
+
+/* A view appears: a short fade, none with reduced motion. */
+@keyframes cantoria-appear {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.cantoria-appear {
+	animation: cantoria-appear var(--cantoria-motion) var(--cantoria-ease) both;
+}
+
+@media print {
+	:root {
+		--cantoria-voice-s: #000;
+		--cantoria-voice-a: #000;
+		--cantoria-voice-t: #000;
+		--cantoria-voice-b: #000;
+		--cantoria-voice-none: #000;
+		--cantoria-shadow: none;
+	}
+}

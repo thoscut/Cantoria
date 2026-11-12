@@ -10,6 +10,7 @@
  * that was this very page, kept on the device, it loads again from the
  * server, or not at all without a network.
  */
+import './design/tokens.css'
 import { createApp } from 'vue'
 import { claimDevice } from './offline/device.ts'
 import MemberApp from './sharing/MemberApp.vue'

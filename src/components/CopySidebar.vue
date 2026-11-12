@@ -36,6 +36,7 @@ import CopyTasksTab from './CopyTasksTab.vue'
 import FieldSection from './FieldSection.vue'
 import FileList from './FileList.vue'
 import MergeList from './MergeList.vue'
+import MusicFacts from './MusicFacts.vue'
 import RightsBadge from './RightsBadge.vue'
 import RightsPanel from './RightsPanel.vue'
 import StatesPanel from './StatesPanel.vue'
@@ -52,6 +53,7 @@ import {
 	detailError,
 	detailLoading,
 	entries,
+	factsOf,
 	isFieldActive,
 	isModuleActive,
 	loadDetail,
@@ -310,6 +312,7 @@ async function onSaved(): Promise<void> {
 					<NcIconSvgWrapper :path="mdiInformationOutline" />
 				</template>
 				<div :key="detail.copy.id" class="copy-sidebar__tab">
+					<MusicFacts v-if="factsOf(detail.copy.id)" :facts="factsOf(detail.copy.id)!" />
 					<FieldSection v-for="section in OVERVIEW_SECTIONS"
 						:key="section.id"
 						:section-id="section.id"

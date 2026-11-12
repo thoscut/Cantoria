@@ -7,6 +7,7 @@
  * Shared state of the app: meta data, catalog entries, filters, selected
  * entry and open dialogs. Plain Vue refs, no store library.
  */
+import type { CatalogFacts, FactsIndex, PieceFit } from './scoreFacts.ts'
 import type { ViewName } from './startParams.ts'
 import type { Detail, Entry, FieldInfo, FilterContext, Filters, Level, Meta, PersonalView, ReleaseRow, Role, SortOrder } from './types.ts'
 
@@ -16,6 +17,7 @@ import { errorMessage, fetchEntries, fetchEntry, fetchMeta, fetchReleaseList, no
 import { DEFAULT_FILTERS, filterEntries, hasActiveFilters, searchText, sortEntries, worksWithValidVersion } from './catalog.ts'
 import { focusAfterUpdate } from './focus.ts'
 import { optionLabel, translateLabel } from './format.ts'
+import { fetchFacts, pieceFit } from './scoreFacts.ts'
 import { cardShown, fieldActive, moduleActive, viewActive, viewShown } from './modules.ts'
 import { confirmDiscard } from './unsaved.ts'
 
@@ -252,6 +254,8 @@ export async function loadEntries(): Promise<boolean> {
 		entries.value = await fetchEntries()
 		entriesStatus.value = 'ready'
 		entriesError.value = ''
+		// the facts follow without holding up the list
+		loadScoreFacts()
 		return true
 	} catch (error) {
 		entriesError.value = errorMessage(error)
@@ -300,8 +304,52 @@ export const versionsOnPortal = computed(() => new Set(portalRows.value
 	.filter((row) => row.status === 'ok' || row.status === 'remove')
 	.map((row) => row.versionId)))
 
+// ---- facts from the scores (module score_facts) ------------------------------
+
+/** Facts per copy, the choir profile and how many scores were read; null until loaded or while the module is off */
+export const scoreFacts = ref<FactsIndex | null>(null)
+
+/**
+ * Load the facts from the scores, if the module is on. Optional: the
+ * catalog works without them.
+ */
+export async function loadScoreFacts(): Promise<void> {
+	if (!isModuleActive('score_facts')) {
+		scoreFacts.value = null
+		return
+	}
+	try {
+		scoreFacts.value = await fetchFacts()
+	} catch {
+		scoreFacts.value = null
+	}
+}
+
+/** How each copy fits the choir profile, by copy id */
+export const fitsByCopy = computed(() => {
+	const index = scoreFacts.value
+	const map = new Map<number, PieceFit>()
+	if (index === null) {
+		return map
+	}
+	for (const [copyId, facts] of Object.entries(index.copies)) {
+		map.set(Number(copyId), pieceFit(facts.voices, index.profile.groups))
+	}
+	return map
+})
+
+/**
+ * The facts of one copy, or null.
+ *
+ * @param copyId - the copy
+ */
+export function factsOf(copyId: number): CatalogFacts | null {
+	return scoreFacts.value?.copies[String(copyId)] ?? null
+}
+
 export const filterContext = computed<FilterContext>(() => ({
 	worksWithValidVersion: worksWithValidVersion(entries.value),
+	fits: fitsByCopy.value,
 }))
 
 // ---- filters and sorting --------------------------------------------------

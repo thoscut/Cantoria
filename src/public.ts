@@ -10,6 +10,7 @@
  * someone signed out (S N6); the pieces of an account whose session only
  * ended stay.
  */
+import './design/tokens.css'
 import { createApp } from 'vue'
 import { claimDevice } from './offline/device.ts'
 import PublicApp from './sharing/PublicApp.vue'

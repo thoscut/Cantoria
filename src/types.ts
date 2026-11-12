@@ -7,6 +7,8 @@
  * Types of the server API (see docs/api.md).
  */
 
+import type { PieceFit } from './scoreFacts.ts'
+
 /** The three levels of the catalog that carry editable fields. */
 export type Level = 'work' | 'version' | 'copy'
 
@@ -1165,6 +1167,8 @@ export interface Filters {
 	maxMinutes: number | null
 	/** hired material to return within 30 days or overdue */
 	hiredReturn: boolean
+	/** fits the ranges of the choir profile: as written comfortably, as written at all, or after the suggested transposition */
+	fits?: 'comfortable' | 'possible' | 'transposed' | null
 }
 
 /** Facts the filters need beyond the entry itself. */
@@ -1173,6 +1177,8 @@ export interface FilterContext {
 	worksWithValidVersion: Set<number>
 	/** today (YYYY-MM-DD), for hired material to return; the browser's day if missing */
 	today?: string
+	/** how each copy fits the choir profile (facts from the scores), by copy id */
+	fits?: Map<number, PieceFit>
 }
 
 // ---- milestone 0.5: maintaining the catalog ----------------------------------

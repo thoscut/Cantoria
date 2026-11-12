@@ -83,6 +83,7 @@ import {
 	isConductor,
 	isLibrarian,
 	isModuleActive,
+	scoreFacts,
 	isViewShown,
 	personalViewDialogOpen,
 	resetFilters,
@@ -232,6 +233,11 @@ const binderSelectOptions = computed<Option<number>[]>(() => binderOptions.value
 /** Finding repertoire: the scorings and languages recorded in the catalog, and lengths */
 const scoringOptions = computed(() => distinctValues(entries.value, 'scoring'))
 const languageOptions = computed(() => distinctValues(entries.value, 'language'))
+const fitSelectOptions = computed<Option<string>[]>(() => [
+	{ id: 'comfortable', label: t('cantoria', 'Comfortable for all voices') },
+	{ id: 'possible', label: t('cantoria', 'Possible for all voices') },
+	{ id: 'transposed', label: t('cantoria', 'Fits, also transposed') },
+])
 const durationSelectOptions = computed<Option<number>[]>(() => [2, 3, 4, 5, 7, 10, 15].map((minutes) => ({
 	id: minutes,
 	label: n('cantoria', 'At most %n minute', 'At most %n minutes', minutes),
@@ -383,6 +389,12 @@ function onFooterClick(event: Event, open: 'archive' | 'view'): void {
 						:input-label="t('cantoria', 'Language')"
 						:placeholder="t('cantoria', 'Any language')"
 						:options="languageOptions" />
+					<NcSelect v-if="scoreFacts !== null"
+						v-model="filters.fits"
+						:input-label="t('cantoria', 'Our ranges')"
+						:placeholder="t('cantoria', 'Any range')"
+						:options="fitSelectOptions"
+						:reduce="reduceId" />
 					<NcSelect v-model="filters.maxMinutes"
 						:input-label="t('cantoria', 'Duration')"
 						:placeholder="t('cantoria', 'Any duration')"
