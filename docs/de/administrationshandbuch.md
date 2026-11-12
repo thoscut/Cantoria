@@ -39,6 +39,15 @@ Cantoria**. Die Liste **Einrichtung** oben auf der Seite zeigt diese sechs
 Schritte, jeden als *Erledigt*, *Noch zu tun* oder *Bitte prüfen*, mit einem
 Link an die Stelle, wo er erledigt wird.
 
+Auf einer neuen Instanz (kein Archivordner, keine Funktionen gewählt, keine
+Exemplare) öffnet die Seite von selbst die **geführte Einrichtung**: einen
+Dialog, der dieselben Schritte Seite für Seite durchgeht, mit denselben
+Formularen wie die Seite. Jedes Formular behält seinen eigenen Knopf
+**Speichern**; **Weiter** speichert nichts. **Später** schließt den Dialog,
+und der Browser merkt es sich. **Schritt für Schritt einrichten** oben auf
+der Seite öffnet ihn jederzeit wieder, beim ersten Schritt, der noch nicht
+erledigt ist; für die Administration verweist auch die leere App darauf.
+
 1. **Archivordner** – wähle den Ordner mit den Notendateien
    ([Abschnitt 3](#3-archivordner)). Gleich nach der Wahl, vor dem Speichern,
    zeigt die Seite, welche Konten der Rollengruppen ihn nicht öffnen können.

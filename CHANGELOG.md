@@ -10,6 +10,16 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Guided setup.** On a new instance the settings page opens a dialog that
+  leads through the first configuration one page at a time: a welcome with
+  what is needed, archive folder, functions for the choir, roles and groups,
+  the access check, a page about import and file sync, and a summary with
+  the state of each step. It uses the same forms as the page and starts on
+  the first step that is not done. **Set up step by step** opens it again;
+  the empty app links to it for administrators.
+
 ## [0.17.0] - 2026-11-04
 
 The first version for the Nextcloud app store.

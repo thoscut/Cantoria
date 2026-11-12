@@ -34,6 +34,14 @@ Cantoria**. The list **Setting up** at the top of the page shows these six
 steps, each as *done*, *missing* or *problem*, with a link to the place where
 it is done.
 
+On a new instance (no archive folder, no functions chosen, no copies) the
+page opens the **guided setup** by itself: a dialog that goes through the
+same steps one page at a time, with the same forms as the page. Each form
+keeps its own **Save** button; **Continue** saves nothing. **Later** closes
+the dialog, and the browser remembers it. **Set up step by step** at the top
+of the page opens it again at any time, on the first step that is not done;
+for administrators the empty app links to it, too.
+
 1. **Archive folder** – choose the folder with the score files
    ([section 3](#3-archive-folder)). Right after choosing, before you save,
    the page shows which accounts of the role groups cannot open it.

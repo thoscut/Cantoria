@@ -385,3 +385,96 @@ export function roleChanges(saved: Record<string, string[]>, draft: Record<strin
 export function catalogRoleEmpty(draft: Record<string, string[]>): boolean {
 	return (draft[CATALOG_ROLE] ?? []).length === 0
 }
+
+/**
+ * The guided setup (a dialog on the settings page): a welcome, the four
+ * steps that are done on the settings page, one page about the catalog
+ * (import and file sync happen in the app) and a summary.
+ */
+export type WizardStepKey = 'welcome' | 'archive' | 'modules' | 'roles' | 'access' | 'catalog' | 'done'
+
+/** The pages of the guided setup, in this order. */
+export const WIZARD_STEPS: readonly WizardStepKey[] = ['welcome', 'archive', 'modules', 'roles', 'access', 'catalog', 'done']
+
+/** Hash of the settings page that opens the guided setup, e.g. from the app. */
+export const WIZARD_HASH = 'cantoria-setup-wizard'
+
+/** Key in this browser: the guided setup was finished or put off ("done" / "later"). */
+export const WIZARD_STORAGE_KEY = 'setupWizard'
+
+/**
+ * Whether the instance is still untouched: no archive folder, no functions
+ * chosen, no copies. Only then does the guided setup open by itself.
+ *
+ * @param settings - settings of the server
+ */
+export function untouched(settings: Settings): boolean {
+	return settings.archive.id === 0 && settings.modulesChosen !== true && settings.catalog.copies === 0
+}
+
+/**
+ * Whether the guided setup opens by itself when the page loads: when it was
+ * asked for (hash), or on an untouched instance that was not put off in
+ * this browser.
+ *
+ * @param settings - settings of the server
+ * @param remembered - value remembered in this browser, or null
+ * @param requested - the page was opened with the hash of the guided setup
+ */
+export function wizardOpensByItself(settings: Settings, remembered: string | null, requested: boolean): boolean {
+	return requested || (remembered === null && untouched(settings))
+}
+
+/**
+ * The page the guided setup starts on: the welcome on an untouched instance,
+ * otherwise the first step of the settings page that is not done, then the
+ * catalog page while import or file sync are missing, else the summary.
+ *
+ * @param settings - settings of the server
+ * @param steps - the setup steps (setupSteps)
+ */
+export function wizardStartStep(settings: Settings, steps: SetupStep[]): WizardStepKey {
+	if (untouched(settings)) {
+		return 'welcome'
+	}
+	const open = (key: StepKey) => steps.find((step) => step.key === key)?.status !== 'done'
+	for (const key of ['archive', 'modules', 'roles'] as const) {
+		if (open(key)) {
+			return key
+		}
+	}
+	// the access check is only known after it ran: it is not a reason to start there
+	if (steps.find((step) => step.key === 'access')?.status === 'problem') {
+		return 'access'
+	}
+	return open('import') || open('fileSync') ? 'catalog' : 'done'
+}
+
+/**
+ * The setup steps a page of the guided setup shows the state of: its own,
+ * import and file sync on the catalog page, none on welcome and summary.
+ *
+ * @param key - page of the guided setup
+ */
+export function wizardStepKeys(key: WizardStepKey): StepKey[] {
+	switch (key) {
+	case 'archive':
+	case 'modules':
+	case 'roles':
+	case 'access':
+		return [key]
+	case 'catalog':
+		return ['import', 'fileSync']
+	default:
+		return []
+	}
+}
+
+/**
+ * The page of the guided setup where a setup step is done.
+ *
+ * @param key - the setup step
+ */
+export function wizardStepOf(key: StepKey): WizardStepKey {
+	return key === 'import' || key === 'fileSync' ? 'catalog' : key
+}
