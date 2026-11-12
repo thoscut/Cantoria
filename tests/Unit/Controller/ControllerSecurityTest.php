@@ -28,6 +28,7 @@ use OCA\Cantoria\Controller\PublicLinkController;
 use OCA\Cantoria\Controller\PublicRepertoireController;
 use OCA\Cantoria\Controller\ReviewController;
 use OCA\Cantoria\Controller\ScanResponse;
+use OCA\Cantoria\Controller\ScoreFactsController;
 use OCA\Cantoria\Controller\SettingsController;
 use OCA\Cantoria\Controller\SongbookController;
 use OCA\Cantoria\Controller\StateController;
@@ -76,6 +77,7 @@ use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\NotificationService;
 use OCA\Cantoria\Service\PracticeAudioService;
 use OCA\Cantoria\Service\PrintMirrorService;
+use OCA\Cantoria\Service\ProgrammeSheets;
 use OCA\Cantoria\Service\PublicRepertoireService;
 use OCA\Cantoria\Service\ReleaseListService;
 use OCA\Cantoria\Service\RepertoireService;
@@ -85,6 +87,7 @@ use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\RunLock;
 use OCA\Cantoria\Service\ScanService;
+use OCA\Cantoria\Service\ScoreFactsService;
 use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\SharedLinkService;
 use OCA\Cantoria\Service\StateService;
@@ -254,6 +257,8 @@ final class ControllerSecurityTest extends TestCase {
 		'EventController::share', 'TaskController::extendLink',
 		// hands out scans of the archive for a songbook (one request per piece)
 		'SongbookController::scan',
+		// reads up to 200 scores of the archive at once (November 2026)
+		'ScoreFactsController::runNow',
 	];
 
 	/**
@@ -1542,5 +1547,62 @@ final class ControllerSecurityTest extends TestCase {
 		(new ModuleMiddleware($this->modulesWithout(), $this->l10n()))->beforeController($controller, 'list');
 		$this->expectException(ModuleDisabledException::class);
 		(new ModuleMiddleware($this->modulesWithout(['score_viewer']), $this->l10n()))->beforeController($controller, 'list');
+	}
+
+	private function scoreFactsController(string $uid): ScoreFactsController {
+		$facts = $this->createMock(ScoreFactsService::class);
+		$facts->expects($uid === 'librarian' ? self::once() : self::never())->method('run')->willReturn(3);
+		$facts->method('summary')->willReturn(['files' => 5, 'read' => 3]);
+		return new ScoreFactsController($this->createStub(IRequest::class), $uid, $facts, $this->createStub(ProgrammeSheets::class),
+			$this->rolesByName(), $this->l10n(), $this->createStub(LoggerInterface::class));
+	}
+
+	/**
+	 * November 2026: the facts of the scores, the programme booklet and the
+	 * large-print parts are modules of their own; what belongs to a programme
+	 * also needs the concerts. Writing keeps the CSRF check, and only the
+	 * catalog librarian has the scores read at once. The roles of the other
+	 * routes are checked in the services (ScoreFactsServiceTest,
+	 * ProgrammeSheetsTest, LargePrintServiceTest).
+	 */
+	public function testTheFactsBookletAndLargePrintRoutesBelongToTheirModules(): void {
+		$modules = [
+			'ScoreFactsController::index' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::saveProfile' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::runNow' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::pitches' => [Modules::SCORE_FACTS, 'concerts'],
+			'BookletController::show' => [Modules::PROGRAMME_BOOKLET, 'concerts'],
+			'BookletController::record' => [Modules::PROGRAMME_BOOKLET, 'concerts'],
+			'LargePrintController::check' => [Modules::LARGE_PRINT],
+			'LargePrintController::record' => [Modules::LARGE_PRINT],
+		];
+		$routes = self::routes();
+		$found = array_values(array_filter(array_keys($routes),
+			fn (string $name): bool => preg_match('/^(ScoreFacts|Booklet|LargePrint)Controller::/', $name) === 1));
+		sort($found);
+		$expected = array_keys($modules);
+		sort($expected);
+		self::assertSame($expected, $found, 'every route of the three controllers is listed here');
+		foreach ($modules as $name => $required) {
+			[$class, $method] = explode('::', $name);
+			$actual = ModuleMiddleware::required('OCA\\Cantoria\\Controller\\' . $class, $method);
+			sort($actual);
+			sort($required);
+			self::assertSame($required, $actual, $name);
+			self::assertNotContains(PublicPage::class, $routes[$name]['attributes'], $name . ' needs an account');
+			self::assertNotContains(NoCSRFRequired::class, $routes[$name]['attributes'], $name . ' keeps the CSRF check');
+			if (!in_array($method, ['index', 'pitches', 'show', 'check'], true)) {
+				self::assertNotSame('GET', $routes[$name]['verb'], $name . ' writes');
+			}
+		}
+		self::assertSame(['score_viewer'], Modules::MODULES[Modules::LARGE_PRINT]['requires'] ?? null,
+			'a large-print part is set from the score the viewer shows');
+
+		foreach (['operations', 'conductor', 'reader', 'contributor', 'member', 'admin', 'nobody'] as $uid) {
+			self::assertSame(Http::STATUS_FORBIDDEN, $this->scoreFactsController($uid)->runNow()->getStatus(), $uid . ' does not start reading the scores');
+		}
+		$response = $this->scoreFactsController('librarian')->runNow();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['read' => 3, 'summary' => ['files' => 5, 'read' => 3]], $response->getData());
 	}
 }

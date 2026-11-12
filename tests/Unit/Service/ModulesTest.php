@@ -202,7 +202,7 @@ final class ModulesTest extends TestCase {
 		self::assertSame(['practice_audio'], $changes['enabled']);
 		self::assertSame(['score_viewer', 'playback'], $changes['alsoEnabled']);
 		self::assertSame([], $changes['disabled']);
-		self::assertSame(['excerpt_links', 'transcription_review', 'corrections', Modules::VERSION_STATES, Modules::SCORE_FACTS, Modules::CONCERT_FOLDER, 'notify_review_points',
+		self::assertSame(['excerpt_links', 'transcription_review', 'corrections', Modules::VERSION_STATES, Modules::SCORE_FACTS, Modules::LARGE_PRINT, Modules::CONCERT_FOLDER, 'notify_review_points',
 			'notify_correction_received', Modules::MEMBER_LINKS, Modules::MEMBER_PRACTICE_AUDIO, Modules::PUBLIC_LINKS], $changes['activated'],
 			'their switches were on');
 		self::assertTrue($modules->isEnabled('practice_audio'));

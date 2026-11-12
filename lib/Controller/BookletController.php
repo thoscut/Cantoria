@@ -72,9 +72,15 @@ class BookletController extends Controller {
 	#[FrontpageRoute(verb: 'POST', url: '/api/events/{id}/booklet/record', requirements: ['id' => '\d+'])]
 	public function record(int $id, array $withLyrics = []): JSONResponse {
 		return $this->run(function (string $uid) use ($id, $withLyrics): array {
-			// Checks the role and that the event exists.
-			$this->sheets->booklet($id, $uid);
-			$items = array_values(array_filter(array_map(fn (mixed $v): ?int => is_int($v) ? $v : null, $withLyrics)));
+			// Checks the role and that the event exists; only pieces whose
+			// lyrics the rights allow are recorded as printed.
+			$allowed = [];
+			foreach ($this->sheets->booklet($id, $uid)['pieces'] as $piece) {
+				if ($piece['lyrics'] !== null || $piece['translation'] !== null) {
+					$allowed[] = $piece['itemId'];
+				}
+			}
+			$items = array_values(array_intersect($allowed, $withLyrics));
 			$this->audit->record($this->audit->newOperation(), $uid, 'event', $id, 'booklet_made', 'lyrics', null,
 				$items === [] ? '' : implode(',', $items));
 			return ['recorded' => true];

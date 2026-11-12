@@ -211,7 +211,7 @@ class ScoreFacts {
 		}
 		$list = '/^(.*?)[\s,]*(' . self::NUMERAL . '(?:(?:[\s.\/,&+-]|und|u\.)+' . self::NUMERAL . ')+)\.?$/u';
 		if (preg_match($list, $name, $m) === 1 && trim($m[1]) !== '') {
-			$base = rtrim($m[1], " ,.");
+			$base = rtrim($m[1], ' ,.');
 			preg_match_all('/' . self::NUMERAL . '/u', $m[2], $numerals);
 			return array_map(fn (string $numeral): string => $base . ' ' . $numeral, $numerals[0]);
 		}

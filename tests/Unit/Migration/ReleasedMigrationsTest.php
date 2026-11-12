@@ -31,6 +31,7 @@ class ReleasedMigrationsTest extends TestCase {
 		'Version001700Date20261030000000.php' => 'd08479cff65cc171a58dce790bee0f2e0681554224103da7d2a290698c58c429',
 		'Version001700Date20261103140000.php' => 'e3fcf49739ec5189ad91ef4d7fe6028c21ca97f8ba5068d5862799c59213c4c9',
 		'Version001700Date20261110120000.php' => '0df2374ff234f02719a8b2d701bc5cd07379163d07121f3403911e04b2c95e28',
+		'Version001800Date20261112120000.php' => '5b06419e68f70b4ded6a2713482982bd510d40198fb6141c02699ad677b4bec3',
 	];
 
 	public function testReleasedMigrationsAreUnchanged(): void {
