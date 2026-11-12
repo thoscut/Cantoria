@@ -87,6 +87,7 @@ class Modules {
 	public const SCORE_FACTS = 'score_facts';
 	/** Programme booklet of a concert as PDF (November 2026) */
 	public const PROGRAMME_BOOKLET = 'programme_booklet';
+	public const LARGE_PRINT = 'large_print';
 
 	/** Switches of the notifications: this prefix plus the subject (NotificationService) */
 	public const NOTIFY_PREFIX = 'notify_';
@@ -233,7 +234,10 @@ class Modules {
 			'description' => 'The action "Open in Cantoria" for files of the archive folder in the Files app: a click on MusicXML opens the score view, other files of a copy open the copy. Rights are checked as in the app.'],
 		self::SCORE_FACTS => ['group' => 'scores', 'requires' => ['score_viewer'], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Facts from the scores',
-			'description' => 'Reads from each MusicXML file the range of every voice, the first and last tones, the keys and the first bars, in the background with the account of the archive folder. With it: a choir profile of the voice groups, the filter "Fits our ranges" with a suggested transposition, the first bars of each piece in lists and the pitch sheet of a programme. Only reads.'],
+			'description' => 'Reads from each MusicXML file the range of every voice, the first and last tones, the keys and the first bars, in the background with the account of the archive folder. With it: a choir profile of the voice groups, the filter "Our ranges" with a suggested transposition, the first bars of each piece in lists and the pitch sheet of a programme. Only reads.'],
+		self::LARGE_PRINT => ['group' => 'scores', 'requires' => ['score_viewer'], 'simple' => false, 'standard' => true, 'planned' => false,
+			'label' => 'Large-print parts',
+			'description' => 'One voice of a MusicXML score set large for singers with a visual impairment: big notes, few measures per line, strong lines, the lyrics below. Made by the catalog librarian or the conductor in the score view and printed from the browser. Needs confirmed public domain, a license, or the confirmation of the catalog librarian that the part is an accessible copy (§ 45b UrhG); every part is recorded.'],
 		'tasks' => ['group' => 'collaboration', 'requires' => [], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Questions and tasks',
 			'description' => 'Questions and checks with a location in the score (page, measures, voice), addressed to a role.'],

@@ -47,6 +47,7 @@ import {
 	mdiClipboardTextOutline,
 	mdiContentCopy,
 	mdiFileMusicOutline,
+	mdiFormatSize,
 	mdiLinkVariantPlus,
 	mdiOpenInNew,
 	mdiPencilOutline,
@@ -112,6 +113,7 @@ import { useLeaveGuard } from '../sharing/leaveGuard.ts'
 
 /** Practice audio files: own chunk, loaded when the dialog is opened */
 const PracticeAudioDialog = defineAsyncComponent(() => import('./PracticeAudioDialog.vue'))
+const LargePrintDialog = defineAsyncComponent(() => import('./LargePrintDialog.vue'))
 /** Small corrections: own chunk, loaded when the dialog is opened */
 const CorrectionDialog = defineAsyncComponent(() => import('./CorrectionDialog.vue'))
 
@@ -1174,6 +1176,26 @@ function closePractice(): void {
 	focusAfterDialog(practiceButton)
 }
 
+// ---- large-print part (November 2026) ----------------------------------------
+
+const largePrintOpen = ref(false)
+const largePrintButton = ref(null)
+/** The catalog librarian and the conductor make parts; the server checks the rights */
+const canLargePrint = computed(() => isModuleActive('large_print') && hasAnyRole(['librarian', 'conductor'])
+	&& scoreText.value !== '' && props.detail.version.preservation_copy !== true)
+
+function openLargePrint(): void {
+	if (player?.isPlaying) {
+		togglePlay()
+	}
+	largePrintOpen.value = true
+}
+
+function closeLargePrint(): void {
+	largePrintOpen.value = false
+	focusAfterDialog(largePrintButton)
+}
+
 // ---- following the playback -------------------------------------------------
 
 let active: { id: string, end: number }[] = []
@@ -1673,7 +1695,17 @@ onBeforeUnmount(() => {
 							{{ t('cantoria', 'Practice files …') }}
 						</NcButton>
 					</div>
-					<p v-else-if="canPlay && exportReason" class="score-viewer__hint">
+					<div v-if="canLargePrint" class="score-viewer__buttons">
+						<NcButton ref="largePrintButton"
+							aria-haspopup="dialog"
+							@click="openLargePrint">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiFormatSize" />
+							</template>
+							{{ t('cantoria', 'Large-print part …') }}
+						</NcButton>
+					</div>
+					<p v-if="canPlay && !canExportAudio && exportReason" class="score-viewer__hint">
 						{{ exportReason }}
 					</p>
 				</div>
@@ -1868,6 +1900,15 @@ onBeforeUnmount(() => {
 					:version-line="versionLineText"
 					:transpose="transpose"
 					@close="closePractice" />
+				<LargePrintDialog v-if="largePrintOpen && model"
+					:copy-id="detail.copy.id"
+					:score-text="scoreText"
+					:model="model"
+					:focus-key="focusKey"
+					:voice-name="labelOf"
+					:title="[shelfmark, String(detail.work.title ?? '')].filter((part) => part !== '').join(' ')"
+					:version-line="versionLineText"
+					@close="closeLargePrint" />
 				<CorrectionDialog v-if="correction && model"
 					:detail="detail"
 					:model="model"

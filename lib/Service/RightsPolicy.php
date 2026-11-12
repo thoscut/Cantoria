@@ -356,6 +356,48 @@ class RightsPolicy {
 	/** The use a license must grant for printing lyrics in a programme booklet */
 	public const BOOKLET_USE = 'publication';
 
+	/** Who makes a large-print part: the catalog librarian and the conductor */
+	public const LARGE_PRINT_MAKERS = [Roles::LIBRARIAN, Roles::CONDUCTOR];
+	/** License uses that cover a printed copy of one voice for a singer (Fields::LICENSE_USES) */
+	public const LARGE_PRINT_USES = ['accessible_format', 'binder', 'self_print', 'print_station', 'member_download'];
+
+	/**
+	 * Whether a large-print part (one voice of the MusicXML, set large for a
+	 * singer with a visual impairment) may be printed: it is a copy on
+	 * paper. Never an internal preservation copy; otherwise confirmed public
+	 * domain, or a license today for an accessible format or for printed
+	 * copies for singers. Without either, German law knows a limitation for
+	 * people with a visual impairment (§ 45b UrhG); whether it applies is
+	 * decided by the catalog librarian, who then confirms it ($accessible),
+	 * and the confirmation is recorded with the part (LargePrintService).
+	 *
+	 * @param string $day today (YYYY-MM-DD), for the validity of licenses
+	 * @param bool $accessible the catalog librarian confirmed that the part is made for a person with a visual impairment
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function largePrintDenial(WorkVersion $version, string $day, ?Copy $copy = null, bool $accessible = false): ?string {
+		if (self::isPreservationCopy($version, $copy)) {
+			return 'Internal preservation copy: no part is printed from it.';
+		}
+		if ($this->largePrintBasis($version, $day) !== null || $accessible) {
+			return null;
+		}
+		return 'A large-print part is a printed copy: unless public domain is confirmed, it needs a license for an accessible format or for printed copies for singers. Without one, the catalog librarian can confirm that the part is made for a person with a visual impairment (§ 45b UrhG).';
+	}
+
+	/**
+	 * What allows a large-print part without a confirmation: "free"
+	 * (confirmed public domain), "license", or null.
+	 *
+	 * @param string $day today (YYYY-MM-DD)
+	 */
+	public function largePrintBasis(WorkVersion $version, string $day): ?string {
+		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+			return 'free';
+		}
+		return $this->coversOne($this->licensesOf($version), self::LARGE_PRINT_USES, $day) ? 'license' : null;
+	}
+
 	/**
 	 * Whether the lyrics of a version may be printed in a programme booklet
 	 * (November 2026). A booklet is handed out to the audience: that is a

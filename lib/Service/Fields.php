@@ -101,6 +101,7 @@ final class Fields {
 		'digital_scores' => 'Passing on digital score files (MusicXML) to choir members (hand-over folder, pieces kept on devices)',
 		'recording_sharing' => 'Passing on recordings to choir members (performers and producer agree; hand-over folder)',
 		'digitisation' => 'Digitisation (scans, MusicXML transcriptions)',
+		'accessible_format' => 'Accessible format for people with a visual impairment (large-print parts)',
 		'successor' => 'Transfer to a legal successor',
 	];
 
