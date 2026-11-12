@@ -27,6 +27,8 @@ const props = defineProps<{
 	incipit: Incipit | null
 	/** larger, e.g. in the sidebar or the annual report */
 	large?: boolean
+	/** draw at once, not only when scrolled into view (print views) */
+	eager?: boolean
 }>()
 
 const root = ref<HTMLElement | null>(null)
@@ -47,7 +49,7 @@ async function draw() {
 }
 
 onMounted(() => {
-	if (typeof IntersectionObserver === 'undefined') {
+	if (props.eager || typeof IntersectionObserver === 'undefined') {
 		visible = true
 		draw()
 		return
