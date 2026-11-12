@@ -12,7 +12,7 @@
  */
 import type { AnnualReport, ReportLicense } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiDownload, mdiPrinterOutline } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiBookOpenPageVariantOutline, mdiDownload, mdiPrinterOutline } from '@mdi/js'
 import { computed, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
@@ -26,6 +26,7 @@ import { formatDate } from '../format.ts'
 import { n, t } from '../l10n.ts'
 import { licenseUseLabel } from '../labels.ts'
 import { defaultReportYear, formatNumber, yearsBetween } from '../statistics.ts'
+import { readStored } from '../storage.ts'
 
 const props = defineProps<{
 	/** today ("YYYY-MM-DD", from the server) */
@@ -154,6 +155,88 @@ const licenseTables = computed(() => {
 	]
 })
 
+// ---- the report as a booklet (design proposal V7, November 2026) ----
+
+const makingBooklet = ref(false)
+
+/**
+ * The annual report as a designed PDF: cover, the year in large figures,
+ * the concerts as a timeline, rights, stock and the lists.
+ */
+async function makeBooklet(): Promise<void> {
+	const r = report.value
+	if (r === null || makingBooklet.value) {
+		return
+	}
+	makingBooklet.value = true
+	error.value = ''
+	try {
+		const { buildReport } = await import('../report/build.ts')
+		const title = t('cantoria', 'Annual report {year}', { year: r.year })
+		const built = await buildReport({
+			title,
+			// the line above the title of the programme booklet, e.g. the name of the choir
+			overline: readStored('booklet.overline') ?? '',
+			subtitle: t('cantoria', 'As of {date}', { date: formatDate(r.today) }),
+			figuresHeading: t('cantoria', 'The year in figures'),
+			figures: [
+				{ label: t('cantoria', 'Concerts sung'), value: r.totals.concerts },
+				{ label: t('cantoria', 'Pieces sung'), value: r.totals.pieces },
+				{ label: t('cantoria', 'Different works'), value: r.totals.works },
+				{ label: t('cantoria', 'New copies'), value: r.additions.total },
+				{ label: t('cantoria', 'Active copies'), value: r.stock.active },
+				{ label: t('cantoria', 'Licenses valid on {date}', { date: formatDate(r.licenses.validOn) }), value: r.licenses.valid },
+			].map((figure) => ({ label: figure.label, value: formatNumber(figure.value) })),
+			concertsHeading: t('cantoria', 'Concerts'),
+			concerts: r.concerts.map((concert) => ({
+				date: concertDate(concert.date),
+				title: concert.title || t('cantoria', 'Untitled'),
+				detail: [concert.location, n('cantoria', '%n piece', '%n pieces', concert.pieces), concert.status === 'sung' ? '' : t('cantoria', 'Planned')]
+					.filter((part) => part).join(' · '),
+				sung: concert.status === 'sung',
+			})),
+			noConcerts: t('cantoria', 'No concerts in this year.'),
+			tables: [
+				{ heading: t('cantoria', 'Open rights questions'), note: t('cantoria', 'As of today: the archive keeps no earlier states of these figures.'), rows: openRights.value },
+				{ heading: t('cantoria', 'Stock'), note: '', rows: stock.value },
+			].map((entry) => ({ ...entry, rows: entry.rows.map((row) => ({ label: row.label, value: formatNumber(row.value) })) })),
+			lists: [
+				{
+					heading: t('cantoria', 'New accessions'),
+					items: r.accessions.map((accession) => ({
+						title: [accession.shelfmark, accession.title].filter((part) => part).join(' '),
+						detail: [accession.composer, formatDate(accession.date)].filter((part) => part).join(' · '),
+					})),
+					more: '',
+				},
+				...licenseTables.value.map((entry) => ({
+					heading: entry.caption,
+					items: entry.rows.map((license) => ({
+						title: [license.title, license.composer].filter((part) => part).join(' · ') || '–',
+						detail: [license.holder, usesText(license), license.validUntil ? t('cantoria', 'until {date}', { date: formatDate(license.validUntil) }) : '']
+							.filter((part) => part).join(' · '),
+					})),
+					more: '',
+				})),
+			],
+		})
+		const url = URL.createObjectURL(new Blob([built.bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' }))
+		const link = document.createElement('a')
+		link.href = url
+		link.download = `${title}.pdf`
+		link.rel = 'noopener'
+		document.body.appendChild(link)
+		link.click()
+		link.remove()
+		setTimeout(() => URL.revokeObjectURL(url), 60000)
+		announcement.value = n('cantoria', 'The booklet has %n page. The download has started.', 'The booklet has %n pages. The download has started.', built.pages)
+	} catch (caught) {
+		error.value = errorMessage(caught)
+	} finally {
+		makingBooklet.value = false
+	}
+}
+
 /**
  * Uses of a license as text.
  *
@@ -195,6 +278,13 @@ function concertDate(date: string | null): string {
 					<NcIconSvgWrapper :path="mdiPrinterOutline" />
 				</template>
 				{{ t('cantoria', 'Print annual report') }}
+			</NcButton>
+			<NcButton :disabled="report === null || loading || makingBooklet" @click="makeBooklet">
+				<template #icon>
+					<NcLoadingIcon v-if="makingBooklet" :size="20" />
+					<NcIconSvgWrapper v-else :path="mdiBookOpenPageVariantOutline" />
+				</template>
+				{{ t('cantoria', 'Annual report as a booklet (PDF)') }}
 			</NcButton>
 			<NcButton :href="annualReportCsvUrl(year)" download>
 				<template #icon>
