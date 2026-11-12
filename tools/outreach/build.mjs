@@ -22,7 +22,7 @@ import { parseArgs } from 'node:util'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const EXAMPLE_SENDER = join(HERE, 'example', 'sender.json')
-const ISSUES = 'https://github.com/thoscut/choircoresmanager/issues'
+const ISSUES = 'https://github.com/thoscut/Cantoria/issues'
 
 /** The products: kind and final size, in mm for print and in px for screen. */
 const PRODUCTS = {

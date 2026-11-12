@@ -22,7 +22,7 @@ Markenrecherche durch Fachleute**.
 
 ## Warum ein neuer Name
 
-- Das Repository heißt noch `choircoresmanager`. Der Name stammt vom Fork
+- Das Repository hieß `choircoresmanager` (heute `Cantoria`). Der Name stammte vom Fork
   `orchestrascoresmanager` und liest sich leicht als „choir cores“ statt
   „choir scores“.
 - Die App heißt im README, in `appinfo/info.xml` und in den Befehlen

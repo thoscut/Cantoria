@@ -93,7 +93,7 @@ Apps → search "Cantoria" → **Download and enable**.
 ### From a release archive
 
 1. Download `cantoria-<version>.tar.gz` from the
-   [releases of the repository](https://github.com/thoscut/choircoresmanager/releases).
+   [releases of the repository](https://github.com/thoscut/Cantoria/releases).
 2. Unpack it into the `apps` folder of your Nextcloud, so that the app lies
    in `apps/cantoria`.
 3. Enable it under Apps, or run `occ app:enable cantoria`.
@@ -105,7 +105,7 @@ Node.js 24 and npm 11:
 
 ```sh
 cd /path/to/nextcloud/apps
-git clone https://github.com/thoscut/choircoresmanager.git cantoria
+git clone https://github.com/thoscut/Cantoria.git cantoria
 cd cantoria
 npm ci
 npm run build

@@ -51,34 +51,34 @@ No external requests and no telemetry: notation, fonts and sounds are part of th
 - **Zugriff über Gruppen:** Rollen werden Nextcloud-Gruppen zugeordnet, z. B. schreibt die Archivverwaltung und der Vorstand liest. Andere Konten sehen das Archiv nicht; die Administration ohne Rolle darf lesen und die Einstellungen ändern.
 
 Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind in der App enthalten. Barrierefrei (Ziel WCAG 2.2 AA) mit inklusiver Sprache. Auf Deutsch (du und Sie) und Englisch; Französisch, Spanisch, Italienisch, Niederländisch und Polnisch sind maschinell übersetzt und warten noch auf eine Durchsicht durch Muttersprachler. Läuft auch bei gehosteten Nextclouds ohne Shell-Zugang; ein vorhandenes Verzeichnis lässt sich aus CSV, Excel (.xlsx) oder OpenDocument (.ods) übernehmen. Benötigt MySQL, MariaDB oder PostgreSQL (auch in Nextcloud All-in-One). Die Rechte-Hilfen bilden deutsches Urheberrecht ab; sie unterstützen eine Entscheidung und sind keine Rechtsberatung.]]></description>
-	<version>0.17.0-dev.2</version>
+	<version>0.17.0</version>
 	<licence>AGPL-3.0-or-later</licence>
 	<author homepage="https://github.com/thoscut">Thomas Scheel</author>
 	<namespace>Cantoria</namespace>
 	<documentation>
-		<user>https://github.com/thoscut/choircoresmanager/blob/main/docs/user-guide.md</user>
-		<admin>https://github.com/thoscut/choircoresmanager/blob/main/docs/admin-guide.md</admin>
-		<developer>https://github.com/thoscut/choircoresmanager/blob/main/docs/api.md</developer>
+		<user>https://github.com/thoscut/Cantoria/blob/main/docs/user-guide.md</user>
+		<admin>https://github.com/thoscut/Cantoria/blob/main/docs/admin-guide.md</admin>
+		<developer>https://github.com/thoscut/Cantoria/blob/main/docs/api.md</developer>
 	</documentation>
 	<category>organization</category>
 	<category>office</category>
-	<website>https://github.com/thoscut/choircoresmanager</website>
-	<bugs>https://github.com/thoscut/choircoresmanager/issues</bugs>
-	<repository type="git">https://github.com/thoscut/choircoresmanager.git</repository>
-	<!-- The App Store shows these pictures as they are at the address. Before a
-	     release, point them at the tag of the version instead of main
-	     (…/choircoresmanager/v<version>/docs/screenshots/…), so that the store
-	     never shows an unreleased state; there is no tag yet. -->
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/catalog.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/copy-rights.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/score-voice-focus.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/practice-audio.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/start-page-due.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/concert-planning.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/statistics.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/shared-with-me.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/score-dark.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/thoscut/choircoresmanager/main/docs/screenshots/de/catalog.png</screenshot>
+	<website>https://github.com/thoscut/Cantoria</website>
+	<bugs>https://github.com/thoscut/Cantoria/issues</bugs>
+	<repository type="git">https://github.com/thoscut/Cantoria.git</repository>
+	<!-- The App Store shows these pictures as they are at the address, so
+	     they point at the tag of the version, never at main: the store never
+	     shows an unreleased state. Raise the tag in the addresses with every
+	     release (docs/release.md). -->
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/catalog.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/copy-rights.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/score-voice-focus.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/practice-audio.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/start-page-due.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/concert-planning.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/statistics.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/shared-with-me.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/score-dark.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/thoscut/Cantoria/v0.17.0/docs/screenshots/de/catalog.png</screenshot>
 	<dependencies>
 		<php min-version="8.2"/>
 		<!-- Tested in the CI with MariaDB and PostgreSQL (Nextcloud All-in-One

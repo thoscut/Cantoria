@@ -96,7 +96,7 @@ target above; this statement can serve as a basis for the part they cover.
 
 If something in the app is hard or impossible to use for you, please tell
 us in an issue of the repository
-([github.com/thoscut/choircoresmanager/issues](https://github.com/thoscut/choircoresmanager/issues)),
+([github.com/thoscut/Cantoria/issues](https://github.com/thoscut/Cantoria/issues)),
 or ask the administration of your Nextcloud to pass it on. Describe the
 page, what you wanted to do and which assistive technology you use. Do not
 include personal data of others.

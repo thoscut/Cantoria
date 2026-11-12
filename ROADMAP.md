@@ -144,7 +144,7 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | im Review bis auf den Probelauf der Release-Kette nach dem Merge und, beim Maintainer, Markenprüfung, Signaturzertifikat, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation und die Angaben des Repositorys auf GitHub | PR #14, #15, #16 |
+| 0.17 Bereit zur ersten Veröffentlichung | Version 0.17.0 vorbereitet; offen beim Maintainer: Markenprüfung, Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys (heute `thoscut/Cantoria`) | PR #14, #15, #16, Version 0.17.0 |
 | 0.18 Rechte auf allen neuen Wegen | im Review bis auf drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) | PR #14, #16 |
 | 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
 | 0.20 Einführen und umsteigen | im Review bis auf Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |

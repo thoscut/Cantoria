@@ -7,12 +7,13 @@ only accepts signed releases from a public repository.
 
 1. **Public repository** with the app's code (the app store certificate
    request links to it):
-   [github.com/thoscut/choircoresmanager](https://github.com/thoscut/choircoresmanager).
+   [github.com/thoscut/Cantoria](https://github.com/thoscut/Cantoria).
    `appinfo/info.xml` names it in `<website>`, `<bugs>` (issue tracker,
    required; the packaging script refuses to build without it),
    `<repository>` and `<documentation>`. The `<screenshot>` entries point to
-   `docs/screenshots/` on the `main` branch, so they only show once that
-   branch holds this app.
+   `docs/screenshots/` at the tag of the version
+   (`…/Cantoria/v<version>/docs/screenshots/…`), so they show once the tag
+   is pushed and the store never shows an unreleased state.
 
    The repository started as a fork of the Orchestra Scores Manager (another
    app) with its own open pull requests. The first push of this app replaces
@@ -128,7 +129,9 @@ the checksum of a listed file.
    route always needs a new version, otherwise Nextcloud does not run the
    migration or reload the routes), and the same version in `package.json`
    and `package-lock.json`; `tools/release/package.sh` stops when the three
-   differ. Check the supported Nextcloud range in `<dependencies>`.
+   differ. Point the `<screenshot>` addresses at the new tag
+   (`…/v<version>/docs/screenshots/…`). Check the supported Nextcloud range
+   in `<dependencies>`.
 2. Check that every migration of the version is listed with its checksum in
    `RELEASED` of `tests/Unit/Migration/ReleasedMigrationsTest.php`
    (`sha256sum lib/Migration/<file>`). This normally happened when the

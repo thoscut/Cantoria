@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for your idea. Please check the [roadmap](https://github.com/thoscut/choircoresmanager/blob/main/ROADMAP.md)
+        Thank you for your idea. Please check the [roadmap](https://github.com/thoscut/Cantoria/blob/main/ROADMAP.md)
         (German) first: it lists what is planned and what the app deliberately does not do, for example
         the functions of a choir's practice system.
   - type: textarea
