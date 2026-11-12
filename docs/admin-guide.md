@@ -920,6 +920,8 @@ writes files into a folder others can open (see section 16).
 | Excerpt links | Score view | on | No new links, and existing links do not open (they are kept and expire as before). |
 | Reviewing transcriptions | Score view | on | The file sync still recognises transcription reports, but does not read them; no review points, no correction orders, no review in the score view, no filter "open review points". Reports, points and decisions are kept. |
 | Small corrections | Score view | on | No corrections in the score view; files corrected before stay as they are. |
+| Facts from the scores | Score view | on | The hourly job reads no scores; no section "Music" with ranges and first bars, no choir profile, no filter "Our ranges", no programme band and no pitch sheet. Facts read before stay in the database and are shown again when the module is switched on. |
+| Large-print parts | Score view | on | No large-print parts; the server refuses the check and the record. Parts printed before are on paper; the audit log keeps them. |
 | Revisions of a version | Score view | on | No new revisions from corrections or the file sync, no list, no comparison, no current revision to set; concerts confirmed as sung keep no revision and outputs print no version line. Revisions recorded before and the revisions of past concerts are kept. |
 | Opening from the Files app | – | on | The Files app has no action "Open in Cantoria"; a click on MusicXML in the archive folder does what it did before. Without the score view, MusicXML opens its copy instead. |
 | Questions and tasks | – | on | No questions and tasks, no task cards and notifications. Existing tasks are kept. |
@@ -930,6 +932,7 @@ writes files into a folder others can open (see section 16).
 | Concerts in the calendar | Concerts and song lists | on | No calendar files and entries. Entries in calendars stay there. |
 | Concert folder | Concerts and song lists, Score view | off (in no preset) | No page "Concert folder" and no entry in the navigation; its routes answer 404. What conductors kept on their devices is removed at their next visit with a network. |
 | Songbooks | – | on | No songbooks from a programme, a song list or the catalog. Songbooks made before are printed already; the audit log keeps them. |
+| Programme booklet | Concerts and song lists | on | No programme booklets. The lyrics in a booklet come from the module "Facts from the scores"; without it a booklet has the cover and the programme. |
 | New accessions and shelf labels | – | on | No accession assistant and no labels. The import still creates copies. |
 | Merging works | – | on | No merge proposals, no merging and no undo. Merges done stay. |
 | Inventory | – | on | No inventory lists and no list of gaps in the shelf marks. Recorded counts stay in the catalog. |

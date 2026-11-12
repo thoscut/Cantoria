@@ -39,6 +39,12 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
 5. Unter **Mehr zum Üben** findest du Anfangstöne, Metronom, Text, deine
    eigene Tonhöhe und **Selbst aufnehmen** (nimm Kopfhörer).
 
+Die Leiste über den Noten zeigt den Takt, der gerade läuft, und mit
+**Langsamer** und **Schneller** änderst du das Tempo. Hat ein Stück bis zu
+acht Stimmen, hat jede eine Schaltfläche in ihrer Farbe: Ein Tipp schaltet
+die Stimme stumm oder wieder ein. Mit **Gesungene Stimme (Vokale des
+Liedtexts)** klingen die Stimmen wie Gesang statt wie eine Orgel.
+
 ## Ohne Netz üben
 
 Wo es eingeschaltet ist, schaltest du bei einem Stück **Ohne Netz

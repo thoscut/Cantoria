@@ -66,7 +66,7 @@ const unsungText = computed(() => fit.value.unsung.map(groupLabel).join(', '))
 				<dd>{{ keyText }}</dd>
 			</template>
 			<template v-if="facts.measures > 0">
-				<dt>{{ t('cantoria', 'Length') }}</dt>
+				<dt>{{ t('cantoria', 'Length of the piece') }}</dt>
 				<dd>{{ n('cantoria', '%n measure', '%n measures', facts.measures) }}</dd>
 			</template>
 		</dl>

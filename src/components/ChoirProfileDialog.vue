@@ -21,8 +21,8 @@ import ActionDialog from './ActionDialog.vue'
 import AmbitusChart from './AmbitusChart.vue'
 import VoiceMark from './VoiceMark.vue'
 import { errorMessage } from '../api.ts'
-import { GROUPS, groupLabel, saveProfile, toneName } from '../scoreFacts.ts'
-import { loadScoreFacts, scoreFacts } from '../store.ts'
+import { GROUPS, groupLabel, runFacts, saveProfile, toneName } from '../scoreFacts.ts'
+import { isLibrarian, loadScoreFacts, scoreFacts } from '../store.ts'
 import { showSuccess } from '@nextcloud/dialogs'
 
 const emit = defineEmits<{
@@ -49,6 +49,7 @@ const keyLabels = {
 	comfortHigh: t('cantoria', 'Comfortable to'),
 	limitHigh: t('cantoria', 'Possible to'),
 }
+const summary = computed(() => scoreFacts.value?.summary ?? null)
 const busy = ref(false)
 const error = ref('')
 
@@ -98,6 +99,23 @@ async function submit(): Promise<void> {
 		await loadScoreFacts()
 		showSuccess(t('cantoria', 'Choir profile saved.'))
 		emit('close')
+	} catch (e) {
+		error.value = errorMessage(e)
+	} finally {
+		busy.value = false
+	}
+}
+
+/**
+ * Reads the next scores at once (catalog librarian) instead of waiting for
+ * the background job.
+ */
+async function readNow(): Promise<void> {
+	busy.value = true
+	error.value = ''
+	try {
+		await runFacts()
+		await loadScoreFacts()
 	} catch (e) {
 		error.value = errorMessage(e)
 	} finally {
@@ -189,12 +207,29 @@ async function reset(): Promise<void> {
 			@click="reset">
 			{{ t('cantoria', 'Back to the default values') }}
 		</NcButton>
+		<p v-if="summary" class="profile__read" role="status">
+			{{ t('cantoria', '{read} of {files} scores read.', { read: summary.read, files: summary.files }) }}
+			<template v-if="summary.read < summary.files">
+				{{ t('cantoria', 'The rest follows in the background, a few every hour.') }}
+			</template>
+		</p>
+		<NcButton v-if="isLibrarian && summary && summary.read < summary.files"
+			variant="secondary"
+			:disabled="busy"
+			@click="readNow">
+			{{ t('cantoria', 'Read the next scores now') }}
+		</NcButton>
 	</ActionDialog>
 </template>
 
 <style scoped>
 .profile__intro {
 	margin-block-end: 8px;
+}
+
+.profile__read {
+	margin-block: 12px 4px;
+	color: var(--color-text-maxcontrast);
 }
 
 .profile__hint {

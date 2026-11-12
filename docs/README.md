@@ -51,6 +51,8 @@ documentation for developers is in English.
   request and the rules the code keeps.
 - [API](api.md): the internal JSON API between the user interface and the
   server. It is not a stable public interface.
+- [Design](design.md): the voice colours, the app's own building blocks and
+  the rules for colour, print and motion.
 - [API for agents](api-v1.md): the stable, versioned OCS API v1 for tools
   and agents, described in [openapi.json](../openapi.json).
 - [Tests](../tests/README.md): unit tests and integration tests against a

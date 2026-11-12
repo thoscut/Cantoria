@@ -204,6 +204,57 @@ consent as a scan (use "Digitisation").
   links without a profit motive the liability risk is low (CJEU, C-160/15,
   *GS Media*).
 
+## Lyrics in a programme booklet
+
+A programme booklet is handed to the audience. Printing the lyrics of a
+piece in it copies and distributes the text (§§ 16, 17 UrhG): that needs the
+consent of the rights holder, usually the publisher, as long as the text is
+protected, that is, until 70 years after the death of its author (§ 64
+UrhG). A GEMA license for the concert covers the performance, not the
+printed text. A translation is protected on its own (§ 3 UrhG), also when
+the original text is free.
+
+The app therefore prints the lyrics of a version only with confirmed public
+domain or a valid license for "Publication". It is careful here: it goes by
+the rights status of the version as a whole, so a free text set by a
+protected composer is not printed until a license is recorded. The
+translation printed beside the lyrics is the one entered for the version;
+the app cannot check its rights. Enter your own translation, a free one or
+one you have a permission for, and name translator and source.
+
+Titles, names and life dates of composers and lyricists are facts and can
+always be printed.
+
+## Large print for singers with a visual impairment
+
+People with a visual or reading impairment may copy published sheet music
+for their own use, or have it copied, to turn it into an accessible format
+(§ 45b (1) UrhG). This is an exception to the rule that sheet music is
+copied only with consent (§ 53 (4) UrhG). It has conditions:
+
+- The person cannot read the music as easily as others even with glasses or
+  contact lenses (§ 45b (2) UrhG). Ordinary reading glasses are not meant.
+- The person has lawful access to the work, for example as a member who
+  sings from a copy the choir bought.
+- The copy is for that person's own use. It stays with the person and is
+  not passed on, lent to others or put into the choir folders.
+- The music is not changed beyond what the format needs (§ 62 UrhG), and
+  the source is named (§ 63 UrhG): the part keeps title, composer and
+  edition.
+
+A choir that makes such a part acts for the person. It is usually not an
+"authorised entity" (§ 45c UrhG), which may keep and exchange accessible
+copies and has duties of its own; so the choir keeps no stock of large-print
+parts.
+
+The app allows a large-print part without further questions with confirmed
+public domain or a license for an accessible format or for printed copies
+for the singers. Otherwise the catalog librarian confirms in the dialog that
+the part is made for a singer with a visual impairment and stays with that
+person. The app records the confirmation and the voice in the history of
+the copy. It never records who the singer is: that would be health data
+(Art. 9 GDPR), which the archive does not need.
+
 ## Practising without a network and the concert folder
 
 A piece kept "available without a network" is a copy on the device of the

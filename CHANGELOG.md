@@ -10,6 +10,55 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Ranges of the voices and the choir profile** (module "Facts from the
+  scores"). The app reads from every MusicXML file the range and tessitura
+  of each voice, the first tones, the keys and the first bars, in the
+  background and whenever a score is opened. The details of a copy show
+  them in the section "Music"; the conductor describes the choir in the
+  choir profile (voice groups, never single singers), and the catalog
+  filter "Our ranges" finds pieces that fit, with a suggested
+  transposition. Migration `Version001800Date20261112120000` adds the
+  table `cantoria_score_facts`.
+- **Pitch sheet and the programme at a glance.** A concert or song list
+  shows its pieces as a band with lengths, keys and a sign for every
+  transition, and a pitch sheet with the first tone of every voice per
+  piece, to play and to print.
+- **Programme booklet** (module "Programme booklet"). A PDF for the
+  audience from a concert: cover, programme with the people and their life
+  dates, and the lyrics read from the MusicXML with a translation. Lyrics
+  are printed only with confirmed public domain or a license for
+  publication (`RightsPolicy::bookletLyricsDenial`). New version fields
+  "Translation of the lyrics" and "Translator and source of the
+  translation".
+- **Large-print parts** (module "Large-print parts"). One voice of a score
+  set large for a singer with a visual impairment and printed from the
+  score view. Needs confirmed public domain, a license (new use
+  "Accessible format") or the confirmation of the catalog librarian that
+  the part is an accessible copy (§ 45b UrhG); every part is recorded
+  without the name of the singer.
+- **Sung practice voice.** The playback and the practice files can sound
+  like singing: each note takes the vowel of its syllable. A synthetic
+  sound made in the browser; vowels only.
+- **Annual report as a booklet (PDF)** with the year in large figures and
+  the concerts as a timeline.
+- **Design** (`docs/design.md`): a colour and letter per voice group in
+  the mixer, the ranges and the score; the first bars of a piece in the
+  catalog, tasks and programmes; a transport bar with measure, tempo and
+  voice buttons for practising; the next concert on the start page;
+  drawings for empty views; public pages with the colour and the logo of
+  the choir.
+- **Guides** in English and German for all of the above, the legal
+  background of lyrics in a booklet and of large print (§ 45b UrhG), and
+  the new routes in `docs/api.md`.
+
+### Changed
+
+- The mixer shows the voice group of each voice; the note with a shared
+  piece is a slip beside the notes.
+- The version on `main` is 0.18.0-dev.1 for the new table and routes.
+
 ## [0.17.0] - 2026-11-04
 
 The first version for the Nextcloud app store.

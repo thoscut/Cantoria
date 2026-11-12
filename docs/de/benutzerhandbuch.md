@@ -183,6 +183,12 @@ dem Termin bestätigen, was gesungen wurde (nur Chorleitung). Danach folgen
 die **Aufgaben für deine Rollen**, sortiert nach Archivmappe. So folgt eine
 gedruckte Liste dem Regal.
 
+Mit dem Modul „Konzerte und Notenlisten“ steht über den Karten **Nächstes
+Konzert**: der Titel, das Datum und die Tage bis dahin und ein Ring, der
+zeigt, wie viele Stücke des Programms bereit sind, also im Archiv und ohne
+Warnung. **Programm öffnen** führt zum Konzert. Unter **Ansicht anpassen**
+blendest du es zusammen mit den **Konzertfristen** aus.
+
 ### Ein Exemplar finden
 
 ![Das Werkverzeichnis in der deutschen Oberfläche: die Exemplare des Demo-Archivs mit Signatur, Titel, Komposition, Rechte-Kennzeichen und Repertoire, links das Suchfeld und die Filter.](../screenshots/de/catalog.png)
@@ -537,7 +543,13 @@ deinem Browser: Über dein Üben wird nichts auf dem Server gespeichert.
 - **Mischpult** öffnet einen Regler je Stimme. Er wirkt zusätzlich zu
   **Stimmen beim Abspielen**: Bei 0 % ist eine Stimme stumm, bei 50 % halb so
   laut. **Alle Stimmen auf 100 %** setzt es zurück. Eine Übe-Datei eines
-  geteilten Stücks klingt wie das Mischpult.
+  geteilten Stücks klingt wie das Mischpult. Die Regler tragen die Farbe und
+  den Buchstaben der Stimmgruppe.
+- **Gesungene Stimme (Vokale des Liedtexts)** lässt die Stimmen wie Gesang
+  klingen statt wie eine Orgel: Jede Note bekommt den Vokal ihrer Silbe,
+  Noten ohne Text ein neutrales „ah“. Der Klang entsteht künstlich in
+  deinem Browser, er ist keine Aufnahme, und er singt nur Vokale, keine
+  Wörter. Übe-Dateien übernehmen ihn.
 - **… merken** hält die gezeigten Takte als Stelle fest, auf Wunsch mit
   Namen („Fuge“, „Einsatz Tenor“). Ein Klick auf eine gemerkte Stelle zeigt
   sie und spielt sie in Schleife; das Kreuz entfernt sie. Die Stellen bleiben
@@ -1200,6 +1212,140 @@ Scans behalten ihre Seiten, wie sie sind. Ein Scan, der sich nicht lesen
 lässt (beschädigt oder mit Passwort geschützt), bleibt draußen, und der
 Dialog nennt ihn. Jedes erstellte Liederbuch steht mit seinen Signaturen im
 Protokoll.
+
+### Stimmumfänge und das Chorprofil
+
+Mit dem Modul „Angaben aus den Noten“ liest die App aus jeder MusicXML-Datei
+den Umfang jeder Stimme, die Anfangstöne, die Tonarten und die ersten Takte.
+Sie liest nur: Im Werkverzeichnis und in den Dateien ändert sich nichts.
+
+In den Details eines Exemplars zeigt der Abschnitt **Musik** die ersten
+Takte, die **Tonart**, die **Länge des Stücks** in Takten und ein Schaubild der
+Umfänge: einen Balken je Stimme, der Teil, in dem die Stimme meist singt,
+kräftiger gezeichnet, über dem Umfang deines Chors. Jede Stimmgruppe hat
+ihre Farbe und ihren Buchstaben (S, A, T, B); so lässt sich das Schaubild
+auch in Schwarzweiß lesen.
+
+Ein Zeichen sagt, wie das Stück passt: **Passt zu unseren Stimmumfängen**,
+**Möglich in unseren Stimmumfängen** oder **Außerhalb unserer
+Stimmumfänge**. Passt das Stück höher oder tiefer besser, nennt das Zeichen
+den Schritt, und eine Schaltfläche zeigt das Schaubild um ihn verschoben.
+Das ist ein Vorschlag; die Chorleitung entscheidet. Im Werkverzeichnis
+findet der Filter **Unsere Stimmumfänge** Stücke, die **Bequem für alle
+Stimmen** oder **Möglich für alle Stimmen** sind oder transponiert passen
+(**Passt, auch transponiert**). Die ersten Takte stehen auch in Listen, in
+Aufgaben und in Programmen neben den Stücken.
+
+So beschreibst du deinen Chor:
+
+1. Öffne ein Exemplar mit Noten und wähle unter **Musik** das
+   **Chorprofil**.
+2. Setze den Haken bei den Stimmgruppen, die der Chor hat. Lege für jede
+   **Möglich ab**, **Bequem ab**, **Bequem bis** und **Möglich bis** fest.
+   Das Schaubild neben der Tabelle zeigt das Ergebnis.
+3. **Profil speichern**. **Zurück zu den Vorgabewerten** stellt die Werte
+   eines gemischten Laienchors wieder her.
+
+Die Rollen „Chorleitung“ und „Bestand“ speichern das Profil; jede Rolle des
+Archivs liest es. Das Profil beschreibt Stimmgruppen, nie einzelne
+Sängerinnen und Sänger, und jede Änderung steht im Protokoll.
+
+> [!NOTE]
+> Die Noten werden im Hintergrund gelesen, jede Stunde einige, und immer,
+> wenn Noten geöffnet werden. Das Chorprofil sagt, wie viele gelesen sind;
+> die Rolle „Bestand“ kann dort die nächsten gleich lesen lassen. Der Name
+> einer Stimme entscheidet über ihre Gruppe („Sopran II“, „Bariton“);
+> Instrumente zählen nicht. Die Angaben einer internen Erhaltungskopie sehen
+> nur die Rollen, die sie ansehen dürfen.
+
+### Anstimmzettel und das Programm auf einen Blick
+
+Ein Konzert oder eine Notenliste zeigt über den Stücken **Das Programm auf
+einen Blick**: einen Block je Stück, so breit, wie das Stück lang ist, mit
+der Tonart und, wenn das Konzert eine Anfangszeit hat, mit der ungefähren
+Uhrzeit seines Beginns. Zwischen zwei Blöcken sagt ein Zeichen, wie der Chor
+von einem Stück zum nächsten kommt: `=` gleiche Tonart, `≈` gleiche
+Vorzeichen, `↗` verwandte Tonart, `♪` entfernte Tonart, bei der ein neuer
+Ton angegeben wird. Die Zeile darunter nennt die Länge, die geschätzten
+Stücke ohne Dauer und die Zahl der neuen Töne. Wer das Programm ändern darf,
+zieht einen Block an einen neuen Platz oder nutzt die Pfeile in der Liste.
+
+Der Abschnitt **Anstimmzettel** nennt je Stück die Tonart am Anfang (und am
+Ende, wenn sie eine andere ist), den Anfangston jeder Stimme, Tempo und
+Taktart und den Weg vom Stück davor. Die Schaltfläche in der letzten Spalte
+spielt die Anfangstöne an, nacheinander vom tiefsten an, dann zusammen.
+**Anstimmzettel** bei den Druck-Schaltflächen druckt den Zettel auf A4 für
+das Notenpult.
+
+Der Zettel braucht die Module „Angaben aus den Noten“ und „Konzerte und
+Notenlisten“. Die Töne sind aus der MusicXML des Exemplars gelesen, das im
+Programm steht; prüfe sie an den Noten. Ein Stück ohne MusicXML zeigt keine
+Töne.
+
+### Programmheft
+
+Mit dem Modul „Programmheft“ erstellen Chorleitung und die Rolle „Bestand“
+aus einem Konzert ein Heft für das Publikum: eine Titelseite, das Programm
+mit den Beteiligten und ihren Lebensdaten und die Liedtexte mit einer
+Übersetzung.
+
+1. Wähle in einem Konzert **Programmheft (PDF) …**.
+2. Fülle **Über dem Titel, z. B. der Name des Chors**, **Titel auf dem
+   Deckblatt**, **Zeilen unter dem Titel (Datum, Uhrzeit, Ort)** und, wenn
+   du magst, **Ein paar Worte zur Begrüßung (optional)** aus.
+3. Wähle das **Papier**: **A5 (A4 gefaltet)** oder **A4**, und ob das Heft
+   die **Dauern zeigen** soll.
+4. Bei jedem Stück, dessen Liedtext gedruckt werden darf, ist **Liedtext
+   abdrucken** eingeschaltet. Das Feld **Liedtext aus den Noten gelesen
+   (prüfe ihn)** enthält den Text aus der MusicXML; korrigiere ihn dort.
+   Deine Änderungen gehen nur in dieses Heft.
+5. **Heft erstellen (PDF)**. Das PDF entsteht in deinem Browser und wird
+   gleich heruntergeladen.
+
+Ein Heft geht an das Publikum: Liedtexte darin zu drucken ist eine
+Veröffentlichung. Die App druckt den Liedtext einer Fassung nur mit
+bestätigter Gemeinfreiheit oder einer Lizenz für **Veröffentlichung**; sonst
+steht das Stück ohne Text im Heft, und der Dialog nennt den Grund nach
+**Kein Liedtext:**. Der Liedtext einer internen Erhaltungskopie wird nie
+gedruckt. Die Übersetzung ist die, die bei der Fassung in den Feldern
+**Übersetzung des Liedtexts** und **Übersetzung von und Quelle der
+Übersetzung** eingetragen ist; trage nur Übersetzungen ein, die der Chor
+drucken darf.
+
+Gestrichene Stücke bleiben draußen, und Zugaben stehen unter einer eigenen
+Überschrift. Jedes erstellte Heft steht im Protokoll des Konzerts, mit den
+Stücken, deren Liedtext es druckt. Für ein gefaltetes Heft druckst du die
+A5-Seiten mit der Broschüren-Einstellung deines Druckers.
+
+### Großdruck-Stimmen
+
+Mit dem Modul „Großdruck-Stimmen“ setzen Chorleitung und die Rolle „Bestand“
+eine Stimme aus den Noten groß für ein Chormitglied mit einer
+Sehbehinderung: große Noten, wenige Takte pro Zeile, kräftige Linien und der
+Liedtext darunter.
+
+1. Öffne die Noten des Exemplars und wähle **Großdruck-Stimme …**.
+2. Wähle die **Stimme** und, wenn es hilft, eine zweite unter **Mit einer
+   zweiten Stimme (z. B. die Nachbarstimme oder das Klavier)**.
+3. Wähle die **Größe der Noten**: **Groß (etwa 1,4-fach)**, **Größer (etwa
+   1,8-fach)** oder **Am größten (etwa 2,3-fach)**. Der Dialog zeigt die
+   erste Seite.
+4. **Stimme drucken** öffnet den Druckdialog des Browsers. Die Stimme ist
+   für A4 in Schwarzweiß gesetzt.
+
+Eine Großdruck-Stimme ist eine gedruckte Kopie. Die App erlaubt sie mit
+bestätigter Gemeinfreiheit oder einer Lizenz für ein barrierefreies Format
+oder für gedruckte Kopien für die Chormitglieder. Ohne beides kann die Rolle
+„Bestand“ im Dialog bestätigen, dass die Stimme für ein Chormitglied mit
+einer Sehbehinderung erstellt wird und bei dieser Person bleibt (§ 45b
+UrhG); siehe den
+[rechtlichen Hintergrund](rechtlicher-hintergrund.md#großdruck-für-chormitglieder-mit-einer-sehbehinderung).
+Jede Stimme steht mit ihrem Namen im Verlauf des Exemplars, nie mit dem
+Namen der Person. Aus einer internen Erhaltungskopie wird keine Stimme
+gedruckt.
+
+Stimmen, die sich in den Noten ein System teilen, werden zusammen gedruckt;
+der Dialog nennt sie.
 
 ### Konzertmappe
 
@@ -1986,6 +2132,9 @@ begonnene oder beendete Lizenzen, offene Rechtefragen und den Bestand. In
 der ersten Jahreshälfte schlägt er das vergangene Jahr vor. **Jahresbericht
 drucken** druckt nur den Bericht auf A4 in Schwarzweiß, auf Wunsch in großer
 Schrift; **Jahresbericht als CSV** lädt seine Tabellen herunter.
+**Jahresbericht als Heft (PDF)** setzt dieselben Zahlen als kleines Heft für
+die Mitgliederversammlung: eine Titelseite, das Jahr in großen Zahlen, die
+Konzerte als Zeitleiste und die Tabellen. Es entsteht in deinem Browser.
 
 > [!NOTE]
 > Offene Rechtefragen und der Bestand gelten immer für heute, weil das
