@@ -141,7 +141,7 @@ export function contentsPages(count: number): number {
  * @param size - font size
  * @param width - the width available
  */
-function fit(text: string, font: PDFFont, size: number, width: number): string {
+export function fit(text: string, font: PDFFont, size: number, width: number): string {
 	if (font.widthOfTextAtSize(text, size) <= width) {
 		return text
 	}
@@ -161,7 +161,7 @@ function fit(text: string, font: PDFFont, size: number, width: number): string {
  * @param width - the width available
  * @param max - most lines
  */
-function wrap(text: string, font: PDFFont, size: number, width: number, max: number): string[] {
+export function wrap(text: string, font: PDFFont, size: number, width: number, max: number): string[] {
 	const lines: string[] = []
 	let line = ''
 	for (const word of text.split(' ').filter((part) => part !== '')) {

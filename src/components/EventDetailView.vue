@@ -23,6 +23,7 @@ import {
 	mdiArrowLeft,
 	mdiArrowUp,
 	mdiBookMusicOutline,
+	mdiBookOpenPageVariantOutline,
 	mdiCalendarExportOutline,
 	mdiCalendarPlusOutline,
 	mdiCalendarRemoveOutline,
@@ -51,6 +52,7 @@ import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import ActionDialog from './ActionDialog.vue'
 import AppNotices from './AppNotices.vue'
+import BookletDialog from './BookletDialog.vue'
 import CalendarDialog from './CalendarDialog.vue'
 import EventDialog from './EventDialog.vue'
 import PitchSheet from './PitchSheet.vue'
@@ -200,6 +202,10 @@ const sharing = ref(false)
 /** A songbook of the programme to print (round 3, November 2026) */
 const canMakeSongbook = computed(() => items.value.length > 0 && isModuleActive('songbook') && hasAnyRole(['librarian', 'conductor']))
 const makingSongbook = ref(false)
+/** A programme booklet for the audience (proposal 2, November 2026) */
+const canMakeBooklet = computed(() => isConcert.value && items.value.some((item) => item.struck !== true)
+	&& isModuleActive('programme_booklet') && hasAnyRole(['librarian', 'conductor']))
+const makingBooklet = ref(false)
 /** A new programme with these pieces (round 3, November 2026) */
 const canCopyProgramme = computed(() => canPlanEvents.value && event.value !== null && items.value.some((item) => item.struck !== true))
 const copyingProgramme = ref(false)
@@ -610,6 +616,12 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Songbook (PDF) …') }}
 						</NcButton>
+						<NcButton v-if="canMakeBooklet" :disabled="busy" @click="makingBooklet = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiBookOpenPageVariantOutline" />
+							</template>
+							{{ t('cantoria', 'Programme booklet (PDF) …') }}
+						</NcButton>
 						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiFolderMusicOutline" />
@@ -954,6 +966,9 @@ function revisionText(item: EventItem): string {
 		<SongbookDialog v-if="makingSongbook && event"
 			:event-id="event.id"
 			@close="makingSongbook = false" />
+		<BookletDialog v-if="makingBooklet && event"
+			:event-id="event.id"
+			@close="makingBooklet = false" />
 		<CalendarDialog v-if="calendarDialogOpen && event"
 			:event-id="event.id"
 			:deadlines="withDeadlines && !event.imported"
