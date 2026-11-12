@@ -108,6 +108,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setTextOrigin(?string $textOrigin)
  * @method string|null getSocietyWorkNo()
  * @method void setSocietyWorkNo(?string $societyWorkNo)
+ * @method string|null getLyricsTranslation()
+ * @method void setLyricsTranslation(?string $lyricsTranslation)
+ * @method string|null getTranslationSource()
+ * @method void setTranslationSource(?string $translationSource)
  * @method int getCreated()
  * @method void setCreated(int $created)
  * @method int getModified()
@@ -165,6 +169,9 @@ class WorkVersion extends Entity implements JsonSerializable {
 	protected ?string $textOrigin = null;
 	/** Number of the work at the collecting society (GEMA), for the song order */
 	protected ?string $societyWorkNo = null;
+	/** Translation of the lyrics for the programme booklet, and who made it and where it comes from */
+	protected ?string $lyricsTranslation = null;
+	protected ?string $translationSource = null;
 	protected int $created = 0;
 	protected int $modified = 0;
 
@@ -178,7 +185,7 @@ class WorkVersion extends Entity implements JsonSerializable {
 			'publicationReason', 'validSince', 'validSetBy', 'validReason', 'confirmedBy', 'confirmedByName',
 			'confirmedAt', 'confirmedReason', 'confirmedEvidence', 'portalRemovedAt', 'portalRemovedReason',
 			'publicationStatus', 'reviewStatus', 'rule1Status', 'rule1Checked', 'keySignature', 'scoring',
-			'language', 'melodyOrigin', 'textOrigin', 'societyWorkNo'] as $field) {
+			'language', 'melodyOrigin', 'textOrigin', 'societyWorkNo', 'lyricsTranslation', 'translationSource'] as $field) {
 			$this->addType($field, 'string');
 		}
 		foreach (['preservationCopy', 'scientificEdition', 'posthumousWork'] as $field) {

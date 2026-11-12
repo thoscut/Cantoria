@@ -1235,6 +1235,7 @@ final class ControllerSecurityTest extends TestCase {
 			$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $this->createStub(ExportService::class),
 			$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
 			$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class), $scores,
+			$this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class),
 			$this->l10n(), $this->createStub(LoggerInterface::class));
 	}
 
@@ -1482,7 +1483,7 @@ final class ControllerSecurityTest extends TestCase {
 				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $this->createStub(ExportService::class),
 				$this->createStub(FileSyncService::class), $entries,
 				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
-				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+				$this->createStub(ScoreService::class), $this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 			self::assertSame(Http::STATUS_OK, $controller->audit()->getStatus());
 		}
 		self::assertSame([FolderBookService::OBJECT_TYPES, []], $excluded, 'contributors do not see the names of the folder book');
@@ -1496,7 +1497,7 @@ final class ControllerSecurityTest extends TestCase {
 				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $export,
 				$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
 				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
-				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+				$this->createStub(ScoreService::class), $this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 			self::assertSame(Http::STATUS_FORBIDDEN, $controller->importTemplate('ods')->getStatus(), $uid);
 		}
 	}

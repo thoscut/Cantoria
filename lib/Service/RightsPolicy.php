@@ -353,6 +353,32 @@ class RightsPolicy {
 		return 'A songbook needs confirmed public domain or a license for copies for the binders or for the print station. The catalog librarian records it on the tab "Rights".';
 	}
 
+	/** The use a license must grant for printing lyrics in a programme booklet */
+	public const BOOKLET_USE = 'publication';
+
+	/**
+	 * Whether the lyrics of a version may be printed in a programme booklet
+	 * (November 2026). A booklet is handed out to the audience: that is a
+	 * publication of the text, which a confirmed public domain status of the
+	 * version or a license for publication covers. Lyrics of an internal
+	 * preservation copy are never printed; an unconfirmed proposal does not
+	 * count (the app suggests, people decide).
+	 *
+	 * @return string|null null when allowed, otherwise the reason with the next step
+	 */
+	public function bookletLyricsDenial(WorkVersion $version, string $day, ?Copy $copy = null): ?string {
+		if (self::isPreservationCopy($version, $copy)) {
+			return 'Internal preservation copy: its lyrics are not printed.';
+		}
+		if ($version->getRightsStatus() === 'public_domain' && $version->isConfirmed()) {
+			return null;
+		}
+		if ($this->coversOne($this->licensesOf($version), [self::BOOKLET_USE], $day)) {
+			return null;
+		}
+		return 'Printing lyrics in a booklet needs confirmed public domain or a license for publication. The catalog librarian records it on the tab "Rights".';
+	}
+
 	/**
 	 * Whether a piece may be kept on a device in a circle (milestones 0.15,
 	 * 0.19): the notes as MusicXML and the scan stay there for weeks, which

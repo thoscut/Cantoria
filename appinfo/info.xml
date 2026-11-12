@@ -92,6 +92,7 @@ Keine fremden Server und keine Telemetrie: Notensatz, Schriften und Klänge sind
 		<job>OCA\Cantoria\BackgroundJob\WeeklyBackup</job>
 		<job>OCA\Cantoria\BackgroundJob\DailyChecks</job>
 		<job>OCA\Cantoria\BackgroundJob\ChecksumJob</job>
+		<job>OCA\Cantoria\BackgroundJob\ScoreFactsJob</job>
 		<job>OCA\Cantoria\BackgroundJob\AnnualSnapshotJob</job>
 	</background-jobs>
 	<repair-steps>

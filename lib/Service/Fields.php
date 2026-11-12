@@ -208,7 +208,7 @@ final class Fields {
 			'publication_status' => 32, 'review_status' => 32, 'rule1_status' => 32, 'rule1_checked' => 255,
 			'confirmed_by' => 64, 'confirmed_by_name' => 255, 'confirmed_at' => 10, 'portal_removed_at' => 10,
 			'portal_removed_reason' => 1000, 'valid_reason' => 1000, 'key_signature' => 40, 'scoring' => 200,
-			'language' => 100, 'melody_origin' => 16, 'text_origin' => 16, 'society_work_no' => 32,
+			'language' => 100, 'melody_origin' => 16, 'text_origin' => 16, 'society_work_no' => 32, 'translation_source' => 500,
 		],
 		self::COPY => [
 			'shelfmark' => 20, 'status' => 20, 'status_reason' => 1000, 'status_since' => 10, 'kind' => 32,
@@ -327,6 +327,9 @@ final class Fields {
 				'scoring' => self::field(self::TYPE_TEXT, 'Scoring', $librarianConductor),
 				'language' => self::field(self::TYPE_TEXT, 'Language', $librarianConductor),
 				'duration' => self::field(self::TYPE_NUMBER, 'Duration (seconds)', $librarianConductor),
+				// Programme booklet (November 2026): printed next to the lyrics where the rights allow both
+				'lyrics_translation' => self::field(self::TYPE_LONGTEXT, 'Translation of the lyrics', $librarianConductor),
+				'translation_source' => self::field(self::TYPE_TEXT, 'Translator and source of the translation', $librarianConductor),
 				// Special cases of the protection term (milestone 0.8, module protection_terms)
 				'scientific_edition' => self::field(self::TYPE_BOOLEAN, 'Scientific edition (§ 70 UrhG)', $librarian),
 				'posthumous_work' => self::field(self::TYPE_BOOLEAN, 'Posthumous work (§ 71 UrhG)', $librarian),
