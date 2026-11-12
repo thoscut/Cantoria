@@ -19,12 +19,13 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwit
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import ActionDialog from './ActionDialog.vue'
+import IncipitImage from './IncipitImage.vue'
 import { answerTask, closeTask, errorMessage } from '../api.ts'
 import { focusAfterDialog } from '../focus.ts'
 import { formatDate, formatDateTime, toIsoDate } from '../format.ts'
 import { referenceWords, roleLabel, taskCategoryLabel, taskKindLabel, taskStatusLabel } from '../labels.ts'
 import { placeText } from '../references.ts'
-import { hasRole, isLibrarian, openEntry, scoreRequest } from '../store.ts'
+import { factsOf, hasRole, isLibrarian, openEntry, scoreRequest } from '../store.ts'
 
 const props = withDefaults(defineProps<{
 	task: Task
@@ -43,6 +44,9 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
 	changed: []
 }>()
+
+/** The first bars of the piece, in lists across copies (design proposal V6) */
+const incipit = computed(() => props.showCopy ? factsOf(props.task.copy_id)?.incipit ?? null : null)
 
 const place = computed(() => placeText({
 	page: props.task.page,
@@ -137,6 +141,7 @@ function showScore(): void {
 				{{ taskStatusLabel(task.status) }}
 			</span>
 		</header>
+		<IncipitImage v-if="incipit" class="task-item__incipit no-print" :incipit="incipit" />
 		<p v-if="place" class="task-item__place">
 			{{ place }}
 		</p>
