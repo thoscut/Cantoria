@@ -45,8 +45,11 @@ final class ScoreFactsTest extends TestCase {
 		$facts = ScoreFacts::analyze((string)file_get_contents(self::DEMO . '1-01_Der-Mond-ist-aufgegangen_Schulz.musicxml'));
 		self::assertNotNull($facts);
 		self::assertSame(ScoreFacts::FORMAT, $facts['format']);
-		$voices = array_column($facts['voices'], null, 'group');
-		self::assertSame(['S', 'A', 'T', 'B'], array_keys($voices));
+		self::assertSame(['S', 'A', 'T', 'B'], array_column($facts['voices'], 'group'));
+		$voices = [];
+		foreach ($facts['voices'] as $voice) {
+			$voices[(string)$voice['group']] = $voice;
+		}
 		self::assertSame([65, 74], [$voices['S']['low'], $voices['S']['high']]);
 		self::assertSame([41, 53], [$voices['B']['low'], $voices['B']['high']]);
 		foreach ($facts['voices'] as $voice) {

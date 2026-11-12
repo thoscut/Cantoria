@@ -191,9 +191,15 @@ class ProgrammeSheets {
 				'died' => self::year($person->getDied()),
 			];
 		}
-		$order = array_flip(['composer', 'lyricist', 'arranger', 'translator']);
-		usort($list, fn (array $a, array $b): int => $order[$a['role']] <=> $order[$b['role']]);
-		return $list;
+		$sorted = [];
+		foreach (['composer', 'lyricist', 'arranger', 'translator'] as $role) {
+			foreach ($list as $entry) {
+				if ($entry['role'] === $role) {
+					$sorted[] = $entry;
+				}
+			}
+		}
+		return $sorted;
 	}
 
 	private static function year(?string $date): ?string {

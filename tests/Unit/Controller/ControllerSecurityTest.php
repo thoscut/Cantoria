@@ -12,6 +12,7 @@ namespace OCA\Cantoria\Tests\Unit\Controller;
 use OCA\Cantoria\Controller\AnnualSnapshotController;
 use OCA\Cantoria\Controller\ApiController;
 use OCA\Cantoria\Controller\ApiV1StatusController;
+use OCA\Cantoria\Controller\BookletController;
 use OCA\Cantoria\Controller\CalendarController;
 use OCA\Cantoria\Controller\ChoirSystemController;
 use OCA\Cantoria\Controller\ConcertFolderController;
@@ -1604,5 +1605,25 @@ final class ControllerSecurityTest extends TestCase {
 		$response = $this->scoreFactsController('librarian')->runNow();
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertSame(['read' => 3, 'summary' => ['files' => 5, 'read' => 3]], $response->getData());
+	}
+
+	/**
+	 * The record of a booklet names only pieces whose lyrics the rights
+	 * allowed to print, whatever the browser sends.
+	 */
+	public function testTheRecordOfABookletNamesOnlyPiecesWhoseLyricsMayBePrinted(): void {
+		$sheets = $this->createStub(ProgrammeSheets::class);
+		$sheets->method('booklet')->willReturn(['event' => [], 'pieces' => [
+			['itemId' => 1, 'lyrics' => [['number' => '1', 'text' => 'Text']], 'translation' => null],
+			['itemId' => 2, 'lyrics' => null, 'translation' => null],
+			['itemId' => 3, 'lyrics' => null, 'translation' => 'Translation'],
+		]]);
+		$audit = $this->createMock(AuditLog::class);
+		$audit->method('newOperation')->willReturn('op');
+		$audit->expects(self::once())->method('record')->with('op', 'conductor', 'event', 5, 'booklet_made', 'lyrics', null, '1,3');
+		$controller = new BookletController($this->createStub(IRequest::class), 'conductor', $sheets, $audit, $this->l10n(),
+			$this->createStub(LoggerInterface::class));
+		$response = $controller->record(5, [3, 2, 1, 99, '1']);
+		self::assertSame(['recorded' => true], $response->getData());
 	}
 }

@@ -79,7 +79,7 @@ class ScoreFacts {
 
 		/** @var array<string, array{name: string, vocal: ?bool}> $partInfo */
 		$partInfo = [];
-		foreach (self::elements($xpath->query('/score-partwise/part-list/score-part')) as $scorePart) {
+		foreach (self::elements($xpath, '/score-partwise/part-list/score-part') as $scorePart) {
 			$name = trim(preg_replace('/\s+/u', ' ', self::text($xpath, 'part-name', $scorePart)) ?? '');
 			$sound = self::text($xpath, 'score-instrument/instrument-sound', $scorePart);
 			$vocal = $sound === '' ? null : str_starts_with($sound, 'voice.');
@@ -97,7 +97,7 @@ class ScoreFacts {
 		$partIndex = 0;
 		/** @var array<string, array<string, true>> $stavesOfPart */
 		$stavesOfPart = [];
-		foreach (self::elements($xpath->query('/score-partwise/part')) as $part) {
+		foreach (self::elements($xpath, '/score-partwise/part') as $part) {
 			$id = $part->getAttribute('id');
 			$info = $partInfo[$id] ?? ['name' => '', 'vocal' => null];
 			$isInstrument = $info['vocal'] === false || ($info['vocal'] === null && preg_match(self::INSTRUMENT, $info['name']) === 1);
@@ -174,7 +174,7 @@ class ScoreFacts {
 			'time' => $time,
 			'tempo' => $tempo,
 			'measures' => $measures,
-			'incipit' => self::incipit($xpath, $members, $voices),
+			'incipit' => self::incipit($xpath, $members),
 			'lyrics' => self::lyrics($xpath, $members, $voices),
 		];
 	}
@@ -290,8 +290,8 @@ class ScoreFacts {
 				'name' => $voice['name'],
 				'group' => self::group($voice['name']),
 				'part' => $voice['part'],
-				'low' => (int)array_key_first($voice['pitches']),
-				'high' => (int)array_key_last($voice['pitches']),
+				'low' => array_key_first($voice['pitches']),
+				'high' => array_key_last($voice['pitches']),
 				'tessLow' => $tessLow,
 				'tessHigh' => $tessHigh,
 				'first' => $voice['first'],
@@ -317,10 +317,10 @@ class ScoreFacts {
 		$foundLow = null;
 		foreach ($pitches as $pitch => $weight) {
 			$sum += $weight;
-			if ($foundLow === null && $sum >= 0.1 * $total) {
+			if ($foundLow === null && $sum * 10 >= $total) {
 				$foundLow = $pitch;
 			}
-			if ($sum >= 0.9 * $total) {
+			if ($sum * 10 >= $total * 9) {
 				$high = $pitch;
 				break;
 			}
@@ -332,10 +332,9 @@ class ScoreFacts {
 	 * The first bars of the top voice in the Plaine & Easie Code.
 	 *
 	 * @param array<string, array{part: string, partIndex: int, staff: int, voice: string, pitches: array<int, int>, first: ?int, last: ?int, notes: int}> $members
-	 * @param list<FactVoice> $voices
 	 * @return FactIncipit|null
 	 */
-	private static function incipit(\DOMXPath $xpath, array $members, array $voices): ?array {
+	private static function incipit(\DOMXPath $xpath, array $members): ?array {
 		$top = self::topMember($members);
 		if ($top === null) {
 			return null;
@@ -456,7 +455,8 @@ class ScoreFacts {
 			if ($part === null) {
 				continue;
 			}
-			/** @var array<string, string> $verses */
+			// A verse number such as "1" becomes an integer key in PHP.
+			/** @var array<array-key, string> $verses */
 			$verses = [];
 			foreach (self::children($part, 'measure') as $measure) {
 				foreach (self::children($measure, 'note') as $note) {
@@ -486,7 +486,7 @@ class ScoreFacts {
 			if ($verses === []) {
 				continue;
 			}
-			uksort($verses, fn (string $a, string $b): int => [(int)$a, $a] <=> [(int)$b, $b]);
+			uksort($verses, fn (int|string $a, int|string $b): int => [(int)$a, (string)$a] <=> [(int)$b, (string)$b]);
 			$list = [];
 			foreach ($verses as $number => $text) {
 				$text = trim(preg_replace('/ {2,}/', ' ', $text) ?? $text);
@@ -562,7 +562,7 @@ class ScoreFacts {
 	}
 
 	private static function part(\DOMXPath $xpath, string $id): ?\DOMElement {
-		foreach (self::elements($xpath->query('/score-partwise/part')) as $part) {
+		foreach (self::elements($xpath, '/score-partwise/part') as $part) {
 			if ($part->getAttribute('id') === $id) {
 				return $part;
 			}
@@ -571,7 +571,7 @@ class ScoreFacts {
 	}
 
 	private static function partName(\DOMXPath $xpath, string $id): string {
-		foreach (self::elements($xpath->query('/score-partwise/part-list/score-part')) as $scorePart) {
+		foreach (self::elements($xpath, '/score-partwise/part-list/score-part') as $scorePart) {
 			if ($scorePart->getAttribute('id') === $id) {
 				return trim(preg_replace('/\s+/u', ' ', self::text($xpath, 'part-name', $scorePart)) ?? '');
 			}
@@ -605,7 +605,7 @@ class ScoreFacts {
 	private static function text(\DOMXPath $xpath, string $path, \DOMNode $context): string {
 		$nodes = $xpath->query($path, $context);
 		$node = $nodes === false ? null : $nodes->item(0);
-		return $node === null ? '' : trim($node->textContent);
+		return $node instanceof \DOMNode ? trim($node->textContent) : '';
 	}
 
 	private static function childElement(\DOMElement $parent, string $name): ?\DOMElement {
@@ -635,13 +635,16 @@ class ScoreFacts {
 	}
 
 	/**
-	 * @param \DOMNodeList<\DOMNode>|false $list
+	 * The elements an XPath expression finds.
+	 *
 	 * @return list<\DOMElement>
 	 */
-	private static function elements(\DOMNodeList|false $list): array {
+	private static function elements(\DOMXPath $xpath, string $path): array {
 		$elements = [];
+		$list = $xpath->query($path);
 		if ($list !== false) {
-			foreach ($list as $node) {
+			for ($i = 0; $i < $list->length; $i++) {
+				$node = $list->item($i);
 				if ($node instanceof \DOMElement) {
 					$elements[] = $node;
 				}

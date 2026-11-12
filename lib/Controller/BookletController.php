@@ -74,13 +74,13 @@ class BookletController extends Controller {
 		return $this->run(function (string $uid) use ($id, $withLyrics): array {
 			// Checks the role and that the event exists; only pieces whose
 			// lyrics the rights allow are recorded as printed.
-			$allowed = [];
+			$items = [];
 			foreach ($this->sheets->booklet($id, $uid)['pieces'] as $piece) {
-				if ($piece['lyrics'] !== null || $piece['translation'] !== null) {
-					$allowed[] = $piece['itemId'];
+				if (is_int($piece['itemId']) && ($piece['lyrics'] !== null || $piece['translation'] !== null)
+					&& in_array($piece['itemId'], $withLyrics, true)) {
+					$items[] = $piece['itemId'];
 				}
 			}
-			$items = array_values(array_intersect($allowed, $withLyrics));
 			$this->audit->record($this->audit->newOperation(), $uid, 'event', $id, 'booklet_made', 'lyrics', null,
 				$items === [] ? '' : implode(',', $items));
 			return ['recorded' => true];

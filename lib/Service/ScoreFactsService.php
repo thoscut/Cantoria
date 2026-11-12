@@ -278,10 +278,11 @@ class ScoreFactsService {
 		$seen = [];
 		$valid = [];
 		foreach ($groups as $group) {
-			if (!is_array($group) || !in_array($group['group'] ?? null, ScoreFacts::GROUPS, true) || isset($seen[$group['group']])) {
+			$name = is_array($group) ? ($group['group'] ?? null) : null;
+			if (!is_array($group) || !is_string($name) || !in_array($name, ScoreFacts::GROUPS, true) || isset($seen[$name])) {
 				throw new InvalidInputException('Please give the voice groups of the choir.');
 			}
-			$seen[$group['group']] = true;
+			$seen[$name] = true;
 			$values = [];
 			foreach (['comfortLow', 'comfortHigh', 'limitLow', 'limitHigh'] as $key) {
 				$value = $group[$key] ?? null;
@@ -293,7 +294,8 @@ class ScoreFactsService {
 			if ($values['comfortLow'] > $values['comfortHigh'] || $values['limitLow'] > $values['comfortLow'] || $values['limitHigh'] < $values['comfortHigh']) {
 				throw new InvalidInputException('Please give each range from a lower to a higher tone; the possible range includes the comfortable one.');
 			}
-			$valid[] = ['group' => $group['group'], ...$values];
+			$valid[] = ['group' => $name, 'comfortLow' => $values['comfortLow'], 'comfortHigh' => $values['comfortHigh'],
+				'limitLow' => $values['limitLow'], 'limitHigh' => $values['limitHigh']];
 		}
 		usort($valid, fn (array $a, array $b): int => array_search($a['group'], ScoreFacts::GROUPS, true) <=> array_search($b['group'], ScoreFacts::GROUPS, true));
 		return $valid;
