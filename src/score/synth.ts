@@ -11,6 +11,11 @@
  * The same synthesizer renders practice audio files into an
  * OfflineAudioContext, so that a file sounds like the playback.
  *
+ * A second timbre sings (November 2026): a source rich in harmonics, like
+ * the vibrating vocal folds, through three resonances (formants) of a vowel
+ * – taken from the lyrics under the note, or a neutral "o" – with a wider
+ * vibrato. It is no singer, but closer to how a voice sounds in a choir.
+ *
  * Clean sound: the signal path is linear (no compressor: its fast gain
  * changes distorted chords audibly); a static soft limiter only bends peaks
  * that would otherwise clip. Every gain change is a ramp, also when the
@@ -49,6 +54,57 @@ const VIBRATO_RATE = 5
 const VIBRATO_CENTS = 5
 const VIBRATO_DELAY = 0.15
 const VIBRATO_FADE = 0.3
+
+/** The sung timbre: harmonics of the source fall off like the vocal folds' (1/n^1.2) */
+export const VOICE_HARMONICS = [0, ...Array.from({ length: 40 }, (_, index) => (index + 1) ** -1.2)]
+
+/** Wider vibrato of the sung timbre, as a factor of VIBRATO_CENTS */
+const VOICE_VIBRATO = 4
+const VOICE_VIBRATO_DELAY = 0.25
+
+export type Timbre = 'organ' | 'voice'
+export type Vowel = 'a' | 'e' | 'i' | 'o' | 'u' | 'neutral'
+
+/**
+ * Three formants per vowel: frequency in Hz and relative level (averages of
+ * adult voices). The bandwidths are the same for every vowel.
+ */
+export const FORMANTS: Record<Vowel, [number, number][]> = {
+	a: [[800, 1], [1150, 0.5], [2900, 0.25]],
+	e: [[400, 1], [2000, 0.4], [2550, 0.3]],
+	i: [[270, 1], [2300, 0.3], [3000, 0.25]],
+	o: [[450, 1], [800, 0.6], [2830, 0.15]],
+	u: [[325, 1], [700, 0.3], [2530, 0.1]],
+	neutral: [[500, 1], [1000, 0.5], [2600, 0.2]],
+}
+const FORMANT_BANDWIDTHS = [160, 200, 260]
+/** Levels the vowels to about the loudness of the organ tone (measured offline) */
+const VOWEL_GAIN: Record<Vowel, number> = { a: 2.5, e: 1.3, i: 1, o: 1.1, u: 1.1, neutral: 1.6 }
+
+/**
+ * Low tones lose more of their energy in the formants: a boost that is
+ * 1.8 at G2 and 1 from about E4 on.
+ *
+ * @param frequency - fundamental in Hz
+ */
+export function lowBoost(frequency: number): number {
+	return Math.max(1, Math.min(1.8, 1.8 - (frequency - 98) / 300))
+}
+
+/**
+ * Frequencies of the formants of a vowel for a tone. A singer raises the
+ * first formant above a high fundamental, so that a high tone keeps its
+ * strength; the synthesizer does the same.
+ *
+ * @param vowel - the vowel
+ * @param frequency - fundamental in Hz
+ */
+export function formantsFor(vowel: Vowel, frequency: number): { frequency: number, q: number, gain: number }[] {
+	return FORMANTS[vowel].map(([formant, gain], index) => {
+		const tuned = index === 0 ? Math.max(formant, frequency * 1.1) : formant
+		return { frequency: tuned, q: tuned / FORMANT_BANDWIDTHS[index], gain }
+	})
+}
 
 /** The limiter passes levels up to this unchanged … */
 export const LIMIT_KNEE = 0.7
@@ -116,6 +172,8 @@ export class Synth {
 	private readonly bus: GainNode
 	private readonly master: GainNode
 	private readonly wave: PeriodicWave
+	private voiceWave: PeriodicWave | null = null
+	private timbre: Timbre = 'organ'
 	private readonly vibrato: OscillatorNode
 	private readonly vibratoDepth: GainNode
 	private readonly sounding = new Set<SoundingNote>()
@@ -163,6 +221,15 @@ export class Synth {
 	}
 
 	/**
+	 * Organ tone or sung vowels, for the notes scheduled from now on.
+	 *
+	 * @param timbre - the timbre
+	 */
+	setTimbre(timbre: Timbre): void {
+		this.timbre = timbre
+	}
+
+	/**
 	 * Overall volume.
 	 *
 	 * @param value - 0 … 1
@@ -178,17 +245,21 @@ export class Synth {
 	 * @param start - start in AudioContext time
 	 * @param end - end in AudioContext time
 	 * @param gain - loudness 0 … 1
+	 * @param vowel - the vowel to sing in the sung timbre; default the neutral one
 	 */
-	note(pitch: number, start: number, end: number, gain: number): void {
+	note(pitch: number, start: number, end: number, gain: number, vowel?: Vowel | null): void {
 		const context = this.context
+		const sung = this.timbre === 'voice'
 		const oscillator = context.createOscillator()
-		oscillator.setPeriodicWave(this.wave)
-		oscillator.frequency.value = 440 * 2 ** ((pitch - 69) / 12)
+		const frequency = 440 * 2 ** ((pitch - 69) / 12)
+		oscillator.setPeriodicWave(sung ? this.sungWave() : this.wave)
+		oscillator.frequency.value = frequency
 		// The vibrato sets in after the attack: a steady pitch at the start
 		const depth = context.createGain()
+		const vibratoDelay = sung ? VOICE_VIBRATO_DELAY : VIBRATO_DELAY
 		depth.gain.value = 0
-		depth.gain.setValueAtTime(0, start + VIBRATO_DELAY)
-		depth.gain.linearRampToValueAtTime(1, start + VIBRATO_DELAY + VIBRATO_FADE)
+		depth.gain.setValueAtTime(0, start + vibratoDelay)
+		depth.gain.linearRampToValueAtTime(sung ? VOICE_VIBRATO : 1, start + vibratoDelay + VIBRATO_FADE)
 		this.vibratoDepth.connect(depth).connect(oscillator.detune)
 
 		const envelope = context.createGain()
@@ -201,7 +272,24 @@ export class Synth {
 		// The tail ends at a level far below hearing (about −65 dB); stop there
 		envelope.gain.setValueAtTime(0, release + RELEASE_TAIL)
 
-		oscillator.connect(envelope).connect(this.bus)
+		oscillator.connect(envelope)
+		const formants: AudioNode[] = []
+		if (sung) {
+			const chosen: Vowel = vowel ?? 'neutral'
+			const makeup = VOWEL_GAIN[chosen] * lowBoost(frequency)
+			for (const formant of formantsFor(chosen, frequency)) {
+				const filter = context.createBiquadFilter()
+				filter.type = 'bandpass'
+				filter.frequency.value = formant.frequency
+				filter.Q.value = formant.q
+				const level = context.createGain()
+				level.gain.value = formant.gain * makeup
+				envelope.connect(filter).connect(level).connect(this.bus)
+				formants.push(filter, level)
+			}
+		} else {
+			envelope.connect(this.bus)
+		}
 		oscillator.start(start)
 		oscillator.stop(release + RELEASE_TAIL + 0.01)
 		const sounding: SoundingNote = { oscillator, envelope, level: (time) => envelopeAt(time, start, end, gain) }
@@ -210,8 +298,19 @@ export class Synth {
 			this.vibratoDepth.disconnect(depth)
 			depth.disconnect()
 			envelope.disconnect()
+			formants.forEach((node) => node.disconnect())
 			this.sounding.delete(sounding)
 		}
+	}
+
+	/** The source of the sung timbre, made on first use */
+	private sungWave(): PeriodicWave {
+		if (!this.voiceWave) {
+			const imag = new Float32Array(VOICE_HARMONICS)
+			// Not normalized: the levels of the formants are measured against this source
+			this.voiceWave = this.context.createPeriodicWave(new Float32Array(imag.length), imag, { disableNormalization: true })
+		}
+		return this.voiceWave
 	}
 
 	/**

@@ -82,6 +82,8 @@ import { followMeasure, turnSystem } from '../score/follow.ts'
 import { scoreTarget } from '../score/hit.ts'
 import { ArchiveLimitError, readScoreText } from '../score/mxl.ts'
 import { lyricSyllables } from '../score/lyrics.ts'
+import { timbre } from '../score/sungVoice.ts'
+import { eventVowels } from '../score/vowels.ts'
 import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { mixedGains, startingTones, transposedFifths, transposeTimeline } from '../score/practising.ts'
@@ -933,6 +935,10 @@ const lyricsStep = ref<'0' | '1' | '2' | '3'>('0')
 /** Syllables of that voice along the playback (milestone 0.14) */
 const syllables = computed(() => model.value && lyricsVoice.value ? lyricSyllables(model.value, timeline.value, lyricsVoice.value) : [])
 
+/** The vowels the sung voice sings, from the lyrics under the notes (November 2026) */
+const vowels = computed(() => model.value ? eventVowels(model.value, timeline.value) : undefined)
+watch([timbre, vowels], () => player?.setTimbre(timbre.value, vowels.value))
+
 /** Singing along with the pitch display, and why the microphone did not work */
 const pitchShown = ref(false)
 const pitchProblem = ref('')
@@ -990,6 +996,7 @@ function ensurePlayer(): ScorePlayerType {
 		player.setGains(gains())
 		player.setMetronome(beats())
 		player.setLoop(loop.value)
+		player.setTimbre(timbre.value, vowels.value)
 	}
 	return player
 }

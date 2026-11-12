@@ -33,6 +33,7 @@ import PracticePitch from './PracticePitch.vue'
 import PracticeRecorder from './PracticeRecorder.vue'
 import PracticeTools from './PracticeTools.vue'
 import { readStored, writeStored } from '../storage.ts'
+import { sungVoice } from '../score/sungVoice.ts'
 
 export interface VoiceOption {
 	id: string
@@ -217,6 +218,10 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 				<div class="playback-settings__switches">
 					<NcCheckboxRadioSwitch v-model="repeats" type="switch">
 						{{ t('cantoria', 'Play repeats') }}
+					</NcCheckboxRadioSwitch>
+					<!-- the sung voice: vowels of the lyrics through formants; the organ tone otherwise -->
+					<NcCheckboxRadioSwitch v-model="sungVoice" type="switch">
+						{{ t('cantoria', 'Sung voice (vowels of the lyrics)') }}
 					</NcCheckboxRadioSwitch>
 					<!-- the score view adds "Scroll along" and the volume -->
 					<slot name="playback" />

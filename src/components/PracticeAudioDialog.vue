@@ -52,6 +52,8 @@ import {
 import { transposeText } from '../practiceLabels.ts'
 import { transposeTimeline } from '../score/practising.ts'
 import { RenderCancelled, renderTimeline } from '../score/render.ts'
+import { timbre } from '../score/sungVoice.ts'
+import { eventVowels } from '../score/vowels.ts'
 import { encodeWav } from '../score/wav.ts'
 import { zipStore } from '../score/zip.ts'
 
@@ -97,6 +99,8 @@ const title = computed(() => String(props.detail.work.title ?? ''))
 const rate = computed(() => props.tempoPercent / 100)
 /** The same events as the playback in the score view */
 const timeline = computed(() => transposeTimeline(playbackTimeline(props.model, props.range, props.repeats), props.transpose ?? 0))
+/** The vowels of the sung voice, when it is chosen */
+const vowels = computed(() => eventVowels(props.model, timeline.value))
 const from = computed(() => props.model.measures[props.range?.start ?? 0]?.number ?? '')
 const to = computed(() => props.model.measures[props.range?.end ?? props.model.measures.length - 1]?.number ?? '')
 /** Count-in at the start of every file: "0", "1" or "2" bars */
@@ -260,7 +264,15 @@ async function makeFile(part: PracticePart, onProgress: (done: number) => void, 
 		onProgress(1)
 		return data
 	}
-	const samples = await renderTimeline(timeline.value, partGains(part), { rate: rate.value, sampleRate: SAMPLE_RATE, signal, onProgress, countIn: countIn.value })
+	const samples = await renderTimeline(timeline.value, partGains(part), {
+		rate: rate.value,
+		sampleRate: SAMPLE_RATE,
+		signal,
+		onProgress,
+		countIn: countIn.value,
+		timbre: timbre.value,
+		vowelOf: vowels.value,
+	})
 	return encodeWav(samples, SAMPLE_RATE, channels.value === '2' ? 2 : 1, props.versionLine ? asciiText(props.versionLine) : '')
 }
 
