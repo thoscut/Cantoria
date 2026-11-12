@@ -11,18 +11,17 @@
  * says what to do and links the place where it is done. The states are
  * derived from what the page has loaded; nothing is stored.
  */
-import type { SetupStep, StepKey, StepStatus } from '../../settings.ts'
+import type { SetupStep, StepKey } from '../../settings.ts'
 import type { AccessReport, Settings } from '../../types.ts'
 
-import { mdiAlertOutline, mdiCheckCircleOutline, mdiCircleOutline, mdiHelpCircleOutline } from '@mdi/js'
 import { t } from '../../l10n.ts'
 import { generateUrl } from '@nextcloud/router'
 import { computed } from 'vue'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import GuideLink from '../GuideLink.vue'
 import { ADMIN_GUIDE, adminGuideUrl } from '../../docs.ts'
-import { translateLabel } from '../../format.ts'
 import { SETTINGS_SECTIONS, setupSteps } from '../../settings.ts'
+import { stepHint, stepStatusIcon as statusIcon, stepStatusText as statusText, stepTitle as title } from '../../setupLabels.ts'
 
 const props = defineProps<{
 	settings: Settings
@@ -34,107 +33,12 @@ const steps = computed(() => setupSteps(props.settings, props.report))
 const appUrl = generateUrl('/apps/cantoria/')
 
 /**
- * Name of a step.
- *
- * @param key - the step
- */
-function title(key: StepKey): string {
-	switch (key) {
-	case 'archive':
-		return t('cantoria', 'Archive folder')
-	case 'roles':
-		return t('cantoria', 'Roles and groups')
-	case 'access':
-		return t('cantoria', 'Access to the archive folder')
-	case 'modules':
-		return t('cantoria', 'Functions for your choir')
-	case 'import':
-		return t('cantoria', 'Import catalog')
-	default:
-		return t('cantoria', 'File sync')
-	}
-}
-
-/**
- * State of a step in words.
- *
- * @param status - state of the step
- */
-function statusText(status: StepStatus): string {
-	switch (status) {
-	case 'done':
-		return t('cantoria', 'Completed')
-	case 'missing':
-		return t('cantoria', 'Still to do')
-	case 'problem':
-		return t('cantoria', 'Needs attention')
-	default:
-		return t('cantoria', 'Not checked yet')
-	}
-}
-
-/**
- * Icon of a state (the text says the same).
- *
- * @param status - state of the step
- */
-function statusIcon(status: StepStatus): string {
-	switch (status) {
-	case 'done':
-		return mdiCheckCircleOutline
-	case 'problem':
-		return mdiAlertOutline
-	case 'unchecked':
-		return mdiHelpCircleOutline
-	default:
-		return mdiCircleOutline
-	}
-}
-
-/**
- * Names of roles as one text, as the role settings show them.
- *
- * @param roles - role keys
- */
-function roleNames(roles: string[]): string {
-	return roles.map((role) => translateLabel(props.settings.roleLabels[role] ?? role)).join(', ')
-}
-
-/**
  * What to do for a step that is not done.
  *
  * @param step - the step
  */
 function hint(step: SetupStep): string {
-	const without = step.rolesWithoutGroup ?? []
-	switch (step.key) {
-	case 'archive':
-		return t('cantoria', 'Choose the folder in Nextcloud that holds the score files.')
-	case 'roles':
-		if (step.status === 'problem') {
-			return t('cantoria', 'A group of a role no longer exists. Choose another group for the role.')
-		}
-		if (without.includes('member')) {
-			return t('cantoria', 'Give the role "Choir members" a group. Otherwise nobody sees what the conductor shares with the choir.')
-		}
-		if (without.some((role) => role !== 'librarian')) {
-			return t('cantoria', 'The functions you chose need a group for these roles: {roles}.', { roles: roleNames(without) })
-		}
-		return t('cantoria', 'Give at least the catalog role (music librarians) a group.')
-	case 'access':
-		if (step.status === 'missing') {
-			return t('cantoria', 'Choose the archive folder first.')
-		}
-		return step.status === 'problem'
-			? t('cantoria', 'Some accounts cannot open the archive folder. Share it with their groups (reading is enough) and check again.')
-			: t('cantoria', 'Check whether everybody with a role can open the archive folder.')
-	case 'modules':
-		return t('cantoria', 'Choose what Cantoria should do for your choir: keep the archive in order, plan concerts, let the singers practise, or publish pages.')
-	case 'import':
-		return t('cantoria', 'A music librarian imports the catalog (Archive management → Import catalog, with a template) or starts without one, with the first new accession.')
-	default:
-		return t('cantoria', 'A music librarian links the files in the app: Archive management → Run file sync.')
-	}
+	return stepHint(step, props.settings.roleLabels)
 }
 
 /**

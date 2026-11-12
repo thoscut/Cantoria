@@ -12,6 +12,15 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Added
 
+- **Guided setup.** On a new instance the settings page opens a dialog that
+  leads through the first configuration one page at a time: a welcome with
+  what is needed, then five steps (archive folder, functions for the choir,
+  roles and groups, the access check, import and file sync in the app) and
+  an overview with the state of each step. It uses the same forms as the
+  page and starts on the first step that is not done. **Continue** saves
+  what a page holds; going back or closing with input that is not saved asks
+  first. **Set up step by step** opens it again; the empty app links to it
+  for administrators.
 - **Ranges of the voices and the choir profile** (module "Facts from the
   scores"). The app reads from every MusicXML file the range and tessitura
   of each voice, the first tones, the keys and the first bars, in the
@@ -55,6 +64,8 @@ All notable changes to this app are documented in this file. The format follows
 
 ### Changed
 
+- **Settings page.** Leaving the page with a chosen but unsaved archive
+  folder or unsaved role groups asks first.
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
 - The version on `main` is 0.18.0-dev.1 for the new table and routes.

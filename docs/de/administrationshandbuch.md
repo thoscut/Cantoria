@@ -39,6 +39,27 @@ Cantoria**. Die Liste **Einrichtung** oben auf der Seite zeigt diese sechs
 Schritte, jeden als *Erledigt*, *Noch zu tun* oder *Bitte prüfen*, mit einem
 Link an die Stelle, wo er erledigt wird.
 
+Auf einer neuen Instanz (kein Archivordner, keine Funktionen gewählt, keine
+Exemplare) öffnet die Seite von selbst die **geführte Einrichtung**: einen
+Dialog, der die Einrichtung Seite für Seite durchgeht. Nach einer Begrüßung
+kommen fünf Schritte: Archivordner, Funktionen, Rollen und Gruppen, die
+Zugriffsprüfung (sie läuft von selbst) und eine Seite für Import und
+Dateiabgleich, die in der App geschehen. Eine Übersicht schließt ihn ab. Die
+Schritte nutzen dieselben Formulare wie die Seite; solange der Dialog offen
+ist, zeigt die Seite nur die Liste **Einrichtung**.
+
+- **Weiter** speichert, was du auf einer Seite eingetragen hast (**Speichern
+  und weiter**), und bleibt dort, wenn das Speichern scheitert. Auf der Seite
+  der Funktionen übernimmt es sie so, wie sie dort stehen; damit ist dieser
+  Schritt erledigt.
+- Zurückgehen, zu einer anderen Seite springen oder Schließen fragt vorher
+  nach, wenn etwas nicht gespeichert ist.
+- Jeder Schritt lässt sich überspringen. **Später** schließt den Dialog, und
+  der Browser merkt es sich.
+- **Schritt für Schritt einrichten** oben auf der Seite öffnet ihn jederzeit
+  wieder, beim ersten Schritt, der noch nicht erledigt ist; für die
+  Administration verweist auch die leere App darauf.
+
 1. **Archivordner** – wähle den Ordner mit den Notendateien
    ([Abschnitt 3](#3-archivordner)). Gleich nach der Wahl, vor dem Speichern,
    zeigt die Seite, welche Konten der Rollengruppen ihn nicht öffnen können.

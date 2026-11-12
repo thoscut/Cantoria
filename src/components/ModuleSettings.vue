@@ -164,6 +164,35 @@ async function apply(change: { modules: Record<string, boolean> } | { preset: st
 	}
 }
 
+/**
+ * For the guided setup: keep the functions as they are shown. The server
+ * notes that they were chosen (the step of the setup is done) when it gets a
+ * change, also one that changes nothing; so one switch is sent as it stands.
+ * A switch that is off, or else one that needs nothing, has no side effect.
+ *
+ * @return whether the server took it
+ */
+async function keepAsShown(): Promise<boolean> {
+	const list = modules.value
+	const module = list.find((candidate) => !candidate.enabled) ?? list.find((candidate) => candidate.requires.length === 0) ?? list[0]
+	if (module === undefined || busy.value) {
+		return false
+	}
+	busy.value = true
+	try {
+		const result = await saveModules({ modules: { [module.key]: module.enabled } })
+		emit('changed', result.modules)
+		return true
+	} catch (error) {
+		showError(errorMessage(error))
+		return false
+	} finally {
+		busy.value = false
+	}
+}
+
+defineExpose({ keepAsShown })
+
 // ---- switching a module --------------------------------------------------------
 
 /** A module to switch off that others need: asked first. */

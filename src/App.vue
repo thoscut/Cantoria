@@ -39,6 +39,7 @@ import { formatDate } from './format.ts'
 import { applyModules } from './modules.ts'
 import { currentEventId, currentView, navigate, openDueTarget, startNavigation, switchedOffNotice } from './navigation.ts'
 import { startNotice } from './notices.ts'
+import { WIZARD_HASH } from './settings.ts'
 import { DEFAULT_VIEW, isMissingCopy, parseStartParams } from './startParams.ts'
 import {
 	archiveDialogOpen,
@@ -259,7 +260,8 @@ function openArchive(): void {
 }
 
 /** The settings are a page under Administration → Cantoria. */
-const settingsUrl = adminSettingsUrl()
+/** The settings page with the guided setup open */
+const setupUrl = adminSettingsUrl(WIZARD_HASH)
 </script>
 
 <template>
@@ -352,11 +354,11 @@ const settingsUrl = adminSettingsUrl()
 								</template>
 								{{ t('cantoria', 'Open archive management') }}
 							</NcButton>
-							<NcButton v-if="canChangeSettings" :href="settingsUrl">
+							<NcButton v-if="canChangeSettings" :href="setupUrl" :variant="isLibrarian ? 'secondary' : 'primary'">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiCogOutline" />
 								</template>
-								{{ t('cantoria', 'Open settings') }}
+								{{ t('cantoria', 'Set up step by step') }}
 							</NcButton>
 						</div>
 					</template>
