@@ -20,8 +20,11 @@ import {
 	WIZARD_STEPS,
 	wizardOpensByItself,
 	wizardStartStep,
+	settingsStepsOpen,
 	wizardStepKeys,
+	wizardStepNumber,
 	wizardStepOf,
+	WIZARD_STEP_COUNT,
 } from '../settings.ts'
 
 /** An access check as the server sends it (invented accounts and groups). */
@@ -303,6 +306,20 @@ describe('guided setup', () => {
 		for (const key of covered) {
 			expect(wizardStepKeys(wizardStepOf(key))).toContain(key)
 		}
+	})
+
+	it('numbers the five steps; welcome and overview frame them', () => {
+		expect(WIZARD_STEPS.map((page) => wizardStepNumber(page))).toEqual([null, 1, 2, 3, 4, 5, null])
+		expect(WIZARD_STEP_COUNT).toBe(5)
+	})
+
+	it('is the main action of the page while archive folder, functions or roles are open', () => {
+		const open = (raw: Record<string, unknown>) => settingsStepsOpen(setupSteps(normalizeSettings(raw), null))
+		expect(open({})).toBe(true)
+		expect(open({ ...ready, roles: {} })).toBe(true)
+		expect(open({ ...ready, modulesChosen: false })).toBe(true)
+		// The access check, import and file sync do not count: they are not forms of the page
+		expect(open(ready)).toBe(false)
 	})
 })
 

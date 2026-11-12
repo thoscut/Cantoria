@@ -396,6 +396,37 @@ export type WizardStepKey = 'welcome' | 'archive' | 'modules' | 'roles' | 'acces
 /** The pages of the guided setup, in this order. */
 export const WIZARD_STEPS: readonly WizardStepKey[] = ['welcome', 'archive', 'modules', 'roles', 'access', 'catalog', 'done']
 
+/**
+ * The pages that are steps and carry a number ("Step 2 of 5"); welcome and
+ * overview frame them. Import and file sync share one page, because both
+ * happen in the app.
+ */
+const WIZARD_NUMBERED: readonly WizardStepKey[] = ['archive', 'modules', 'roles', 'access', 'catalog']
+
+/** How many pages of the guided setup are steps. */
+export const WIZARD_STEP_COUNT = WIZARD_NUMBERED.length
+
+/**
+ * The number of a page among the steps, from 1; null for welcome and overview.
+ *
+ * @param key - page of the guided setup
+ */
+export function wizardStepNumber(key: WizardStepKey): number | null {
+	const position = WIZARD_NUMBERED.indexOf(key)
+	return position < 0 ? null : position + 1
+}
+
+/**
+ * Whether the part of the setup that is done on the settings page is still
+ * open: archive folder, functions or roles. The page then offers the guided
+ * setup as its main action.
+ *
+ * @param steps - the setup steps (setupSteps)
+ */
+export function settingsStepsOpen(steps: SetupStep[]): boolean {
+	return steps.some((step) => (step.key === 'archive' || step.key === 'modules' || step.key === 'roles') && step.status !== 'done')
+}
+
 /** Hash of the settings page that opens the guided setup, e.g. from the app. */
 export const WIZARD_HASH = 'cantoria-setup-wizard'
 

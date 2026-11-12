@@ -316,13 +316,11 @@ export const singular = {
 		'auf Wunsch euer bisheriges Werkverzeichnis als CSV- oder Tabellendatei.',
 		'auf Wunsch Ihr bisheriges Werkverzeichnis als CSV- oder Tabellendatei.',
 	],
-	'Each page has the same form as the settings page. Save there before you go on; going on saves nothing.': [
-		'Jede Seite hat dasselbe Formular wie die Einstellungsseite. Speichere dort, bevor du weitergehst; „Weiter“ speichert nichts.',
-		'Jede Seite hat dasselbe Formular wie die Einstellungsseite. Speichern Sie dort, bevor Sie weitergehen; „Weiter“ speichert nichts.',
-	],
-	'The catalog and the files are brought in by a music librarian, in the app under Archive management:': 'Werkverzeichnis und Dateien bringt die Archivverwaltung in der App unter „Archivverwaltung“ ein:',
-	'Import catalog: a template, a dry run, then the import. A choir without a catalog file starts with the first new accession.': 'Werkverzeichnis importieren: eine Vorlage, ein Probelauf, dann der Import. Ein Chor ohne Verzeichnisdatei beginnt mit dem ersten Neuzugang.',
-	'Run file sync: it links the files of the archive folder to the copies.': 'Dateiabgleich starten: Er verknüpft die Dateien des Archivordners mit den Exemplaren.',
+	'Every step can be skipped and changed later on the settings page.': 'Jeder Schritt lässt sich überspringen und später auf der Einstellungsseite ändern.',
+	'Save and continue': 'Speichern und weiter',
+	'"Continue" keeps the functions as they are shown here.': '„Weiter“ übernimmt die Funktionen so, wie sie hier stehen.',
+	'Cantoria is set up. Everything can be changed later on the settings page.': 'Cantoria ist eingerichtet. Alles lässt sich später auf der Einstellungsseite ändern.',
+	'These two steps are done in the app by a music librarian (catalog role), not on this page.': 'Diese beiden Schritte erledigt die Archivverwaltung (Rolle „Bestand“) in der App, nicht auf dieser Seite.',
 	'Restore a complete backup instead': 'Stattdessen eine vollständige Sicherung wiederherstellen',
 	'This is where the setup stands. Steps that are still open stay in the list "Setting up" on the settings page.': 'So steht die Einrichtung. Offene Schritte bleiben in der Liste „Einrichtung“ auf der Einstellungsseite.',
 	'Files in the former folder are not moved or deleted; after the next file sync they are listed as "not found" until they are in the new folder too.': 'Dateien im bisherigen Ordner werden weder verschoben noch gelöscht; nach dem nächsten Dateiabgleich stehen sie als „nicht gefunden“ da, bis sie auch im neuen Ordner liegen.',
@@ -330,9 +328,9 @@ export const singular = {
 	'It could not be checked who can open this folder: {error}': 'Es ließ sich nicht prüfen, wer diesen Ordner öffnen kann: {error}',
 	'These accounts of the role groups cannot open this folder, so the app will show them no files:': 'Diese Konten der Rollengruppen können diesen Ordner nicht öffnen; die App wird ihnen deshalb keine Dateien zeigen:',
 	'{account} – group {group} ({role})': '{account} – Gruppe {group} ({role})',
-	'No group has a role yet. Give the roles their groups below; then check access.': [
-		'Noch keine Gruppe hat eine Rolle. Ordne den Rollen unten ihre Gruppen zu und prüfe dann den Zugriff.',
-		'Noch keine Gruppe hat eine Rolle. Ordnen Sie den Rollen unten ihre Gruppen zu und prüfen Sie dann den Zugriff.',
+	'No group has a role yet. Give the roles their groups; then check access.': [
+		'Noch keine Gruppe hat eine Rolle. Ordne den Rollen ihre Gruppen zu und prüfe dann den Zugriff.',
+		'Noch keine Gruppe hat eine Rolle. Ordnen Sie den Rollen ihre Gruppen zu und prüfen Sie dann den Zugriff.',
 	],
 	'Every checked account of the role groups can open this folder.': 'Alle geprüften Konten der Rollengruppen können diesen Ordner öffnen.',
 	'These groups no longer exist: {groups}. Remove them from their role and choose the right group instead.': [
@@ -2918,7 +2916,7 @@ export const singular = {
 	'Revision valid since': 'Stand gilt seit',
 	'The number of the work at the collecting society, e.g. from the GEMA repertoire search. It goes into the song order of a concert.': 'Die Nummer des Werks bei der Verwertungsgesellschaft, z. B. aus der Repertoiresuche der GEMA. Sie steht in der Liederfolge eines Konzerts.',
 	// ---- 0.12: one word, one meaning (teilen, not freigeben, for shares) ----
-	'Everyone with a role needs access to this folder in their own Nextcloud, e.g. through a share or a group folder. "Access to the archive folder" below shows who cannot open it.': 'Alle mit einer Rolle brauchen in ihrer eigenen Nextcloud Zugriff auf diesen Ordner, z. B. weil er mit ihnen geteilt ist oder in einem Team- bzw. Gruppenordner liegt. „Zugriff auf den Archivordner“ weiter unten zeigt, wer ihn nicht öffnen kann.',
+	'Everyone with a role needs access to this folder in their own Nextcloud, e.g. through a share or a group folder. "Access to the archive folder" shows who cannot open it.': 'Alle mit einer Rolle brauchen in ihrer eigenen Nextcloud Zugriff auf diesen Ordner, z. B. weil er mit ihnen geteilt ist oder in einem Team- bzw. Gruppenordner liegt. „Zugriff auf den Archivordner“ zeigt, wer ihn nicht öffnen kann.',
 	'The app reads files only with the permissions of the person who uses it. Whoever cannot open the archive folder in their own Nextcloud sees the catalog, but no scores, scans or practice files. The check looks at every member of the role groups; it only reads and shares nothing.': 'Die App liest Dateien nur mit den Rechten der Person, die sie benutzt. Wer den Archivordner in der eigenen Nextcloud nicht öffnen kann, sieht das Werkverzeichnis, aber keine Noten, Scans oder Übe-Dateien. Die Prüfung sieht sich jedes Mitglied der Rollengruppen an; sie liest nur und teilt nichts.',
 	'Share the archive folder with the groups of the roles, or keep it in a team folder or group folder that these groups can open. Sharing with single persons is possible, but a group follows changes of office by itself.': [
 		'Teile den Archivordner mit den Gruppen der Rollen oder lege ihn in einen Team- bzw. Gruppenordner, den diese Gruppen öffnen können. Mit einzelnen Personen zu teilen ist möglich, aber eine Gruppe folgt einem Wechsel im Amt von selbst.',

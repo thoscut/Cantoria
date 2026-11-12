@@ -16,14 +16,16 @@
  * The guided setup opens by itself on an untouched instance (no archive
  * folder, no functions, no copies) unless it was put off in this browser,
  * and with the hash #cantoria-setup-wizard (link from the app); the button
- * in the first section opens it at any time.
+ * in the first section opens it at any time. While it is open the sections
+ * below are not shown: it uses the same forms, and two of each on one page
+ * would share their ids and their unsaved input.
  */
 import type { AccessReport, RepertoireThresholds, Settings } from '../../types.ts'
 
 import { mdiArrowRight, mdiMapMarkerPath } from '@mdi/js'
 import { t } from '../../l10n.ts'
 import { generateUrl } from '@nextcloud/router'
-import { nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
@@ -37,8 +39,8 @@ import SetupChecklist from './SetupChecklist.vue'
 import SetupWizard from './SetupWizard.vue'
 import { errorMessage, fetchSettings } from '../../api.ts'
 import { ADMIN_GUIDE, adminGuideUrl } from '../../docs.ts'
-import { focusAfterDialog } from '../../focus.ts'
-import { SETTINGS_SECTIONS, WIZARD_HASH, WIZARD_STORAGE_KEY, wizardOpensByItself } from '../../settings.ts'
+import { focusAfterDialog, focusElement } from '../../focus.ts'
+import { SETTINGS_SECTIONS, settingsStepsOpen, setupSteps, WIZARD_HASH, WIZARD_STORAGE_KEY, wizardOpensByItself } from '../../settings.ts'
 import { readStored, writeStored } from '../../storage.ts'
 import BackupRestore from '../BackupRestore.vue'
 import FolderBookSettings from '../FolderBookSettings.vue'
@@ -55,9 +57,9 @@ const accessRequested = window.location.hash === '#' + SETTINGS_SECTIONS.access
 /** Opened through the link "Set up step by step" of the app */
 const wizardRequested = window.location.hash === '#' + WIZARD_HASH
 const wizardOpen = ref(false)
-/** The module switches of the page load again after the guided setup changed them */
-const modulesKey = ref(0)
 const wizardButton = useTemplateRef('wizardButton')
+/** While archive folder, functions or roles are open, the guided setup is the main action of the page */
+const setupOpen = computed(() => settings.value !== null && settingsStepsOpen(setupSteps(settings.value, accessReport.value)))
 
 const appUrl = generateUrl('/apps/cantoria/')
 const sections = SETTINGS_SECTIONS
@@ -96,7 +98,12 @@ async function load(): Promise<void> {
 	loading.value = settings.value === null
 	loadError.value = ''
 	try {
-		apply(await fetchSettings())
+		const value = await fetchSettings()
+		// Decided before the sections are shown, so that they do not load only to make way
+		if (settings.value === null && wizardOpensByItself(value, readStored(WIZARD_STORAGE_KEY), wizardRequested)) {
+			wizardOpen.value = true
+		}
+		apply(value)
 	} catch (error) {
 		loadError.value = errorMessage(error)
 	} finally {
@@ -111,10 +118,22 @@ async function load(): Promise<void> {
  * @param finished - "Finish" on the last page, not "Later"
  */
 function closeWizard(finished: boolean): void {
+	leaveWizard(finished)
+	focusAfterDialog(wizardButton)
+}
+
+/**
+ * Close the guided setup and remember it. The hash that opened it goes, so
+ * that loading the page again does not open it once more.
+ *
+ * @param finished - "Finish" on the last page
+ */
+function leaveWizard(finished: boolean): void {
 	wizardOpen.value = false
 	writeStored(WIZARD_STORAGE_KEY, finished ? 'done' : 'later')
-	modulesKey.value++
-	focusAfterDialog(wizardButton)
+	if (window.location.hash === '#' + WIZARD_HASH) {
+		window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+	}
 }
 
 /**
@@ -123,17 +142,19 @@ function closeWizard(finished: boolean): void {
  * @param section - the section
  */
 async function wizardToSection(section: keyof typeof SETTINGS_SECTIONS): Promise<void> {
-	wizardOpen.value = false
-	modulesKey.value++
+	leaveWizard(false)
+	// The sections come back only now
 	await nextTick()
-	document.getElementById(SETTINGS_SECTIONS[section])?.scrollIntoView({ block: 'start' })
+	const target = document.getElementById(SETTINGS_SECTIONS[section])
+	target?.scrollIntoView({ block: 'start' })
+	// The focus follows (WCAG 2.4.3): into the section, else to the button of the guided setup
+	if (!focusElement(target)) {
+		focusElement(wizardButton.value)
+	}
 }
 
 onMounted(async () => {
 	await load()
-	if (settings.value && wizardOpensByItself(settings.value, readStored(WIZARD_STORAGE_KEY), wizardRequested)) {
-		wizardOpen.value = true
-	}
 	if (accessRequested) {
 		// The section exists only now; the browser could not jump to it.
 		await nextTick()
@@ -153,7 +174,7 @@ onMounted(async () => {
 				<div class="cantoria-settings__buttons">
 					<NcButton v-if="settings"
 						ref="wizardButton"
-						variant="primary"
+						:variant="setupOpen ? 'primary' : 'secondary'"
 						@click="wizardOpen = true">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiMapMarkerPath" />
@@ -184,7 +205,7 @@ onMounted(async () => {
 			</NcButton>
 		</NcNoteCard>
 
-		<template v-if="settings">
+		<template v-if="settings && !wizardOpen">
 			<NcSettingsSection :id="sections.archive"
 				:name="t('cantoria', 'Archive folder')"
 				:doc-url="adminGuideUrl(ADMIN_GUIDE.archive)">
@@ -213,7 +234,7 @@ onMounted(async () => {
 			<NcSettingsSection :id="sections.modules"
 				:name="t('cantoria', 'Functions and modules')"
 				:doc-url="adminGuideUrl(ADMIN_GUIDE.modules)">
-				<ModuleSettings :key="modulesKey" @changed="load" />
+				<ModuleSettings @changed="load" />
 			</NcSettingsSection>
 
 			<NcSettingsSection v-if="settings.repertoire"
