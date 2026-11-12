@@ -33,7 +33,7 @@ import type { FocusTarget } from '../focus.ts'
 import type { PieceForDevice } from '../offline/rules.ts'
 import type { MemberLink, MemberPageState, MemberPracticeAudioInput } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline, mdiNoteTextOutline, mdiOpenInNew } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiNoteTextOutline, mdiOpenInNew } from '@mdi/js'
 import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
@@ -45,6 +45,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import EmptyArt from '../components/EmptyArt.vue'
 import GuideLink from '../components/GuideLink.vue'
 import Attribution from './Attribution.vue'
 import DiscardRecording from './DiscardRecording.vue'
@@ -485,7 +486,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 					:name="t('cantoria', 'Nothing has been shared with you yet')"
 					:description="t('cantoria', 'When the conductor or the music librarians share a piece or an excerpt with the choir members, it appears here. Each link is valid for at most six months.')">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiMusicNoteOutline" />
+						<EmptyArt kind="sheet" />
 					</template>
 					<template #action>
 						<NcButton :href="guideUrl"

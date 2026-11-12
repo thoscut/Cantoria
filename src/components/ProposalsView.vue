@@ -11,7 +11,7 @@
  */
 import type { Detail, Entry, Proposal } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiCheck, mdiClose, mdiHomeOutline, mdiInboxOutline } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiCheck, mdiClose, mdiHomeOutline } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
 import { n, t } from '../l10n.ts'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -21,6 +21,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import ActionDialog from './ActionDialog.vue'
+import EmptyArt from './EmptyArt.vue'
 import ReloadError from './ReloadError.vue'
 import ViewHeader from './ViewHeader.vue'
 import { acceptProposal, errorMessage, fetchEntry, fetchProposals, rejectProposal } from '../api.ts'
@@ -242,7 +243,7 @@ async function decide(): Promise<void> {
 				:name="t('cantoria', 'The inbox is empty')"
 				:description="t('cantoria', 'There are no open proposals. Tools and transcription rounds put their proposals here; nothing else to do now.')">
 				<template #icon>
-					<NcIconSvgWrapper :path="mdiInboxOutline" />
+					<EmptyArt kind="tray" />
 				</template>
 				<template #action>
 					<NcButton @click="navigate('due')">

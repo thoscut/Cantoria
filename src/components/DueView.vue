@@ -10,13 +10,14 @@
  */
 import type { DueCard, DueResult } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiBookOpenPageVariantOutline, mdiCheckCircleOutline } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiBookOpenPageVariantOutline } from '@mdi/js'
 import { t } from '../l10n.ts'
 import { computed, onMounted, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import EmptyArt from './EmptyArt.vue'
 import NextConcert from './NextConcert.vue'
 import TaskList from './TaskList.vue'
 import ViewHeader from './ViewHeader.vue'
@@ -151,7 +152,7 @@ const somethingHidden = computed(() => personalView.value.cards.length > 0)
 					:name="t('cantoria', 'Nothing is due')"
 					:description="t('cantoria', 'There are no open tasks or other things to do for your roles.')">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiCheckCircleOutline" />
+						<EmptyArt kind="done" />
 					</template>
 					<template #action>
 						<NcButton @click="navigate('catalog')">

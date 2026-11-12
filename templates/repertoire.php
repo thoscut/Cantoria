@@ -40,6 +40,28 @@ $texts = $_['texts'];
 		margin-top: 0;
 	}
 
+	/* The colour and the logo of the choir's Nextcloud above the list */
+	.cantoria-repertoire__band {
+		height: 72px;
+		margin-bottom: calc(4 * var(--default-grid-baseline, 4px));
+		border-radius: var(--border-radius-container, 16px);
+		background:
+			var(--image-logo, none) center / auto 44px no-repeat,
+			var(--color-primary, #00679e);
+	}
+
+	@media (forced-colors: active) {
+		.cantoria-repertoire__band {
+			border: 1px solid CanvasText;
+		}
+	}
+
+	@media print {
+		.cantoria-repertoire__band {
+			display: none;
+		}
+	}
+
 	.cantoria-repertoire__list {
 		padding: 0;
 		list-style: none;
@@ -79,6 +101,7 @@ $texts = $_['texts'];
 
 <main class="cantoria-repertoire-page">
 <div class="cantoria-repertoire">
+	<div class="cantoria-repertoire__band" aria-hidden="true"></div>
 	<h2><?php p($texts['heading']); ?></h2>
 	<p><?php p($texts['intro']); ?></p>
 	<?php if ($_['entries'] === []): ?>

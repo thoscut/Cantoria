@@ -88,3 +88,39 @@ body[data-themes*='dark'] {
 		--cantoria-shadow: none;
 	}
 }
+
+/* A drawing in an empty view is larger than Nextcloud's icons (EmptyArt.vue). */
+.empty-content__icon:has(.empty-art) {
+	inline-size: 96px;
+	block-size: 96px;
+	opacity: 0.55;
+}
+
+.empty-content__icon:has(.empty-art) svg.empty-art {
+	inline-size: 96px !important;
+	block-size: 96px !important;
+	max-inline-size: none !important;
+	max-block-size: none !important;
+}
+
+/* Public pages in the look of the choir: a band in the colour of the
+   Nextcloud's theming with its logo, above what the choir shares. */
+.cantoria-choir-band {
+	block-size: 72px;
+	border-radius: var(--border-radius-container, 16px);
+	background:
+		var(--image-logo, none) center / auto 44px no-repeat,
+		linear-gradient(135deg, var(--color-primary, #00679e), color-mix(in srgb, var(--color-primary, #00679e) 72%, #000));
+}
+
+@media (forced-colors: active) {
+	.cantoria-choir-band {
+		border: 1px solid CanvasText;
+	}
+}
+
+@media print {
+	.cantoria-choir-band {
+		display: none;
+	}
+}

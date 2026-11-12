@@ -3,7 +3,7 @@
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
-	<section class="arc" aria-labelledby="programme-arc-title">
+	<section class="arc cantoria-appear" aria-labelledby="programme-arc-title">
 		<h3 id="programme-arc-title" class="arc__title">
 			{{ t('cantoria', 'The programme at a glance') }}
 		</h3>

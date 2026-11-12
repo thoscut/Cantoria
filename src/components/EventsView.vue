@@ -12,7 +12,7 @@
 import type { CalendarMessage } from '../calendar.ts'
 import type { ChoirEvent, EventKind } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiCalendarExportOutline, mdiCalendarPlusOutline, mdiCalendarStarOutline, mdiFormatListNumbered, mdiPlus } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiCalendarExportOutline, mdiCalendarPlusOutline, mdiPlus } from '@mdi/js'
 import { n, t } from '../l10n.ts'
 import { computed, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -22,6 +22,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import CalendarDialog from './CalendarDialog.vue'
+import EmptyArt from './EmptyArt.vue'
 import ReloadError from './ReloadError.vue'
 import EventDialog from './EventDialog.vue'
 import ViewHeader from './ViewHeader.vue'
@@ -213,8 +214,7 @@ function onCreated(event: ChoirEvent): void {
 					? t('cantoria', 'Plan a new concert, or import earlier concerts in the archive management.')
 					: t('cantoria', 'Create a new song list, or import earlier song lists in the archive management.')">
 				<template #icon>
-					<!-- the icons of the navigation -->
-					<NcIconSvgWrapper :path="isConcert ? mdiCalendarStarOutline : mdiFormatListNumbered" />
+					<EmptyArt :kind="isConcert ? 'stand' : 'binder'" />
 				</template>
 			</NcEmptyContent>
 			<table v-else class="events-view__table">
