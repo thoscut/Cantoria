@@ -85,6 +85,7 @@ import { ArchiveLimitError, readScoreText } from '../score/mxl.ts'
 import { lyricSyllables } from '../score/lyrics.ts'
 import { timbre } from '../score/sungVoice.ts'
 import { eventVowels } from '../score/vowels.ts'
+import { groupOf, voiceColor } from '../score/voiceGroups.ts'
 import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { mixedGains, startingTones, transposedFifths, transposeTimeline } from '../score/practising.ts'
@@ -962,7 +963,13 @@ watch(focusVoice, (voice) => {
 })
 
 /** Display names of the voices for the mixer */
-const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice) })))
+const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice), group: groupOf(labelOf(voice)) })))
+
+/** The focus voice in the colour of its group (design proposal V2), else the neutral focus colour */
+const focusStyle = computed(() => {
+	const group = focusVoice.value ? groupOf(labelOf(focusVoice.value)) : null
+	return group ? { '--score-focus': voiceColor(group) } : undefined
+})
 
 /**
  * Give the starting tones from the current place: of the focus voice when
@@ -1475,7 +1482,7 @@ onBeforeUnmount(() => {
 		@close="requestClose">
 		<!-- Key handling for the whole viewer: Space plays/pauses (see onKeydown) -->
 		<!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -->
-		<div class="score-viewer" @keydown="onKeydown">
+		<div class="score-viewer" :style="focusStyle" @keydown="onKeydown">
 			<!-- not a <header>: outside <main> that would be a second banner landmark -->
 			<div class="score-viewer__header">
 				<h2 :id="headingId" class="score-viewer__title">

@@ -16,14 +16,15 @@
  *
  * Plain functions without a browser, tested in `scoreFacts.test.ts`.
  */
+import type { VoiceGroup } from './score/voiceGroups.ts'
+
 import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
 import { apiUrl } from './api.ts'
 import { midiPitchName, transposedFifths } from './score/practising.ts'
+import { GROUPS } from './score/voiceGroups.ts'
 
-/** Voice groups of a choir, top to bottom */
-export const GROUPS = ['S', 'A', 'T', 'B'] as const
-export type VoiceGroup = typeof GROUPS[number]
+export { GROUPS, groupLabel } from './score/voiceGroups.ts'
+export type { VoiceGroup } from './score/voiceGroups.ts'
 
 export interface FactVoice {
 	name: string | null
@@ -358,24 +359,4 @@ export function stepBetween(from: number, to: number): number {
  */
 export function paeText(incipit: Incipit): string {
 	return `@clef:${incipit.clef}\n@keysig:${incipit.keysig}\n@timesig:${incipit.timesig}\n@data:${incipit.data}\n`
-}
-
-/**
- * Name of a voice group for people.
- *
- * @param group - S, A, T, B or null
- */
-export function groupLabel(group: VoiceGroup | null): string {
-	switch (group) {
-	case 'S':
-		return t('cantoria', 'Soprano')
-	case 'A':
-		return t('cantoria', 'Alto')
-	case 'T':
-		return t('cantoria', 'Tenor')
-	case 'B':
-		return t('cantoria', 'Bass')
-	default:
-		return t('cantoria', 'Voice without a group')
-	}
 }

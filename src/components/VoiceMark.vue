@@ -17,10 +17,10 @@
  * letter always goes with the colour, so the colour never carries the
  * information alone.
  */
-import type { VoiceGroup } from '../scoreFacts.ts'
+import type { VoiceGroup } from '../score/voiceGroups.ts'
 
 import { computed } from 'vue'
-import { groupLabel } from '../scoreFacts.ts'
+import { groupLabel } from '../score/voiceGroups.ts'
 
 const props = defineProps<{
 	group: VoiceGroup | null

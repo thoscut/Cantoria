@@ -16,6 +16,7 @@ import type { PlayMode } from '../score/player.ts'
 import type { TargetNote } from '../score/pitch.ts'
 import type { Mix } from '../score/practising.ts'
 import type { LyricSyllable } from '../score/lyrics.ts'
+import type { VoiceGroup } from '../score/voiceGroups.ts'
 
 import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 import { t } from '../l10n.ts'
@@ -57,7 +58,7 @@ const props = withDefaults(defineProps<{
 	tempoMin: number
 	tempoMax: number
 	tempoHint: string
-	mixerVoices: { key: string, label: string }[]
+	mixerVoices: { key: string, label: string, group?: VoiceGroup | null }[]
 	playing: boolean
 	/** voice to read the lyrics along with, null without lyrics */
 	lyricsVoiceLabel: string | null

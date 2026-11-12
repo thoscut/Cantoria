@@ -12,6 +12,8 @@
  * Life dates for the booklet: "1740–1815", "* 1962", "† 1815" or nothing.
  *
  * @param person - the person
+ * @param person.born - year of birth
+ * @param person.died - year of death
  * @param beforeChrist - a year before Christ, e.g. "{year} BC"
  */
 export function lifeDates(person: { born: string | null, died: string | null }, beforeChrist: (year: string) => string): string {

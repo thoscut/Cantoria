@@ -58,6 +58,7 @@ import { loadScore, playbackTimeline, renderPages, selectMeasures } from '../sco
 import { lyricSyllables } from '../score/lyrics.ts'
 import { timbre } from '../score/sungVoice.ts'
 import { eventVowels } from '../score/vowels.ts'
+import { groupOf, voiceColor } from '../score/voiceGroups.ts'
 import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { partGains, practiceFileName, practiceMidi, SAMPLE_RATE } from '../score/practice.ts'
@@ -505,7 +506,13 @@ watch(focusVoice, (voice) => {
 })
 
 /** Display names of the voices for the mixer */
-const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice) })))
+const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice), group: groupOf(labelOf(voice)) })))
+
+/** The focus voice in the colour of its group (design proposal V2), else the neutral focus colour */
+const focusStyle = computed(() => {
+	const group = focusVoice.value ? groupOf(labelOf(focusVoice.value)) : null
+	return group ? { '--score-focus': voiceColor(group) } : undefined
+})
 
 /**
  * Give the starting tones from the current place: of the focus voice when
@@ -1154,6 +1161,7 @@ onBeforeUnmount(() => {
 	<div ref="rootElement"
 		class="excerpt-viewer"
 		:class="{ 'excerpt-viewer--stage': stage, 'excerpt-viewer--no-print': !printable }"
+		:style="focusStyle"
 		@keydown="onKeydown">
 		<!-- In the stage view the page starts with the bar and the notes (D27): the reference stays for screen readers -->
 		<p class="excerpt-viewer__reference" :class="{ 'hidden-visually': stage }">

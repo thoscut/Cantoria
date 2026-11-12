@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { extractStaves, LARGE_PRINT_SCALE, largePrintOptions, stavesPerPart } from '../score/largePrint.ts'
 
@@ -56,7 +55,7 @@ describe('large-print part', () => {
 	})
 
 	it('cuts a real score', () => {
-		const xml = readFileSync('tests/fixtures/demo/1-01_Der-Mond-ist-aufgegangen_Schulz.musicxml', 'utf8')
+		const xml = Object.values(import.meta.glob('../../tests/fixtures/demo/1-01_*.musicxml', { query: '?raw', import: 'default', eager: true }))[0] as string
 		const part = parse(extractStaves(xml, [1]) ?? '')
 		expect(part.querySelectorAll('score-partwise > part')).toHaveLength(1)
 		expect(part.querySelectorAll('measure').length).toBeGreaterThan(4)
