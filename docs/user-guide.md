@@ -173,6 +173,12 @@ confirm what was sung (conductor only). **Tasks for your
 roles** follow, sorted by archive binder, so that a printed list follows the
 shelf.
 
+With the module "Concerts and song lists", **Next concert** stands above the
+cards: the title, the date and the days until then, and a ring that shows how
+many pieces of the programme are ready, that is, in the archive and without a
+warning. **Open the programme** leads to the concert. Under **Customize
+view** it is hidden together with the **Concert deadlines**.
+
 ### Finding a copy
 
 ![The catalog of the demo archive with the status filter "Active" (20 of 23 copies): shelf mark, title, composer, rights status with a symbol, repertoire and number of files per row; on the left the search field and the filters for binder, rights status, repertoire and status.](screenshots/catalog.png)
@@ -500,7 +506,13 @@ about your practising is stored on the server.
 - **Mixer** opens a slider for every voice. It works on top of **Voices
   during playback**: at 0 % a voice is muted, at 50 % it is half as loud.
   **All voices at 100 %** resets it. A practice file of a shared piece
-  sounds like the mixer.
+  sounds like the mixer. The sliders carry the colour and the letter of the
+  voice group.
+- **Sung voice (vowels of the lyrics)** lets the voices sound like singing
+  instead of an organ: each note takes the vowel of its syllable, and notes
+  without lyrics a neutral "ah". It is a synthetic sound made in your
+  browser, not a recording, and it sings vowels only, no words. Practice
+  files take it, too.
 - **Remember** keeps the shown measures as a passage, with a name if you
   like ("Fugue", "Tenor entry"). A click on a remembered passage shows it
   and plays it in a loop; the cross removes it. The passages are kept per
@@ -1118,6 +1130,128 @@ The PDF is made in your browser and downloaded at once; the scans keep their
 pages as they are. A scan that cannot be read (damaged or protected by a
 password) is left out, and the dialog names it. Every songbook made is
 recorded in the audit log with the shelf marks in it.
+
+### Ranges of the voices and the choir profile
+
+With the module "Facts from the scores", the app reads from every MusicXML
+file the range of each voice, the first tones, the keys and the first bars.
+It only reads: nothing in the catalog or in the files changes.
+
+In the details of a copy, the section **Music** shows the first bars, the
+**Key**, the **Length of the piece** in measures and a chart of the ranges: one bar per
+voice, with the part where the voice mostly sings drawn stronger, on top of
+the range of your choir. Each voice group has its own colour and its letter
+(S, A, T, B), so the chart also reads in black and white.
+
+A badge says how the piece fits: **Fits our ranges**, **Possible in our
+ranges** or **Out of our ranges**. Where the piece fits better higher or
+lower, the badge names the step, and a button shows the chart moved by it.
+This is a suggestion; the conductor decides. In the catalog, the filter
+**Our ranges** finds pieces that are **Comfortable for all voices**,
+**Possible for all voices** or that fit when transposed (**Fits, also
+transposed**). The first bars also stand next to the pieces in lists, in
+tasks and in programmes.
+
+How to describe your choir:
+
+1. Open a copy with a score and choose **Choir profile** under **Music**.
+2. Tick the voice groups the choir has. For each, set **Possible from**,
+   **Comfortable from**, **Comfortable to** and **Possible to**. The chart
+   beside the table shows the result.
+3. **Save profile**. **Back to the default values** returns to the values of
+   a mixed amateur choir.
+
+The conductor and the catalog librarian save the profile; every archive role
+reads it. The profile describes voice groups, never single singers, and
+every change is recorded in the audit log.
+
+> [!NOTE]
+> The scores are read in the background, a few every hour, and whenever a
+> score is opened. The choir profile says how many are read; the catalog
+> librarian can read the next ones at once there. The name of a voice decides
+> its group ("Sopran II", "Bariton"); instruments do not count. Facts of an
+> internal preservation copy are shown only to the roles that may view it.
+
+### Pitch sheet and the programme at a glance
+
+A concert or song list shows **The programme at a glance** above its pieces:
+one block per piece, as wide as the piece is long, with the key and, when
+the concert has a start time, about the time it begins. Between two blocks a
+sign says how the choir gets from one piece to the next: `=` the same key,
+`≈` the same signature, `↗` a related key, `♪` a distant key, where a new
+tone is given. The line below sums up the length, the estimated pieces
+without a duration and the number of new tones. Whoever may change the
+programme drags a block to a new place or uses the arrows in the list.
+
+The section **Pitch sheet** lists per piece the key at the start (and the
+key at the end when it differs), the first tone of every voice, tempo and
+time signature and the way from the piece before. The button in the last
+column plays the first tones, one after the other from the lowest, then
+together. **Pitch sheet** among the print buttons prints the sheet on A4 for
+the music stand.
+
+The sheet needs the modules "Facts from the scores" and "Concerts and song
+lists". The tones are read from the MusicXML of the copy the programme
+uses; check them against the score. A piece without MusicXML shows no tones.
+
+### Programme booklet
+
+With the module "Programme booklet", conductors and catalog librarians make
+a booklet for the audience from a concert: a cover, the programme with the
+people and their life dates, and the lyrics with a translation.
+
+1. In a concert, choose **Programme booklet (PDF) …**.
+2. Fill in **Above the title, e.g. the name of the choir**, **Title on the
+   cover**, **Lines under the title (date, time, place)** and, if you like,
+   **A few words of welcome (optional)**.
+3. Choose the **Paper**: **A5 (A4 folded)** or **A4**, and whether to **Show
+   the durations**.
+4. For each piece whose lyrics may be printed, **Print the lyrics** is on.
+   The field **Lyrics read from the score (check them)** holds the text from
+   the MusicXML; correct it there. Your changes go into this booklet only.
+5. **Make the booklet (PDF)**. The PDF is made in your browser and
+   downloaded at once.
+
+A booklet is handed to the audience: printing lyrics in it is a publication.
+The app prints the lyrics of a version only with confirmed public domain or
+a license for **Publication**; otherwise the piece is listed without text
+and the dialog gives the reason after **No lyrics:**. Lyrics of an internal
+preservation copy are never printed. The translation is the one entered for
+the version in the fields **Translation of the lyrics** and **Translator and
+source of the translation**; enter only translations the choir may print.
+
+Struck pieces are left out and encores stand under their own heading. Every
+booklet made is recorded in the audit log of the concert, with the pieces
+whose lyrics it prints. For a folded booklet, print the A5 pages with the
+booklet setting of your printer.
+
+### Large-print parts
+
+With the module "Large-print parts", conductors and catalog librarians set
+one voice of a score large for a singer with a visual impairment: big notes,
+few measures per line, strong lines and the lyrics below.
+
+1. Open the score of the copy and choose **Large-print part …**.
+2. Choose the **Voice** and, if it helps, a second one under **With a second
+   voice (e.g. the neighbour or the piano)**.
+3. Choose the **Size of the notes**: **Large (about 1.4 times)**, **Larger
+   (about 1.8 times)** or **Largest (about 2.3 times)**. The dialog shows
+   the first page.
+4. **Print the part** opens the print dialog of the browser. The part is
+   set for A4 in black and white.
+
+A large-print part is a printed copy. The app allows it with confirmed
+public domain or a license for an accessible format or for printed copies
+for the singers. Without either, the catalog librarian can confirm in the
+dialog that the part is made for a singer with a visual impairment and stays
+with that person (§ 45b UrhG); see the
+[legal background](legal-background.md#large-print-for-singers-with-a-visual-impairment).
+Every part is recorded in the history of the copy with its voice, and never
+with the name of the singer. No part is printed from an internal
+preservation copy.
+
+Voices that share one staff in the score are printed together; the dialog
+names them.
 
 ### Concert folder
 
@@ -1855,7 +1989,10 @@ board and the general meeting: concerts with their dates and pieces, new
 accessions, licenses that started or ended, open rights questions and the
 stock. In the first half of the year it proposes the past year. **Print
 annual report** prints only the report on A4 in black and white, optionally
-in large print; **Annual report as CSV** downloads its tables.
+in large print; **Annual report as CSV** downloads its tables. **Annual
+report as a booklet (PDF)** sets the same figures as a small booklet for the
+general meeting: a cover, the year in large figures, the concerts as a
+timeline and the tables. It is made in your browser.
 
 > [!NOTE]
 > Open rights questions and the stock are always those of today, because the

@@ -16,6 +16,7 @@ import type { PlayMode } from '../score/player.ts'
 import type { TargetNote } from '../score/pitch.ts'
 import type { Mix } from '../score/practising.ts'
 import type { LyricSyllable } from '../score/lyrics.ts'
+import type { VoiceGroup } from '../score/voiceGroups.ts'
 
 import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 import { t } from '../l10n.ts'
@@ -33,6 +34,7 @@ import PracticePitch from './PracticePitch.vue'
 import PracticeRecorder from './PracticeRecorder.vue'
 import PracticeTools from './PracticeTools.vue'
 import { readStored, writeStored } from '../storage.ts'
+import { sungVoice } from '../score/sungVoice.ts'
 
 export interface VoiceOption {
 	id: string
@@ -56,7 +58,7 @@ const props = withDefaults(defineProps<{
 	tempoMin: number
 	tempoMax: number
 	tempoHint: string
-	mixerVoices: { key: string, label: string }[]
+	mixerVoices: { key: string, label: string, group?: VoiceGroup | null }[]
 	playing: boolean
 	/** voice to read the lyrics along with, null without lyrics */
 	lyricsVoiceLabel: string | null
@@ -217,6 +219,10 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 				<div class="playback-settings__switches">
 					<NcCheckboxRadioSwitch v-model="repeats" type="switch">
 						{{ t('cantoria', 'Play repeats') }}
+					</NcCheckboxRadioSwitch>
+					<!-- the sung voice: vowels of the lyrics through formants; the organ tone otherwise -->
+					<NcCheckboxRadioSwitch v-model="sungVoice" type="switch">
+						{{ t('cantoria', 'Sung voice (vowels of the lyrics)') }}
 					</NcCheckboxRadioSwitch>
 					<!-- the score view adds "Scroll along" and the volume -->
 					<slot name="playback" />

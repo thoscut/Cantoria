@@ -2573,6 +2573,106 @@ public links use the column `circle` of `cantoria_links`, the scan of a
 link `cantoria_links.scan_file_id` (nullable, no default), the programme
 of a link for choir members `cantoria_links.event_id` (nullable, no default,
 milestone 0.20); a whole piece needs no column.
+## Facts from the scores, programme sheets and large print (November 2026)
+
+### Facts from the scores
+
+Module `score_facts` (needs `score_viewer`). The table
+`cantoria_score_facts` keeps per MusicXML file of the archive what
+`ScoreFacts::analyze` reads from it: per voice the name, the voice group
+(`S`, `A`, `T`, `B` or `null`, from the name), the lowest and highest tone,
+the tessitura (the tones between the 10th and the 90th percentile of the sung time), the first and
+last tone and the number of notes; the key at the start and the end, time
+signature, tempo, number of measures, an incipit (Plaine & Easie Code of
+the first bars of the top voice) and the lyrics of the first voice that has
+some. Tones are MIDI numbers at sounding pitch. The facts are derived data:
+they are not in the backup and are read again when the file or
+`ScoreFacts::FORMAT` changes. They are read by the hourly job
+`ScoreFactsJob` (50 files per run, with the account of the archive folder)
+and whenever `GET /api/files/{id}/content` hands out a score.
+
+`GET /api/facts` (every archive role) answers
+
+```json
+{ "copies": { "7": { "voices": [{ "name": "Sopran", "group": "S", "low": 60, "high": 79, "tessLow": 64, "tessHigh": 76 }],
+                     "keyStart": { "fifths": 1, "mode": "major" },
+                     "incipit": { "clef": "G-2", "keysig": "xF", "timesig": "4/4", "data": "4''G8AB/2''C" },
+                     "measures": 48 } },
+  "profile": { "groups": [{ "group": "S", "comfortLow": 62, "comfortHigh": 77, "limitLow": 60, "limitHigh": 81 }], "custom": false },
+  "summary": { "files": 120, "read": 96 },
+  "canEditProfile": true }
+```
+
+`copies` holds the score of each copy (the file the viewer would open) that
+has facts; copies that are internal preservation copies only for the roles
+that may view them. The list never carries lyrics. The browser compares the
+ranges with the profile (`src/scoreFacts.ts`, `pieceFit`) and draws the
+incipit with Verovio after checking it (`src/design/incipit.ts`).
+
+`PUT /api/facts/profile` with `{ groups: [{ group, comfortLow, comfortHigh,
+limitLow, limitHigh }] }` saves the choir profile (roles conductor and
+librarian, else 403): each group once, tones 24 to 96, the possible range
+around the comfortable one (else 400). An empty list returns to the default
+profile. The change is recorded in the audit log (object `settings`, field
+`choir_profile`).
+
+`POST /api/facts/run` (role librarian; 20 requests in 10 minutes) reads the
+next 200 files at once and answers `{ read, summary }`.
+
+`GET /api/events/{id}/pitches` (also module `concerts`; every archive role)
+answers the pitch sheet of a programme or song list: `event` (kind, title,
+date, start and end time, location) and `pieces` in the order of the
+programme without struck items, each with `itemId`, `copyId`, `shelfmark`,
+`title`, `composer`, `encore`, `duration`, `keySignature` and `facts`
+(`voices` with `first`, `last`, `low`, `high`; `keyStart`, `keyEnd`,
+`tempo`, `time`, `incipit`), or `facts` `null` when the copy has no score
+read or the account may not view it (`viewDenial`).
+
+### Programme booklet
+
+Module `programme_booklet` and `concerts`; roles librarian and conductor
+(else 403). The booklet is set in the browser (`src/booklet/build.ts`,
+pdf-lib).
+
+`GET /api/events/{id}/booklet` answers `event` and `pieces` (struck items
+left out): `itemId`, `title`, `composer`, `arranger`, `persons` (composer,
+lyricist, arranger and translator with `name`, `born` and `died` as years),
+`duration`, `encore`, `participation`, `language`, `lyrics` (the verses read
+from the score, or `null`), `translation`, `translationSource` and
+`lyricsReason`. `lyrics` and `translation` are only handed out when
+`RightsPolicy::bookletLyricsDenial` allows printing them: confirmed public
+domain or a license valid today for `publication`, never an internal
+preservation copy. Otherwise `lyricsReason` (translated) says why, also when
+the piece is not in the catalog or no lyrics were found in its MusicXML; it
+is `null` for a piece without text.
+
+`POST /api/events/{id}/booklet/record` with `{ withLyrics: [itemId, …] }`
+records the booklet in the audit log: object `event`, action
+`booklet_made`, field `lyrics`, the item ids as the new value. Items whose
+lyrics the rights do not allow are left out of the record.
+
+### Large-print parts
+
+Module `large_print` (needs `score_viewer`); roles librarian and conductor
+(else 403). The part is set in the browser from the score the viewer shows
+(`src/score/largePrint.ts`) and printed there.
+
+`GET /api/copies/{id}/large-print` answers `{ allowed, basis, reason,
+canConfirm }`. `basis` is `free` (confirmed public domain) or `license` (a
+license valid today for `accessible_format`, `binder`, `self_print`,
+`print_station` or `member_download`), else `null` with the translated
+`reason` (`RightsPolicy::largePrintDenial`). `canConfirm` tells the catalog
+librarian that the part can be made as an accessible copy (§ 45b UrhG). An
+internal preservation copy is never allowed and cannot be confirmed.
+
+`POST /api/copies/{id}/large-print` with `{ voice, accessible? }` records
+the part before it is printed (400 without a voice; 403 with the reason when
+the rights do not allow it; `accessible` counts only from the librarian) and
+answers `{ recorded: true, basis }` with `basis` `free`, `license` or
+`accessible`. Audit log: object `copy`, action `large_print_made`, field
+`voice`, and for an accessible copy the reason that the librarian confirmed
+it. No name of a singer is taken or stored.
+
 ## Folder book (module `folder_book`, milestone 0.7)
 
 Which choir folder is out with whom since when. Read by `librarian`,

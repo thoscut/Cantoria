@@ -83,6 +83,11 @@ class Modules {
 	public const ANNUAL_SNAPSHOT = 'annual_snapshot';
 	/** Revisions of a version: corrections and changed MusicXML, the current revision, comparing two (milestone 0.8) */
 	public const VERSION_STATES = 'version_states';
+	/** Facts read from the MusicXML files: ranges, first tones, keys, incipits (November 2026) */
+	public const SCORE_FACTS = 'score_facts';
+	/** Programme booklet of a concert as PDF (November 2026) */
+	public const PROGRAMME_BOOKLET = 'programme_booklet';
+	public const LARGE_PRINT = 'large_print';
 
 	/** Switches of the notifications: this prefix plus the subject (NotificationService) */
 	public const NOTIFY_PREFIX = 'notify_';
@@ -227,6 +232,12 @@ class Modules {
 		'files_integration' => ['group' => 'scores', 'requires' => [], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Opening from the Files app',
 			'description' => 'The action "Open in Cantoria" for files of the archive folder in the Files app: a click on MusicXML opens the score view, other files of a copy open the copy. Rights are checked as in the app.'],
+		self::SCORE_FACTS => ['group' => 'scores', 'requires' => ['score_viewer'], 'simple' => false, 'standard' => true, 'planned' => false,
+			'label' => 'Facts from the scores',
+			'description' => 'Reads the range of every voice, the first tones, the keys and the first bars from each MusicXML file. With it: the choir profile, the filter "Our ranges", the first bars in lists and the pitch sheet.'],
+		self::LARGE_PRINT => ['group' => 'scores', 'requires' => ['score_viewer'], 'simple' => false, 'standard' => true, 'planned' => false,
+			'label' => 'Large-print parts',
+			'description' => 'One voice of a MusicXML score set large for singers with a visual impairment, printed from the score view. Needs confirmed public domain, a license, or the confirmation of the catalog librarian (§ 45b UrhG).'],
 		'tasks' => ['group' => 'collaboration', 'requires' => [], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Questions and tasks',
 			'description' => 'Questions and checks with a location in the score (page, measures, voice), addressed to a role.'],
@@ -251,6 +262,9 @@ class Modules {
 		'songbook' => ['group' => 'concerts', 'requires' => [], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'Songbooks',
 			'description' => 'The scans (PDF) of a programme, a song list or a filtered catalog as one songbook to print, with cover, contents and page numbers, where the rights allow printed copies.'],
+		self::PROGRAMME_BOOKLET => ['group' => 'concerts', 'requires' => ['concerts'], 'simple' => false, 'standard' => true, 'planned' => false,
+			'label' => 'Programme booklet',
+			'description' => 'A programme booklet of a concert as PDF: pieces with the people and their life dates, durations and, where the rights allow publishing them, the lyrics with a translation.'],
 		'accession' => ['group' => 'maintenance', 'requires' => [], 'simple' => false, 'standard' => true, 'planned' => false,
 			'label' => 'New accessions and shelf labels',
 			'description' => 'Assistant for new copies with the next free shelf mark and the required fields; shelf labels to print.'],

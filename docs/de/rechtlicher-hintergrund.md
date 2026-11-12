@@ -219,6 +219,62 @@ braucht dieselbe Einwilligung wie ein Scan (Nutzung „Digitalisierung“).
   den USA frei sind. Für Links ohne Gewinnabsicht ist das Haftungsrisiko
   gering (EuGH, C-160/15, *GS Media*).
 
+## Liedtexte im Programmheft
+
+Ein Programmheft geht an das Publikum. Wer den Liedtext eines Stücks darin
+abdruckt, vervielfältigt und verbreitet den Text (§§ 16, 17 UrhG): Das
+braucht die Einwilligung der Rechteinhaber, meist des Verlags, solange der
+Text geschützt ist, also bis 70 Jahre nach dem Tod der Person, die ihn
+geschrieben hat (§ 64 UrhG). Eine GEMA-Lizenz für das Konzert deckt die
+Aufführung, nicht den gedruckten Text. Eine Übersetzung ist selbst geschützt
+(§ 3 UrhG), auch wenn der Originaltext frei ist.
+
+Die App druckt den Liedtext einer Fassung deshalb nur mit bestätigter
+Gemeinfreiheit oder einer gültigen Lizenz für „Veröffentlichung“. Sie ist
+hier vorsichtig: Sie richtet sich nach dem Rechtestatus der Fassung als
+Ganzes, sodass ein freier Text, den eine geschützte Komposition vertont,
+erst gedruckt wird, wenn eine Lizenz eingetragen ist. Die Übersetzung neben
+dem Liedtext ist die, die bei der Fassung eingetragen ist; ihre Rechte kann
+die App nicht prüfen. Tragt eine eigene Übersetzung ein, eine freie oder
+eine, für die ihr eine Erlaubnis habt, und nennt, von wem sie ist und woher
+sie stammt.
+
+Titel, Namen und Lebensdaten der Beteiligten sind Tatsachen und dürfen
+immer gedruckt werden.
+
+## Großdruck für Chormitglieder mit einer Sehbehinderung
+
+Menschen mit einer Seh- oder Lesebehinderung dürfen veröffentlichte Noten
+zum eigenen Gebrauch vervielfältigen oder vervielfältigen lassen, um sie in
+ein barrierefreies Format umzuwandeln (§ 45b Abs. 1 UrhG). Das ist eine
+Ausnahme von der Regel, dass Noten nur mit Einwilligung kopiert werden
+(§ 53 Abs. 4 UrhG). Sie hat Bedingungen:
+
+- Die Person kann die Noten auch mit Brille oder Kontaktlinsen nicht so
+  leicht lesen wie andere (§ 45b Abs. 2 UrhG). Eine gewöhnliche Lesebrille
+  ist nicht gemeint.
+- Die Person hat rechtmäßigen Zugang zum Werk, zum Beispiel als Mitglied,
+  das aus einem Exemplar singt, das der Chor gekauft hat.
+- Die Kopie dient dem eigenen Gebrauch dieser Person. Sie bleibt bei ihr und
+  wird nicht weitergegeben, verliehen oder in die Chormappen gelegt.
+- Die Noten werden nicht weiter verändert, als das Format es braucht (§ 62
+  UrhG), und die Quelle wird genannt (§ 63 UrhG): Die Stimme behält Titel,
+  Komposition und Edition.
+
+Ein Chor, der eine solche Stimme erstellt, handelt für die Person. Er ist
+in der Regel keine „befugte Stelle“ (§ 45c UrhG), die barrierefreie Kopien
+vorhalten und austauschen darf und eigene Pflichten hat; der Chor legt
+deshalb keinen Vorrat an Großdruck-Stimmen an.
+
+Die App erlaubt eine Großdruck-Stimme ohne weitere Fragen mit bestätigter
+Gemeinfreiheit oder einer Lizenz für ein barrierefreies Format oder für
+gedruckte Kopien für die Chormitglieder. Sonst bestätigt die Rolle „Bestand“
+im Dialog, dass die Stimme für ein Chormitglied mit einer Sehbehinderung
+erstellt wird und bei dieser Person bleibt. Die App hält die Bestätigung und
+die Stimme im Verlauf des Exemplars fest. Wer die Person ist, hält sie nie
+fest: Das wären Gesundheitsdaten (Art. 9 DSGVO), die das Archiv nicht
+braucht.
+
 ## Ohne Netz üben und die Konzertmappe
 
 Ein Stück, das „ohne Netz verfügbar“ ist, ist eine Kopie auf dem Gerät des

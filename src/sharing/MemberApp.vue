@@ -33,7 +33,7 @@ import type { FocusTarget } from '../focus.ts'
 import type { PieceForDevice } from '../offline/rules.ts'
 import type { MemberLink, MemberPageState, MemberPracticeAudioInput } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiMusicNoteOutline, mdiOpenInNew } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiNoteTextOutline, mdiOpenInNew } from '@mdi/js'
 import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
@@ -45,6 +45,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import EmptyArt from '../components/EmptyArt.vue'
 import GuideLink from '../components/GuideLink.vue'
 import Attribution from './Attribution.vue'
 import DiscardRecording from './DiscardRecording.vue'
@@ -485,7 +486,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 					:name="t('cantoria', 'Nothing has been shared with you yet')"
 					:description="t('cantoria', 'When the conductor or the music librarians share a piece or an excerpt with the choir members, it appears here. Each link is valid for at most six months.')">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiMusicNoteOutline" />
+						<EmptyArt kind="sheet" />
 					</template>
 					<template #action>
 						<NcButton :href="guideUrl"
@@ -611,11 +612,16 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								{{ t('cantoria', 'All pieces ({count})', { count: links.length }) }}
 							</NcButton>
 							<Attribution class="member-app__off-stage" :credits="selected.credits ?? []" :notices="selected.notices ?? []" />
-							<NcNoteCard v-if="selected.note" type="info" class="member-app__note member-app__off-stage">
-								<p class="member-app__note-text">
-									{{ t('cantoria', 'Note: {note}', { note: selected.note }) }}
+							<!-- The note with the piece as a slip (design proposal V3), not an info bar -->
+							<aside v-if="selected.note" class="member-app__note member-app__slip member-app__off-stage" :aria-label="t('cantoria', 'Note with this piece')">
+								<p class="member-app__slip-heading">
+									<NcIconSvgWrapper :path="mdiNoteTextOutline" :size="18" inline />
+									{{ t('cantoria', 'Note with this piece') }}
 								</p>
-							</NcNoteCard>
+								<p class="member-app__note-text">
+									{{ selected.note }}
+								</p>
+							</aside>
 							<p class="member-app__muted member-app__off-stage">
 								{{ place(selected) }}<template v-if="selected.expires">
 									· {{ t('cantoria', 'Valid until {date}', { date: formatDate(selected.expires) }) }}
@@ -871,8 +877,39 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 }
 
 .member-app__note-text {
+	margin: 0;
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
+}
+
+/* A slip of paper pinned to the piece: slightly turned, a soft shadow */
+.member-app__slip {
+	align-self: flex-start;
+	max-inline-size: 36rem;
+	padding: 10px 14px 12px;
+	border: 1px solid var(--color-border-maxcontrast);
+	border-inline-start: 4px solid var(--color-primary-element);
+	border-radius: 2px 10px 10px 2px;
+	background: var(--color-background-hover);
+	box-shadow: var(--cantoria-shadow);
+	transform: rotate(-0.4deg);
+}
+
+.member-app__slip-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 4px;
+	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
+	font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce), print {
+	.member-app__slip {
+		box-shadow: none;
+		transform: none;
+	}
 }
 
 .member-app__items {

@@ -110,4 +110,23 @@ class ArchiveFileMapper extends QBMapper {
 		$result->closeCursor();
 		return $counts;
 	}
+
+	/**
+	 * The MusicXML files of the copies that have any, for the facts of
+	 * their scores (ScoreFactsService).
+	 *
+	 * @return array<int, list<ArchiveFile>> copy id => files
+	 */
+	public function findMusicxmlPerCopy(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->isNotNull('copy_id'))
+			->andWhere($qb->expr()->eq('role', $qb->createNamedParameter('musicxml')))
+			->orderBy('id');
+		$result = [];
+		foreach ($this->findEntities($qb) as $file) {
+			$result[(int)$file->getCopyId()][] = $file;
+		}
+		return $result;
+	}
 }

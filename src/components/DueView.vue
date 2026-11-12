@@ -10,13 +10,15 @@
  */
 import type { DueCard, DueResult } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiBookOpenPageVariantOutline, mdiCheckCircleOutline } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiBookOpenPageVariantOutline } from '@mdi/js'
 import { t } from '../l10n.ts'
 import { computed, onMounted, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import EmptyArt from './EmptyArt.vue'
+import NextConcert from './NextConcert.vue'
 import TaskList from './TaskList.vue'
 import ViewHeader from './ViewHeader.vue'
 import { errorMessage, fetchDue } from '../api.ts'
@@ -24,8 +26,9 @@ import { dueCardLabel } from '../dueLabels.ts'
 import { dueTarget } from '../dueTargets.ts'
 import { formatDate } from '../format.ts'
 import { navigate, openDueTarget } from '../navigation.ts'
+import { ROLES } from '../labels.ts'
 import { DUE_CONCERTS, DUE_TASKS } from '../modules.ts'
-import { canSeeProposals, isCardShown, personalView, personalViewDialogOpen } from '../store.ts'
+import { canSeeProposals, hasAnyRole, isCardShown, isModuleActive, personalView, personalViewDialogOpen } from '../store.ts'
 
 const due = ref<DueResult | null>(null)
 const loading = ref(false)
@@ -72,6 +75,9 @@ const tasks = computed(() => (isCardShown(DUE_TASKS) ? due.value?.tasks ?? [] : 
 
 const nothingDue = computed(() => cards.value.length === 0 && concerts.value.length === 0 && tasks.value.length === 0)
 
+/** The next concert on top, for everyone who sees the concerts (design proposal V6) */
+const showNextConcert = computed(() => isModuleActive('concerts') && hasAnyRole(ROLES) && isCardShown(DUE_CONCERTS))
+
 /** Whether the personal view hides something of this page. */
 const somethingHidden = computed(() => personalView.value.cards.length > 0)
 </script>
@@ -106,6 +112,8 @@ const somethingHidden = computed(() => personalView.value.cards.length > 0)
 			</NcEmptyContent>
 
 			<template v-else-if="due">
+				<NextConcert v-if="showNextConcert" />
+
 				<section v-if="cards.length > 0" aria-labelledby="due-cards-heading">
 					<h3 id="due-cards-heading" class="hidden-visually">
 						{{ t('cantoria', 'Overview') }}
@@ -144,7 +152,7 @@ const somethingHidden = computed(() => personalView.value.cards.length > 0)
 					:name="t('cantoria', 'Nothing is due')"
 					:description="t('cantoria', 'There are no open tasks or other things to do for your roles.')">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiCheckCircleOutline" />
+						<EmptyArt kind="done" />
 					</template>
 					<template #action>
 						<NcButton @click="navigate('catalog')">

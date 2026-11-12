@@ -11,6 +11,8 @@
  */
 import type { CountIn } from './countIn.ts'
 import type { Timeline } from './timeline.ts'
+import type { VowelOf } from './player.ts'
+import type { Timbre } from './synth.ts'
 
 import { scheduleClicks, scheduleEvents } from './player.ts'
 import { renderedSeconds } from './practice.ts'
@@ -48,6 +50,10 @@ export interface RenderOptions {
 	onProgress?: (done: number) => void
 	/** clicks before the music */
 	countIn?: CountIn | null
+	/** organ tone (default) or the sung voice */
+	timbre?: Timbre
+	/** the vowel per event for the sung voice */
+	vowelOf?: VowelOf
 }
 
 /**
@@ -58,7 +64,7 @@ export interface RenderOptions {
  * @param options - tempo, sample rate, cancel signal, progress
  */
 export async function renderTimeline(timeline: Timeline, gainOf: (voice: string) => number, options: RenderOptions): Promise<Float32Array> {
-	const { rate, sampleRate, signal, onProgress, countIn } = options
+	const { rate, sampleRate, signal, onProgress, countIn, timbre, vowelOf } = options
 	if (signal?.aborted) {
 		throw new RenderCancelled()
 	}
@@ -66,12 +72,13 @@ export async function renderTimeline(timeline: Timeline, gainOf: (voice: string)
 	const seconds = renderedSeconds(timeline, rate, lead)
 	const context = new OfflineAudioContext({ numberOfChannels: 1, length: Math.max(1, Math.ceil(seconds * sampleRate)), sampleRate })
 	const synth = new Synth(EXPORT_VOLUME, context)
+	synth.setTimbre(timbre ?? 'organ')
 	// The whole timeline at once, with the same scheduling as the playback
 	const startAudio = lead / rate
 	if (countIn) {
 		scheduleClicks(synth, countIn, startAudio, rate)
 	}
-	scheduleEvents(synth, timeline.events, 0, { startAudio, startScore: 0, rate }, Infinity, 0, gainOf)
+	scheduleEvents(synth, timeline.events, 0, { startAudio, startScore: 0, rate }, Infinity, 0, gainOf, vowelOf)
 
 	let cancelled = false
 	const rendering = new Promise<AudioBuffer>((resolve, reject) => {

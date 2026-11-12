@@ -153,6 +153,8 @@ onMounted(async () => {
 <template>
 	<!-- The public layout of Nextcloud has no main landmark of its own -->
 	<main class="public-excerpt">
+		<!-- the colour and the logo of the choir's Nextcloud (design proposal V8) -->
+		<div class="cantoria-choir-band" aria-hidden="true" />
 		<template v-if="excerpt">
 			<h2 class="public-excerpt__title">
 				{{ excerpt.title }}

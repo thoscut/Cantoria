@@ -124,6 +124,10 @@ function actionLabel(action: string): string {
 		return t('cantoria', 'Current revision set')
 	case 'songbook_made':
 		return t('cantoria', 'Songbook made')
+	case 'booklet_made':
+		return t('cantoria', 'Programme booklet made')
+	case 'large_print_made':
+		return t('cantoria', 'Large-print part made')
 	default:
 		return action
 	}

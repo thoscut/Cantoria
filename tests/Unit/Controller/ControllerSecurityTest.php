@@ -12,6 +12,7 @@ namespace OCA\Cantoria\Tests\Unit\Controller;
 use OCA\Cantoria\Controller\AnnualSnapshotController;
 use OCA\Cantoria\Controller\ApiController;
 use OCA\Cantoria\Controller\ApiV1StatusController;
+use OCA\Cantoria\Controller\BookletController;
 use OCA\Cantoria\Controller\CalendarController;
 use OCA\Cantoria\Controller\ChoirSystemController;
 use OCA\Cantoria\Controller\ConcertFolderController;
@@ -28,6 +29,7 @@ use OCA\Cantoria\Controller\PublicLinkController;
 use OCA\Cantoria\Controller\PublicRepertoireController;
 use OCA\Cantoria\Controller\ReviewController;
 use OCA\Cantoria\Controller\ScanResponse;
+use OCA\Cantoria\Controller\ScoreFactsController;
 use OCA\Cantoria\Controller\SettingsController;
 use OCA\Cantoria\Controller\SongbookController;
 use OCA\Cantoria\Controller\StateController;
@@ -76,6 +78,7 @@ use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\NotificationService;
 use OCA\Cantoria\Service\PracticeAudioService;
 use OCA\Cantoria\Service\PrintMirrorService;
+use OCA\Cantoria\Service\ProgrammeSheets;
 use OCA\Cantoria\Service\PublicRepertoireService;
 use OCA\Cantoria\Service\ReleaseListService;
 use OCA\Cantoria\Service\RepertoireService;
@@ -85,6 +88,7 @@ use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\RunLock;
 use OCA\Cantoria\Service\ScanService;
+use OCA\Cantoria\Service\ScoreFactsService;
 use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\SharedLinkService;
 use OCA\Cantoria\Service\StateService;
@@ -254,6 +258,8 @@ final class ControllerSecurityTest extends TestCase {
 		'EventController::share', 'TaskController::extendLink',
 		// hands out scans of the archive for a songbook (one request per piece)
 		'SongbookController::scan',
+		// reads up to 200 scores of the archive at once (November 2026)
+		'ScoreFactsController::runNow',
 	];
 
 	/**
@@ -1235,6 +1241,7 @@ final class ControllerSecurityTest extends TestCase {
 			$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $this->createStub(ExportService::class),
 			$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
 			$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class), $scores,
+			$this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class),
 			$this->l10n(), $this->createStub(LoggerInterface::class));
 	}
 
@@ -1482,7 +1489,7 @@ final class ControllerSecurityTest extends TestCase {
 				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $this->createStub(ExportService::class),
 				$this->createStub(FileSyncService::class), $entries,
 				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
-				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+				$this->createStub(ScoreService::class), $this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 			self::assertSame(Http::STATUS_OK, $controller->audit()->getStatus());
 		}
 		self::assertSame([FolderBookService::OBJECT_TYPES, []], $excluded, 'contributors do not see the names of the folder book');
@@ -1496,7 +1503,7 @@ final class ControllerSecurityTest extends TestCase {
 				$this->createStub(CatalogService::class), $this->createStub(ImportService::class), $export,
 				$this->createStub(FileSyncService::class), $this->createStub(AuditEntryMapper::class),
 				$this->createStub(UserFiles::class), $this->createStub(ITimeFactory::class), $this->createStub(IDateTimeZone::class),
-				$this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+				$this->createStub(ScoreService::class), $this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 			self::assertSame(Http::STATUS_FORBIDDEN, $controller->importTemplate('ods')->getStatus(), $uid);
 		}
 	}
@@ -1541,5 +1548,82 @@ final class ControllerSecurityTest extends TestCase {
 		(new ModuleMiddleware($this->modulesWithout(), $this->l10n()))->beforeController($controller, 'list');
 		$this->expectException(ModuleDisabledException::class);
 		(new ModuleMiddleware($this->modulesWithout(['score_viewer']), $this->l10n()))->beforeController($controller, 'list');
+	}
+
+	private function scoreFactsController(string $uid): ScoreFactsController {
+		$facts = $this->createMock(ScoreFactsService::class);
+		$facts->expects($uid === 'librarian' ? self::once() : self::never())->method('run')->willReturn(3);
+		$facts->method('summary')->willReturn(['files' => 5, 'read' => 3]);
+		return new ScoreFactsController($this->createStub(IRequest::class), $uid, $facts, $this->createStub(ProgrammeSheets::class),
+			$this->rolesByName(), $this->l10n(), $this->createStub(LoggerInterface::class));
+	}
+
+	/**
+	 * November 2026: the facts of the scores, the programme booklet and the
+	 * large-print parts are modules of their own; what belongs to a programme
+	 * also needs the concerts. Writing keeps the CSRF check, and only the
+	 * catalog librarian has the scores read at once. The roles of the other
+	 * routes are checked in the services (ScoreFactsServiceTest,
+	 * ProgrammeSheetsTest, LargePrintServiceTest).
+	 */
+	public function testTheFactsBookletAndLargePrintRoutesBelongToTheirModules(): void {
+		$modules = [
+			'ScoreFactsController::index' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::saveProfile' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::runNow' => [Modules::SCORE_FACTS],
+			'ScoreFactsController::pitches' => [Modules::SCORE_FACTS, 'concerts'],
+			'BookletController::show' => [Modules::PROGRAMME_BOOKLET, 'concerts'],
+			'BookletController::record' => [Modules::PROGRAMME_BOOKLET, 'concerts'],
+			'LargePrintController::check' => [Modules::LARGE_PRINT],
+			'LargePrintController::record' => [Modules::LARGE_PRINT],
+		];
+		$routes = self::routes();
+		$found = array_values(array_filter(array_keys($routes),
+			fn (string $name): bool => preg_match('/^(ScoreFacts|Booklet|LargePrint)Controller::/', $name) === 1));
+		sort($found);
+		$expected = array_keys($modules);
+		sort($expected);
+		self::assertSame($expected, $found, 'every route of the three controllers is listed here');
+		foreach ($modules as $name => $required) {
+			[$class, $method] = explode('::', $name);
+			$actual = ModuleMiddleware::required('OCA\\Cantoria\\Controller\\' . $class, $method);
+			sort($actual);
+			sort($required);
+			self::assertSame($required, $actual, $name);
+			self::assertNotContains(PublicPage::class, $routes[$name]['attributes'], $name . ' needs an account');
+			self::assertNotContains(NoCSRFRequired::class, $routes[$name]['attributes'], $name . ' keeps the CSRF check');
+			if (!in_array($method, ['index', 'pitches', 'show', 'check'], true)) {
+				self::assertNotSame('GET', $routes[$name]['verb'], $name . ' writes');
+			}
+		}
+		self::assertSame(['score_viewer'], Modules::MODULES[Modules::LARGE_PRINT]['requires'] ?? null,
+			'a large-print part is set from the score the viewer shows');
+
+		foreach (['operations', 'conductor', 'reader', 'contributor', 'member', 'admin', 'nobody'] as $uid) {
+			self::assertSame(Http::STATUS_FORBIDDEN, $this->scoreFactsController($uid)->runNow()->getStatus(), $uid . ' does not start reading the scores');
+		}
+		$response = $this->scoreFactsController('librarian')->runNow();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['read' => 3, 'summary' => ['files' => 5, 'read' => 3]], $response->getData());
+	}
+
+	/**
+	 * The record of a booklet names only pieces whose lyrics the rights
+	 * allowed to print, whatever the browser sends.
+	 */
+	public function testTheRecordOfABookletNamesOnlyPiecesWhoseLyricsMayBePrinted(): void {
+		$sheets = $this->createStub(ProgrammeSheets::class);
+		$sheets->method('booklet')->willReturn(['event' => [], 'pieces' => [
+			['itemId' => 1, 'lyrics' => [['number' => '1', 'text' => 'Text']], 'translation' => null],
+			['itemId' => 2, 'lyrics' => null, 'translation' => null],
+			['itemId' => 3, 'lyrics' => null, 'translation' => 'Translation'],
+		]]);
+		$audit = $this->createMock(AuditLog::class);
+		$audit->method('newOperation')->willReturn('op');
+		$audit->expects(self::once())->method('record')->with('op', 'conductor', 'event', 5, 'booklet_made', 'lyrics', null, '1,3');
+		$controller = new BookletController($this->createStub(IRequest::class), 'conductor', $sheets, $audit, $this->l10n(),
+			$this->createStub(LoggerInterface::class));
+		$response = $controller->record(5, [3, 2, 1, 99, '1']);
+		self::assertSame(['recorded' => true], $response->getData());
 	}
 }

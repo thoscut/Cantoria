@@ -13,6 +13,7 @@
 import type { Click, CountIn } from './countIn.ts'
 import type { PlayEvent, Timeline } from './timeline.ts'
 import type { VoiceMember } from './voices.ts'
+import type { Timbre, Vowel } from './synth.ts'
 
 import { toneTimes } from './practising.ts'
 import { Synth } from './synth.ts'
@@ -117,8 +118,11 @@ function cachedMixLevel(events: PlayEvent[], gainOf: (voice: string) => number):
 
 /** Whatever plays notes: the synthesizer, or a recorder in tests. */
 export interface NoteTarget {
-	note(pitch: number, start: number, end: number, gain: number): void
+	note(pitch: number, start: number, end: number, gain: number, vowel?: Vowel | null): void
 }
+
+/** The vowel to sing for an event in the sung timbre, or null for the neutral one */
+export type VowelOf = (event: PlayEvent) => Vowel | null
 
 /** Whatever plays the clicks of a count-in. */
 export interface ClickTarget {
@@ -190,9 +194,10 @@ export function scheduleBeats(target: ClickTarget, clicks: Click[], next: number
  * @param horizon - schedule events that start up to this context time
  * @param now - current context time; nothing starts earlier
  * @param gainOf - gain 0 … 1 per voice member key
+ * @param vowelOf - the vowel of an event for the sung timbre
  * @return the index of the first event not yet scheduled
  */
-export function scheduleEvents(target: NoteTarget, events: PlayEvent[], next: number, clock: Clock, horizon: number, now: number, gainOf: (voice: string) => number): number {
+export function scheduleEvents(target: NoteTarget, events: PlayEvent[], next: number, clock: Clock, horizon: number, now: number, gainOf: (voice: string) => number, vowelOf?: VowelOf): number {
 	let index = next
 	const level = cachedMixLevel(events, gainOf)
 	while (index < events.length) {
@@ -213,7 +218,7 @@ export function scheduleEvents(target: NoteTarget, events: PlayEvent[], next: nu
 		if (end <= now) {
 			continue
 		}
-		target.note(event.pitch, Math.max(at, now), end, gain * level)
+		target.note(event.pitch, Math.max(at, now), end, gain * level, vowelOf?.(event) ?? null)
 	}
 	return index
 }
@@ -256,6 +261,8 @@ export class ScorePlayer {
 	private rate = 1
 	private volume = 0.7
 	private gainOf: (voice: string) => number = () => 0.55
+	private timbre: Timbre = 'organ'
+	private vowelOf: VowelOf | undefined = undefined
 	private playing = false
 	private loop = false
 	private startAudio = 0
@@ -326,6 +333,20 @@ export class ScorePlayer {
 	}
 
 	/**
+	 * Organ tone or sung voice, with the vowels of the lyrics.
+	 *
+	 * @param timbre - the timbre
+	 * @param vowelOf - the vowel per event; without it the neutral vowel
+	 */
+	setTimbre(timbre: Timbre, vowelOf?: VowelOf): void {
+		this.restartAfter(() => {
+			this.timbre = timbre
+			this.vowelOf = vowelOf
+			this.synth?.setTimbre(timbre)
+		})
+	}
+
+	/**
 	 * The metronome: clicks on the beats while playing.
 	 *
 	 * @param clicks - clicks in seconds of the timeline (countIn.metronomeClicks); empty: off
@@ -349,6 +370,7 @@ export class ScorePlayer {
 		}
 		if (!this.synth) {
 			this.synth = new Synth(this.volume)
+			this.synth.setTimbre(this.timbre)
 		}
 		await this.synth.resume()
 		this.synth.silence()
@@ -407,6 +429,7 @@ export class ScorePlayer {
 		}
 		if (!this.synth) {
 			this.synth = new Synth(this.volume)
+			this.synth.setTimbre(this.timbre)
 		}
 		await this.synth.resume()
 		if (this.position >= this.timeline.duration) {
@@ -502,7 +525,7 @@ export class ScorePlayer {
 		const now = synth.context.currentTime
 		const horizon = now + LOOK_AHEAD
 		const events = this.timeline.events
-		this.next = scheduleEvents(synth, events, this.next, this.clock(), horizon, now, this.gainOf)
+		this.next = scheduleEvents(synth, events, this.next, this.clock(), horizon, now, this.gainOf, this.vowelOf)
 		this.nextBeat = scheduleBeats(synth, this.beats, this.nextBeat, this.clock(), horizon, now)
 		if (this.next >= events.length && this.loop && this.timeline.duration >= MIN_LOOP) {
 			// Start again seamlessly where the timeline ends
@@ -511,7 +534,7 @@ export class ScorePlayer {
 				this.previous = this.clock()
 				this.startAudio = end
 				this.startScore = 0
-				this.next = scheduleEvents(synth, events, 0, this.clock(), horizon, now, this.gainOf)
+				this.next = scheduleEvents(synth, events, 0, this.clock(), horizon, now, this.gainOf, this.vowelOf)
 				this.nextBeat = scheduleBeats(synth, this.beats, 0, this.clock(), horizon, now)
 			}
 			return

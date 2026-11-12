@@ -9,6 +9,7 @@
  * per voice. The parent plays; this only holds the choices.
  */
 import type { Mix } from '../score/practising.ts'
+import type { VoiceGroup } from '../score/voiceGroups.ts'
 
 import { mdiMetronome, mdiMusicNote, mdiTuneVertical } from '@mdi/js'
 import { t } from '../l10n.ts'
@@ -16,12 +17,13 @@ import { computed, ref, useId } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import VoiceMark from './VoiceMark.vue'
 import { transposeText } from '../practiceLabels.ts'
 import { mixChanged, TRANSPOSE_MAX } from '../score/practising.ts'
 
 const props = defineProps<{
 	/** voices of the score with their display names */
-	voices: { key: string, label: string }[]
+	voices: { key: string, label: string, group?: VoiceGroup | null }[]
 	/** while playing the starting tones cannot be given */
 	playing: boolean
 }>()
@@ -134,7 +136,11 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 				:key="voice.key"
 				class="practice-tools__slider"
 				:for="idOf(voice.key)">
-				<span>{{ levelText(voice.label, levelOf(voice.key)) }}</span>
+				<span class="practice-tools__voice">
+					<!-- the letter in the colour of the voice; the text beside it names it -->
+					<VoiceMark v-if="voice.group" :group="voice.group" aria-hidden="true" />
+					{{ levelText(voice.label, levelOf(voice.key)) }}
+				</span>
 				<input :id="idOf(voice.key)"
 					:value="levelOf(voice.key)"
 					type="range"
@@ -152,6 +158,12 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 </template>
 
 <style scoped>
+.practice-tools__voice {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
 .practice-tools {
 	display: flex;
 	flex-wrap: wrap;

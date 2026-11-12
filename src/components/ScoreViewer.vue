@@ -47,6 +47,7 @@ import {
 	mdiClipboardTextOutline,
 	mdiContentCopy,
 	mdiFileMusicOutline,
+	mdiFormatSize,
 	mdiLinkVariantPlus,
 	mdiOpenInNew,
 	mdiPencilOutline,
@@ -82,6 +83,9 @@ import { followMeasure, turnSystem } from '../score/follow.ts'
 import { scoreTarget } from '../score/hit.ts'
 import { ArchiveLimitError, readScoreText } from '../score/mxl.ts'
 import { lyricSyllables } from '../score/lyrics.ts'
+import { timbre } from '../score/sungVoice.ts'
+import { eventVowels } from '../score/vowels.ts'
+import { groupOf, voiceColor } from '../score/voiceGroups.ts'
 import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { mixedGains, startingTones, transposedFifths, transposeTimeline } from '../score/practising.ts'
@@ -110,6 +114,7 @@ import { useLeaveGuard } from '../sharing/leaveGuard.ts'
 
 /** Practice audio files: own chunk, loaded when the dialog is opened */
 const PracticeAudioDialog = defineAsyncComponent(() => import('./PracticeAudioDialog.vue'))
+const LargePrintDialog = defineAsyncComponent(() => import('./LargePrintDialog.vue'))
 /** Small corrections: own chunk, loaded when the dialog is opened */
 const CorrectionDialog = defineAsyncComponent(() => import('./CorrectionDialog.vue'))
 
@@ -933,6 +938,10 @@ const lyricsStep = ref<'0' | '1' | '2' | '3'>('0')
 /** Syllables of that voice along the playback (milestone 0.14) */
 const syllables = computed(() => model.value && lyricsVoice.value ? lyricSyllables(model.value, timeline.value, lyricsVoice.value) : [])
 
+/** The vowels the sung voice sings, from the lyrics under the notes (November 2026) */
+const vowels = computed(() => model.value ? eventVowels(model.value, timeline.value) : undefined)
+watch([timbre, vowels], () => player?.setTimbre(timbre.value, vowels.value))
+
 /** Singing along with the pitch display, and why the microphone did not work */
 const pitchShown = ref(false)
 const pitchProblem = ref('')
@@ -954,7 +963,13 @@ watch(focusVoice, (voice) => {
 })
 
 /** Display names of the voices for the mixer */
-const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice) })))
+const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice), group: groupOf(labelOf(voice)) })))
+
+/** The focus voice in the colour of its group (design proposal V2), else the neutral focus colour */
+const focusStyle = computed(() => {
+	const group = focusVoice.value ? groupOf(labelOf(focusVoice.value)) : null
+	return group ? { '--score-focus': voiceColor(group) } : undefined
+})
 
 /**
  * Give the starting tones from the current place: of the focus voice when
@@ -990,6 +1005,7 @@ function ensurePlayer(): ScorePlayerType {
 		player.setGains(gains())
 		player.setMetronome(beats())
 		player.setLoop(loop.value)
+		player.setTimbre(timbre.value, vowels.value)
 	}
 	return player
 }
@@ -1165,6 +1181,26 @@ function openPractice(): void {
 function closePractice(): void {
 	practiceOpen.value = false
 	focusAfterDialog(practiceButton)
+}
+
+// ---- large-print part (November 2026) ----------------------------------------
+
+const largePrintOpen = ref(false)
+const largePrintButton = ref(null)
+/** The catalog librarian and the conductor make parts; the server checks the rights */
+const canLargePrint = computed(() => isModuleActive('large_print') && hasAnyRole(['librarian', 'conductor'])
+	&& scoreText.value !== '' && props.detail.version.preservation_copy !== true)
+
+function openLargePrint(): void {
+	if (player?.isPlaying) {
+		togglePlay()
+	}
+	largePrintOpen.value = true
+}
+
+function closeLargePrint(): void {
+	largePrintOpen.value = false
+	focusAfterDialog(largePrintButton)
 }
 
 // ---- following the playback -------------------------------------------------
@@ -1446,7 +1482,7 @@ onBeforeUnmount(() => {
 		@close="requestClose">
 		<!-- Key handling for the whole viewer: Space plays/pauses (see onKeydown) -->
 		<!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -->
-		<div class="score-viewer" @keydown="onKeydown">
+		<div class="score-viewer" :style="focusStyle" @keydown="onKeydown">
 			<!-- not a <header>: outside <main> that would be a second banner landmark -->
 			<div class="score-viewer__header">
 				<h2 :id="headingId" class="score-viewer__title">
@@ -1666,7 +1702,17 @@ onBeforeUnmount(() => {
 							{{ t('cantoria', 'Practice files …') }}
 						</NcButton>
 					</div>
-					<p v-else-if="canPlay && exportReason" class="score-viewer__hint">
+					<div v-if="canLargePrint" class="score-viewer__buttons">
+						<NcButton ref="largePrintButton"
+							aria-haspopup="dialog"
+							@click="openLargePrint">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiFormatSize" />
+							</template>
+							{{ t('cantoria', 'Large-print part …') }}
+						</NcButton>
+					</div>
+					<p v-if="canPlay && !canExportAudio && exportReason" class="score-viewer__hint">
 						{{ exportReason }}
 					</p>
 				</div>
@@ -1861,6 +1907,15 @@ onBeforeUnmount(() => {
 					:version-line="versionLineText"
 					:transpose="transpose"
 					@close="closePractice" />
+				<LargePrintDialog v-if="largePrintOpen && model"
+					:copy-id="detail.copy.id"
+					:score-text="scoreText"
+					:model="model"
+					:focus-key="focusKey"
+					:voice-name="labelOf"
+					:title="[shelfmark, String(detail.work.title ?? '')].filter((part) => part !== '').join(' ')"
+					:version-line="versionLineText"
+					@close="closeLargePrint" />
 				<CorrectionDialog v-if="correction && model"
 					:detail="detail"
 					:model="model"

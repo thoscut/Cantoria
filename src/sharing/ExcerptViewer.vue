@@ -36,7 +36,7 @@ import type { Timeline } from '../score/timeline.ts'
 import type { VerovioToolkit } from '../score/toolkit.ts'
 import type { Voice } from '../score/voices.ts'
 
-import { mdiAlertCircleOutline, mdiChevronUp, mdiDownload, mdiMagnifyMinusOutline, mdiMagnifyPlusOutline, mdiPause, mdiPlay, mdiRecordCircleOutline, mdiStop, mdiTuneVariant } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiChevronUp, mdiDownload, mdiMagnifyMinusOutline, mdiMagnifyPlusOutline, mdiMinus, mdiPause, mdiPlay, mdiPlus, mdiRecordCircleOutline, mdiStop, mdiTuneVariant } from '@mdi/js'
 import { n, t } from '../l10n.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -56,6 +56,9 @@ import { followMeasure, turnSystem } from '../score/follow.ts'
 import { scoreTarget } from '../score/hit.ts'
 import { loadScore, playbackTimeline, renderPages, selectMeasures } from '../score/model.ts'
 import { lyricSyllables } from '../score/lyrics.ts'
+import { timbre } from '../score/sungVoice.ts'
+import { eventVowels } from '../score/vowels.ts'
+import { groupOf, voiceColor } from '../score/voiceGroups.ts'
 import { targetNotes } from '../score/pitch.ts'
 import { ScorePlayer, voiceGains } from '../score/player.ts'
 import { partGains, practiceFileName, practiceMidi, SAMPLE_RATE } from '../score/practice.ts'
@@ -361,6 +364,36 @@ const focusOption = computed<VoiceOption>({
 
 const focusVoice = computed(() => model.value?.voices.find((voice) => voice.key === focusKey.value) ?? null)
 
+/** The voices as chips in the bar (design proposal V3); a large score keeps the list in the settings */
+const MAX_CHIPS = 8
+const voiceChips = computed(() => {
+	const voices = model.value?.voices ?? []
+	return voices.length < 2 || voices.length > MAX_CHIPS
+		? []
+		: voices.map((voice) => ({ key: voice.key, label: labelOf(voice), group: groupOf(labelOf(voice)) }))
+})
+
+/**
+ * A chip chooses the focus voice; the chosen chip again gives it up.
+ *
+ * @param key - key of the voice
+ */
+function toggleVoice(key: string): void {
+	const option = voiceOptions.value.find((candidate) => candidate.id === (focusKey.value === key ? '' : key))
+	if (option) {
+		focusOption.value = option
+	}
+}
+
+/**
+ * The tempo in steps of five percent, from the bar.
+ *
+ * @param delta - percent, e.g. -5
+ */
+function tempoBy(delta: number): void {
+	tempoPercent.value = Math.max(TEMPO_MIN, Math.min(TEMPO_MAX, Math.round((tempoPercent.value + delta) / 5) * 5))
+}
+
 function applyFocus(): void {
 	if (pagesElement.value) {
 		markFocus(pagesElement.value, focusVoice.value?.members ?? [])
@@ -478,6 +511,10 @@ const lyricsStep = ref<'0' | '1' | '2' | '3'>('0')
 /** Syllables of that voice along the playback (milestone 0.14) */
 const syllables = computed(() => model.value && lyricsVoice.value ? lyricSyllables(model.value, timeline.value, lyricsVoice.value) : [])
 
+/** The vowels the sung voice sings, from the lyrics under the notes (November 2026) */
+const vowels = computed(() => model.value ? eventVowels(model.value, timeline.value) : undefined)
+watch([timbre, vowels], () => player?.setTimbre(timbre.value, vowels.value))
+
 /** Singing along with the pitch display, and why the microphone did not work */
 const pitchShown = ref(false)
 const pitchProblem = ref('')
@@ -499,7 +536,13 @@ watch(focusVoice, (voice) => {
 })
 
 /** Display names of the voices for the mixer */
-const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice) })))
+const mixerVoices = computed(() => (model.value?.voices ?? []).map((voice) => ({ key: voice.key, label: labelOf(voice), group: groupOf(labelOf(voice)) })))
+
+/** The focus voice in the colour of its group (design proposal V2), else the neutral focus colour */
+const focusStyle = computed(() => {
+	const group = focusVoice.value ? groupOf(labelOf(focusVoice.value)) : null
+	return group ? { '--score-focus': voiceColor(group) } : undefined
+})
 
 /**
  * Give the starting tones from the current place: of the focus voice when
@@ -534,6 +577,7 @@ function ensurePlayer(): ScorePlayerType {
 		player.setGains(gains())
 		player.setMetronome(beats())
 		player.setLoop(loop.value)
+		player.setTimbre(timbre.value, vowels.value)
 	}
 	return player
 }
@@ -1003,6 +1047,8 @@ async function makePracticeFile(): Promise<void> {
 				sampleRate: SAMPLE_RATE,
 				signal,
 				countIn,
+				timbre: timbre.value,
+				vowelOf: eventVowels(loaded, events),
 				onProgress: (done) => {
 					exportStatus.value = t('cantoria', 'Making the file … {percent} %', { percent: Math.floor(done * 10) * 10 })
 				},
@@ -1145,6 +1191,7 @@ onBeforeUnmount(() => {
 	<div ref="rootElement"
 		class="excerpt-viewer"
 		:class="{ 'excerpt-viewer--stage': stage, 'excerpt-viewer--no-print': !printable }"
+		:style="focusStyle"
 		@keydown="onKeydown">
 		<!-- In the stage view the page starts with the bar and the notes (D27): the reference stays for screen readers -->
 		<p class="excerpt-viewer__reference" :class="{ 'hidden-visually': stage }">
@@ -1190,6 +1237,47 @@ onBeforeUnmount(() => {
 						</template>
 						<span class="excerpt-viewer__button-label">{{ t('cantoria', 'Stop') }}</span>
 					</NcButton>
+				</div>
+				<!-- The place and the tempo, as on a player (design proposal V3) -->
+				<div v-if="canPlay" class="excerpt-viewer__transport">
+					<span class="excerpt-viewer__measure">
+						{{ t('cantoria', 'Measure {number}', { number: currentMeasureNumber }) }}
+					</span>
+					<div class="excerpt-viewer__tempo" role="group" :aria-label="t('cantoria', 'Tempo')">
+						<NcButton variant="tertiary"
+							:aria-label="t('cantoria', 'Slower')"
+							:disabled="tempoPercent <= TEMPO_MIN"
+							@click="tempoBy(-5)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiMinus" />
+							</template>
+						</NcButton>
+						<span class="excerpt-viewer__tempo-value" aria-live="polite">{{ tempoText }}</span>
+						<NcButton variant="tertiary"
+							:aria-label="t('cantoria', 'Faster')"
+							:disabled="tempoPercent >= TEMPO_MAX"
+							@click="tempoBy(5)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiPlus" />
+							</template>
+						</NcButton>
+					</div>
+				</div>
+				<div v-if="voiceChips.length > 0"
+					class="excerpt-viewer__voices"
+					role="group"
+					:aria-label="t('cantoria', 'My voice')">
+					<button v-for="chip in voiceChips"
+						:key="chip.key"
+						type="button"
+						class="excerpt-viewer__chip"
+						:class="{ 'excerpt-viewer__chip--chosen': chip.key === focusKey }"
+						:style="{ '--voice': voiceColor(chip.group) }"
+						:aria-pressed="chip.key === focusKey ? 'true' : 'false'"
+						@click="toggleVoice(chip.key)">
+						<span class="excerpt-viewer__chip-letter" aria-hidden="true">{{ chip.group ?? '·' }}</span>
+						{{ chip.label }}
+					</button>
 				</div>
 				<div class="excerpt-viewer__buttons" role="group" :aria-label="t('cantoria', 'Size of the score')">
 					<NcButton variant="tertiary"
@@ -1429,9 +1517,109 @@ onBeforeUnmount(() => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
-	padding: var(--default-grid-baseline);
-	border-bottom: 1px solid var(--color-border);
+	padding: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
+	border: 1px solid var(--color-border);
+	border-block-start: none;
+	border-radius: 0 0 var(--border-radius-container, 16px) var(--border-radius-container, 16px);
 	background-color: var(--color-main-background);
+	box-shadow: var(--cantoria-shadow);
+}
+
+/* The place in the piece and the tempo, like the display of a player */
+.excerpt-viewer__transport {
+	display: flex;
+	align-items: center;
+	gap: var(--default-grid-baseline);
+}
+
+.excerpt-viewer__measure,
+.excerpt-viewer__tempo-value {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.excerpt-viewer__measure {
+	min-inline-size: 5.5em;
+	padding: 2px 10px;
+	border-radius: var(--border-radius-pill, 999px);
+	background: var(--color-background-dark);
+	font-weight: 600;
+	text-align: center;
+}
+
+.excerpt-viewer__tempo {
+	display: flex;
+	align-items: center;
+}
+
+.excerpt-viewer__tempo-value {
+	min-inline-size: 6.5em;
+	text-align: center;
+}
+
+/* One chip per voice, in the colour of the voice and with its letter */
+.excerpt-viewer__voices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.excerpt-viewer__chip {
+	--voice: var(--cantoria-voice-none);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-block-size: var(--default-clickable-area, 34px);
+	margin: 0;
+	padding: 2px 12px 2px 4px;
+	border: 2px solid var(--voice);
+	border-radius: var(--border-radius-pill, 999px);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	font: inherit;
+	cursor: pointer;
+	transition: background-color var(--cantoria-motion) var(--cantoria-ease);
+}
+
+.excerpt-viewer__chip:focus-visible {
+	outline: 2px solid var(--color-main-text);
+	outline-offset: 2px;
+}
+
+.excerpt-viewer__chip-letter {
+	display: inline-grid;
+	place-items: center;
+	inline-size: 1.7em;
+	block-size: 1.7em;
+	border-radius: 50%;
+	background: var(--voice);
+	color: var(--color-main-background);
+	font-size: 0.85em;
+	font-weight: 700;
+}
+
+/* chosen: filled, bold and with a tick of the border – not the colour alone */
+.excerpt-viewer__chip--chosen {
+	background: var(--voice);
+	color: var(--color-main-background);
+	font-weight: 700;
+}
+
+.excerpt-viewer__chip--chosen .excerpt-viewer__chip-letter {
+	background: var(--color-main-background);
+	color: var(--voice);
+}
+
+.excerpt-viewer--stage .excerpt-viewer__voices,
+.excerpt-viewer--stage .excerpt-viewer__tempo {
+	display: none;
+}
+
+@media (forced-colors: active) {
+	.excerpt-viewer__chip--chosen {
+		background: Highlight;
+		color: HighlightText;
+	}
 }
 
 .excerpt-viewer__controls {

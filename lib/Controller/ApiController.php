@@ -20,8 +20,10 @@ use OCA\Cantoria\Service\FileSyncService;
 use OCA\Cantoria\Service\FolderBookService;
 use OCA\Cantoria\Service\ImportService;
 use OCA\Cantoria\Service\MetaService;
+use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\ProtectionText;
 use OCA\Cantoria\Service\Roles;
+use OCA\Cantoria\Service\ScoreFactsService;
 use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\UserFiles;
 use OCP\AppFramework\Controller;
@@ -68,6 +70,8 @@ class ApiController extends Controller {
 		private ITimeFactory $time,
 		private IDateTimeZone $timeZone,
 		private ScoreService $scores,
+		private ScoreFactsService $scoreFacts,
+		private Modules $modules,
 		private IL10N $l,
 		private LoggerInterface $logger,
 	) {
@@ -137,6 +141,10 @@ class ApiController extends Controller {
 			$score = $this->scores->content($id, $this->userId);
 		} catch (UserFacingException $e) {
 			return $this->errorResponse($e);
+		}
+		// The facts of a score opened are read at once, not only by the background job.
+		if ($this->modules->isEnabled(Modules::SCORE_FACTS)) {
+			$this->scoreFacts->remember($id, $score['content']);
 		}
 		// The viewer fetches the file with a script. Opened directly, the
 		// browser must neither render the XML on the Nextcloud origin nor guess

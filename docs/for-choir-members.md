@@ -38,6 +38,12 @@ with the choir. You only need a browser, no app. The details are in the
 5. **More for practising** has starting tones, metronome, lyrics, your own
    pitch and **Record myself** (use headphones).
 
+The bar above the notes shows the measure that is playing, and with
+**Slower** and **Faster** you change the tempo. Where a piece has up to
+eight voices, each has a button in its colour: a tap mutes the voice or
+brings it back. With **Sung voice (vowels of the lyrics)** the voices sound
+like singing instead of an organ.
+
 ## Practising without a network
 
 Where it is switched on, switch on **Available without a network** at a

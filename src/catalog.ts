@@ -8,6 +8,7 @@
  * derived rights indicator. No Vue, no server access, easy to test.
  */
 import type { Entry, FilterContext, Filters, SortOrder } from './types.ts'
+import type { PieceFit } from './scoreFacts.ts'
 
 import { toIsoDate } from './format.ts'
 
@@ -72,6 +73,7 @@ export const DEFAULT_FILTERS: Readonly<Filters> = Object.freeze({
 	language: null,
 	maxMinutes: null,
 	hiredReturn: false,
+	fits: null,
 })
 
 /**
@@ -95,6 +97,7 @@ export function moreFiltersActive(filters: Filters): number {
 		filters.language !== null,
 		filters.maxMinutes !== null,
 		filters.hiredReturn,
+		(filters.fits ?? null) !== null,
 	].filter(Boolean).length
 }
 
@@ -230,6 +233,7 @@ export function hasActiveFilters(filters: Filters): boolean {
 		|| filters.language !== null
 		|| filters.maxMinutes !== null
 		|| filters.hiredReturn
+		|| (filters.fits ?? null) !== null
 }
 
 /**
@@ -254,6 +258,7 @@ export function activeFilterCount(filters: Filters): number {
 		filters.language !== null,
 		filters.maxMinutes !== null,
 		filters.hiredReturn,
+		(filters.fits ?? null) !== null,
 	].filter(Boolean).length
 }
 
@@ -375,8 +380,32 @@ export function filterEntries(entries: Entry[], filters: Filters, index: Map<num
 		if (filters.maxMinutes !== null && !(typeof entry.duration === 'number' && entry.duration > 0 && entry.duration <= filters.maxMinutes * 60)) {
 			return false
 		}
+		if (filters.fits && !fitsFilter(context.fits?.get(entry.id), filters.fits)) {
+			return false
+		}
 		return true
 	})
+}
+
+/**
+ * Whether a piece passes the filter "Fits our ranges". Pieces without
+ * facts from their score, or without a voice of a known group, never do.
+ *
+ * @param fit - how the piece fits the choir profile
+ * @param wanted - comfortable or possible as written, or after the suggested transposition
+ */
+export function fitsFilter(fit: PieceFit | undefined, wanted: 'comfortable' | 'possible' | 'transposed'): boolean {
+	if (!fit || fit.fit === null) {
+		return false
+	}
+	switch (wanted) {
+	case 'comfortable':
+		return fit.fit === 'comfortable'
+	case 'possible':
+		return fit.fit !== 'out'
+	default:
+		return fit.transposedFit !== null && fit.transposedFit !== 'out'
+	}
 }
 
 /**

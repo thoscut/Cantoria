@@ -667,4 +667,57 @@ final class RightsPolicyTest extends TestCase {
 		self::assertSame('Internal preservation copy: it does not go into a songbook.',
 			$this->policy(true, true, [self::license('binder')], false)->songbookDenial($version, self::TODAY));
 	}
+
+	// ---- the programme booklet: lyrics printed for the audience (November 2026) ----
+
+	public function testLyricsInABookletNeedConfirmedPublicDomainOrALicenseForPublication(): void {
+		$denied = 'Printing lyrics in a booklet needs confirmed public domain or a license for publication. The catalog librarian records it on the tab "Rights".';
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
+		$unconfirmed = self::version(['rights_status' => 'public_domain']);
+		$protected = self::version(['rights_status' => 'protected']);
+		self::assertNull($this->policy(true, false)->bookletLyricsDenial($confirmed, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false)->bookletLyricsDenial($unconfirmed, self::TODAY), 'public domain counts only when confirmed');
+		self::assertSame($denied, $this->policy(true, false)->bookletLyricsDenial($protected, self::TODAY));
+		self::assertNull($this->policy(true, false, [self::license('publication')])->bookletLyricsDenial($protected, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false, [self::license('binder,portal,practice_audio')])->bookletLyricsDenial($protected, self::TODAY),
+			'copies for the choir are no publication for the audience');
+		self::assertSame($denied, $this->policy(true, false, [self::license('publication', null, '2026-01-31')])->bookletLyricsDenial($protected, self::TODAY),
+			'a license that has ended');
+	}
+
+	public function testTheLyricsOfAPreservationCopyAreNeverPrinted(): void {
+		$version = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'preservation_copy' => true]);
+		self::assertSame('Internal preservation copy: its lyrics are not printed.',
+			$this->policy(true, true, [self::license('publication')], false)->bookletLyricsDenial($version, self::TODAY));
+	}
+
+	// ---- large-print parts for singers with a visual impairment (November 2026) ----
+
+	public function testALargePrintPartNeedsConfirmedPublicDomainALicenseOrTheConfirmationOfTheLibrarian(): void {
+		$denied = 'A large-print part is a printed copy and needs confirmed public domain or a license for it. Without a license, the catalog librarian can confirm an accessible copy (§ 45b UrhG).';
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
+		$unconfirmed = self::version(['rights_status' => 'public_domain']);
+		$protected = self::version(['rights_status' => 'protected']);
+		self::assertNull($this->policy(true, false)->largePrintDenial($confirmed, self::TODAY));
+		self::assertSame('free', $this->policy(true, false)->largePrintBasis($confirmed, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false)->largePrintDenial($unconfirmed, self::TODAY), 'public domain counts only when confirmed');
+		self::assertSame($denied, $this->policy(true, false)->largePrintDenial($protected, self::TODAY));
+		foreach (RightsPolicy::LARGE_PRINT_USES as $use) {
+			self::assertNull($this->policy(true, false, [self::license($use)])->largePrintDenial($protected, self::TODAY), $use);
+			self::assertSame('license', $this->policy(true, false, [self::license($use)])->largePrintBasis($protected, self::TODAY), $use);
+		}
+		self::assertSame($denied, $this->policy(true, false, [self::license('portal,practice_audio,publication')])->largePrintDenial($protected, self::TODAY),
+			'viewing, sound and publication are no printed copy for a singer');
+		self::assertSame($denied, $this->policy(true, false, [self::license('accessible_format', null, '2026-01-31')])->largePrintDenial($protected, self::TODAY),
+			'a license that has ended');
+		self::assertNull($this->policy(true, false)->largePrintDenial($protected, self::TODAY, null, true),
+			'the confirmation of an accessible copy (§ 45b UrhG)');
+		self::assertNull($this->policy(true, false)->largePrintBasis($protected, self::TODAY), 'a confirmation is no license');
+	}
+
+	public function testNoLargePrintPartIsMadeFromAPreservationCopyEvenWhenConfirmed(): void {
+		$version = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'preservation_copy' => true]);
+		self::assertSame('Internal preservation copy: no part is printed from it.',
+			$this->policy(true, true, [self::license('accessible_format')], false)->largePrintDenial($version, self::TODAY, null, true));
+	}
 }

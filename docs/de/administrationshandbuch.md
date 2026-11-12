@@ -1020,6 +1020,8 @@ können (siehe Abschnitt 16).
 | Ausschnitt-Links | Notenansicht | ein | Keine neuen Links, und vorhandene Links öffnen sich nicht (sie bleiben erhalten und laufen ab wie bisher). |
 | Prüfung der Übertragungen | Notenansicht | ein | Der Dateiabgleich erkennt Berichte von Übertragungen weiterhin, liest sie aber nicht; keine Prüfpunkte, keine Korrekturaufträge, keine Prüfung in der Notenansicht, kein Filter „offene Prüfpunkte“. Berichte, Punkte und Entscheidungen bleiben erhalten. |
 | Kleine Korrekturen | Notenansicht | ein | Keine Korrekturen in der Notenansicht; vorher korrigierte Dateien bleiben, wie sie sind. |
+| Angaben aus den Noten | Notenansicht | ein | Der stündliche Job liest keine Noten; kein Abschnitt „Musik“ mit Stimmumfängen und ersten Takten, kein Chorprofil, kein Filter „Unsere Stimmumfänge“, kein Programm auf einen Blick und kein Anstimmzettel. Vorher gelesene Angaben bleiben in der Datenbank und erscheinen wieder, wenn das Modul eingeschaltet wird. |
+| Großdruck-Stimmen | Notenansicht | ein | Keine Großdruck-Stimmen; der Server lehnt Prüfung und Eintrag ab. Vorher gedruckte Stimmen sind auf Papier; das Protokoll behält sie. |
 | Stände einer Fassung | Notenansicht | ein | Keine neuen Stände aus Korrekturen oder dem Dateiabgleich, keine Liste, kein Vergleich, kein aktueller Stand festzulegen; als gesungen bestätigte Konzerte behalten keinen Stand, und Ausgaben drucken keine Zeile zum Stand. Vorher erfasste Stände und die Stände vergangener Konzerte bleiben erhalten. |
 | Öffnen aus der Dateien-App | – | ein | Die Dateien-App hat keine Aktion „In Cantoria öffnen“; ein Klick auf MusicXML im Archivordner tut, was er vorher tat. Ohne die Notenansicht öffnet MusicXML stattdessen sein Exemplar. |
 | Rückfragen und Aufgaben | – | ein | Keine Rückfragen und Aufgaben, keine Karten und Benachrichtigungen zu Aufgaben. Vorhandene Aufgaben bleiben erhalten. |
@@ -1029,6 +1031,8 @@ können (siehe Abschnitt 16).
 | Repertoirezahlen | Konzerte und Notenlisten | ein | Das Werkverzeichnis zeigt die Repertoirewerte des importierten Werkverzeichnisses; keine Grenzen in den Einstellungen. |
 | Konzerte im Kalender | Konzerte und Notenlisten | ein | Keine Kalenderdateien und -einträge. Einträge in Kalendern bleiben dort. |
 | Konzertmappe | Konzerte und Notenlisten, Notenansicht | aus (in keiner Voreinstellung) | Keine Seite „Konzertmappe“ und kein Eintrag in der Navigation; ihre Routen antworten mit 404. Was die Chorleitung auf ihren Geräten behalten hat, wird beim nächsten Besuch mit Netz entfernt. |
+| Liederbücher | – | ein | Keine Liederbücher aus einem Programm, einer Notenliste oder dem Werkverzeichnis. Vorher erstellte Liederbücher sind schon gedruckt; das Protokoll behält sie. |
+| Programmheft | Konzerte und Notenlisten | ein | Keine Programmhefte. Die Liedtexte im Heft kommen aus dem Modul „Angaben aus den Noten“; ohne es enthält ein Heft die Titelseite und das Programm. |
 | Neuzugänge und Etiketten | – | ein | Kein Assistent für Neuzugänge und keine Etiketten. Der Import legt weiterhin Exemplare an. |
 | Werke zusammenführen | – | ein | Keine Vorschläge zum Zusammenführen, kein Zusammenführen und kein Rückgängigmachen. Erfolgte Zusammenführungen bleiben. |
 | Inventur | – | ein | Keine Inventurlisten und keine Liste der Signaturlücken. Erfasste Zählungen bleiben im Werkverzeichnis. |

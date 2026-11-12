@@ -22,6 +22,8 @@ import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { emit as emitEvent } from '@nextcloud/event-bus'
 import { useIsMobile } from '@nextcloud/vue/composables/useIsMobile'
 import AppNotices from './AppNotices.vue'
+import FitBadge from './FitBadge.vue'
+import IncipitImage from './IncipitImage.vue'
 import RightsBadge from './RightsBadge.vue'
 import { activeFilterCount, isEntryConfirmed, songListCount } from '../catalog.ts'
 import { formatDate } from '../format.ts'
@@ -29,7 +31,9 @@ import { repertoireClassLabel, repertoireSourceLabel } from '../labels.ts'
 import {
 	choiceLabel,
 	entries,
+	factsOf,
 	filters,
+	fitsByCopy,
 	filtersActive,
 	isModuleActive,
 	openEntry,
@@ -318,6 +322,10 @@ function statusText(entry: Entry): string {
 						<span class="catalog-card__title">{{ entry.title || t('cantoria', '(no title)') }}</span>
 					</span>
 					<span v-if="entry.composer" class="catalog-card__composer">{{ entry.composer }}</span>
+					<span v-if="factsOf(entry.id)" class="catalog-table__music">
+						<IncipitImage :incipit="factsOf(entry.id)?.incipit ?? null" />
+						<FitBadge :fit="fitsByCopy.get(entry.id)" />
+					</span>
 					<span class="catalog-card__meta">
 						<RightsBadge :rights-status="entry.rights_status"
 							:rights-confirmed="confirmation(entry)"
@@ -380,6 +388,10 @@ function statusText(entry: Entry): string {
 					</td>
 					<td class="catalog-table__title">
 						{{ entry.title }}
+						<span v-if="factsOf(entry.id)" class="catalog-table__music">
+							<IncipitImage :incipit="factsOf(entry.id)?.incipit ?? null" />
+							<FitBadge :fit="fitsByCopy.get(entry.id)" />
+						</span>
 					</td>
 					<td>{{ entry.composer }}</td>
 					<td>
@@ -413,6 +425,14 @@ function statusText(entry: Entry): string {
 <style scoped>
 .catalog {
 	min-height: 100%;
+}
+
+.catalog-table__music {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+	margin-block-start: 2px;
 }
 
 .catalog__header {

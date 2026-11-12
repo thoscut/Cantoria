@@ -36,6 +36,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import EmptyArt from '../components/EmptyArt.vue'
 import DiscardRecording from './DiscardRecording.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
@@ -567,7 +568,7 @@ onBeforeUnmount(() => {
 					:name="t('cantoria', 'No programme to be sung')"
 					:description="t('cantoria', 'Concerts and song lists in draft or fixed appear here, the next one first.')">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiMusicNoteOutline" />
+						<EmptyArt kind="stand" />
 					</template>
 				</NcEmptyContent>
 

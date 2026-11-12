@@ -14,6 +14,7 @@
  */
 import type { CalendarMessage } from '../calendar.ts'
 import type { ChoirEvent, EventDetail, EventItem, Entry } from '../types.ts'
+import type { PitchPiece } from '../scoreFacts.ts'
 
 import {
 	mdiAlertCircleOutline,
@@ -22,6 +23,7 @@ import {
 	mdiArrowLeft,
 	mdiArrowUp,
 	mdiBookMusicOutline,
+	mdiBookOpenPageVariantOutline,
 	mdiCalendarExportOutline,
 	mdiCalendarPlusOutline,
 	mdiCalendarRemoveOutline,
@@ -50,8 +52,11 @@ import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import ActionDialog from './ActionDialog.vue'
 import AppNotices from './AppNotices.vue'
+import BookletDialog from './BookletDialog.vue'
 import CalendarDialog from './CalendarDialog.vue'
 import EventDialog from './EventDialog.vue'
+import PitchSheet from './PitchSheet.vue'
+import ProgrammeArc from './ProgrammeArc.vue'
 import ProgrammeShareDialog from './ProgrammeShareDialog.vue'
 import SongbookDialog from './SongbookDialog.vue'
 import {
@@ -74,6 +79,7 @@ import { focusAfterDialog, focusAfterUpdate } from '../focus.ts'
 import { formatDate, toIsoDate } from '../format.ts'
 import { eventStatusLabel, ROLES } from '../labels.ts'
 import { navigate } from '../navigation.ts'
+import { fetchPitchSheet } from '../scoreFacts.ts'
 import { canPlanEvents, entries, hasAnyRole, isModuleActive, loadEntries, loadPortalRows, openEntry, versionsOnPortal } from '../store.ts'
 
 const props = defineProps<{
@@ -97,6 +103,7 @@ async function load(): Promise<void> {
 		const result = await fetchEvent(props.eventId)
 		if (run === loadRun) {
 			data.value = result
+			loadPitches(run)
 		}
 	} catch (caught) {
 		if (run === loadRun) {
@@ -109,8 +116,59 @@ async function load(): Promise<void> {
 	}
 }
 
+// ---- facts from the scores: the programme band and the pitch sheet (November 2026) ----
+
+const pitchPieces = ref<PitchPiece[]>([])
+const pitchMap = computed(() => new Map(pitchPieces.value.map((piece) => [piece.itemId, piece])))
+const hasPitches = computed(() => pitchPieces.value.some((piece) => piece.facts !== null))
+
+/**
+ * Load the facts of the pieces; without them the band shows durations only.
+ *
+ * @param run - the load this belongs to
+ */
+async function loadPitches(run: number): Promise<void> {
+	if (!isModuleActive('score_facts')) {
+		pitchPieces.value = []
+		return
+	}
+	try {
+		const sheet = await fetchPitchSheet(props.eventId)
+		if (run === loadRun) {
+			pitchPieces.value = sheet.pieces
+		}
+	} catch {
+		// The facts are an aid: the programme works without them
+		if (run === loadRun) {
+			pitchPieces.value = []
+		}
+	}
+}
+
+/**
+ * Go to an item of the list.
+ *
+ * @param itemId - the item
+ */
+async function jumpTo(itemId: number): Promise<void> {
+	await nextTick()
+	const element = document.getElementById(`event-item-${itemId}`)
+	element?.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+	element?.focus({ preventScroll: true })
+}
+
+/**
+ * The band was rearranged by dragging.
+ *
+ * @param order - all item ids in the new order
+ */
+async function reorderTo(order: number[]): Promise<void> {
+	await act(() => reorderEventItems(props.eventId, order), t('cantoria', 'The order has been changed.'))
+}
+
 watch(() => props.eventId, () => {
 	data.value = null
+	pitchPieces.value = []
 	load()
 }, { immediate: true })
 
@@ -144,6 +202,10 @@ const sharing = ref(false)
 /** A songbook of the programme to print (round 3, November 2026) */
 const canMakeSongbook = computed(() => items.value.length > 0 && isModuleActive('songbook') && hasAnyRole(['librarian', 'conductor']))
 const makingSongbook = ref(false)
+/** A programme booklet for the audience (proposal 2, November 2026) */
+const canMakeBooklet = computed(() => isConcert.value && items.value.some((item) => item.struck !== true)
+	&& isModuleActive('programme_booklet') && hasAnyRole(['librarian', 'conductor']))
+const makingBooklet = ref(false)
 /** A new programme with these pieces (round 3, November 2026) */
 const canCopyProgramme = computed(() => canPlanEvents.value && event.value !== null && items.value.some((item) => item.struck !== true))
 const copyingProgramme = ref(false)
@@ -397,7 +459,7 @@ const totalText = computed(() => formatDuration(data.value?.totalDuration ?? 0) 
 
 // ---- printing ----
 
-const printMode = ref<'programme' | 'binders' | 'songlist'>('programme')
+const printMode = ref<'programme' | 'binders' | 'songlist' | 'pitches'>('programme')
 const largePrint = ref(false)
 
 /**
@@ -405,7 +467,7 @@ const largePrint = ref(false)
  *
  * @param mode - which list
  */
-async function print(mode: 'programme' | 'binders' | 'songlist'): Promise<void> {
+async function print(mode: 'programme' | 'binders' | 'songlist' | 'pitches'): Promise<void> {
 	printMode.value = mode
 	await nextTick()
 	window.print()
@@ -554,6 +616,12 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Songbook (PDF) …') }}
 						</NcButton>
+						<NcButton v-if="canMakeBooklet" :disabled="busy" @click="makingBooklet = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiBookOpenPageVariantOutline" />
+							</template>
+							{{ t('cantoria', 'Programme booklet (PDF) …') }}
+						</NcButton>
 						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiFolderMusicOutline" />
@@ -581,6 +649,14 @@ function revisionText(item: EventItem): string {
 					</p>
 				</section>
 
+				<ProgrammeArc v-if="printedItems.length > 0"
+					:items="items"
+					:pitches="pitchMap"
+					:start-time="event.start_time"
+					:editable="editable && !busy"
+					@jump="jumpTo"
+					@reorder="reorderTo" />
+
 				<section class="event-detail__items" aria-labelledby="event-detail-items">
 					<h3 id="event-detail-items">
 						{{ n('cantoria', '%n piece', '%n pieces', items.length) }}
@@ -602,7 +678,9 @@ function revisionText(item: EventItem): string {
 					</p>
 					<ol v-else class="event-detail__list">
 						<li v-for="(item, index) in items"
+							:id="`event-item-${item.id}`"
 							:key="item.id"
+							tabindex="-1"
 							class="event-item"
 							:class="{ 'event-item--struck': item.struck }">
 							<span class="event-item__position" aria-hidden="true">{{ index + 1 }}</span>
@@ -682,6 +760,13 @@ function revisionText(item: EventItem): string {
 					</p>
 				</section>
 
+				<section v-if="hasPitches" class="event-detail__pitches" aria-labelledby="event-detail-pitches">
+					<h3 id="event-detail-pitches">
+						{{ t('cantoria', 'Pitch sheet') }}
+					</h3>
+					<PitchSheet :pieces="pitchPieces" />
+				</section>
+
 				<section v-if="showCalendar" class="event-detail__calendar" aria-labelledby="event-detail-calendar">
 					<h3 id="event-detail-calendar">
 						{{ t('cantoria', 'Calendar') }}
@@ -737,6 +822,12 @@ function revisionText(item: EventItem): string {
 							</template>
 							{{ t('cantoria', 'Song list') }}
 						</NcButton>
+						<NcButton v-if="hasPitches" @click="print('pitches')">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiPrinterOutline" />
+							</template>
+							{{ t('cantoria', 'Pitch sheet') }}
+						</NcButton>
 					</div>
 				</section>
 				<p class="hidden-visually" aria-live="polite">
@@ -761,7 +852,8 @@ function revisionText(item: EventItem): string {
 						· {{ event.location }}
 					</template>
 				</p>
-				<table class="event-print__table">
+				<PitchSheet v-if="printMode === 'pitches'" :pieces="pitchPieces" print />
+				<table v-else class="event-print__table">
 					<thead>
 						<tr>
 							<th>{{ t('cantoria', 'No.') }}</th>
@@ -874,6 +966,9 @@ function revisionText(item: EventItem): string {
 		<SongbookDialog v-if="makingSongbook && event"
 			:event-id="event.id"
 			@close="makingSongbook = false" />
+		<BookletDialog v-if="makingBooklet && event"
+			:event-id="event.id"
+			@close="makingBooklet = false" />
 		<CalendarDialog v-if="calendarDialogOpen && event"
 			:event-id="event.id"
 			:deadlines="withDeadlines && !event.imported"
@@ -940,6 +1035,7 @@ function revisionText(item: EventItem): string {
 
 .event-detail__summary,
 .event-detail__items,
+.event-detail__pitches,
 .event-detail__calendar,
 .event-detail__print-options {
 	display: flex;
@@ -983,6 +1079,7 @@ function revisionText(item: EventItem): string {
 }
 
 .event-detail__items h3,
+.event-detail__pitches h3,
 .event-detail__calendar h3,
 .event-detail__print-options h3 {
 	margin: 0;
@@ -1021,6 +1118,11 @@ function revisionText(item: EventItem): string {
 	font-weight: bold;
 	font-variant-numeric: tabular-nums;
 	text-align: end;
+}
+
+.event-item:focus-visible {
+	outline: 2px solid var(--color-main-text);
+	outline-offset: -2px;
 }
 
 .event-item__body {

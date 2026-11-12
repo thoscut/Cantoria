@@ -9,6 +9,7 @@
  * it shows anything, what another account or a signed-out one kept on the
  * device goes (S N6), as on the page "Shared with me".
  */
+import './design/tokens.css'
 import { createApp } from 'vue'
 import { claimDevice } from './offline/device.ts'
 import ConcertFolderApp from './sharing/ConcertFolderApp.vue'

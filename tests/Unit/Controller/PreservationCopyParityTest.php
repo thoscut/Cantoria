@@ -317,7 +317,7 @@ final class PreservationCopyParityTest extends TestCase {
 		return new ApiController($this->createStub(IRequest::class), 'account', $roles, $this->createStub(MetaService::class), $catalog,
 			$this->createStub(ImportService::class), $export ?? $this->createStub(ExportService::class), $this->createStub(FileSyncService::class),
 			$this->createStub(\OCA\Cantoria\Db\AuditEntryMapper::class), $this->createStub(UserFiles::class), $this->time(),
-			$this->createStub(IDateTimeZone::class), $this->createStub(ScoreService::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+			$this->createStub(IDateTimeZone::class), $this->createStub(ScoreService::class), $this->createStub(\OCA\Cantoria\Service\ScoreFactsService::class), $this->createStub(\OCA\Cantoria\Service\Modules::class), $this->l10n(), $this->createStub(LoggerInterface::class));
 	}
 
 	private function time(): ITimeFactory {
