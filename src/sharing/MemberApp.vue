@@ -272,7 +272,7 @@ async function deleteDevice(): Promise<void> {
 }
 
 /** What "Delete everything on this device" deletes besides the pieces (U43) */
-const deleteConsequence = t('cantoria', 'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages, the settings for practising and the marks "New".')
+const deleteConsequence = t('cantoria', 'In this browser, this deletes the pieces available without a network on all pages of Cantoria, the remembered passages and voice, the settings for practising and the marks "New".')
 
 /** Words of a text reference (the same texts as in the archive). */
 const WORDS = {
@@ -675,6 +675,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								:measure-from="selected.measure_from"
 								:measure-to="selected.measure_to"
 								:voice="selected.voice"
+								remember-voice
 								:verse="selected.verse"
 								:tempo="selected.tempo"
 								:can-play="selected.canPlay"

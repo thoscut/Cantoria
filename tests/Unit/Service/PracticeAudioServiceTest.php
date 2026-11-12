@@ -44,6 +44,7 @@ final class PracticeAudioServiceTest extends TestCase {
 	private ?string $denial = null;
 	private AuditLog&MockObject $audit;
 
+	#[\Override]
 	protected function setUp(): void {
 		$this->audit = $this->createMock(AuditLog::class);
 		$this->audit->method('newOperation')->willReturn('op-1');

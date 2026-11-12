@@ -125,7 +125,7 @@ final class IcsWriterTest extends TestCase {
 		$text = implode("\n", $lines);
 		self::assertSame('BEGIN:VTIMEZONE', $lines[0]);
 		self::assertSame('TZID:Europe/Berlin', $lines[1]);
-		self::assertSame('END:VTIMEZONE', $lines[count($lines) - 1]);
+		self::assertSame('END:VTIMEZONE', end($lines));
 		// State at the start of the year
 		self::assertStringContainsString("BEGIN:STANDARD\nDTSTART:20260101T000000\nTZOFFSETFROM:+0100\nTZOFFSETTO:+0100\nTZNAME:CET\nEND:STANDARD", $text);
 		// Clocks go forward at 02:00 local time on the last Sunday in March …

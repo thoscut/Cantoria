@@ -28,7 +28,9 @@ with the choir. You only need a browser, no app. The details are in the
 
 1. In the bar above the notes, tap **Voice, measures and practising**.
 2. Under **My voice**, choose your voice and **Focus voice louder** or
-   **Focus voice only**.
+   **Focus voice only**. This browser remembers your voice: the next piece
+   opens with it, unless its link names a voice of its own; a voice Tenor
+   also finds Tenor 1.
 3. Under **Measures and tempo**, enter **From measure** and **To measure**,
    tap **Show measures** and switch on **Loop**: the passage plays again and again.
    The tempo plays it slower.

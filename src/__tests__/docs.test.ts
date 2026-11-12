@@ -49,7 +49,10 @@ const PAIRS = [
 ] as const
 
 /** The pages whose links are checked. */
-const CHECKED = ['docs/README.md', ...PAIRS.flat(), 'docs/de/schnellstart.md']
+/** The quick start in both languages: the same sections, pictures of its own. */
+const QUICK_START = ['docs/quick-start.md', 'docs/de/schnellstart.md'] as const
+
+const CHECKED = ['docs/README.md', 'docs/architecture.md', ...PAIRS.flat(), ...QUICK_START]
 
 /**
  * Text of a documentation file.
@@ -173,7 +176,7 @@ describe('links into the guides', () => {
 })
 
 describe('the guides in English and German', () => {
-	it.each(PAIRS)('%s and %s have the same headings in the same order', (english, german) => {
+	it.each([...PAIRS, QUICK_START])('%s and %s have the same headings in the same order', (english, german) => {
 		// A section added in only one language shows up here: change both.
 		const levels = (path: string) => headings(doc(path)).map((heading) => heading.level)
 		expect(levels(german)).toEqual(levels(english))
@@ -190,7 +193,7 @@ describe('the guides in English and German', () => {
 		expect(pictures.filter((picture) => !picture.startsWith('../screenshots/de/'))).toEqual([])
 	})
 
-	it.each(PAIRS)('%s and %s link each other at the top', (english, german) => {
+	it.each([...PAIRS, QUICK_START])('%s and %s link each other at the top', (english, german) => {
 		expect(doc(english)).toContain(`[Deutsch](${german.replace('docs/', '')})`)
 		expect(doc(german)).toContain(`[English](../${english.replace('docs/', '')})`)
 	})
@@ -281,6 +284,7 @@ describe('messages quoted in the guides', () => {
 		['docs/de/schnellstart.md', /\*„([^“]+)“\*/g, german],
 		['docs/de/fuer-chormitglieder.md', /„([^“]+)“/g, german],
 		['docs/user-guide.md', /\*"([^"]+)"\*/g, english],
+		['docs/quick-start.md', /\*"([^"]+)"\*/g, english],
 		['docs/admin-guide.md', /\*"([^"]+)"\*/g, english],
 		['docs/for-choir-members.md', /"([^"]+)"/g, english],
 	] as const)('%s quotes messages as the interface says them', (path, pattern, texts) => {

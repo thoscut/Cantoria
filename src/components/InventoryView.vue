@@ -29,6 +29,7 @@ import { focusAfterUpdate } from '../focus.ts'
 import { formatDate, parseIsoDate, toIsoDate } from '../format.ts'
 import { countPayload } from '../maintenance.ts'
 import { choiceLabel, hasAnyRole, loadDetail, loadEntries, openEntry } from '../store.ts'
+import { confirmDiscard, useUnsavedGuard } from '../unsaved.ts'
 
 const canCount = computed(() => hasAnyRole(['librarian', 'operations']))
 
@@ -42,27 +43,48 @@ const error = ref('')
 
 const drafts = reactive<Record<number, CountDraft>>({})
 
-async function load(): Promise<void> {
+/** Counter of the loads: only the answer to the latest one is shown */
+let loadRun = 0
+
+/**
+ * Loads the binder. What was typed for a copy that is still in the list
+ * stays (the switch "also copies that are not active", reloading); after
+ * saving, `fresh` starts again with empty figures.
+ *
+ * @param fresh - forget what was typed
+ */
+async function load(fresh = false): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		inventory.value = await fetchInventory(binder.value, showAll.value)
-		binder.value = inventory.value.binder
+		const result = await fetchInventory(binder.value, showAll.value)
+		if (run !== loadRun) {
+			return
+		}
+		inventory.value = result
+		binder.value = result.binder
+		const kept: Record<number, CountDraft> = {}
+		for (const row of result.rows) {
+			kept[row.copyId] = (!fresh && drafts[row.copyId]) || { counted: false, originals: '', copies: '' }
+		}
 		for (const key of Object.keys(drafts)) {
 			delete drafts[Number(key)]
 		}
-		for (const row of inventory.value.rows) {
-			drafts[row.copyId] = { counted: false, originals: '', copies: '' }
-		}
+		Object.assign(drafts, kept)
 		saveError.value = ''
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
-onMounted(load)
+onMounted(() => load())
 
 const binderOptions = computed(() => (inventory.value?.binders ?? []).map((entry) => ({
 	id: entry.binder,
@@ -75,11 +97,23 @@ const binderOption = computed({
 	get: () => binderOptions.value.find((option) => option.id === binder.value) ?? null,
 	set: (option: { id: number } | null) => {
 		if (option && option.id !== binder.value) {
-			binder.value = option.id
-			load()
+			changeBinder(option.id)
 		}
 	},
 })
+
+/**
+ * Another binder: the figures typed for this one would be gone, so ask first.
+ *
+ * @param next - the binder to show
+ */
+async function changeBinder(next: number): Promise<void> {
+	if (!(await confirmDiscard())) {
+		return
+	}
+	binder.value = next
+	await load(true)
+}
 
 const binderFacts = computed(() => inventory.value?.binders.find((entry) => entry.binder === binder.value) ?? null)
 
@@ -94,6 +128,8 @@ const saveError = ref('')
 const payload = computed(() => countPayload(inventory.value?.rows ?? [], drafts))
 
 const countedCount = computed(() => Object.values(drafts).filter((draft) => draft.counted).length)
+/** Copies ticked or figures typed and not saved: another binder or leaving the page asks first */
+useUnsavedGuard(computed(() => countedCount.value > 0 && !saving.value))
 
 function markAll(): void {
 	for (const draft of Object.values(drafts)) {
@@ -148,7 +184,7 @@ async function save(): Promise<void> {
 	try {
 		const recorded = await recordCounts(payload.value.counts, date)
 		showSuccess(n('cantoria', 'The count of %n copy has been recorded.', 'The count of %n copies has been recorded.', recorded))
-		await Promise.all([load(), loadEntries(), loadDetail()])
+		await Promise.all([load(true), loadEntries(), loadDetail()])
 		// The button is disabled now (nothing ticked): on to the next binder
 		await focusAfterUpdate(() => document.querySelector('.inventory-view input[role="combobox"], #app-content-vue input[role="combobox"]'))
 	} catch (caught) {
@@ -187,7 +223,7 @@ const today = parseIsoDate(toIsoDate(new Date()))
 			:print-filter="printFilter"
 			reloadable
 			:loading="loading"
-			@reload="load" />
+			@reload="load()" />
 
 		<div class="inventory-view__content">
 			<NcEmptyContent v-if="!inventory && loading" :name="t('cantoria', 'Loading …')">
@@ -200,7 +236,7 @@ const today = parseIsoDate(toIsoDate(new Date()))
 					<NcIconSvgWrapper :path="mdiAlertCircleOutline" />
 				</template>
 				<template #action>
-					<NcButton @click="load">
+					<NcButton @click="load()">
 						{{ t('cantoria', 'Try again') }}
 					</NcButton>
 				</template>
@@ -213,7 +249,7 @@ const today = parseIsoDate(toIsoDate(new Date()))
 						:input-label="t('cantoria', 'Archive binder')"
 						:options="binderOptions"
 						:clearable="false" />
-					<NcCheckboxRadioSwitch v-model="showAll" type="switch" @update:model-value="load">
+					<NcCheckboxRadioSwitch v-model="showAll" type="switch" @update:model-value="load()">
 						{{ t('cantoria', 'Also copies that are not active') }}
 					</NcCheckboxRadioSwitch>
 				</div>

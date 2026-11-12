@@ -128,6 +128,14 @@ class DueService {
 				$cards[] = ['key' => 'licenses_expiring', 'count' => $expiring, 'label' => 'Licenses ending or ended'];
 			}
 		}
+		if ($isLibrarian) {
+			// hired material (round 3, November 2026): to return within 30 days or overdue, core
+			$soon = (new \DateTimeImmutable($this->rights->today($uid)))->modify('+30 days')->format('Y-m-d');
+			$hired = $this->copies->countReturnDue($soon);
+			if ($hired > 0) {
+				$cards[] = ['key' => 'hired_return', 'count' => $hired, 'label' => 'Hired material to return'];
+			}
+		}
 		if ($isConductor && $active['valid_version']) {
 			$withoutValid = [];
 			$valid = [];

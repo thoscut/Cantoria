@@ -189,6 +189,9 @@ function reset(): void {
 			<p class="performance-import__muted">
 				{{ t('cantoria', 'A new import replaces the previously imported concerts and song lists. Planned events are never touched.') }}
 			</p>
+			<p v-if="report.keptAssignments > 0" class="performance-import__muted">
+				{{ n('cantoria', '%n line keeps the copy you assigned by hand after the last import.', '%n lines keep the copy you assigned by hand after the last import.', report.keptAssignments) }}
+			</p>
 			<p v-if="report.snapshot" class="performance-import__muted">
 				{{ t('cantoria', 'The previous state was saved as a snapshot: {path}', { path: report.snapshot }) }}
 			</p>

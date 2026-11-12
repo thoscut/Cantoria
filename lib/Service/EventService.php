@@ -57,6 +57,9 @@ class EventService {
 	private const EVENT_FIELDS = ['title', 'event_date', 'start_time', 'end_time', 'location', 'period', 'is_public', 'board_agreed', 'notes'];
 	private const ITEM_FIELDS = ['duration', 'note', 'encore', 'struck'];
 
+	/** @var array<int, ?string> names of persons read during this request */
+	private array $personNames = [];
+
 	public function __construct(
 		private IDBConnection $db,
 		private EventMapper $events,
@@ -96,6 +99,52 @@ class EventService {
 		$this->checkTime($event, true, $uid);
 		$event = $this->events->insert($event);
 		$this->audit->record($this->audit->newOperation(), $uid, 'event', $event->getId(), 'created', 'title', null, $event->getTitle());
+		return $event;
+	}
+
+	/**
+	 * A new programme from an existing one (round 3, November 2026): a
+	 * concert or song list of the kind chosen, as a draft, with the pieces
+	 * of the source in their order, duration, note and encore. Struck pieces
+	 * (not sung) are left out; what was recorded about the performance (sung,
+	 * the revision sung) stays with the source. Any programme can be the
+	 * source, also an imported, sung or cancelled one.
+	 *
+	 * @param array<array-key, mixed> $data fields of the new event (request data)
+	 */
+	public function duplicate(int $sourceId, string $kind, array $data, string $uid): Event {
+		$this->roles->requireRole($uid, self::PLANNERS);
+		try {
+			$source = $this->events->find($sourceId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException('Not found.');
+		}
+		$this->db->beginTransaction();
+		try {
+			$event = $this->create($kind, $data, $uid);
+			$position = 0;
+			foreach ($this->items->findByEvent($sourceId) as $old) {
+				if ($old->getStruck() === true) {
+					continue;
+				}
+				$item = new EventItem();
+				$item->setEventId($event->getId());
+				$item->setPosition(++$position);
+				foreach (['copy_id', 'version_id', 'work_id', 'title_text', 'composer_text', 'participation', 'candidates', 'duration', 'note'] as $field) {
+					$item->setValue($field, $old->getValue($field));
+				}
+				$item->setAssignment($old->getAssignment());
+				$item->setEncore($old->getEncore() === true);
+				$item->setCounts(false);
+				$this->items->insert($item);
+			}
+			$this->audit->record($this->audit->newOperation(), $uid, 'event', $event->getId(), 'copied_from', 'event', null,
+				(string)$source->getTitle());
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 		return $event;
 	}
 
@@ -181,13 +230,35 @@ class EventService {
 		foreach ($this->items->findByEvent($eventId) as $item) {
 			$items[$item->getId()] = $item;
 		}
-		if (count($itemIds) !== count($items) || array_diff($itemIds, array_keys($items)) !== []) {
+		if (!self::isPermutation($itemIds, array_keys($items))) {
 			throw new InvalidInputException('The new order must contain every item exactly once.');
 		}
-		foreach ($itemIds as $index => $id) {
-			$items[$id]->setPosition($index + 1);
-			$this->items->update($items[$id]);
+		$this->db->beginTransaction();
+		try {
+			foreach ($itemIds as $index => $id) {
+				$items[$id]->setPosition($index + 1);
+				$this->items->update($items[$id]);
+			}
+			$this->db->commit();
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
 		}
+	}
+
+	/**
+	 * Whether $order holds every id of $ids exactly once, nothing more: a
+	 * repeated id (e.g. [11, 11, 12] for 11, 12, 13) would leave one item at
+	 * its old position and give two items the same one.
+	 *
+	 * @param list<int> $order
+	 * @param list<int> $ids
+	 */
+	public static function isPermutation(array $order, array $ids): bool {
+		return count($order) === count($ids)
+			&& count(array_unique($order)) === count($order)
+			&& array_diff($order, $ids) === []
+			&& array_diff($ids, $order) === [];
 	}
 
 	public function setFixed(int $eventId, string $uid): void {
@@ -425,10 +496,7 @@ class EventService {
 	 * @return list<array<string, mixed>>
 	 */
 	public function list(?string $kind): array {
-		$counts = [];
-		foreach ($this->items->findAll() as $item) {
-			$counts[$item->getEventId()] = ($counts[$item->getEventId()] ?? 0) + 1;
-		}
+		$counts = $this->items->countPerEvent();
 		return array_map(fn (Event $e): array => $e->jsonSerialize() + ['items' => $counts[$e->getId()] ?? 0], $this->events->findByKind($kind));
 	}
 
@@ -504,9 +572,17 @@ class EventService {
 	private function namesByRole(int $versionId): array {
 		$names = [];
 		foreach ($this->contributions->findByVersion($versionId) as $contribution) {
-			try {
-				$names[$contribution->getRole()][] = $this->persons->find($contribution->getPersonId())->getName();
-			} catch (DoesNotExistException) {
+			$personId = $contribution->getPersonId();
+			// one query per person, not per contribution: the same composer stands in many pieces
+			if (!array_key_exists($personId, $this->personNames)) {
+				try {
+					$this->personNames[$personId] = $this->persons->find($personId)->getName();
+				} catch (DoesNotExistException) {
+					$this->personNames[$personId] = null;
+				}
+			}
+			if ($this->personNames[$personId] !== null) {
+				$names[$contribution->getRole()][] = $this->personNames[$personId];
 			}
 		}
 		return array_map(fn (array $list): string => implode('; ', $list), $names);

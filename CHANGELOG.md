@@ -16,6 +16,11 @@ The first version for the Nextcloud app store.
 
 ### Added
 
+- **Quick start in English** (`docs/quick-start.md`), next to the German
+  one, and an architecture overview for developers
+  (`docs/architecture.md`). The guides now say that the weekly backup goes
+  into the backup folder outside the archive folder.
+
 - **PostgreSQL.** The app now installs on PostgreSQL as well as on MySQL
   and MariaDB, and so also in Nextcloud All-in-One. The integration tests
   run in the CI on Nextcloud 33 and 35, each with MariaDB 11.8 and with
@@ -98,9 +103,58 @@ The first version for the Nextcloud app store.
   - "Remove from this device" at the top of "Shared with me" and the
     concert folder, with the number of kept pieces; notes on shared
     devices in the guides.
+- **Optimisation round 2 (10 November 2026): tests and CI.** A new CI job
+  installs the app as it is on the base branch, runs that version's
+  integration tests, then upgrades to the archive of the change and checks
+  that every table kept its rows (`tools/ci/upgrade-check.sh`, MariaDB and
+  PostgreSQL). The integration tests also run on MySQL 8.0, the oldest
+  database `info.xml` names. Psalm also checks the unit tests
+  (`psalm-tests.xml`, `composer psalm:tests`) and found a test message
+  that lost its period to string interpolation. The CI shows the line
+  coverage of `lib/` and `src/` (`npm run test:coverage`), caches
+  Composer's downloads, and `.github/CODEOWNERS` asks the maintainer for
+  every review.
+- **Songbooks (optimisation round 3).** Conductors and music librarians make
+  one PDF to print from the scans of a concert, a song list or the catalog
+  as filtered (at most 200 pieces): with a cover, the contents with the page
+  of each piece, page numbers (also on rotated scans), a choice of order
+  and, for double-sided printing, each piece on a right-hand page. Only
+  pieces with confirmed public domain or a license for copies for the
+  binders or the print station go in, never an internal preservation copy;
+  every piece left out says why. The PDF is made in the browser (pdf-lib);
+  the server hands out only the scans allowed and records every songbook in
+  the audit log. New module "Songbooks" (on in "Standard" and "Complete").
+- **Finding repertoire (optimisation round 3).** The catalog filters by
+  scoring, language and duration ("at most … minutes") of the version, and
+  sorts by the last performance ("Sung longest ago", "Sung most recently";
+  never sung at the end). `GET /api/entries` carries `scoring`, `language`
+  and `duration`.
+- **A new programme from an existing one (optimisation round 3).** "New
+  programme with these pieces …" in a concert or song list makes a draft
+  with its pieces in their order, struck pieces left out
+  (`POST /api/events/{id}/copy`).
+- **Recorded twice? (optimisation round 3).** While a new accession is typed,
+  the form names copies that may be the same piece (same title without
+  article, accents or punctuation, and the same composer where both are
+  given), each a click away. Only a hint.
+- **My voice remembered (optimisation round 3).** On "Shared with me" the
+  browser remembers the voice a choir member chose and opens the next piece
+  with it, unless its link names a voice ("Tenor" also finds "Tenor 1").
+  "Delete everything on this device" forgets it too.
+- **Hired material (optimisation round 3).** Copies record who they are hired
+  from and the day they must be back (copy fields `hired_from` and
+  `return_date`, migration `Version001700Date20261110120000`); the start page
+  of the music librarians counts the copies due back within 30 days or
+  overdue (card `hired_return`), and the catalog filters them.
 
 ### Changed
 
+- **Optimisation round 4 (10 November 2026): faster with a large archive.**
+  The list of concerts counts the pieces in the database instead of reading
+  every programme item; the start page counts the hired copies due back in
+  the database; a few tasks, merging works and moving a copy read only the
+  copies and programme items concerned; names of persons are read once per
+  request; the app starts the catalog and the start parameters together.
 - **One panel for practising.** Voice, measures and tempo with the loop,
   and the further tools are one panel in the score view and on a shared
   view, in the order of the most frequent way of practising. Size, lyrics,
@@ -229,6 +283,31 @@ The first version for the Nextcloud app store.
 
 ### Fixed
 
+- **Optimisation round 1 (10 November 2026): nothing typed gets lost, no
+  wrong data.** Fields being edited in the sidebar, counts typed in the
+  inventory and corrections in the correction dialog are no longer thrown
+  away without a question when another copy, another binder or Escape
+  comes; the browser asks before the page is left. The score view of the
+  archive asks before a recording of oneself is discarded. A list that
+  fails to reload says so above the old list instead of showing a
+  switched filter over stale rows, and a slow answer no longer replaces a
+  newer one (tasks, programmes, release lists, links, proposals,
+  protection terms, a programme, a person, the inventory). A person who
+  could not be loaded is no longer shown with the buttons of the person
+  before. Retrying a score no longer creates a second engraving toolkit.
+  After printing the binder list, printing again prints the programme.
+  Sharing a programme with a piece sung twice makes one link, not two. A
+  new order of a programme with a repeated item is refused instead of
+  giving two items the same position. A role change can no longer give a
+  person the same role twice in a version. A folder taken out of service
+  comes back only if no folder in service has its label. Merge proposals
+  compare titles without accents and in every Unicode form, and works
+  without a composer form a group of their own next to several composers.
+  Whole numbers are limited to 0 to 2,147,483,647, so a negative count or a
+  shelf mark like 99999999999-1 is refused with a clear message instead of
+  a database error. Importing the performances again keeps the lines
+  assigned to a copy by hand. The archive management dialog is no longer
+  part of every account's main bundle.
 - After the second review round of 3 November 2026: the pedal no longer
   skips a piece while the next one loads, and a link to a piece puts the
   focus into the notes. A public page with a piece that may not be kept no

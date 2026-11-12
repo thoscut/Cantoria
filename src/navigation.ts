@@ -15,7 +15,7 @@ import { reactive, ref, watch } from 'vue'
 import { dueTarget } from './dueTargets.ts'
 import { applyModules, viewActive } from './modules.ts'
 import { buildQuery, DEFAULT_VIEW, parseStartParams } from './startParams.ts'
-import { closeEntry, filters, moduleStates, openEntry, resetFilters, selectedId } from './store.ts'
+import { filters, moduleStates, openEntry, requestCloseEntry, resetFilters, selectedId } from './store.ts'
 
 export const currentView = ref<ViewName>(DEFAULT_VIEW)
 export const currentEventId = ref<number | null>(null)
@@ -88,7 +88,7 @@ function onPopState(): void {
 	if (params.copyId !== null && params.copyId !== selectedId.value) {
 		openEntry(params.copyId)
 	} else if (params.copyId === null && selectedId.value !== null) {
-		closeEntry()
+		requestCloseEntry()
 	}
 }
 

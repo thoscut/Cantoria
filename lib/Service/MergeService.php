@@ -89,7 +89,7 @@ class MergeService {
 				$this->audit->record($operation, $uid, Fields::VERSION, $version->getId(), 'merged', 'work_id', $sourceWorkId, $targetWorkId, $reason);
 			}
 			$movedItems = [];
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByWork($sourceWorkId) as $item) {
 				if ($item->getWorkId() === $sourceWorkId) {
 					$item->setValue('work_id', $targetWorkId);
 					$this->items->update($item);
@@ -147,7 +147,7 @@ class MergeService {
 			$this->copies->update($copy);
 			$this->audit->record($operation, $uid, Fields::COPY, $copyId, 'merged', 'version_id', $fromVersionId, $targetVersionId, $reason);
 			$movedItems = [];
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByCopy($copyId) as $item) {
 				if ($item->getCopyId() === $copyId) {
 					$movedItems[] = ['id' => $item->getId(), 'version' => $item->getVersionId(), 'work' => $item->getWorkId()];
 					$item->setValue('version_id', $targetVersionId);
@@ -212,7 +212,7 @@ class MergeService {
 					$this->versions->update($version);
 					$this->audit->record($operation, $uid, Fields::VERSION, $version->getId(), 'merge_undone', 'work_id', $target->getId(), $source->getId(), $reason);
 				}
-				foreach ($this->items->findAll() as $item) {
+				foreach ($this->items->findByWork($target->getId()) as $item) {
 					$itemVersionId = $item->getVersionId();
 					$followsVersion = $itemVersionId !== null && isset($versions[$itemVersionId]);
 					$recordedWorkOnly = $itemVersionId === null && in_array($item->getId(), $movedItems, true);
@@ -251,7 +251,7 @@ class MergeService {
 			foreach ($moved['eventItems'] as $entry) {
 				$recorded[$entry['id']] = $entry;
 			}
-			foreach ($this->items->findAll() as $item) {
+			foreach ($this->items->findByCopy($copy->getId()) as $item) {
 				if ($item->getCopyId() === $copy->getId() && $item->getVersionId() === $merge->getTargetId()) {
 					$entry = $recorded[$item->getId()] ?? null;
 					$item->setValue('version_id', $entry === null ? $from->getId() : $entry['version']);
@@ -377,6 +377,10 @@ class MergeService {
 			$clusters = $bySurname === [] ? [$withoutComposer] : array_values($bySurname);
 			if (count($clusters) === 1 && $bySurname !== []) {
 				$clusters[0] = array_merge($clusters[0], $withoutComposer);
+			} elseif (count($clusters) > 1) {
+				// several composers: the works without one are a group of
+				// their own, not belonging to any of them
+				$clusters[] = $withoutComposer;
 			}
 			foreach ($clusters as $cluster) {
 				if (count($cluster) < 2) {
@@ -400,8 +404,13 @@ class MergeService {
 		return Sort::byKeys($groups, $groupKeys);
 	}
 
+	/**
+	 * Title for comparing: like the search (CatalogSearch::normalize), so a
+	 * decomposed "Ä" from macOS or an accent ("Ave María") does not hide a
+	 * duplicate; punctuation counts as a space.
+	 */
 	public static function normalizeTitle(?string $title): string {
-		$text = mb_strtolower(trim((string)$title));
+		$text = CatalogSearch::normalize((string)$title);
 		$text = (string)preg_replace('/[^\p{L}\p{N}]+/u', ' ', $text);
 		return trim($text);
 	}
@@ -411,7 +420,7 @@ class MergeService {
 	 * Zelter (1758-1832)" → "zelter", "Friedrich Silcher, op. 26" → "silcher".
 	 */
 	public static function surname(?string $composer): string {
-		$text = mb_strtolower(trim((string)$composer));
+		$text = CatalogSearch::normalize((string)$composer);
 		$text = (string)preg_replace('/\(.*?\)/u', ' ', $text);
 		$text = explode(',', $text)[0];
 		$text = (string)preg_replace('/[^\p{L}\s-]+/u', ' ', $text);

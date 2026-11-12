@@ -36,6 +36,8 @@ use OCP\IUserManager;
  *   it, it is addressed to one of them, and only they find it in a list.
  */
 class TaskService {
+	/** Up to this many copies, withContext() reads them one by one instead of the whole catalog */
+	private const FEW_COPIES = 10;
 	public const ADDRESSEES = [Roles::CONDUCTOR, Roles::LIBRARIAN, Roles::OPERATIONS, Roles::READER];
 	public const CATEGORIES = ['reading', 'structure', 'origin', 'shelf', 'rights', 'other'];
 	/** Roles that may create tasks */
@@ -219,12 +221,18 @@ class TaskService {
 	 */
 	public function withContext(array $tasks, ?string $uid = null): array {
 		$hidePreservationCopies = $uid !== null && !$this->roles->hasAnyRole($uid, RightsPolicy::PRESERVATION_COPY_VIEWERS);
-		$copies = [];
-		foreach ($this->copies->findAll() as $copy) {
-			$copies[$copy->getId()] = $copy;
+		$copyIds = array_values(array_unique(array_map(fn (Task $task): int => $task->getCopyId(), $tasks)));
+		if (count($copyIds) <= self::FEW_COPIES) {
+			// a single task or a few: read their copies, not the whole catalog
+			[$copies, $versions, $works] = $this->contextOf($copyIds);
+		} else {
+			$copies = [];
+			foreach ($this->copies->findAll() as $copy) {
+				$copies[$copy->getId()] = $copy;
+			}
+			$versions = $this->versions->findAllById();
+			$works = $this->works->findAllById();
 		}
-		$versions = $this->versions->findAllById();
-		$works = $this->works->findAllById();
 		$rows = [];
 		foreach ($tasks as $task) {
 			$copy = $copies[$task->getCopyId()] ?? null;
@@ -243,6 +251,30 @@ class TaskService {
 		}
 		usort($rows, fn (array $a, array $b): int => [$a['binder'] ?? 0, $a['number'] ?? 0, $a['id']] <=> [$b['binder'] ?? 0, $b['number'] ?? 0, $b['id']]);
 		return $rows;
+	}
+
+	/**
+	 * Copies, versions and works of a few copies, by id; missing ones are
+	 * left out.
+	 *
+	 * @param list<int> $copyIds
+	 * @return array{0: array<int, \OCA\Cantoria\Db\Copy>, 1: array<int, \OCA\Cantoria\Db\WorkVersion>, 2: array<int, \OCA\Cantoria\Db\Work>}
+	 */
+	private function contextOf(array $copyIds): array {
+		$copies = [];
+		$versions = [];
+		$works = [];
+		foreach ($copyIds as $copyId) {
+			try {
+				$copy = $this->copies->find($copyId);
+				$copies[$copyId] = $copy;
+				$version = $versions[$copy->getVersionId()] ?? $this->versions->find($copy->getVersionId());
+				$versions[$version->getId()] = $version;
+				$works[$version->getWorkId()] ??= $this->works->find($version->getWorkId());
+			} catch (DoesNotExistException) {
+			}
+		}
+		return [$copies, $versions, $works];
 	}
 
 	/**
@@ -289,7 +321,7 @@ class TaskService {
 		if ($value === null || $value === '') {
 			return null;
 		}
-		$int = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+		$int = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => FieldValue::MAX_NUMBER]]);
 		if ($int === false) {
 			throw new InvalidInputException('"%s" must be a whole number.', [$label]);
 		}

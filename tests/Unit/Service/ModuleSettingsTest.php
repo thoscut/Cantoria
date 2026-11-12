@@ -173,6 +173,7 @@ final class ModuleSettingsTest extends TestCase {
 		$this->moduleConfig = ['module_concerts' => false];
 		$this->runRepairStep();
 		self::assertFalse($this->moduleConfig['module_concerts'], 'a stored switch is never changed');
+		/** @psalm-suppress InvalidArrayOffset the repair step added the key */
 		self::assertFalse($this->moduleConfig['module_statistics'], 'a module new to the installation gets its default');
 	}
 }

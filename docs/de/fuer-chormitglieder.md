@@ -29,7 +29,9 @@ steht es im [Benutzerhandbuch](benutzerhandbuch.md#für-chormitglieder).
 
 1. Tippe in der Leiste über den Noten auf **Stimme, Takte und Üben**.
 2. Unter **Meine Stimme** wählst du deine Stimme und **Stimme betont** (sie
-   ist lauter) oder **Nur diese Stimme**.
+   ist lauter) oder **Nur diese Stimme**. Dieser Browser merkt sich deine
+   Stimme: Das nächste Stück öffnet mit ihr, außer sein Link nennt eine eigene;
+   die Stimme Tenor findet auch Tenor 1.
 3. Unter **Takte und Tempo** gibst du **Von Takt** und **Bis Takt** ein,
    tippst auf **Takte zeigen** und schaltest **Schleife** ein: Die Stelle läuft
    immer wieder. Mit dem Tempo spielst du langsamer.

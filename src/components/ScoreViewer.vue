@@ -105,6 +105,8 @@ import { SETTINGS_SECTIONS } from '../settings.ts'
 import { ADMIN_GUIDE, adminGuideUrl, USER_GUIDE, userGuideUrl } from '../docs.ts'
 import { canChangeSettings, canCreateLinks, canCreateTasks, canShareOutside, fieldInfo, fieldLabel, hasAnyRole, isModuleActive } from '../store.ts'
 import { showError } from '../toasts.ts'
+import DiscardRecording from '../sharing/DiscardRecording.vue'
+import { useLeaveGuard } from '../sharing/leaveGuard.ts'
 
 /** Practice audio files: own chunk, loaded when the dialog is opened */
 const PracticeAudioDialog = defineAsyncComponent(() => import('./PracticeAudioDialog.vue'))
@@ -173,6 +175,10 @@ const scoreElement = ref<HTMLElement | null>(null)
 const pagesElement = ref<HTMLElement | null>(null)
 
 let toolkit: VerovioToolkit | null = null
+/** The toolkit being created, shared by every load of this viewer */
+let toolkitReady: Promise<VerovioToolkit> | null = null
+/** Counter of the loads: only the latest one shows its result */
+let loadRun = 0
 let player: ScorePlayerType | null = null
 let disposed = false
 let resizeObserver: ResizeObserver | null = null
@@ -201,19 +207,30 @@ async function load(keep = false): Promise<void> {
 	loadingText.value = t('cantoria', 'Loading the score …')
 	// Fetch the file and load Verovio at the same time. A toolkit created after
 	// the viewer was closed is destroyed right away.
-	const toolkitPromise = toolkit ? Promise.resolve(toolkit) : createToolkit()
-	toolkitPromise.then((created) => {
+	// One toolkit per viewer: a retry while the first one still loads waits
+	// for it instead of creating a second one that is never destroyed.
+	const run = ++loadRun
+	toolkitReady ??= createToolkit().then((created) => {
 		if (disposed) {
 			created.destroy()
 		} else {
 			toolkit = created
 		}
-	}, () => {})
+		return created
+	}, (error: unknown) => {
+		// a later attempt may try again
+		toolkitReady = null
+		throw error
+	})
+	const toolkitPromise = toolkitReady
 	let content: ArrayBuffer
 	try {
 		content = await fetchFileContent(info.fileId)
 		await toolkitPromise
 	} catch (error) {
+		if (run !== loadRun) {
+			return
+		}
 		status.value = 'error'
 		notShared.value = errorReason(error) === REASON_NOT_SHARED
 		errorText.value = error instanceof Error && error.message !== '' ? error.message : t('cantoria', 'The score could not be loaded.')
@@ -221,14 +238,15 @@ async function load(keep = false): Promise<void> {
 		return
 	}
 	const engraver = toolkit
-	if (disposed || !engraver) {
+	// a newer load (retry, correction) took over
+	if (disposed || !engraver || run !== loadRun) {
 		return
 	}
 	try {
 		loadingText.value = t('cantoria', 'Engraving the score …')
 		const text = await readScoreText(content)
 		await nextFrame()
-		if (disposed) {
+		if (disposed || run !== loadRun) {
 			return
 		}
 		const loaded = loadScore(engraver, text)
@@ -764,6 +782,21 @@ const barElement = ref<HTMLElement | null>(null)
 useStickyHeader(barElement, '.score-viewer')
 /** A recording of oneself runs, or waits unsaved */
 const recorderState = ref<RecorderState>('idle')
+/** A recording of oneself would be lost: the browser asks before the page is left, the viewer before it closes */
+const recordingUnsaved = computed(() => recorderState.value !== 'idle')
+useLeaveGuard(recordingUnsaved)
+const confirmClose = ref(false)
+
+/**
+ * Closes the viewer, or first asks while a recording is not saved.
+ */
+function requestClose() {
+	if (recordingUnsaved.value) {
+		confirmClose.value = true
+		return
+	}
+	emit('close')
+}
 
 function onCompactChange(event: MediaQueryListEvent): void {
 	compact.value = event.matches
@@ -1406,9 +1439,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+	<!-- show stays true: the viewer decides in requestClose whether it closes -->
 	<NcModal size="full"
+		:show="true"
 		:label-id="headingId"
-		@close="emit('close')">
+		@close="requestClose">
 		<!-- Key handling for the whole viewer: Space plays/pauses (see onKeydown) -->
 		<!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -->
 		<div class="score-viewer" @keydown="onKeydown">
@@ -1838,6 +1873,9 @@ onBeforeUnmount(() => {
 					@saved="onCorrected"
 					@close="closeCorrection" />
 			</template>
+			<DiscardRecording v-if="confirmClose"
+				@discard="confirmClose = false; emit('close')"
+				@stay="confirmClose = false" />
 		</div>
 	</NcModal>
 </template>

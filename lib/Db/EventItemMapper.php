@@ -50,6 +50,56 @@ class EventItemMapper extends QBMapper {
 	}
 
 	/**
+	 * Items that name a work (merging works moves them).
+	 *
+	 * @return list<EventItem>
+	 */
+	public function findByWork(int $workId): array {
+		return $this->findByColumn('work_id', $workId);
+	}
+
+	/**
+	 * Items that name a copy (moving a copy moves them).
+	 *
+	 * @return list<EventItem>
+	 */
+	public function findByCopy(int $copyId): array {
+		return $this->findByColumn('copy_id', $copyId);
+	}
+
+	/**
+	 * @return list<EventItem>
+	 */
+	private function findByColumn(string $column, int $value): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->eq($column, $qb->createNamedParameter($value, IQueryBuilder::PARAM_INT)))
+			->orderBy('event_id')->addOrderBy('position');
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * The number of items per event, counted by the database (the list of
+	 * concerts needs no items).
+	 *
+	 * @return array<int, int> event id => items
+	 */
+	public function countPerEvent(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('event_id')
+			->selectAlias($qb->func()->count('id'), 'cnt')
+			->from($this->getTableName())
+			->groupBy('event_id');
+		$result = $qb->executeQuery();
+		$counts = [];
+		foreach ($result->fetchAllAssociative() as $row) {
+			$counts[Row::int($row['event_id'])] = Row::int($row['cnt']);
+		}
+		$result->closeCursor();
+		return $counts;
+	}
+
+	/**
 	 * @return list<EventItem>
 	 */
 	public function findByAssignment(string $assignment): array {

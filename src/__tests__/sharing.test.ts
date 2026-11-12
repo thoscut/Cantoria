@@ -7,7 +7,7 @@ import type { Voice } from '../score/voices.ts'
 import type { CircleOption } from '../types.ts'
 
 import { describe, expect, it } from 'vitest'
-import { excerptTempo, voiceForServer, voiceOfLink } from '../sharing/excerpt.ts'
+import { excerptTempo, ownVoice, voiceForServer, voiceOfLink } from '../sharing/excerpt.ts'
 import { daysLeft, deviceUntil, endsSoon, hasEnded, sharedUntil } from '../sharing/linkDates.ts'
 import { canOfferScan, initialScope, linkMeasures, measureProblem, previewRows, scopeText } from '../sharing/linkScope.ts'
 
@@ -41,6 +41,23 @@ describe('voiceOfLink', () => {
 		expect(voiceOfLink(voices, null, labelOf)).toBeNull()
 		expect(voiceOfLink(voices, '', labelOf)).toBeNull()
 		expect(voiceOfLink(voices, 'Sopran', labelOf)).toBeNull()
+	})
+})
+
+describe('ownVoice', () => {
+	it('finds the voice remembered from the last piece, also as a family', () => {
+		expect(ownVoice(voices, 'Tenor II', labelOf)?.key).toBe('1.2')
+		expect(ownVoice(voices, 'tenor', labelOf)?.key).toBe('1.1')
+		expect(ownVoice(voices, 'Tenor I', labelOf)?.key).toBe('1.1')
+		const satb = [voice('1.1', 'Sopran', 'S'), voice('2.1', 'Alt', 'A')]
+		expect(ownVoice(satb, 'Alt 2', labelOf)?.key).toBe('2.1')
+	})
+
+	it('chooses nothing when nothing fits', () => {
+		expect(ownVoice(voices, null, labelOf)).toBeNull()
+		expect(ownVoice(voices, 'Sopran', labelOf)).toBeNull()
+		expect(ownVoice(voices, 'Ten', labelOf)).toBeNull()
+		expect(ownVoice(voices, 'a(b', labelOf)).toBeNull()
 	})
 })
 

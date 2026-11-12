@@ -19,6 +19,9 @@ namespace OCA\Cantoria\Service;
  * @psalm-import-type FieldInfo from Fields
  */
 final class FieldValue {
+	/** Largest whole number a field holds: the columns are 32-bit INTEGER */
+	public const MAX_NUMBER = 2147483647;
+
 	/**
 	 * @param FieldInfo $info
 	 */
@@ -28,7 +31,13 @@ final class FieldValue {
 		}
 		switch ($info['type']) {
 			case Fields::TYPE_NUMBER:
-				return is_int($value) ? null : '"%s" must be a whole number.';
+				if (!is_int($value)) {
+					return '"%s" must be a whole number.';
+				}
+				// counts, seconds, years and binders are never negative, and
+				// a larger number would fail in the database (PostgreSQL,
+				// MySQL in strict mode) with an error nobody understands
+				return $value >= 0 && $value <= self::MAX_NUMBER ? null : '"%s" must be a whole number from 0 to 2147483647.';
 			case Fields::TYPE_BOOLEAN:
 				return is_bool($value) ? null : '"%s" must be yes or no.';
 			case Fields::TYPE_CHOICE:

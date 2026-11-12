@@ -17,6 +17,7 @@ import { DEFAULT_FILTERS, filterEntries, hasActiveFilters, searchText, sortEntri
 import { focusAfterUpdate } from './focus.ts'
 import { optionLabel, translateLabel } from './format.ts'
 import { cardShown, fieldActive, moduleActive, viewActive, viewShown } from './modules.ts'
+import { confirmDiscard } from './unsaved.ts'
 
 /** Role keys used by the UI (see docs/api.md). */
 export const ROLE_LIBRARIAN = 'librarian'
@@ -368,6 +369,10 @@ export const sidebarTakesFocus = ref(false)
  * @param tab - sidebar tab to show (default: overview for another copy)
  */
 export async function openEntry(id: number, tab?: string): Promise<void> {
+	// fields being edited in the sidebar would be gone with another copy
+	if (selectedId.value !== null && selectedId.value !== id && !(await confirmDiscard())) {
+		return
+	}
 	if (tab !== undefined) {
 		sidebarTab.value = tab
 	} else if (selectedId.value !== id) {
@@ -419,8 +424,18 @@ export async function loadDetail(showSpinner = false): Promise<void> {
 }
 
 /**
- * Close the sidebar. The focus goes back to the control it was opened
- * from, if that is still in the page.
+ * Close the sidebar, first asking when fields are being edited. The focus
+ * goes back to the control it was opened from, if that is still in the page.
+ */
+export async function requestCloseEntry(): Promise<void> {
+	if (await confirmDiscard()) {
+		closeEntry()
+	}
+}
+
+/**
+ * Close the sidebar at once, also with fields being edited (after a copy
+ * was deleted or merged).
  */
 export function closeEntry(): void {
 	detailRequest++

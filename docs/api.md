@@ -155,9 +155,14 @@ Choice keys:
    "title": "…", "composer": "…", "work_no": null, "arranger_text": "…",
    "rights_status": "public_domain", "rights_confirmed": null, "confirmed_at": null,
    "preservation_copy": false, "publication": "zu klären",
-   "valid_since": null, "repertoire": "aktuell", "last_performed": "2025-12-06",
+   "valid_since": null, "scoring": "SATB", "language": "Latin", "duration": 180,
+   "repertoire": "aktuell", "last_performed": "2025-12-06",
    "has_musicxml": true, "files": 9, "pdfs": 3 }]
 ```
+
+`return_date` is the day hired material must be back (copy field, with
+`hired_from`). `scoring`, `language` and `duration` (seconds) are those of the version,
+for finding repertoire (filters "Scoring", "Language" and "At most … minutes").
 
 `GET /api/entries/{id}` returns everything about one copy:
 
@@ -590,7 +595,8 @@ Creating a task or a link refuses fields other than the ones listed below
 
 Start page card keys: `tasks_open`, `tasks_answered`, `ambiguous_items`,
 `proposals`, `portal_remove`, `portal_add`, `confirm_current`, `rule1_current`,
-`licenses_expiring`, `valid_missing`. The `label` is translated, always in the
+`licenses_expiring`, `valid_missing`, `hired_return` (librarian: copies with
+`return_date` within 30 days or past, not retired; core). The `label` is translated, always in the
 plural; the UI shows its own label in singular or plural for the keys it knows
 (`src/dueLabels.ts`) and the server's label for new keys.
 
@@ -739,6 +745,7 @@ valid version).
 | `GET /api/events/{id}` | – | any role |
 | `POST /api/events` | `{ kind, event: { title, event_date, start_time, end_time, location, period, is_public, board_agreed, notes } }` | conductor, librarian |
 | `PATCH /api/events/{id}` | `{ event: { …changed fields } }` | conductor, librarian |
+| `POST /api/events/{id}/copy` | `{ kind, event: { … as above } }`: a new draft with the pieces of `{id}` in their order (duration, note, encore; struck items left out, nothing of the performance), in one transaction | conductor, librarian |
 | `POST /api/events/{id}/items` | `{ copyId }` | conductor, librarian |
 | `PATCH /api/event-items/{id}` | `{ item: { duration?, note?, encore?, struck? } }` | conductor, librarian |
 | `DELETE /api/event-items/{id}` | – | conductor, librarian (not for sung/imported) |
@@ -755,9 +762,12 @@ valid version).
 | `POST /api/performances/import` | `{ fileId, dryRun, ownChoir? }` | librarian; `.xlsx` or `.csv` |
 
 Performance import report: `{ dryRun, source, sha256, snapshot, events,
-songLists, items, certain, ambiguous, notInCatalog, counted, ownChoir,
-unknownShelfmarks, sheets }`. A repeated import replaces the previously
-imported events of the same kind; planned events are never touched.
+songLists, items, certain, ambiguous, notInCatalog, counted,
+keptAssignments, ownChoir, unknownShelfmarks, sheets }`. A repeated import
+replaces the previously imported events of the same kind; planned events
+are never touched. A line the import cannot assign for certain keeps the
+assignment made by hand after the last import (same event, position and
+title, copy still there); `keptAssignments` counts them.
 
 Start page card: `ambiguous_items`. Notifications: `concert_deadline` (10, 8
 and 6 weeks before, to conductor and librarian; link `?event={id}`) and
@@ -1372,6 +1382,7 @@ audio and preservation copies applies whatever is switched on.
 | `performance_import` | `concerts` | on |
 | `repertoire` | `concerts` | on |
 | `calendar` | `concerts` | on |
+| `songbook` | – | on |
 | `accession` | – | on |
 | `merge` | – | on |
 | `inventory` | – | on |
@@ -1447,6 +1458,7 @@ other check of the app. The routes and their modules:
 | `calendar` | `GET /api/events/{id}/ics`, `GET /api/events/upcoming/ics`, `GET /api/calendars`, `POST /api/events/{id}/calendar`, `POST /api/events/upcoming/calendar` (and `concerts`) |
 | `persons` | `/api/persons…`, `/api/versions/{id}/contributions`, `/api/contributions/{id}` |
 | `protection_terms` | `GET /api/protection/review` (and `persons`) |
+| `songbook` | `GET /api/events/{id}/songbook`, `POST /api/songbook/pieces`, `GET /api/songbook/files/{id}`, `POST /api/songbook/record` |
 | `accession` | `GET /api/accession/next`, `POST /api/accession`, `PUT /api/accession/open-binders`, `GET /api/labels` |
 | `merge` | `/api/merges…` |
 | `inventory` | `GET /api/inventory`, `POST /api/inventory/count`, `GET /api/inventory/gaps` |
@@ -2242,6 +2254,46 @@ license that releases it (400 `The expiry date must lie between today and
 the current one (400 `The link is valid until %s already. …`). The audit
 log records `extended` with the old and the new day and, beyond the
 archive roles, the last day of the license (`license_until`).
+
+### Songbooks
+
+Round 3 of the November 2026 optimisation. Module `songbook`; roles
+librarian and conductor (else 403). The songbook itself is put together in
+the browser (`src/songbook/build.ts`, pdf-lib): the server says which pieces
+may go in, hands out their scans and records the songbook.
+
+`GET /api/events/{id}/songbook` (also module `concerts`) lists the pieces of
+a programme or song list in its order, struck items left out, at most 200;
+`POST /api/songbook/pieces` with `{ copyIds: [id, …] }` does the same for a
+list of copies (the catalog as filtered), in the order given, each copy
+once, unknown copies left out (no or a wrong id: 400 `Please choose the
+copies for the songbook.`; more than 200: 400). The answer:
+
+```json
+{ "title": "Adventskonzert", "date": "2026-12-13",
+  "pieces": [{ "copyId": 7, "shelfmark": "1-03", "title": "Ave verum corpus", "composer": "W. A. Mozart",
+               "arranger": null, "note": null, "scanFileId": 81, "allowed": true, "reason": null }] }
+```
+
+`allowed` needs the view of the piece (`viewDenial`) and the rights for a
+songbook (`RightsPolicy::songbookDenial`): confirmed public domain or a
+license valid today for `binder` or `print_station`, never an internal
+preservation copy; and a scan (`role` `score_pdf`, found in the archive
+folder). `reason` (translated) says why not. `note` is `Encore` (translated)
+for an encore. A programme line without a copy has `copyId` `null`; an
+internal preservation copy the account may not view shows neither
+`shelfmark` nor `title` (`reason` `Not available.`). `title` and `date` are
+empty for a list of copies.
+
+`GET /api/songbook/files/{scanFileId}` hands out the scan after the same
+checks and the account's own access to the file (403 with the reason; 400
+`This file is not a PDF scan.` for another file), rate limited to 600
+requests in 10 minutes per user.
+
+`POST /api/songbook/record` with `{ copyIds, eventId?, title? }` records
+the songbook in the audit log: action `songbook_made`, object `event` (with
+its id) or `songbook`, the shelf marks as the new value and the title as the
+reason.
 
 ### The page of the choir members
 

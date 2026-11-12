@@ -29,6 +29,7 @@ use OCA\Cantoria\Controller\PublicRepertoireController;
 use OCA\Cantoria\Controller\ReviewController;
 use OCA\Cantoria\Controller\ScanResponse;
 use OCA\Cantoria\Controller\SettingsController;
+use OCA\Cantoria\Controller\SongbookController;
 use OCA\Cantoria\Controller\StateController;
 use OCA\Cantoria\Controller\TaskController;
 use OCA\Cantoria\Db\ArchiveFileMapper;
@@ -158,6 +159,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(ChoirSystemController::class)]
 #[CoversClass(AnnualSnapshotController::class)]
 #[CoversClass(StateController::class)]
+#[CoversClass(SongbookController::class)]
 final class ControllerSecurityTest extends TestCase {
 	use ModuleSwitches;
 
@@ -250,6 +252,8 @@ final class ControllerSecurityTest extends TestCase {
 		'StateController::setCurrent',
 		// sharing a programme and extending links write links and check the rights per piece (milestone 0.18, S N14)
 		'EventController::share', 'TaskController::extendLink',
+		// hands out scans of the archive for a songbook (one request per piece)
+		'SongbookController::scan',
 	];
 
 	/**

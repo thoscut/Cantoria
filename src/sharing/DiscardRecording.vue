@@ -4,17 +4,18 @@
 -->
 <script setup lang="ts">
 /**
- * Asks before another piece replaces the shown one while a recording of
- * oneself is not saved (milestone 0.19): the view of each piece is new, and
- * the recording would be gone without a word.
+ * Asks before another piece replaces the shown one, or the score view of the
+ * archive closes, while a recording of oneself is not saved (milestone 0.19):
+ * the view of each piece is new, and the recording would be gone without a
+ * word.
  */
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import { t } from '../l10n.ts'
 
 defineProps<{
-	/** the piece that would be opened */
-	next: string
+	/** the piece that would be opened; without one, the score view would close */
+	next?: string
 }>()
 
 const emit = defineEmits<{
@@ -32,12 +33,15 @@ const emit = defineEmits<{
 		size="small"
 		dialog-classes="discard-recording"
 		@update:open="(open: boolean) => open || emit('stay')">
-		<p>
+		<p v-if="next !== undefined">
 			{{ t('cantoria', 'Your recording is not saved. If you open "{title}" now, it is gone.', { title: next }) }}
+		</p>
+		<p v-else>
+			{{ t('cantoria', 'Your recording is not saved. If you close the score now, it is gone.') }}
 		</p>
 		<template #actions>
 			<NcButton variant="tertiary" @click="emit('discard')">
-				{{ t('cantoria', 'Discard and open') }}
+				{{ next !== undefined ? t('cantoria', 'Discard and open') : t('cantoria', 'Discard and close') }}
 			</NcButton>
 			<NcButton variant="primary" @click="emit('stay')">
 				{{ t('cantoria', 'Keep the recording') }}

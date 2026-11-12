@@ -50,6 +50,7 @@ final class FilesIntegrationServiceTest extends TestCase {
 	/** @var list<int> Nextcloud file ids looked up in the archive */
 	private array $lookedUp = [];
 
+	#[\Override]
 	protected function setUp(): void {
 		$copy = new Copy();
 		$copy->setId(35);

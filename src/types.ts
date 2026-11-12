@@ -114,6 +114,12 @@ export interface Entry {
 	copies_unlicensed?: boolean
 	publication: string | null
 	valid_since: string | null
+	/** hired material: the day it must be back (YYYY-MM-DD) */
+	return_date?: string | null
+	/** scoring, language and duration (seconds) of the version, for finding repertoire */
+	scoring?: string | null
+	language?: string | null
+	duration?: number | null
 	repertoire: string | null
 	last_performed: string | null
 	has_musicxml: boolean
@@ -449,6 +455,29 @@ export interface ProgrammeShareItem {
 	until?: string | null
 	/** more choir members than the licenses were bought for (a hint, no barrier) */
 	quantity?: { licensed: number, members: number } | null
+}
+
+/** A piece of a songbook as the server describes it */
+export interface SongbookPiece {
+	/** null for a programme line without a copy or a copy the account may not see */
+	copyId: number | null
+	shelfmark: string | null
+	title: string
+	composer: string | null
+	arranger: string | null
+	/** e.g. "Encore" */
+	note: string | null
+	scanFileId: number | null
+	allowed: boolean
+	/** why it cannot go in */
+	reason: string | null
+}
+
+export interface SongbookPlan {
+	/** the title of the programme, empty for a list of copies */
+	title: string
+	date: string | null
+	pieces: SongbookPiece[]
 }
 
 export interface ProgrammeShareOptions {
@@ -868,6 +897,8 @@ export interface PerformanceImportReport {
 	ambiguous: number
 	notInCatalog: number
 	counted: number
+	/** lines that keep the assignment made by hand after the last import */
+	keptAssignments: number
 	ownChoir: string | null
 	unknownShelfmarks: string[]
 	sheets: string[]
@@ -1104,7 +1135,8 @@ export interface ModuleSettingsResult extends ModuleSettings {
 }
 
 /** Sort orders of the catalog list. */
-export type SortOrder = 'catalog' | 'shelfmark' | 'title'
+/** performedLongAgo: sung longest ago first (never sung last); performedRecently: the other way */
+export type SortOrder = 'catalog' | 'shelfmark' | 'title' | 'performedLongAgo' | 'performedRecently'
 
 /** Filter state of the navigation. Empty string / false = no filter. */
 export interface Filters {
@@ -1125,12 +1157,22 @@ export interface Filters {
 	reviewOpen: boolean
 	/** photocopies not covered by a license for the binders (milestone 0.11) */
 	copiesUnlicensed: boolean
+	/** scoring of the version, as written (e.g. "SATB"); compared without case */
+	scoring: string | null
+	/** language of the version */
+	language: string | null
+	/** at most this many minutes long (pieces without a duration are left out) */
+	maxMinutes: number | null
+	/** hired material to return within 30 days or overdue */
+	hiredReturn: boolean
 }
 
 /** Facts the filters need beyond the entry itself. */
 export interface FilterContext {
 	/** ids of works that have a valid version */
 	worksWithValidVersion: Set<number>
+	/** today (YYYY-MM-DD), for hired material to return; the browser's day if missing */
+	today?: string
 }
 
 // ---- milestone 0.5: maintaining the catalog ----------------------------------

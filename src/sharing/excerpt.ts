@@ -45,6 +45,35 @@ export function voiceOfLink(voices: readonly Voice[], wanted: string | null | un
 		?? null
 }
 
+/** Where the voice a choir member chose last is remembered, in this browser only */
+export const OWN_VOICE_KEY = 'member.voice'
+
+/**
+ * The voice a choir member sings, remembered from the last piece (round 3,
+ * November 2026), found in this score: the same name, or a voice whose name
+ * begins with it ("Tenor" finds "Tenor 1"), or the other way round ("Alt 2"
+ * finds "Alt"). Null when nothing fits; the member chooses then.
+ *
+ * @param voices - voices of the score
+ * @param remembered - the name remembered
+ * @param labelOf - display name of a voice
+ */
+export function ownVoice(voices: readonly Voice[], remembered: string | null | undefined, labelOf: (voice: Voice) => string): Voice | null {
+	const name = (remembered ?? '').trim().toLowerCase()
+	if (name === '') {
+		return null
+	}
+	const exact = voiceOfLink(voices, remembered, labelOf)
+	if (exact) {
+		return exact
+	}
+	const label = (voice: Voice): string => labelOf(voice).trim().toLowerCase()
+	const word = (text: string): RegExp => new RegExp('^' + text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b')
+	return voices.find((voice) => word(name).test(label(voice)))
+		?? voices.find((voice) => label(voice) !== '' && word(label(voice)).test(name))
+		?? null
+}
+
 /**
  * A voice name as the server accepts it: no control characters, at most 100
  * characters.

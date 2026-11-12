@@ -85,7 +85,7 @@ final class AppSettingsTest extends TestCase {
 	}
 
 	/**
-	 * @param array<string, Folder> $children sub folders by name
+	 * @param array<array-key, Folder> $children sub folders by name (a name like 2026 becomes an integer key)
 	 */
 	private function folder(int $id, string $path, string $owner, bool $incomingShare = false, array $children = [], bool $mounted = false): Folder {
 		$user = $this->createStub(IUser::class);

@@ -90,7 +90,7 @@ The screenshots show the invented demo archive from [tools/demo](tools/demo/READ
     <td width="33%" valign="top">
       <a href="docs/screenshots/concert-warnings.png"><img src="docs/screenshots/concert-warnings.png" width="280" alt="Pieces of a concert programme in order with their durations and warnings about rights and preservation copies."></a>
       <h3>Concerts</h3>
-      <p>Plan concerts and song lists piece by piece with durations, rights warnings and deadline reminders. After the concert, confirm what was sung; repertoire figures and "last sung" follow from the documented performances. Export the song order for the collecting society and import existing performance records and song lists from CSV or Excel.</p>
+      <p>Plan concerts and song lists piece by piece with durations, rights warnings and deadline reminders. After the concert, confirm what was sung; repertoire figures and "last sung" follow from the documented performances. Export the song order for the collecting society and import existing performance records and song lists from CSV or Excel. Find pieces by scoring, language, length or how long ago they were sung, start the next programme from an old one, and make a songbook PDF with cover, contents and page numbers from the pieces whose rights allow copies.</p>
     </td>
   </tr>
   <tr>
@@ -328,8 +328,8 @@ or add a language.
 - [Administration guide](docs/admin-guide.md): installation, roles, archive
   folder, import, backups and restore, managed hosting
   ([Administrationshandbuch](docs/de/administrationshandbuch.md), German)
-- [Schnellstart](docs/de/schnellstart.md): German quick start for the archive
-  management and the conductor
+- [Quick start](docs/quick-start.md): the first steps for music librarians
+  and conductors ([Schnellstart](docs/de/schnellstart.md), German)
 - [Cantoria alongside a choir system](docs/alongside-a-choir-system.md): who
   keeps what, the hand-over folder and the comparison with the choir system's
   export ([Neben einem Chorsystem](docs/de/neben-einem-chorsystem.md), German)

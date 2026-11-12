@@ -21,6 +21,7 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcRadioGroup from '@nextcloud/vue/components/NcRadioGroup'
 import NcRadioGroupButton from '@nextcloud/vue/components/NcRadioGroupButton'
 import TaskList from './TaskList.vue'
+import ReloadError from './ReloadError.vue'
 import ViewHeader from './ViewHeader.vue'
 import { errorMessage, fetchTasks } from '../api.ts'
 import { navigate, taskFilters } from '../navigation.ts'
@@ -31,16 +32,28 @@ const loaded = ref(false)
 const loading = ref(false)
 const error = ref('')
 
+/** Counter of the loads: only the answer to the latest one counts (a filter switched quickly) */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		tasks.value = await fetchTasks(taskFilters.closed)
+		const result = await fetchTasks(taskFilters.closed)
+		if (run !== loadRun) {
+			return
+		}
+		tasks.value = result
 		loaded.value = true
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -124,6 +137,7 @@ function showAll(): void {
 		</div>
 
 		<div class="tasks-view__content">
+			<ReloadError v-if="loaded && error" :error="error" @retry="load()" />
 			<NcEmptyContent v-if="!loaded && loading" :name="t('cantoria', 'Loading …')">
 				<template #icon>
 					<NcLoadingIcon :size="64" />

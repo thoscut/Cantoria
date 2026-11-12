@@ -144,7 +144,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('playbackCases')]
 	public function testPlayDenial(?string $rightsStatus, array $licenseSpecs, ?string $denial): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		$version = self::version(['rights_status' => $rightsStatus]);
 		self::assertSame($denial, $this->policy(true, false, $licenses)->playDenial($version, self::UID));
 	}
@@ -216,7 +216,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('practiceAudioCases')]
 	public function testPracticeAudioDenial(array $userRoles, array $values, array $licenseSpecs, ?string $denial): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		self::assertSame($denial, $this->practicePolicy($userRoles, $licenses)->practiceAudioDenial(self::version($values), self::UID));
 	}
 
@@ -273,7 +273,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('memberCases')]
 	public function testLinksForChoirMembers(array $values, array $licenseSpecs, ?string $view, ?string $play, ?string $practiceAudio): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		$policy = $this->practicePolicy([], $licenses);
 		$version = self::version($values);
 		self::assertSame($view, $policy->memberViewDenial($version, self::TODAY));
@@ -317,7 +317,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('publicCases')]
 	public function testPublicLinks(array $values, array $licenseSpecs, ?string $view, ?string $play): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		$policy = $this->practicePolicy([], $licenses);
 		$version = self::version($values);
 		self::assertSame($view, $policy->publicViewDenial($version, self::TODAY));
@@ -350,7 +350,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('memberScanCases')]
 	public function testTheScanForChoirMembersNeedsALicenseForCopies(array $values, array $licenseSpecs, ?string $denial): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		self::assertSame($denial, $this->practicePolicy([], $licenses)->memberScanDenial(self::version($values), self::TODAY));
 	}
 
@@ -381,7 +381,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('handoverCases')]
 	public function testTheHandOverNeedsUsesForDigitalScoresAndRecordings(array $values, array $licenseSpecs, ?string $score, ?string $audio): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		$policy = $this->practicePolicy([], $licenses);
 		self::assertSame($score, $policy->handoverScoreDenial(self::version($values), self::TODAY), 'MusicXML');
 		self::assertSame($audio, $policy->handoverAudioDenial(self::version($values), self::TODAY), 'recording');
@@ -418,7 +418,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('deviceCopyCases')]
 	public function testACopyOnTheDeviceOfTheConductorNeedsTheRightsForIt(array $values, array $licenseSpecs, ?string $withNotes, ?string $scanOnly): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		$policy = $this->practicePolicy([Roles::CONDUCTOR], $licenses);
 		self::assertSame($withNotes, $policy->deviceDenial(RightsPolicy::CIRCLE_FOLDER, self::version($values), self::TODAY));
 		self::assertSame($scanOnly, $policy->deviceDenial(RightsPolicy::CIRCLE_FOLDER, self::version($values), self::TODAY, null, false));
@@ -580,7 +580,7 @@ final class RightsPolicyTest extends TestCase {
 	 */
 	#[DataProvider('publicScanCases')]
 	public function testTheScanOfAPublicLinkNeedsItsOwnLicense(array $values, array $licenseSpecs, ?string $denial): void {
-		$licenses = array_map(fn (array $spec): License => self::license(...$spec), $licenseSpecs);
+		$licenses = array_map(fn (array $spec): License => self::license($spec[0], $spec[1] ?? null, $spec[2] ?? null), $licenseSpecs);
 		self::assertSame($denial, $this->practicePolicy([], $licenses)->publicScanDenial(self::version($values), self::TODAY));
 	}
 
@@ -640,5 +640,31 @@ final class RightsPolicyTest extends TestCase {
 		self::assertNull($build(ProtectionTerm::FREE, [])->publicPlayDenial($confirmed, self::TODAY));
 		self::assertSame(self::PUBLIC_NO_AUDIO, $build(ProtectionTerm::PROTECTED, [self::license('online_publication')])->publicPlayDenial($confirmed, self::TODAY));
 		self::assertNull($build(ProtectionTerm::PROTECTED, [self::license('online_publication,online_audio')])->publicPlayDenial($confirmed, self::TODAY));
+	}
+
+	// ---- songbooks ----
+
+	public function testASongbookNeedsConfirmedPublicDomainOrALicenseForPrintedCopies(): void {
+		$denied = 'A songbook needs confirmed public domain or a license for copies for the binders or for the print station. The catalog librarian records it on the tab "Rights".';
+		$confirmed = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01']);
+		$unconfirmed = self::version(['rights_status' => 'public_domain']);
+		$protected = self::version(['rights_status' => 'protected']);
+		self::assertNull($this->policy(true, false)->songbookDenial($confirmed, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false)->songbookDenial($unconfirmed, self::TODAY), 'public domain counts only when confirmed');
+		self::assertSame($denied, $this->policy(true, false)->songbookDenial($protected, self::TODAY));
+		self::assertNull($this->policy(true, false, [self::license('binder')])->songbookDenial($protected, self::TODAY));
+		self::assertNull($this->policy(true, false, [self::license('print_station')])->songbookDenial($protected, self::TODAY));
+		self::assertSame($denied, $this->policy(true, false, [self::license('portal,member_download')])->songbookDenial($protected, self::TODAY),
+			'downloads by single members are not copies printed for the choir');
+		self::assertSame($denied, $this->policy(true, false, [self::license('binder', null, '2026-01-31')])->songbookDenial($protected, self::TODAY),
+			'a license that has ended');
+		self::assertSame($denied, $this->policy(true, false, [self::license('binder', '2099-01-01')])->songbookDenial($protected, self::TODAY),
+			'a license not yet valid');
+	}
+
+	public function testAPreservationCopyNeverGoesIntoASongbook(): void {
+		$version = self::version(['rights_status' => 'public_domain', 'confirmed_at' => '2026-01-01', 'preservation_copy' => true]);
+		self::assertSame('Internal preservation copy: it does not go into a songbook.',
+			$this->policy(true, true, [self::license('binder')], false)->songbookDenial($version, self::TODAY));
 	}
 }

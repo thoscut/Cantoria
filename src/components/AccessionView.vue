@@ -31,7 +31,7 @@ import { createAccession, errorMessage, fetchLabels, fetchNextShelfmark, saveOpe
 import { canonicalShelfmark } from '../catalog.ts'
 import { focusAfterDialog, focusAfterUpdate } from '../focus.ts'
 import { toIsoDate, translateLabel } from '../format.ts'
-import { parseShelfmarkList } from '../maintenance.ts'
+import { parseShelfmarkList, similarEntries } from '../maintenance.ts'
 import { entries, fieldInfo, isLibrarian, loadEntries, openEntry } from '../store.ts'
 import { showError } from '../toasts.ts'
 
@@ -203,6 +203,10 @@ const busy = ref(false)
 const error = ref('')
 const result = ref<AccessionResult | null>(null)
 const showMore = ref(false)
+
+/** Copies that may be this piece already (a hint against recording it twice) */
+const similar = computed(() => similarEntries(entries.value,
+	typeof draft.title === 'string' ? draft.title : '', typeof draft.composer === 'string' ? draft.composer : ''))
 
 /** Binder and number of the proposal. */
 function resetShelfmark(): void {
@@ -513,6 +517,19 @@ onMounted(async () => {
 							:hint="hintOf(field)" />
 					</div>
 
+					<NcNoteCard v-if="similar.length > 0" type="info" class="accession-view__similar">
+						<p>{{ t('cantoria', 'Possibly in the catalog already. If it is the same piece, a further copy or version may be the better way:') }}</p>
+						<ul>
+							<li v-for="entry in similar" :key="entry.id">
+								<NcButton variant="tertiary-no-background" @click="openEntry(entry.id)">
+									{{ entry.shelfmark }} · {{ entry.title }}<template v-if="entry.composer">
+										· {{ entry.composer }}
+									</template>
+								</NcButton>
+							</li>
+						</ul>
+					</NcNoteCard>
+
 					<NcCheckboxRadioSwitch v-model="showMore" type="switch">
 						{{ t('cantoria', 'More details (arranger, publisher, rights, counts)') }}
 					</NcCheckboxRadioSwitch>
@@ -772,5 +789,11 @@ onMounted(async () => {
 .accession-view__muted {
 	margin: 0;
 	color: var(--color-text-maxcontrast);
+}
+
+.accession-view__similar ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 </style>

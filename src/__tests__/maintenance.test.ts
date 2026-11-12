@@ -4,7 +4,8 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { countPayload, LABELS_PER_SHEET, labelSheets, parseCount, parseShelfmarkList } from '../maintenance.ts'
+import type { Entry } from '../types.ts'
+import { countPayload, LABELS_PER_SHEET, labelSheets, parseCount, parseShelfmarkList, similarEntries } from '../maintenance.ts'
 
 describe('labelSheets', () => {
 	it('fills one sheet with empty places after the labels', () => {
@@ -105,5 +106,43 @@ describe('countPayload', () => {
 		})
 		expect(payload.invalid).toEqual([1])
 		expect(payload.counts).toEqual([{ copyId: 2, originals: 7, copies: 1 }])
+	})
+})
+
+describe('similar entries at an accession', () => {
+	const row = (id: number, title: string, composer: string | null): Entry => ({
+		...{ binder: 1, status: 'active', work_no: null, arranger_text: null, rights_status: null, rights_confirmed: null },
+		...{ preservation_copy: false, publication: null, valid_since: null, repertoire: null, last_performed: null },
+		...{ has_musicxml: false, files: 0, pdfs: 0 },
+		id,
+		shelfmark: `1-${id}`,
+		number: id,
+		title,
+		composer,
+		work_id: id,
+		version_id: id,
+	})
+	const catalog = [
+		row(1, 'Ave verum corpus', 'W. A. Mozart'),
+		row(2, 'Das Ave verum corpus (Satz)', 'Mozart'),
+		row(3, 'Ave verum corpus', 'William Byrd'),
+		row(4, 'Der Mond ist aufgegangen', 'J. A. P. Schulz'),
+		row(5, 'Ave', null),
+	]
+	const ids = (list: Entry[]): number[] => list.map((entry) => entry.id)
+
+	it('finds the same title, also with another article, accents or punctuation', () => {
+		expect(ids(similarEntries(catalog, 'Mond ist aufgegangen!', ''))).toEqual([4])
+		expect(ids(similarEntries(catalog, 'Avé verum corpus', 'Mozart'))).toEqual([1, 2])
+	})
+
+	it('leaves out another composer of the same title', () => {
+		expect(ids(similarEntries(catalog, 'Ave verum corpus', 'Byrd'))).toEqual([3])
+		expect(ids(similarEntries(catalog, 'Ave verum corpus', ''))).toEqual([1, 3, 2])
+	})
+
+	it('says nothing for a short or empty title', () => {
+		expect(similarEntries(catalog, 'Av', '')).toEqual([])
+		expect(ids(similarEntries(catalog, 'Ave', ''))).toEqual([5])
 	})
 })

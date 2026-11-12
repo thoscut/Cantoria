@@ -21,6 +21,14 @@ const testConfig = {
 		environment: 'node',
 		// the components of Nextcloud import their styles: through Vite, not Node
 		server: { deps: { inline: [/@nextcloud\/vue/] } },
+		// npm run test:coverage: line coverage of src/ (job "Frontend" in the CI)
+		coverage: {
+			provider: 'v8' as const,
+			include: ['src/**/*.{ts,vue}'],
+			exclude: ['src/__tests__/**'],
+			reporter: ['text-summary', 'json-summary'],
+			reportsDirectory: 'build/coverage-js',
+		},
 	},
 }
 

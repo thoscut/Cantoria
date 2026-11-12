@@ -113,6 +113,7 @@ export const HIDEABLE_CARDS: readonly { key: string, roles: readonly string[] | 
 	{ key: 'rule1_current', roles: ['librarian'] },
 	{ key: 'licenses_expiring', roles: ['librarian'] },
 	{ key: 'copies_unlicensed', roles: ['librarian'] },
+	{ key: 'hired_return', roles: ['librarian'] },
 	{ key: 'valid_missing', roles: ['conductor'] },
 	{ key: DUE_TASKS, roles: null },
 ]

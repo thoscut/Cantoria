@@ -207,6 +207,24 @@ viele. **Suche und Filter zurücksetzen** hebt sie auf. Die Liste lässt sich
 nach Reihenfolge im Werkverzeichnis, Signatur oder Titel sortieren; auf dem
 Smartphone zeigt sie eine Karte je Exemplar.
 
+**Repertoire finden.** Unter **Weitere Filter** bieten **Besetzung** und
+**Sprache** die Werte an, die bei den Fassungen eingetragen sind (nur in
+Groß- und Kleinschreibung verschieden, zählen sie als einer), und **Dauer**
+behält die Stücke von höchstens ein paar Minuten (Stücke ohne eingetragene
+Dauer fallen heraus). Nach **Am längsten nicht gesungen** sortiert, stehen
+die Stücke vorn, die am längsten nicht gesungen wurden: ein guter Anfang, um
+eines wieder aufzunehmen; **Zuletzt gesungen** ist die umgekehrte Richtung.
+Nie gesungene Stücke stehen bei beiden am Ende.
+
+**Leihmaterial.** Für Noten, die von einem Verlag gemietet oder von einem
+anderen Chor geliehen sind, trägst du am Exemplar **Geliehen von** und
+**Zurück bis** ein (Felder des Exemplars, für Archivverwaltung und
+Organisation). Ab 30 Tage vor dem Tag und danach zeigt die Startseite der
+Archivverwaltung die Karte der geliehenen Exemplare, die zurückzugeben sind,
+und **Weitere Filter** → **Leihmaterial zurückzugeben (30 Tage)** listet sie.
+Ist das Material zurück, setze das Exemplar auf **Ausgemustert** (oder leere
+**Zurück bis**).
+
 Das **Rechte-Kennzeichen** zeigt immer Text und Symbol, nie nur eine Farbe:
 
 | Kennzeichen | Bedeutung |
@@ -1118,7 +1136,15 @@ Chorleitung und Archivverwaltung planen Konzerte:
    einmal (siehe [Ein ganzes Programm mit dem Chor
    teilen](#so-teilst-du-ein-ganzes-programm-mit-dem-chor)); **In der
    Konzertmappe öffnen** zeigt das Programm so, wie es bei der Probe und im
-   Konzert auf dem Tablet steht.
+   Konzert auf dem Tablet steht. **Liederbuch (PDF) …** setzt die Scans zu
+   einem PDF zum Drucken zusammen (siehe [Liederbuch aus einem Programm oder
+   einer Auswahl](#liederbuch-aus-einem-programm-oder-einer-auswahl)).
+
+**Neues Programm mit diesen Stücken …** beginnt das nächste Konzert oder die
+nächste Notenliste mit diesem Programm, auch mit einem Konzert von vor Jahren:
+Die Stücke kommen in ihrer Reihenfolge mit Dauer, Notiz und Zugabe,
+gestrichene Stücke bleiben draußen, und das neue Programm ist ein Entwurf mit
+eigenem Datum.
 
 Benachrichtigungen zu den Fristen gehen 10, 8 und 6 Wochen vor dem Konzert an
 Chorleitung und Archivverwaltung. Findet ein Konzert nicht statt, wähle
@@ -1143,6 +1169,37 @@ Programm, die Liste für die Konzertmappen mit Spalten zum Abhaken und die
 Notenliste, auch in Großdruck. Mit dem Modul „Stände einer Fassung“ behält
 jedes Stück den [Stand](#stände-einer-fassung), der gesungen wurde, und das
 Programm, die gedruckten Listen und die Liederfolge nennen ihn.
+
+### Liederbuch aus einem Programm oder einer Auswahl
+
+Mit dem Modul „Liederbücher“ setzen Chorleitung und Archivverwaltung die
+Scans (PDF) mehrerer Stücke zu einem PDF zum Drucken zusammen: für ein
+Konzert, ein Probenwochenende oder einen Singnachmittag.
+
+1. Wähle in einem Konzert oder einer Notenliste **Liederbuch (PDF) …**. Für
+   jede andere Auswahl suchst und filterst du das Werkverzeichnis; unter den
+   Filtern bietet die Navigation ein Liederbuch aus den Treffern an
+   (höchstens die ersten 200).
+2. Die Liste sagt je Stück, ob es hineinkommt. Ein Liederbuch ist eine
+   gedruckte Kopie für den Chor: Ein Stück kommt hinein mit bestätigter
+   Gemeinfreiheit oder einer Lizenz für Kopien für die Chormappen oder für
+   die Druckstation, und es braucht einen Scan (PDF) an seinem Exemplar.
+   Interne Erhaltungskopien kommen nie hinein. Bei jedem fehlenden Stück
+   steht der Grund.
+3. Nimm die Haken bei Stücken weg, die du nicht willst, und trage den
+   **Titel auf dem Deckblatt** und die **Zeile unter dem Titel (optional)**
+   ein, etwa das Datum.
+4. **Reihenfolge**: **Wie im Programm** (oder **Wie in der Liste**), **Nach
+   Titel** oder **Nach Signatur**.
+5. **Bestandteile**: **Deckblatt**, **Inhaltsverzeichnis mit Seitenzahlen**,
+   **Seitenzahlen unten** und für den beidseitigen Druck **Jedes Stück auf
+   einer rechten Seite (beidseitiger Druck)**.
+
+Das PDF entsteht in deinem Browser und wird gleich heruntergeladen; die
+Scans behalten ihre Seiten, wie sie sind. Ein Scan, der sich nicht lesen
+lässt (beschädigt oder mit Passwort geschützt), bleibt draußen, und der
+Dialog nennt ihn. Jedes erstellte Liederbuch steht mit seinen Signaturen im
+Protokoll.
 
 ### Konzertmappe
 
@@ -1501,7 +1558,11 @@ ihn als Prüfpunkte ein, statt ihn als Notendatei zu verknüpfen.
    Exemplaren.
 3. Trage Titel, Komposition, Titelquelle, Zugangsdatum und Herkunft ein;
    unter **Weitere Angaben (Bearbeitung, Verlag, Rechte, Anzahl)** stehen
-   Bearbeitung, Verlag, Rechte und Anzahl.
+   Bearbeitung, Verlag, Rechte und Anzahl. Schon beim Tippen des Titels nennt
+   das Formular die Exemplare, die vielleicht dasselbe Stück sind (gleicher
+   Titel, auch mit anderem Artikel oder Akzenten, und gleiche Komposition, wo
+   beide angegeben sind); ein Klick öffnet eines. Ob du erfasst, entscheidest
+   weiter du.
 4. Wähle auf Wunsch mit **Datei verknüpfen (optional) …** eine Datei aus dem
    Archivordner.
 5. **Zugang erfassen**. Werk, Fassung und Exemplar werden angelegt, und das
@@ -1672,8 +1733,8 @@ Versionsgeschichte wieder her, dann verschwindet die Markierung. Wähle
 
 **Archivverwaltung** → **Sicherung** → **Vollständige Sicherung jetzt
 ablegen** schreibt das Werkverzeichnis als CSV, eine Tabelle mit dem
-Protokoll und die vollständige JSON-Sicherung in den Archivordner; das macht
-die App jede Woche von selbst. **Vollständige Sicherung und
+Protokoll und die vollständige JSON-Sicherung in den Sicherungsordner, der
+außerhalb des Archivordners liegt; das macht die App jede Woche von selbst. **Vollständige Sicherung und
 Wiederherstellung** lädt die vollständige Sicherung herunter und stellt sie
 in einem leeren Werkverzeichnis wieder her. Siehe das
 [Administrationshandbuch](administrationshandbuch.md#5-sicherung-und-wiederherstellung).

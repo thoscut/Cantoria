@@ -55,7 +55,7 @@ final class ProgrammeShareTest extends TestCase {
 	 * @param list<ExcerptLink> $links existing links
 	 */
 	private function service(?string $date = '2026-12-13', array $links = [], bool $librarian = false, ?string $createFails = null,
-		?string $licenseEnd = null): ProgrammeShareService {
+		?string $licenseEnd = null, bool $encore = false): ProgrammeShareService {
 		$event = new Event();
 		$event->setId(4);
 		$event->setEventDate($date);
@@ -63,6 +63,10 @@ final class ProgrammeShareTest extends TestCase {
 		$events->method('find')->willReturn($event);
 		$items = [self::item(1, 31), self::item(2, 32), self::item(3, 33), self::item(4, null, 'Zugabe ohne Noten'), self::item(5, 31, struck: true),
 			self::item(6, 34, 'Erhaltungskopie')];
+		if ($encore) {
+			// the first piece once more, as an encore
+			$items[] = self::item(7, 31);
+		}
 		$itemMapper = $this->createStub(EventItemMapper::class);
 		$itemMapper->method('findByEvent')->willReturn($items);
 		$copies = $this->createStub(CopyMapper::class);
@@ -184,6 +188,12 @@ final class ProgrammeShareTest extends TestCase {
 		$this->service()->share(4, ['items' => [1], 'expires' => '', 'scan' => true], 'carla');
 		self::assertSame(7, $this->calls[0][2]['scan_file_id'] ?? null, 'the first scan of the copy');
 		self::assertSame(LinkService::latestExpiry(self::TODAY), $this->calls[0][2]['expires'] ?? null);
+	}
+
+	public function testAPieceSungTwiceGetsOneLink(): void {
+		$result = $this->service(encore: true)->share(4, ['items' => [1, 7], 'expires' => '2026-12-27'], 'carla');
+		self::assertSame([1, 0, 1], [$result['created'], $result['extended'], $result['kept']], 'the encore keeps the link just made');
+		self::assertCount(1, $this->calls, 'no second link for the same copy');
 	}
 
 	public function testALinkIsNeverShortened(): void {

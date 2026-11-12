@@ -40,7 +40,7 @@ const TOKEN = 'abcdefghijklmnopqrstuvwxyz012345'
 function without(...off: string[]): Record<string, boolean> {
 	const all = ['rights', 'valid_version', 'persons', 'protection_terms', 'releases', 'portal', 'print_station', 'publication',
 		'score_viewer', 'playback', 'practice_audio', 'excerpt_links', 'tasks', 'proposals', 'concerts', 'performance_import',
-		'repertoire', 'calendar', 'accession', 'merge', 'inventory', 'checksums', 'statistics', 'dashboard_widget', 'notifications',
+		'repertoire', 'calendar', 'songbook', 'accession', 'merge', 'inventory', 'checksums', 'statistics', 'dashboard_widget', 'notifications',
 		'transcription_review', 'corrections']
 	return Object.fromEntries(all.map((key) => [key, !off.includes(key)]))
 }

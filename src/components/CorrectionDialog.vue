@@ -53,6 +53,7 @@ import {
 import { loadScore, renderPages, selectMeasures } from '../score/model.ts'
 import { sanitizeSvg } from '../score/sanitize.ts'
 import { createToolkit } from '../score/toolkit.ts'
+import { confirmDiscard, useUnsavedGuard } from '../unsaved.ts'
 
 const props = defineProps<{
 	detail: Detail
@@ -276,6 +277,8 @@ function setSyllable(row: NoteRow, lyric: number, text: number, raw: string): vo
 // ---- changes --------------------------------------------------------------------
 
 const changes = computed(() => pendingChanges(noteRows, valueMap(), true, language))
+/** Corrections typed and not saved: closing or leaving the page asks first */
+useUnsavedGuard(computed(() => changes.value.length > 0 && !busy.value))
 
 /**
  * One change in words.
@@ -305,6 +308,7 @@ const previewElement = ref<HTMLElement | null>(null)
 const previewPages = shallowRef<string[]>([])
 const previewState = ref<'rendering' | 'ready' | 'error'>('rendering')
 let toolkit: VerovioToolkit | null = null
+let toolkitReady: Promise<VerovioToolkit> | null = null
 let disposed = false
 let previewTimer: ReturnType<typeof setTimeout> | null = null
 let previewRun = 0
@@ -318,12 +322,22 @@ async function renderPreview(): Promise<void> {
 	const run = ++previewRun
 	previewState.value = 'rendering'
 	try {
-		const engraver = toolkit ?? await createToolkit()
+		// one toolkit for the dialog, also when an edit comes while it loads
+		toolkitReady ??= createToolkit().then((created) => {
+			if (disposed) {
+				created.destroy()
+			} else {
+				toolkit = created
+			}
+			return created
+		}, (error: unknown) => {
+			toolkitReady = null
+			throw error
+		})
+		const engraver = await toolkitReady
 		if (disposed) {
-			engraver.destroy()
 			return
 		}
-		toolkit = engraver
 		const { xml } = previewScore(props.scoreText, noteRows, valueMap())
 		const loaded = loadScore(engraver, xml)
 		const width = Math.max(280, (previewElement.value?.clientWidth ?? 600) - 16)
@@ -444,8 +458,8 @@ async function save(): Promise<void> {
  *
  * @param open - new open state
  */
-function onUpdateOpen(open: boolean): void {
-	if (!open && !busy.value) {
+async function onUpdateOpen(open: boolean): Promise<void> {
+	if (!open && !busy.value && await confirmDiscard()) {
 		emit('close')
 	}
 }

@@ -69,6 +69,7 @@ import type {
 	Settings,
 	SettingsUpdate,
 	ShelfLabel,
+	SongbookPlan,
 	StateList,
 	Statistics,
 	Task,
@@ -323,8 +324,17 @@ export async function fetchEntry(id: number): Promise<Detail> {
  * @param id - id from `files[]` (not the Nextcloud file id)
  */
 export async function fetchFileContent(id: number): Promise<ArrayBuffer> {
+	return fetchBinary(apiUrl('/files/{id}/content', { id }))
+}
+
+/**
+ * A file from the server as bytes; an error keeps the message of the server.
+ *
+ * @param url - address
+ */
+async function fetchBinary(url: string): Promise<ArrayBuffer> {
 	try {
-		const { data } = await axios.get<ArrayBuffer>(apiUrl('/files/{id}/content', { id }), { responseType: 'arraybuffer' })
+		const { data } = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer' })
 		return data
 	} catch (error) {
 		// With responseType arraybuffer the `{ error }` body arrives as bytes
@@ -664,6 +674,47 @@ export async function shareProgramme(eventId: number, input: { items: number[], 
 }
 
 /**
+ * The pieces of a programme or song list for a songbook, in its order, each
+ * saying whether it may go in.
+ *
+ * @param eventId - concert or song list
+ */
+export async function fetchEventSongbook(eventId: number): Promise<SongbookPlan> {
+	const { data } = await axios.get<SongbookPlan>(apiUrl('/events/{id}/songbook', { id: eventId }))
+	return { ...data, pieces: list(data?.pieces) }
+}
+
+/**
+ * The pieces of a list of copies (the catalog as filtered) for a songbook.
+ *
+ * @param copyIds - copies, in their order
+ */
+export async function fetchCopiesSongbook(copyIds: number[]): Promise<SongbookPlan> {
+	const { data } = await axios.post<SongbookPlan>(apiUrl('/songbook/pieces'), { copyIds })
+	return { ...data, pieces: list(data?.pieces) }
+}
+
+/**
+ * The scan of a piece for the songbook.
+ *
+ * @param scanFileId - scanFileId of the piece
+ */
+export async function fetchSongbookScan(scanFileId: number): Promise<ArrayBuffer> {
+	return fetchBinary(apiUrl('/songbook/files/{id}', { id: scanFileId }))
+}
+
+/**
+ * Records the songbook just made (audit log).
+ *
+ * @param copyIds - the copies in it
+ * @param eventId - the programme it was made from, if any
+ * @param title - its title
+ */
+export async function recordSongbook(copyIds: number[], eventId: number | null, title: string): Promise<void> {
+	await axios.post(apiUrl('/songbook/record'), { copyIds, eventId, title })
+}
+
+/**
  * Which circles a link for this copy can be made for, and what the
  * recipients may do (milestone 0.7).
  *
@@ -686,6 +737,19 @@ export function linkUrl(token: string, circle: string = 'internal'): string {
 		return window.location.origin + generateUrl('/apps/{app}/p/{token}', { app: APP, token })
 	}
 	return window.location.origin + generateUrl('/apps/{app}/', { app: APP }) + '?link=' + encodeURIComponent(token)
+}
+
+/**
+ * A new concert or song list with the pieces of an existing one (struck
+ * pieces left out), as a draft.
+ *
+ * @param sourceId - the programme to copy
+ * @param kind - kind of the new one
+ * @param event - its fields
+ */
+export async function duplicateEvent(sourceId: number, kind: EventKind, event: EventInput): Promise<ChoirEvent> {
+	const { data } = await axios.post<ChoirEvent>(apiUrl('/events/{id}/copy', { id: sourceId }), { kind, event })
+	return data
 }
 
 /**

@@ -9,6 +9,8 @@
  */
 import type { Entry, FilterContext, Filters, SortOrder } from './types.ts'
 
+import { toIsoDate } from './format.ts'
+
 /**
  * Lower case, without diacritics, so "schoner" also finds "schöner".
  *
@@ -66,6 +68,10 @@ export const DEFAULT_FILTERS: Readonly<Filters> = Object.freeze({
 	noValidVersion: false,
 	reviewOpen: false,
 	copiesUnlicensed: false,
+	scoring: null,
+	language: null,
+	maxMinutes: null,
+	hiredReturn: false,
 })
 
 /**
@@ -85,6 +91,10 @@ export function moreFiltersActive(filters: Filters): number {
 		filters.noValidVersion,
 		filters.reviewOpen,
 		filters.copiesUnlicensed,
+		filters.scoring !== null,
+		filters.language !== null,
+		filters.maxMinutes !== null,
+		filters.hiredReturn,
 	].filter(Boolean).length
 }
 
@@ -216,6 +226,10 @@ export function hasActiveFilters(filters: Filters): boolean {
 		|| filters.noValidVersion
 		|| filters.reviewOpen
 		|| filters.copiesUnlicensed
+		|| filters.scoring !== null
+		|| filters.language !== null
+		|| filters.maxMinutes !== null
+		|| filters.hiredReturn
 }
 
 /**
@@ -236,7 +250,58 @@ export function activeFilterCount(filters: Filters): number {
 		filters.noValidVersion,
 		filters.reviewOpen,
 		filters.copiesUnlicensed,
+		filters.scoring !== null,
+		filters.language !== null,
+		filters.maxMinutes !== null,
+		filters.hiredReturn,
 	].filter(Boolean).length
+}
+
+/** Days ahead in which hired material counts as to return (as the start page) */
+export const HIRED_RETURN_DAYS = 30
+
+/**
+ * Whether a copy is hired material to return within HIRED_RETURN_DAYS or
+ * overdue.
+ *
+ * @param entry - catalog entry
+ * @param today - today (YYYY-MM-DD)
+ */
+export function hiredToReturn(entry: Entry, today: string): boolean {
+	if (!entry.return_date || entry.status === 'retired') {
+		return false
+	}
+	const limit = new Date(today + 'T12:00:00')
+	limit.setDate(limit.getDate() + HIRED_RETURN_DAYS)
+	return entry.return_date <= toIsoDate(limit)
+}
+
+/**
+ * A value as the filters compare it: trimmed, without case, spaces folded.
+ *
+ * @param value - scoring or language
+ */
+export function filterKey(value: string | null | undefined): string {
+	return (value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+}
+
+/**
+ * The values of a field found in the catalog, once each (without case), in
+ * the spelling found first, sorted: the choices of a filter.
+ *
+ * @param entries - catalog entries
+ * @param field - scoring or language
+ */
+export function distinctValues(entries: Entry[], field: 'scoring' | 'language'): string[] {
+	const found = new Map<string, string>()
+	for (const entry of entries) {
+		const value = (entry[field] ?? '').trim().replace(/\s+/g, ' ')
+		const key = filterKey(value)
+		if (key !== '' && !found.has(key)) {
+			found.set(key, value)
+		}
+	}
+	return [...found.values()].sort((a, b) => titleCollator.compare(a, b))
 }
 
 /**
@@ -298,6 +363,18 @@ export function filterEntries(entries: Entry[], filters: Filters, index: Map<num
 		if (filters.copiesUnlicensed && entry.copies_unlicensed !== true) {
 			return false
 		}
+		if (filters.scoring !== null && filterKey(entry.scoring) !== filterKey(filters.scoring)) {
+			return false
+		}
+		if (filters.language !== null && filterKey(entry.language) !== filterKey(filters.language)) {
+			return false
+		}
+		if (filters.hiredReturn && !hiredToReturn(entry, context.today ?? toIsoDate(new Date()))) {
+			return false
+		}
+		if (filters.maxMinutes !== null && !(typeof entry.duration === 'number' && entry.duration > 0 && entry.duration <= filters.maxMinutes * 60)) {
+			return false
+		}
 		return true
 	})
 }
@@ -339,11 +416,47 @@ export function sortEntries(entries: Entry[], order: SortOrder): Entry[] {
 			const [binderB, numberB] = shelfmarkParts(b)
 			return binderA - binderB || numberA - numberB
 		})
+	} else if (order === 'performedLongAgo' || order === 'performedRecently') {
+		const direction = order === 'performedLongAgo' ? 1 : -1
+		sorted.sort((a, b) => {
+			const dayA = lastPerformed(a)
+			const dayB = lastPerformed(b)
+			if (dayA === dayB) {
+				return titleCollator.compare(a.title ?? '', b.title ?? '')
+			}
+			// never sung (or unknown) comes last either way
+			if (dayA === '') {
+				return 1
+			}
+			if (dayB === '') {
+				return -1
+			}
+			return direction * (dayA < dayB ? -1 : 1)
+		})
 	} else {
 		sorted.sort((a, b) => titleCollator.compare(a.title ?? '', b.title ?? '')
 			|| titleCollator.compare(a.shelfmark, b.shelfmark))
 	}
 	return sorted
+}
+
+/**
+ * When an entry was last sung, as a sortable text: the date derived from
+ * the concerts, otherwise the imported value if it starts with a year
+ * ("2019", "2019-05", "2019-05-12"); '' when unknown.
+ *
+ * @param entry - catalog entry
+ */
+export function lastPerformed(entry: Entry): string {
+	if (entry.last_performed_on) {
+		return entry.last_performed_on
+	}
+	const imported = (entry.last_performed ?? '').trim()
+	const german = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(imported)
+	if (german) {
+		return `${german[3]}-${german[2]!.padStart(2, '0')}-${german[1]!.padStart(2, '0')}`
+	}
+	return /^\d{4}(-\d{2}){0,2}$/.test(imported) ? imported : ''
 }
 
 /**

@@ -18,6 +18,7 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import ActionDialog from './ActionDialog.vue'
 import PersonDialog from './PersonDialog.vue'
@@ -70,21 +71,38 @@ const shown = computed(() => {
 
 const current = ref<PersonDetail | null>(null)
 const detailLoading = ref(false)
+/** The person chosen last could not be loaded; shown in place of the detail */
+const detailError = ref('')
+/** Counter of the loads: two persons clicked quickly show the second one */
+let selectRun = 0
 
 /**
- * Show a person.
+ * Show a person. Until the new one is there, the old one is not shown, so
+ * that no button acts on the wrong person.
  *
  * @param id - person id
  */
 async function select(id: number): Promise<void> {
+	const run = ++selectRun
 	selectedPersonId.value = id
 	detailLoading.value = true
+	detailError.value = ''
+	if (current.value?.person.id !== id) {
+		current.value = null
+	}
 	try {
-		current.value = await fetchPerson(id)
+		const person = await fetchPerson(id)
+		if (run === selectRun) {
+			current.value = person
+		}
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === selectRun) {
+			detailError.value = errorMessage(caught)
+		}
 	} finally {
-		detailLoading.value = false
+		if (run === selectRun) {
+			detailLoading.value = false
+		}
 	}
 }
 
@@ -239,6 +257,18 @@ function dateText(value: string | null, precision: string | null): string {
 				</ul>
 			</section>
 
+			<NcNoteCard v-if="detailError && selectedPersonId !== null"
+				type="error"
+				role="alert"
+				class="persons-view__detail">
+				<p>{{ t('cantoria', 'This person could not be loaded: {error}', { error: detailError }) }}</p>
+				<NcButton variant="secondary" @click="select(selectedPersonId)">
+					{{ t('cantoria', 'Try again') }}
+				</NcButton>
+			</NcNoteCard>
+			<p v-else-if="!current && detailLoading" class="persons-view__detail">
+				{{ t('cantoria', 'Loading …') }}
+			</p>
 			<section v-if="current" class="persons-view__detail" aria-labelledby="persons-view-name">
 				<h3 id="persons-view-name">
 					{{ current.person.name }}

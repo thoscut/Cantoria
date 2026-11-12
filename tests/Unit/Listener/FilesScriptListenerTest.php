@@ -111,6 +111,7 @@ final class FilesScriptListenerTest extends TestCase {
 		$listener = $this->listener();
 		$listener->handle($event ?? new LoadAdditionalScriptsEvent());
 		self::assertObjectHasProperty('scripts', $listener);
+		/** @psalm-suppress UndefinedPropertyFetch the property of the anonymous test class in listener() */
 		$scripts = $listener->scripts;
 		self::assertIsInt($scripts);
 		self::assertSame($scripts === 1, $this->provided !== [], 'the initial state comes with the script and only with it');

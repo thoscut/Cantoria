@@ -28,7 +28,6 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import AppNotices from './components/AppNotices.vue'
-import ArchiveManagement from './components/ArchiveManagement.vue'
 import CatalogList from './components/CatalogList.vue'
 import CatalogNavigation from './components/CatalogNavigation.vue'
 import CopySidebar from './components/CopySidebar.vue'
@@ -67,6 +66,8 @@ import {
 import { viewTitle } from './viewTitles.ts'
 
 // Views other than the start page and the catalog are loaded when needed
+// only for the archive roles, after the dialog is opened: not in everyone's main bundle
+const ArchiveManagement = defineAsyncComponent(() => import('./components/ArchiveManagement.vue'))
 const TasksView = defineAsyncComponent(() => import('./components/TasksView.vue'))
 const ProposalsView = defineAsyncComponent(() => import('./components/ProposalsView.vue'))
 const ReleaseListView = defineAsyncComponent(() => import('./components/ReleaseListView.vue'))
@@ -139,11 +140,13 @@ function allowedView(params: StartParams): ViewName {
 }
 
 /**
- * Follow the parameters of a notification or shared link.
+ * Follow the parameters of a notification or shared link. They are read
+ * while the catalog loads; only the check for a missing copy waits for it.
  *
  * @param params - parsed query parameters
+ * @param catalogLoaded - the catalog being loaded
  */
-async function followStartParams(params: StartParams): Promise<void> {
+async function followStartParams(params: StartParams, catalogLoaded: Promise<unknown>): Promise<void> {
 	if (params.linkToken !== null) {
 		await openLink(params.linkToken)
 		return
@@ -156,6 +159,7 @@ async function followStartParams(params: StartParams): Promise<void> {
 			copyId = null
 		}
 	}
+	await catalogLoaded
 	if (copyId !== null && isMissingCopy(copyId, entriesStatus.value === 'ready' ? entries.value : null)) {
 		startNotice.value = { text: t('cantoria', 'This copy does not exist or is no longer available.'), type: 'warning' }
 		// Do not try again on reload; keep the view in the URL
@@ -235,8 +239,9 @@ onMounted(async () => {
 			// function: show the start page in the URL, too
 			navigate(currentView.value, { eventId: currentEventId.value, replace: true })
 		}
-		await loadEntries()
-		await followStartParams(params)
+		// the catalog and a link or task of the start parameters at the same time
+		const catalogLoaded = loadEntries()
+		await Promise.all([catalogLoaded, followStartParams(params, catalogLoaded)])
 	}
 })
 

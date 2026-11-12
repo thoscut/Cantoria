@@ -213,6 +213,7 @@ final class Fields {
 		self::COPY => [
 			'shelfmark' => 20, 'status' => 20, 'status_reason' => 1000, 'status_since' => 10, 'kind' => 32,
 			'last_counted' => 10, 'title_source' => 500, 'pages' => 20, 'versions_count' => 20, 'scan_formats' => 100,
+			'hired_from' => 255, 'return_date' => 10,
 		],
 	];
 
@@ -347,6 +348,8 @@ final class Fields {
 				'last_counted' => self::field(self::TYPE_DATE, 'Last counted', $librarianOperations),
 				'title_source' => self::field(self::TYPE_TEXT, 'Title source', $librarian),
 				'pages' => self::field(self::TYPE_TEXT, 'Pages', $librarian),
+				'hired_from' => self::field(self::TYPE_TEXT, 'Hired from', $librarianOperations),
+				'return_date' => self::field(self::TYPE_DATE, 'Return by', $librarianOperations),
 				'versions_count' => self::field(self::TYPE_TEXT, 'Versions (catalog)', $readOnly),
 				'pdf_files' => self::field(self::TYPE_LONGTEXT, 'PDF files (catalog)', $readOnly),
 				'scan_formats' => self::field(self::TYPE_TEXT, 'Formats of original scans', $readOnly),

@@ -71,7 +71,8 @@ import { nextZoom, storedZoom, storeZoom, ZOOM_DEFAULT, ZOOM_STEPS } from '../sc
 import { LARGE_SCREEN } from '../score/screen.ts'
 import { APP_CONTENT, useStickyHeader } from '../stickyHeader.ts'
 import { resolveRange } from '../score/range.ts'
-import { excerptTempo, TEMPO_MAX, TEMPO_MIN, voiceForServer, voiceOfLink } from './excerpt.ts'
+import { excerptTempo, OWN_VOICE_KEY, ownVoice, TEMPO_MAX, TEMPO_MIN, voiceForServer, voiceOfLink } from './excerpt.ts'
+import { readStored, writeStored } from '../storage.ts'
 import { scopeText } from './linkScope.ts'
 
 const props = withDefaults(defineProps<{
@@ -102,6 +103,8 @@ const props = withDefaults(defineProps<{
 	focusOnReady?: boolean
 	/** the rights allow printing the notes; otherwise the print view says so instead */
 	printable?: boolean
+	/** remember the voice chosen in this browser and choose it for links without a voice (choir members) */
+	rememberVoice?: boolean
 }>(), {
 	composer: '',
 	voice: null,
@@ -114,6 +117,7 @@ const props = withDefaults(defineProps<{
 	stage: false,
 	focusOnReady: false,
 	printable: true,
+	rememberVoice: false,
 })
 
 const summaryId = useId()
@@ -179,7 +183,8 @@ async function load(): Promise<void> {
 		range.value = null
 		rangeFrom.value = numberSpan.value.first
 		rangeTo.value = numberSpan.value.last
-		focusKey.value = voiceOfLink(loaded.voices, props.voice, labelOf)?.key ?? ''
+		focusKey.value = (voiceOfLink(loaded.voices, props.voice, labelOf)
+			?? (props.rememberVoice && !props.voice ? ownVoice(loaded.voices, readStored(OWN_VOICE_KEY), labelOf) : null))?.key ?? ''
 		mode.value = focusKey.value !== '' ? 'focus' : 'all'
 		status.value = 'ready'
 		await nextTick()
@@ -346,6 +351,11 @@ const focusOption = computed<VoiceOption>({
 	get: () => voiceOptions.value.find((option) => option.id === focusKey.value) ?? voiceOptions.value[0],
 	set: (option) => {
 		focusKey.value = option?.id ?? ''
+		// chosen by the member: the voice for the next piece, too (not a voice the link set)
+		const chosen = model.value?.voices.find((voice) => voice.key === focusKey.value)
+		if (props.rememberVoice && chosen) {
+			writeStored(OWN_VOICE_KEY, labelOf(chosen))
+		}
 	},
 })
 

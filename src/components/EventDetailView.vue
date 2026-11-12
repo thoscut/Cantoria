@@ -13,7 +13,7 @@
  * columns to tick off) and song list (singers' portal or paper only).
  */
 import type { CalendarMessage } from '../calendar.ts'
-import type { EventDetail, EventItem, Entry } from '../types.ts'
+import type { ChoirEvent, EventDetail, EventItem, Entry } from '../types.ts'
 
 import {
 	mdiAlertCircleOutline,
@@ -21,10 +21,12 @@ import {
 	mdiArrowDown,
 	mdiArrowLeft,
 	mdiArrowUp,
+	mdiBookMusicOutline,
 	mdiCalendarExportOutline,
 	mdiCalendarPlusOutline,
 	mdiCalendarRemoveOutline,
 	mdiCheckAll,
+	mdiContentCopy,
 	mdiDeleteOutline,
 	mdiDownload,
 	mdiFolderMusicOutline,
@@ -36,7 +38,7 @@ import {
 import { showSuccess } from '@nextcloud/dialogs'
 import { generateUrl } from '@nextcloud/router'
 import { n, t } from '../l10n.ts'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
@@ -51,6 +53,7 @@ import AppNotices from './AppNotices.vue'
 import CalendarDialog from './CalendarDialog.vue'
 import EventDialog from './EventDialog.vue'
 import ProgrammeShareDialog from './ProgrammeShareDialog.vue'
+import SongbookDialog from './SongbookDialog.vue'
 import {
 	addEventItem,
 	calendarFileUrl,
@@ -83,15 +86,26 @@ const error = ref('')
 const busy = ref(false)
 const announcement = ref('')
 
+/** Counter of the loads: Back and Forward between two events show the later one */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		data.value = await fetchEvent(props.eventId)
+		const result = await fetchEvent(props.eventId)
+		if (run === loadRun) {
+			data.value = result
+		}
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -127,6 +141,23 @@ const concertFolderUrl = computed(() => {
 	return generateUrl('/apps/cantoria/concert-folder') + (first ? '?item=' + first.id : '')
 })
 const sharing = ref(false)
+/** A songbook of the programme to print (round 3, November 2026) */
+const canMakeSongbook = computed(() => items.value.length > 0 && isModuleActive('songbook') && hasAnyRole(['librarian', 'conductor']))
+const makingSongbook = ref(false)
+/** A new programme with these pieces (round 3, November 2026) */
+const canCopyProgramme = computed(() => canPlanEvents.value && event.value !== null && items.value.some((item) => item.struck !== true))
+const copyingProgramme = ref(false)
+
+/**
+ * Opens the new programme made from this one.
+ *
+ * @param created - the new concert or song list
+ */
+function onProgrammeCopied(created: ChoirEvent): void {
+	copyingProgramme.value = false
+	showSuccess(t('cantoria', 'The new programme "{title}" has been created.', { title: created.title ?? '' }))
+	navigate('event', { eventId: created.id })
+}
 
 const canConfirmSung = computed(() => editable.value && isConcert.value
 	&& event.value?.event_date !== null && event.value?.event_date !== undefined && event.value.event_date <= today)
@@ -380,6 +411,13 @@ async function print(mode: 'programme' | 'binders' | 'songlist'): Promise<void> 
 	window.print()
 }
 
+/** After printing, Ctrl+P prints the programme again, not the list printed last */
+function afterPrint(): void {
+	printMode.value = 'programme'
+}
+onMounted(() => window.addEventListener('afterprint', afterPrint))
+onBeforeUnmount(() => window.removeEventListener('afterprint', afterPrint))
+
 /**
  * Whether the version of an item is in the singers' portal.
  *
@@ -503,6 +541,18 @@ function revisionText(item: EventItem): string {
 								<NcIconSvgWrapper :path="mdiShareVariantOutline" />
 							</template>
 							{{ t('cantoria', 'Share with the choir …') }}
+						</NcButton>
+						<NcButton v-if="canCopyProgramme" :disabled="busy" @click="copyingProgramme = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiContentCopy" />
+							</template>
+							{{ t('cantoria', 'New programme with these pieces …') }}
+						</NcButton>
+						<NcButton v-if="canMakeSongbook" :disabled="busy" @click="makingSongbook = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiBookMusicOutline" />
+							</template>
+							{{ t('cantoria', 'Songbook (PDF) …') }}
 						</NcButton>
 						<NcButton v-if="concertFolderUrl" :href="concertFolderUrl">
 							<template #icon>
@@ -775,6 +825,11 @@ function revisionText(item: EventItem): string {
 			</section>
 		</template>
 
+		<EventDialog v-if="copyingProgramme && event"
+			:kind="event.kind"
+			:copy-of="event"
+			@saved="onProgrammeCopied"
+			@close="copyingProgramme = false" />
 		<EventDialog v-if="editingEvent && event"
 			:kind="event.kind"
 			:event="event"
@@ -816,6 +871,9 @@ function revisionText(item: EventItem): string {
 			:event-id="event.id"
 			:title="event.title || t('cantoria', '(no title)')"
 			@close="sharing = false" />
+		<SongbookDialog v-if="makingSongbook && event"
+			:event-id="event.id"
+			@close="makingSongbook = false" />
 		<CalendarDialog v-if="calendarDialogOpen && event"
 			:event-id="event.id"
 			:deadlines="withDeadlines && !event.imported"

@@ -202,6 +202,7 @@ while read -r sum license; do
 	curl -fsSL --retry 3 --retry-all-errors -o "$STAGE/$APP_ID/LICENSES/$license.txt" "$SPDX/$license.txt"
 	echo "$sum  $STAGE/$APP_ID/LICENSES/$license.txt" | sha256sum -c --quiet -
 done <<'LICENSES'
+e3f18c71e10d673590eb9856c1d79dd3b4b0d65404efb5e8584dbede7edd608b 0BSD
 074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff Apache-2.0
 f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df BSD-2-Clause
 000c7fc2d306b8f74db81d1b44ce9a96da4c1674185714cbe4e9d6b82db45aa7 Font-exception-2.0
@@ -213,6 +214,7 @@ b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5 MIT
 66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172 MPL-2.0
 8eea8287e5876b539670cadb82e99f9a7afddec6f6730811be1daf25d2e9bcfd OFL-1.1
 0bdebfeda07d45dada625ae1317c6f833186e798b171d0db640bcf32e92a8240 Unlicense
+bfb1112d49db5b1daecdfef24bd7e2f3ea0bafb33aa67aa0ab51e2bf8407c03d Zlib
 LICENSES
 # Texts that only files outside the archive use (AGPL-3.0-only: a test
 # stub; CC0-1.0: configuration and manifests, and REUSE.toml itself, which

@@ -195,11 +195,7 @@ class PersonService {
 		$this->requireVersion($versionId);
 		$person = $this->load($personId);
 		self::checkRole($role);
-		foreach ($this->contributions->findByVersion($versionId) as $existing) {
-			if ($existing->getPersonId() === $personId && $existing->getRole() === $role) {
-				throw new InvalidInputException('This person already has this role in this version.');
-			}
-		}
+		$this->requireNewRole($versionId, $personId, $role, null);
 		$contribution = new Contribution();
 		$contribution->setVersionId($versionId);
 		$contribution->setPersonId($personId);
@@ -222,7 +218,11 @@ class PersonService {
 		$before = self::describe($person, $contribution->getRole()) . ($contribution->getTextForComposition() === true ? ' §65' : '');
 		foreach (Input::values($data) as $field => $value) {
 			if ($field === 'role') {
-				$contribution->setRole(self::checkRole(is_string($value) ? $value : ''));
+				$role = self::checkRole(is_string($value) ? $value : '');
+				if ($role !== $contribution->getRole()) {
+					$this->requireNewRole($contribution->getVersionId(), $contribution->getPersonId(), $role, $contribution->getId());
+				}
+				$contribution->setRole($role);
 			} elseif ($field === 'text_for_composition') {
 				$contribution->setTextForComposition(Input::bool($value, 'Text written for this composition'));
 			} else {
@@ -236,6 +236,20 @@ class PersonService {
 			$contribution = $this->contributions->update($contribution);
 		}
 		return $contribution;
+	}
+
+	/**
+	 * A person has each role at most once in a version; `$except` is the
+	 * contribution being changed.
+	 *
+	 * @throws InvalidInputException
+	 */
+	private function requireNewRole(int $versionId, int $personId, string $role, ?int $except): void {
+		foreach ($this->contributions->findByVersion($versionId) as $existing) {
+			if ($existing->getId() !== $except && $existing->getPersonId() === $personId && $existing->getRole() === $role) {
+				throw new InvalidInputException('This person already has this role in this version.');
+			}
+		}
 	}
 
 	public function removeContribution(int $contributionId, string $uid): void {

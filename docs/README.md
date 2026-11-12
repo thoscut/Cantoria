@@ -11,7 +11,7 @@ documentation for developers is in English.
 |---|---|---|
 | Using the app | [User guide](user-guide.md) | [Benutzerhandbuch](de/benutzerhandbuch.md) |
 | Running the app | [Administration guide](admin-guide.md) | [Administrationshandbuch](de/administrationshandbuch.md) |
-| The essentials in a few minutes | – | [Schnellstart](de/schnellstart.md) |
+| The essentials in a few minutes | [Quick start](quick-start.md) | [Schnellstart](de/schnellstart.md) |
 | One page for the singers, to pass on | [For choir members](for-choir-members.md) | [Für Chormitglieder](de/fuer-chormitglieder.md) |
 | The law behind the rights checks | [Legal background](legal-background.md) | [Rechtlicher Hintergrund](de/rechtlicher-hintergrund.md) |
 | Data protection templates for the choir | [Privacy templates](privacy-templates.md) | [Datenschutz-Vorlagen](de/datenschutz-vorlagen.md) |
@@ -22,6 +22,7 @@ documentation for developers is in English.
 
 | You are … | Read |
 |---|---|
+| new and want the essentials in a few minutes | [Quick start](quick-start.md) |
 | a music librarian who keeps the catalog, the rights and the backups | [User guide](user-guide.md) |
 | a conductor who chooses versions, answers questions and plans concerts | [User guide](user-guide.md) |
 | a board member or auditor who reads the catalog and the audit log | [User guide](user-guide.md) |
@@ -46,6 +47,8 @@ documentation for developers is in English.
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md): development setup, checks,
   translations, style and commit messages.
+- [Architecture](architecture.md): the parts of the app, the path of a
+  request and the rules the code keeps.
 - [API](api.md): the internal JSON API between the user interface and the
   server. It is not a stable public interface.
 - [API for agents](api-v1.md): the stable, versioned OCS API v1 for tools

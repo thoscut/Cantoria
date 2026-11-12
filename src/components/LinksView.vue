@@ -19,6 +19,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import LinkList from './LinkList.vue'
+import ReloadError from './ReloadError.vue'
 import ViewHeader from './ViewHeader.vue'
 import { errorMessage, fetchLinks } from '../api.ts'
 import { canonicalShelfmark } from '../catalog.ts'
@@ -32,16 +33,28 @@ const loaded = ref(false)
 const loading = ref(false)
 const error = ref('')
 
+/** Counter of the loads: only the answer to the latest one counts (a filter switched quickly) */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		links.value = await fetchLinks()
+		const result = await fetchLinks()
+		if (run !== loadRun) {
+			return
+		}
+		links.value = result
 		loaded.value = true
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -72,6 +85,7 @@ const sorted = computed(() => [...links.value].sort((a, b) => collator.compare(
 			:loading="loading"
 			@reload="load" />
 		<div class="links-view__content">
+			<ReloadError v-if="loaded && error" :error="error" @retry="load()" />
 			<NcEmptyContent v-if="!loaded && loading" :name="t('cantoria', 'Loading …')">
 				<template #icon>
 					<NcLoadingIcon :size="64" />

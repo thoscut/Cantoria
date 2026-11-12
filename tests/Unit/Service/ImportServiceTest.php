@@ -417,17 +417,19 @@ final class ImportServiceTest extends TestCase {
 	}
 
 	public function testInvalidAndDuplicateShelfMarksAreSkipped(): void {
-		$report = $this->service->import(self::csv(['Signatur', 'Titel'], ['X-1', 'A'], ['7-1', 'B'], ['07-01', 'C'], ['8', 'D'], ['', 'E']),
+		$report = $this->service->import(self::csv(['Signatur', 'Titel'], ['X-1', 'A'], ['7-1', 'B'], ['07-01', 'C'], ['8', 'D'], ['', 'E'], ['99999999999-1', 'F']),
 			'catalog.csv', self::UID, false);
 
 		self::assertSame(['7-1'], array_map(fn (Copy $c): string => $c->getShelfmark(), $this->insertedOf(Copy::class)));
-		self::assertSame(5, $report['rows']);
+		self::assertSame(6, $report['rows']);
 		self::assertSame(1, $report['created']);
 		$warnings = self::warnings($report);
 		self::assertContains('Row 1: shelf mark "X-1" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
 		self::assertContains('Row 3: shelf mark 7-1 occurs twice and was skipped.', $warnings);
 		self::assertContains('Row 4: shelf mark "8" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
 		self::assertContains('Row 5: shelf mark "" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings);
+		self::assertContains('Row 6: shelf mark "99999999999-1" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.', $warnings,
+			'a binder beyond the 32-bit column is a warning, not a failed import');
 	}
 
 	/**

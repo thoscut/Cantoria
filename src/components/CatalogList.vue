@@ -116,6 +116,8 @@ const sortOptions = computed<SortOption[]>(() => [
 	{ id: 'catalog', label: t('cantoria', 'Catalog order') },
 	{ id: 'shelfmark', label: t('cantoria', 'Shelf mark') },
 	{ id: 'title', label: t('cantoria', 'Title') },
+	{ id: 'performedLongAgo', label: t('cantoria', 'Sung longest ago') },
+	{ id: 'performedRecently', label: t('cantoria', 'Sung most recently') },
 ])
 
 /** The sort order as an option of the select (a labelled select fits every width). */

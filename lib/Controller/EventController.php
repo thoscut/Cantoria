@@ -100,6 +100,17 @@ class EventController extends Controller {
 	}
 
 	/**
+	 * A new programme with the pieces of this one.
+	 *
+	 * @param array<string, mixed> $event
+	 */
+	#[NoAdminRequired]
+	#[FrontpageRoute(verb: 'POST', url: '/api/events/{id}/copy', requirements: ['id' => '\d+'])]
+	public function duplicate(int $id, string $kind = 'concert', array $event = []): JSONResponse {
+		return $this->run(fn (string $uid) => $this->events->duplicate($id, $kind, $event, $uid));
+	}
+
+	/**
 	 * @param array<string, mixed> $event
 	 */
 	#[NoAdminRequired]

@@ -929,6 +929,7 @@ writes files into a folder others can open (see section 16).
 | Repertoire figures | Concerts and song lists | on | The catalog shows the repertoire values of the imported catalog; no thresholds in the settings. |
 | Concerts in the calendar | Concerts and song lists | on | No calendar files and entries. Entries in calendars stay there. |
 | Concert folder | Concerts and song lists, Score view | off (in no preset) | No page "Concert folder" and no entry in the navigation; its routes answer 404. What conductors kept on their devices is removed at their next visit with a network. |
+| Songbooks | – | on | No songbooks from a programme, a song list or the catalog. Songbooks made before are printed already; the audit log keeps them. |
 | New accessions and shelf labels | – | on | No accession assistant and no labels. The import still creates copies. |
 | Merging works | – | on | No merge proposals, no merging and no undo. Merges done stay. |
 | Inventory | – | on | No inventory lists and no list of gaps in the shelf marks. Recorded counts stay in the catalog. |

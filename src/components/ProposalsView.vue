@@ -21,6 +21,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import ActionDialog from './ActionDialog.vue'
+import ReloadError from './ReloadError.vue'
 import ViewHeader from './ViewHeader.vue'
 import { acceptProposal, errorMessage, fetchEntry, fetchProposals, rejectProposal } from '../api.ts'
 import { displayValue, formatDateTime } from '../format.ts'
@@ -35,18 +36,30 @@ const error = ref('')
 /** Details of copies, to show current values. */
 const details = reactive(new Map<number, Detail | 'loading' | 'failed'>())
 
+/** Counter of the loads: only the answer to the latest one counts (a filter switched quickly) */
+let loadRun = 0
+
 async function load(): Promise<void> {
+	const run = ++loadRun
 	loading.value = true
 	error.value = ''
 	try {
-		proposals.value = await fetchProposals()
+		const result = await fetchProposals()
+		if (run !== loadRun) {
+			return
+		}
+		proposals.value = result
 		loaded.value = true
 		details.clear()
 		await loadCurrentValues()
 	} catch (caught) {
-		error.value = errorMessage(caught)
+		if (run === loadRun) {
+			error.value = errorMessage(caught)
+		}
 	} finally {
-		loading.value = false
+		if (run === loadRun) {
+			loading.value = false
+		}
 	}
 }
 
@@ -207,6 +220,7 @@ async function decide(): Promise<void> {
 			@reload="load" />
 
 		<div class="proposals-view__content">
+			<ReloadError v-if="loaded && error" :error="error" @retry="load()" />
 			<NcEmptyContent v-if="!loaded && loading" :name="t('cantoria', 'Loading …')">
 				<template #icon>
 					<NcLoadingIcon :size="64" />

@@ -134,7 +134,7 @@ final class ArchiveAccessTest extends TestCase {
 	}
 
 	/**
-	 * @param array{roles: list<array{role: string, groups: list<array<string, mixed>>}>} $report
+	 * @param array{roles: list<array{role: string, groups: list<array<string, mixed>>}>, ...} $report
 	 * @return array<string, mixed>
 	 */
 	private static function group(array $report, string $role, string $group): array {

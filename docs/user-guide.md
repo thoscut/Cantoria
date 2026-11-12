@@ -196,6 +196,22 @@ filters under **More filters** are active, the button says how many.
 **Reset search and filters** clears them. The list can be sorted by catalog
 order, shelf mark or title; on a phone it shows one card per copy.
 
+**Finding repertoire.** Under **More filters**, **Scoring** and **Language**
+offer the values recorded for the versions (written differently only in
+upper and lower case, they count as one), and **Duration** keeps the pieces
+of at most a few minutes (pieces without a recorded duration are left out).
+Sorted by **Sung longest ago**, the pieces not sung for the longest time come
+first, a good start for bringing one back; **Sung most recently** is the
+other way round. Pieces never sung stand at the end of both.
+
+**Hired material.** For scores hired from a publisher or borrowed from
+another choir, enter **Hired from** and **Return by** on the copy (fields of
+the copy, for the music librarians and operations). From 30 days before the
+day, and when it has passed, the start page of the music librarians shows
+the card for hired copies to return, and **More filters** → **Hired material
+to return (30 days)** lists them. Once the material is back, set the copy to
+**Retired** (or clear **Return by**).
+
 The **rights badge** always shows a text and a symbol, never only a colour:
 
 | Badge | Meaning |
@@ -1044,7 +1060,14 @@ Conductors and music librarians plan concerts:
    (see [Sharing a whole programme with the
    choir](#sharing-a-whole-programme-with-the-choir)); **Open in the concert
    folder** shows the programme as it is on the tablet at the rehearsal and
-   the concert.
+   the concert. **Songbook (PDF) …** puts the scans together into one PDF
+   to print (see [Songbook from a programme or a
+   selection](#songbook-from-a-programme-or-a-selection)).
+
+**New programme with these pieces …** starts the next concert or song list
+from this one, also from a concert sung years ago: the pieces come in their
+order with duration, note and encore, struck pieces stay out, and the new
+programme is a draft with a date of its own.
 
 Deadline notifications go to the conductor and the music librarians 10, 8
 and 6 weeks before the concert. If a concert does not take place, **Cancel
@@ -1068,6 +1091,33 @@ with columns to tick and the song list, also in large print. With the
 module "Revisions of a version" each piece keeps the
 [revision](#revisions-of-a-version) that was sung, and the programme, the
 printed lists and the song order name it.
+
+### Songbook from a programme or a selection
+
+With the module "Songbooks", conductors and music librarians put the scans
+(PDF) of several pieces together into one PDF to print: for a concert, a
+retreat or a singing afternoon.
+
+1. In a concert or song list, choose **Songbook (PDF) …**. For any other
+   selection, search and filter the catalog; under the filters the
+   navigation offers a songbook of the hits (at most the first 200).
+2. The list says per piece whether it can go in. A songbook is a printed
+   copy for the choir: a piece goes in with confirmed public domain or a
+   license for copies for the binders or for the print station, and it needs
+   a scan (PDF) linked to its copy. Internal preservation copies never go
+   in. The reason stands next to every piece left out.
+3. Untick pieces you do not want, and set the **Title on the cover** and the
+   **Line under the title (optional)**, for example the date.
+4. **Order**: **As in the programme** (or **As in the list**), **By title** or
+   **By shelf mark**.
+5. **Parts**: **Cover**, **Contents with page numbers**, **Page numbers at
+   the bottom** and, for double-sided printing, **Each piece on a right-hand
+   page (double-sided printing)**.
+
+The PDF is made in your browser and downloaded at once; the scans keep their
+pages as they are. A scan that cannot be read (damaged or protected by a
+password) is left out, and the dialog names it. Every songbook made is
+recorded in the audit log with the shelf marks in it.
 
 ### Concert folder
 
@@ -1404,7 +1454,10 @@ it into review points instead of linking it as a score file.
 2. Choose the binder. The app suggests the next free number; numbers are never
    reused, not even those of retired copies.
 3. Fill in title, composer, title source, accession date and origin; **More
-   details** holds arranger, publisher, rights and counts.
+   details** holds arranger, publisher, rights and counts. While you type the
+   title, the form names the copies that may be the same piece already (same
+   title, also with another article or accents, and the same composer where
+   both are given); a click opens one. Recording it is still up to you.
 4. Optionally **Link a file (optional) …** from the archive folder.
 5. **Record accession**. Work, version and copy are created, and the label
    is added to the sheet below.
@@ -1561,7 +1614,8 @@ a file from a backup or from the version history, and the mark disappears.
 
 **Archive management** → **Backup** → **Store a complete backup now** writes
 the catalog as CSV, a spreadsheet with the audit log, and the complete JSON
-backup into the archive folder; the app does this every week by itself.
+backup into the backup folder, which lies outside the archive folder; the
+app does this every week by itself.
 **Complete backup and restore** downloads the complete backup and restores
 it into an empty catalog. See the
 [administration guide](admin-guide.md#5-backups-and-restore).

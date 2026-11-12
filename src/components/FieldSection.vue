@@ -27,6 +27,7 @@ import { focusAfterUpdate } from '../focus.ts'
 import { FIELD_HELP, SECTION_HELP } from '../helpTerms.ts'
 import { canWrite, fieldInfo } from '../store.ts'
 import { showError } from '../toasts.ts'
+import { useUnsavedGuard } from '../unsaved.ts'
 
 const props = defineProps<{
 	/** Unique id of the section, used for the heading id */
@@ -50,6 +51,20 @@ const showEmpty = ref(false)
 const reason = ref('')
 const draft = reactive<Record<string, DraftValue>>({})
 const errors = reactive<Record<string, string>>({})
+
+/** The form has a value that differs from the saved one: leaving it asks first */
+const dirty = computed(() => editing.value && fields.value.some(({ key, info }) => {
+	if (!editableKeys.value.includes(key)) {
+		return false
+	}
+	try {
+		return comparable(info, fromDraft(info, draft[key])) !== comparable(info, props.record[key])
+	} catch {
+		// not valid yet, but typed
+		return true
+	}
+}))
+useUnsavedGuard(dirty)
 
 /** "Edit" button and form, to move the focus between them (WCAG 2.4.3) */
 const editButton = useTemplateRef('editButton')

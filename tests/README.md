@@ -88,14 +88,16 @@ What is covered:
 | `Service/ReviewServiceTest` | who decides a review point (librarian everything, conductor the musical points), allowed decisions (`corrected` only by the app, text for an order, reason for dismissing), questions need the tasks, catalog fields of a report |
 | `Service/CorrectionServiceTest` | name of the corrected file: dated, in the account's language, numbered when it exists, an earlier suffix replaced, long names shortened without cutting a character |
 | `Service/FilesIntegrationServiceTest`, `Listener/FilesScriptListenerTest` | opening from the Files app: the copy of a Nextcloud file only for files the account sees (the same 404 for unlisted and foreign files), the archive folder as the account sees it; the script only for accounts with a role or admins, while the module is on |
-| `Service/FolderBookServiceTest` | the folder book: one loan per folder at a time, account or name, days not in the future and not before the issue, condition and missing sheets taken over on the return, no retiring while out, contents as copies with a number, the hint for a retired copy or another valid version, the retention period in months (end of shorter months) and the anonymisation of the loan and its audit entries |
+| `Service/FolderBookServiceTest` | the folder book: one loan per folder at a time, account or name, days not in the future and not before the issue, condition and missing sheets taken over on the return, no retiring while out, back into service only with a free label, contents as copies with a number, the hint for a retired copy or another valid version, the retention period in months (end of shorter months) and the anonymisation of the loan and its audit entries |
 | `Service/MirrorRightsTest` | the print station and the hand-over folder remove a file whose rights ended while its version stays listed, also a preservation copy; the preview only names it; a file someone changed stays |
 | `Service/PageKeysTest` | the keys of programmes and pieces on a device: an HMAC with the secret of the instance, stable for the same input, never a plain hash of the id |
 | `Service/PrintMirrorServiceTest` | file names in the target folder of the print station: shelf mark and title, without characters Windows or Nextcloud refuse, shortened without cutting a character |
 | `Service/HandoverContentTest` | the hand-over folder: MusicXML cleaned like the score of a link, a file that is no score left out, scans and recordings as they are |
 | `Service/ChoirSystemCompareServiceTest` | the export of a choir system against the list of the singers' portal: differences become proposals, dry run, no proposal twice, separator of the first line |
 | `Service/SharingTest` | links for choir members and the public: making, opening, extending (creator or librarian, rights of today, license end, a new token for an expired public link), practice audio of choir members, the public repertoire page and its links to CPDL and IMSLP |
-| `Service/ProgrammeShareTest` | sharing a whole programme: one link per piece through the same checks, an existing link extended instead of a second one, never shortened, a reason for every piece left out |
+| `Service/ProgrammeCopyTest` | a new programme from an existing one: a draft of the kind chosen, the pieces in their order without the struck ones and without what was recorded about the performance, all or nothing |
+| `Service/TaskContextTest` | a few tasks read only their own copies for shelf mark and title; a long list reads the catalog once |
+| `Service/ProgrammeShareTest` | sharing a whole programme: one link per piece through the same checks, an existing link extended instead of a second one, one link for a piece sung twice, never shortened, a reason for every piece left out |
 | `Service/LinkTokensTest` | link tokens only as hash and encrypted, read back only with the secret of the instance, shown only to the creator and the catalog librarian |
 | `Service/MusicXmlExcerptTest` | the measures of a link in every part with the attributes and tempo valid at its start, repeats and endings, nothing outside the excerpt (demo scores of `tools/demo`) |
 | `Service/RightsNoticeServiceTest` | the rights notice of a MusicXML file: read from the header only, no internal DTD subset, cut when long, at most a proposal |
@@ -103,6 +105,10 @@ What is covered:
 | `Service/ConcertFolderTest` | the concert folder: programmes still to be sung in their order, the rights of the score view, kept on a device only with the module `offline` and the rights for a copy, no preservation copy, only conductor and librarian |
 | `Service/PrivacyTest` | access and erasure for one person, a deleted account, the retention period of the audit log, the year of birth of persons without a known death, every field with an account in the report |
 | `Service/PersonTableTest` | the register of persons in the export folder without the account that checked a person |
+| `Service/SongbookServiceTest` | songbooks: the pieces of a programme in its order without struck ones, a reason for every piece left out (rights, no scan, no copy, preservation copy), scans only after the same checks, only for the catalog librarian and the conductor, recorded in the audit log |
+| `Service/ContributionRolesTest` | a person has each role at most once in a version, also when a role is changed |
+| `Service/MergeCandidatesTest` | proposals for merging works: titles compared without accents and in every Unicode form, works without a composer as a group of their own next to several composers |
+| `Service/PerformanceReimportTest` | importing the performances again keeps the lines assigned to a copy by hand, unless the line changed or the copy is gone |
 | `Service/ExportServiceTest` | the complete backup in the backup folder, the newest eight weekly backups kept, no link tokens, no accounts in an annual snapshot, the import template |
 | `Service/AnnualSnapshotServiceTest` | comparing two annual snapshots: copies, rights, licenses and files |
 | `Service/AppSettingsTest` | the backup folder is taken over only while only the archive account can open it; a shared folder stops the backup |
@@ -318,7 +324,8 @@ missing arguments end with exit code 2.
 
 The CI job `integration` runs all twenty scripts against a freshly installed
 Nextcloud 33 and 35 (release archives from download.nextcloud.com, checked
-against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17, and PHP 8.3. The job
+against their SHA-512 checksum), each with MariaDB 11.8 and with PostgreSQL 17,
+Nextcloud 33 also with MySQL 8.0, and PHP 8.3. The job
 installs the app with its built frontend, builds the public demo data
 (`node tools/demo/build.mjs`, see `tools/demo/README.md`) and calls
 
@@ -415,10 +422,45 @@ empty it, run the script with an account of its own, then empty the catalog
 again, restore the backup (`occ cantoria:restore`), delete the account and
 set the archive folder and the roles back.
 
+### Upgrade from the base branch in CI
+
+The CI job `upgrade` (Nextcloud 35, MariaDB and PostgreSQL) installs the
+app as it is on the base branch: for a pull request its base commit, for a
+push to `main` the commit before. It builds that version with its own
+`tools/release/package.sh --unreleased` and runs its own
+`tools/ci/integration-demo.sh`, so the instance holds the demo catalog and
+everything the tests of that version left behind. Then the release archive
+of the run replaces the app, and
+
+```sh
+bash tools/ci/upgrade-check.sh /path/to/nextcloud cantoria-<version>.tar.gz demo-librarian
+```
+
+saves a complete backup, runs `occ upgrade` and the pending migrations
+(`occ migrations:migrate cantoria`, since a pull request usually keeps the
+version number), checks that the app is enabled with the new version,
+compares a second backup table by table (no table may disappear or lose
+rows) and runs the file sync and the module list on the migrated data. A
+new migration thus meets real data before it reaches an instance.
+
+## Coverage
+
+```sh
+npm run test:coverage                                   # src/, summary in the terminal
+vendor/bin/phpunit -c tests/phpunit.xml --coverage-text # lib/, needs pcov or Xdebug
+```
+
+The CI writes both summaries into the summary of the jobs "Frontend" and
+"Unit tests 8.3" and keeps the PHP report (Clover) as the artifact
+`coverage-php` for 14 days. There is no threshold: the figure shows where
+tests are missing; the tests themselves are measured by mutations of the
+code they guard (see the reviews).
+
 ## Static analysis and coding standard
 
 ```sh
 composer psalm      # Psalm, see psalm.xml (no baseline)
+composer psalm:tests # Psalm over tests/Unit, see psalm-tests.xml (errorLevel 5)
 composer cs:check   # PHP-CS-Fixer with the Nextcloud coding standard, dry run
 composer cs:fix     # apply the coding standard
 composer lint       # php -l on all PHP files
@@ -429,7 +471,7 @@ tests on PHP 8.2, 8.3 and 8.4, the frontend checks, the REUSE check, the
 check that `openapi.json` is current (`composer run openapi`, then
 `git diff --exit-code`), the build and tests of the MCP server and the
 integration tests with the demo data and the agent run on Nextcloud 33 and
-35. Its first job, `changes`, skips build and tests when only
+35, and the upgrade from the base branch. Its first job, `changes`, skips build and tests when only
 documentation changed (`docs/`, Markdown, `tools/screenshots/`, the GitHub
 templates); the checks of the documentation and REUSE always run. Its last
 job, **CI result** (`ci-ok`), is the required check of `main`: green only

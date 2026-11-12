@@ -34,7 +34,9 @@ final class FieldValueTest extends TestCase {
 
 		yield 'number: int' => [Fields::TYPE_NUMBER, 42, null];
 		yield 'number: zero' => [Fields::TYPE_NUMBER, 0, null];
-		yield 'number: negative' => [Fields::TYPE_NUMBER, -3, null];
+		yield 'number: negative' => [Fields::TYPE_NUMBER, -3, '"%s" must be a whole number from 0 to 2147483647.'];
+		yield 'number: largest 32-bit' => [Fields::TYPE_NUMBER, 2147483647, null];
+		yield 'number: beyond 32 bits' => [Fields::TYPE_NUMBER, 2147483648, '"%s" must be a whole number from 0 to 2147483647.'];
 		yield 'number: numeric string' => [Fields::TYPE_NUMBER, '42', '"%s" must be a whole number.'];
 		yield 'number: float' => [Fields::TYPE_NUMBER, 4.0, '"%s" must be a whole number.'];
 		yield 'number: bool' => [Fields::TYPE_NUMBER, true, '"%s" must be a whole number.'];

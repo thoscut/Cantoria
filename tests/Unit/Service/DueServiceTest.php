@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Tests\Unit\Service;
 
+use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\Event;
 use OCA\Cantoria\Db\EventItemMapper;
@@ -41,8 +42,9 @@ final class DueServiceTest extends TestCase {
 	/**
 	 * @param list<string> $roles
 	 * @param list<string> $off modules switched off
+	 * @param list<Copy> $copies
 	 */
-	private function service(array $roles, array $off = [], ?TaskService $tasks = null): DueService {
+	private function service(array $roles, array $off = [], ?TaskService $tasks = null, array $copies = []): DueService {
 		$roleService = $this->createStub(Roles::class);
 		$roleService->method('rolesOf')->willReturn($roles);
 		$rights = $this->createStub(RightsService::class);
@@ -63,10 +65,13 @@ final class DueServiceTest extends TestCase {
 		}
 		$proposals = $this->createStub(ProposalMapper::class);
 		$proposals->method('countOpen')->willReturn(2);
+		$copyMapper = $this->createStub(CopyMapper::class);
+		$copyMapper->method('countReturnDue')->willReturnCallback(fn (string $until): int => count(array_filter($copies,
+			fn (Copy $copy): bool => $copy->getReturnDate() !== null && $copy->getReturnDate() <= $until && $copy->getStatus() !== 'retired')));
 		return new DueService($roleService, $tasks, $proposals,
 			$this->createStub(ReleaseListService::class), $this->createStub(LicenseMapper::class), $this->createStub(WorkVersionMapper::class),
 			$this->createStub(WorkMapper::class), $rights, $this->createStub(RepertoireService::class), $this->createStub(EventItemMapper::class),
-			$events, $this->modulesWithout($off), $this->createStub(CopyMapper::class));
+			$events, $this->modulesWithout($off), $copyMapper);
 	}
 
 	private static function concert(int $id, string $date, string $status = 'draft', bool $imported = false): Event {
@@ -115,5 +120,20 @@ final class DueServiceTest extends TestCase {
 
 	public function testOtherRolesSeeNoConcerts(): void {
 		self::assertSame([], $this->service([Roles::READER, Roles::OPERATIONS, Roles::CONTRIBUTOR])->forUser('rolf')['concerts']);
+	}
+
+	public function testTheLibrarianSeesHiredMaterialToReturn(): void {
+		$copy = function (?string $returnDate, string $status = 'active'): Copy {
+			$copy = new Copy();
+			$copy->setReturnDate($returnDate);
+			$copy->setStatus($status);
+			return $copy;
+		};
+		// overdue, within 30 days, later, none, retired (returned)
+		$copies = [$copy('2026-10-01'), $copy('2026-11-20'), $copy('2027-02-01'), $copy(null), $copy('2026-10-01', 'retired')];
+		$cards = $this->service([Roles::LIBRARIAN], [], null, $copies)->forUser('lena')['cards'];
+		self::assertContains(['key' => 'hired_return', 'count' => 2, 'label' => 'Hired material to return'], $cards);
+		self::assertNotContains('hired_return', array_column($this->service([Roles::CONDUCTOR], [], null, $copies)->forUser('carla')['cards'], 'key'));
+		self::assertNotContains('hired_return', array_column($this->service([Roles::LIBRARIAN])->forUser('lena')['cards'], 'key'));
 	}
 }

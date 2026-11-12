@@ -80,7 +80,7 @@ final class StatisticsServiceTest extends TestCase {
 		foreach ([[2026, 2025], [1700, 1750], [2026, 2100], [1900, 2026]] as [$from, $to]) {
 			try {
 				StatisticsService::period($from, $to, 2026);
-				self::fail("$from–$to was accepted");
+				self::fail("{$from}–{$to} was accepted");
 			} catch (InvalidInputException $e) {
 				self::assertStringContainsString('period', $e->getMessage());
 			}
