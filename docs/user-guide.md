@@ -1501,13 +1501,14 @@ folder.
 
 ### Comparing with the choir system
 
-If the choir system can export its list of pieces (CSV or Excel), you no
+If the choir system can export its list of pieces (CSV or XLSX), you no
 longer have to keep "In singers' portal since" by hand. In the list
 **Singers' portal**, section **Compare with the choir system**, choose
 **Compare with an export …** and pick the file in your Nextcloud files. The
 app recognises a piece by its shelf mark at the start of a cell (a column
 with the shelf mark, titles like "2-3 Am Brunnen vor dem Tore" or the file
-names of the hand-over folder all work).
+names of the hand-over folder all work). How to prepare the export of the
+choir system: [Cantoria alongside a choir system](alongside-a-choir-system.md#preparing-the-export).
 
 The first result is a dry run. It names the pieces that are in the choir
 system but not recorded as in the portal, the pieces recorded as in the

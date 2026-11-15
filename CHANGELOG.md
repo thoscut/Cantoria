@@ -69,6 +69,12 @@ All notable changes to this app are documented in this file. The format follows
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
 - The version on `main` is 0.18.0-dev.1 for the new table and routes.
+- **Comparing with the choir system.** A file that is neither CSV nor
+  XLSX (an old Excel file, a web page, XML or OpenDocument) is refused with
+  what to do instead, not with "no shelf mark". The guide "Cantoria
+  alongside a choir system" explains how to prepare the export: a field
+  with the shelf mark, CSV, all rows, the whole list and not the plan of one
+  date, with Singste as an example.
 
 ## [0.17.0] - 2026-11-04
 

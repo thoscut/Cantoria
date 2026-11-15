@@ -1646,6 +1646,7 @@ export const singular = {
 	"No write permission for exports in the archive folder.": "No hay permiso de escritura para exportaciones en la carpeta del archivo.",
 	"The CSV file is not UTF-8 encoded. Was it saved with Excel?": "El archivo CSV no está codificado en UTF-8. ¿Se guardó con Excel?",
 	"The CSV file is empty.": "El archivo CSV está vacío.",
+	"This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.": "Este archivo no es CSV ni XLSX. Exporta la lista del sistema del coro como CSV o guarda el archivo como XLSX o como CSV (UTF-8) en una hoja de cálculo.",
 	"Unknown level: %s": "Nivel desconocido: %s",
 	"Unknown field: %s": "Campo desconocido: %s",
 	"\"%s\" is read-only.": "“%s” es de solo lectura.",

@@ -18,6 +18,7 @@ use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\XlsxReader;
 use OCP\IL10N;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -93,6 +94,36 @@ final class ChoirSystemCompareServiceTest extends TestCase {
 	public function testAFileWithoutShelfMarksIsRefused(): void {
 		$this->expectException(InvalidInputException::class);
 		$this->service->compare("Name;Datum\nWarm-up;2026-10-01\n", 'other.csv', 'librarian', false);
+	}
+
+	public function testTheShelfMarkAtTheStartOfAHashtagCellIsFound(): void {
+		// The table export of a choir system: quoted, comma, BOM, the shelf mark in a column of its own (here: hashtags)
+		$export = "\xEF\xBB\xBF\"Titel\",\"Komponiert von\",\"Hashtags\"\n"
+			. "\"Ave verum corpus\",\"W. A. Mozart (1756-1791)\",\"2-35 #advent\"\n"
+			. "\"Am Brunnen vor dem Tore\",\"Franz Schubert\",\"2-3\"\n";
+		$report = $this->service->compare($export, 'Repertoire.csv', 'librarian', true);
+		self::assertSame(['2-35'], array_column($report['added'], 'shelfmark'));
+		self::assertSame(2, $report['matched']);
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function otherFormats(): array {
+		return [
+			'old Excel file' => ["\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1rest", 'export.xls'],
+			'web page named .xls' => ["\xEF\xBB\xBF<html><table><tr><td>2-3</td></tr></table></html>", 'export.xls'],
+			'web page named .csv' => ["  <table><tr><td>2-3</td></tr></table>", 'export.csv'],
+			'XML' => ["<?xml version=\"1.0\"?><rows><row>2-3</row></rows>", 'export.xml'],
+			'OpenDocument' => ["PK\x03\x04rest", 'export.ods'],
+		];
+	}
+
+	#[DataProvider('otherFormats')]
+	public function testOtherFormatsAreRefusedWithAWayOut(string $content, string $fileName): void {
+		$this->expectException(InvalidInputException::class);
+		$this->expectExceptionMessage('Export the list from the choir system as CSV');
+		$this->service->compare($content, $fileName, 'librarian', true);
 	}
 
 	public function testTheSeparatorIsTheOneOfTheFirstLine(): void {

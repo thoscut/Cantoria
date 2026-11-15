@@ -1609,13 +1609,14 @@ ist.
 
 ### Mit dem Chorsystem vergleichen
 
-Kann das Chorsystem seine Liste der Stücke exportieren (CSV oder Excel),
+Kann das Chorsystem seine Liste der Stücke exportieren (CSV oder XLSX),
 musst du „Im Chorportal seit“ nicht mehr von Hand pflegen. Wähle in der
 Liste **Chorportal**, Abschnitt **Mit dem Chorsystem vergleichen**,
 **Mit einem Export vergleichen …** und die Datei in deinen Nextcloud-Dateien.
 Die App erkennt ein Stück an seiner Signatur am Anfang einer Zelle (eine
 Spalte mit der Signatur, Titel wie „2-3 Am Brunnen vor dem Tore“ oder die
-Dateinamen des Übergabeordners funktionieren alle).
+Dateinamen des Übergabeordners funktionieren alle). Wie du den Export des
+Chorsystems vorbereitest: [Cantoria neben einem Chorsystem](neben-einem-chorsystem.md#den-export-vorbereiten).
 
 Das erste Ergebnis ist ein Probelauf. Es nennt die Stücke, die im
 Chorsystem sind, aber nicht als im Portal vermerkt, die Stücke, die als im

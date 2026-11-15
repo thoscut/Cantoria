@@ -63,6 +63,36 @@ Abweichungen werden Vorschläge im Eingang; nichts ändert sich, bevor die Rolle
 „Bestand“ sie annimmt. Stücke, die im Chorsystem sind, aber dafür nicht
 freigegeben, werden aufgelistet, damit sie dort entfernt werden.
 
+### Den Export vorbereiten
+
+Die App erkennt ein Stück an seiner Signatur am Anfang einer Zelle. Das
+Chorsystem muss die Signatur also irgendwo in seiner Liste der Stücke
+führen. Vereinbart dafür ein Feld, das im Export enthalten ist, und tragt
+die Signatur einmal bei jedem Stück ein, z. B. `2-3` oder `2-3 #advent`.
+Der Titel geht auch („2-3 Am Brunnen vor dem Tore“), dann sehen die
+Singenden die Signatur aber im Titel.
+
+- **CSV oder XLSX.** Der Knopf „Excel“ vieler Web-Tabellen liefert eine
+  alte Excel-Datei (`.xls`) oder eine Webseite. Die App liest eine solche
+  Datei nicht und bietet sie für den Vergleich gar nicht an; wähle
+  stattdessen CSV.
+- **Alle Stücke, nicht nur die sichtbare Seite.** Viele Tabellen
+  exportieren nur die angezeigten Zeilen. Prüfe, ob der Export so viele
+  Zeilen hat, wie das Chorsystem Stücke hat: Ein Stück, das im Export
+  fehlt, wird ein Vorschlag „aus dem Chorportal entfernt“. Der Probelauf
+  zeigt es, bevor etwas passiert.
+- **Die ganze Liste, kein Plan.** Die Liste einer Probe oder eines Konzerts
+  ist kein Export des Repertoires: Jedes Stück, das darin fehlt, gälte als
+  entfernt.
+
+**Beispiel: Singste** (Stand November 2026). Trage die Signatur als erstes
+Wort in das Feld **Hashtags** jedes Stücks ein und prüfe an einem Stück,
+dass der Export sie am Anfang der Zelle zeigt. Exportiere die Liste unter
+**Repertoire → Gesamtliste nach Titeln** als CSV. Das Feld **Buchnummer**
+passte besser, ist in diesem Tabellen-Export aber nicht enthalten. Die CSV
+der Liedplanung eines Termins (**Liedplanung**) enthält nur die Stücke
+dieses Termins; nimm sie nicht für den Vergleich.
+
 ## Konzerte
 
 Konzerte bleiben in Cantoria, weil das Programm entscheidet, welche

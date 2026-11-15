@@ -1963,6 +1963,7 @@
         "Not found.": "No encontrado.",
         "There is no checksum difference to accept for this file.": "No hay ninguna diferencia de suma de verificación que aceptar para este archivo.",
         "The file names no shelf mark of the archive. The export needs a column with the shelf mark, or titles that start with it, e.g. \"2-3 Am Brunnen vor dem Tore\".": "El archivo no menciona ninguna signatura del archivo. La exportación necesita una columna con la signatura o títulos que empiecen por ella, p. ej. «2-3 Am Brunnen vor dem Tore».",
+        "This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.": "Este archivo no es CSV ni XLSX. Exporta la lista del sistema del coro como CSV o guarda el archivo como XLSX o como CSV (UTF-8) en una hoja de cálculo.",
         "The CSV file is not UTF-8 encoded. Was it saved with Excel?": "El archivo CSV no está codificado en UTF-8. ¿Se guardó con Excel?",
         "Choir system: %s": "Sistema del coro: %s",
         "The choir system has this piece (export %s).": "El sistema del coro tiene esta pieza (exportación %s).",

@@ -53,7 +53,11 @@ class ChoirSystemCompareService {
 	 */
 	public function compare(string $content, string $fileName, string $uid, bool $dryRun): array {
 		$this->roles->requireRole($uid, [Roles::LIBRARIAN]);
-		$rows = str_ends_with(mb_strtolower($fileName), '.xlsx')
+		$isXlsx = str_ends_with(mb_strtolower($fileName), '.xlsx');
+		if (!$isXlsx) {
+			self::refuseOtherFormats($content, $fileName);
+		}
+		$rows = $isXlsx
 			? array_merge(...array_map(fn (array $sheet): array => $sheet['rows'], $this->xlsx->read($content)))
 			: self::parseCsv($content);
 
@@ -139,6 +143,20 @@ class ChoirSystemCompareService {
 		return ['dryRun' => $dryRun, 'file' => $fileName, 'rows' => $counted, 'matched' => count($present), 'added' => $added,
 			'removed' => $removed, 'alreadyProposed' => $already, 'removeThere' => $removeThere, 'unknown' => $unknown,
 			'unknownCount' => $unknownCount];
+	}
+
+	/**
+	 * Refuses what is neither CSV nor XLSX with a way out, instead of the
+	 * later "no shelf mark": the "Excel" button of many web tables gives an
+	 * old Excel file (.xls) or a web page, an office program may give .ods.
+	 */
+	private static function refuseOtherFormats(string $content, string $fileName): void {
+		$start = ltrim(str_replace("\xEF\xBB\xBF", '', substr($content, 0, 64)));
+		$name = mb_strtolower($fileName);
+		if (str_ends_with($name, '.xls') || str_ends_with($name, '.ods') || str_starts_with($start, "\xD0\xCF\x11\xE0")
+			|| str_starts_with($start, "PK\x03\x04") || str_starts_with($start, '<')) {
+			throw new InvalidInputException('This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.');
+		}
 	}
 
 	/**

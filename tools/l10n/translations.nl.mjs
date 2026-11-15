@@ -1646,6 +1646,7 @@ export const singular = {
 	"No write permission for exports in the archive folder.": "Geen schrijfrechten voor exports in de archiefmap.",
 	"The CSV file is not UTF-8 encoded. Was it saved with Excel?": "Het CSV-bestand is niet in UTF-8 gecodeerd. Is het met Excel opgeslagen?",
 	"The CSV file is empty.": "Het CSV-bestand is leeg.",
+	"This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.": "Dit bestand is geen CSV en geen XLSX. Exporteer de lijst uit het koorsysteem als CSV, of sla het bestand in een spreadsheetprogramma op als XLSX of als CSV (UTF-8).",
 	"Unknown level: %s": "Onbekend niveau: %s",
 	"Unknown field: %s": "Onbekend veld: %s",
 	"\"%s\" is read-only.": "“%s” is alleen-lezen.",

@@ -2209,6 +2209,7 @@ OC.L10N.register(
         "Not found.": "Nicht gefunden.",
         "There is no checksum difference to accept for this file.": "Für diese Datei gibt es keine abweichende Prüfsumme zu übernehmen.",
         "The file names no shelf mark of the archive. The export needs a column with the shelf mark, or titles that start with it, e.g. \"2-3 Am Brunnen vor dem Tore\".": "Die Datei nennt keine Signatur des Archivs. Der Export braucht eine Spalte mit der Signatur oder Titel, die mit ihr beginnen, z. B. „2-3 Am Brunnen vor dem Tore“.",
+        "This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.": "Diese Datei ist weder CSV noch XLSX. Exportieren Sie die Liste aus dem Chorsystem als CSV, oder speichern Sie die Datei in einer Tabellenkalkulation als XLSX oder als CSV (UTF-8).",
         "The CSV file is not UTF-8 encoded. Was it saved with Excel?": "Die CSV-Datei ist nicht UTF-8-kodiert. Wurde sie mit Excel gespeichert?",
         "Choir system: %s": "Chorsystem: %s",
         "The choir system has this piece (export %s).": "Das Chorsystem hat dieses Stück (Export %s).",

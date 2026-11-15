@@ -1964,6 +1964,7 @@ OC.L10N.register(
         "Not found.": "Non trovato.",
         "There is no checksum difference to accept for this file.": "Per questo file non c'è alcuna differenza di checksum da accettare.",
         "The file names no shelf mark of the archive. The export needs a column with the shelf mark, or titles that start with it, e.g. \"2-3 Am Brunnen vor dem Tore\".": "Il file non indica alcuna segnatura dell'archivio. L'esportazione deve avere una colonna con la segnatura, o titoli che iniziano con essa, ad es. «2-3 Am Brunnen vor dem Tore».",
+        "This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.": "Questo file non è né CSV né XLSX. Esporta l'elenco dal sistema del coro come CSV oppure salva il file come XLSX o come CSV (UTF-8) in un foglio di calcolo.",
         "The CSV file is not UTF-8 encoded. Was it saved with Excel?": "Il file CSV non è codificato in UTF-8. È stato salvato con Excel?",
         "Choir system: %s": "Sistema del coro: %s",
         "The choir system has this piece (export %s).": "Il sistema del coro ha questo brano (esportazione %s).",

@@ -459,6 +459,7 @@ export const singular = {
 	'No write permission for exports in the archive folder.': 'Keine Schreibberechtigung für Exporte im Archivordner.',
 	'The CSV file is not UTF-8 encoded. Was it saved with Excel?': 'Die CSV-Datei ist nicht UTF-8-kodiert. Wurde sie mit Excel gespeichert?',
 	'The CSV file is empty.': 'Die CSV-Datei ist leer.',
+	'This file is neither CSV nor XLSX. Export the list from the choir system as CSV, or save the file as XLSX or as CSV (UTF-8) in a spreadsheet program.': ['Diese Datei ist weder CSV noch XLSX. Exportiere die Liste aus dem Chorsystem als CSV, oder speichere die Datei in einer Tabellenkalkulation als XLSX oder als CSV (UTF-8).', 'Diese Datei ist weder CSV noch XLSX. Exportieren Sie die Liste aus dem Chorsystem als CSV, oder speichern Sie die Datei in einer Tabellenkalkulation als XLSX oder als CSV (UTF-8).'],
 	'Unknown level: %s': 'Unbekannte Ebene: %s',
 	'Unknown field: %s': 'Unbekanntes Feld: %s',
 	'"%s" is read-only.': '„%s“ ist schreibgeschützt.',

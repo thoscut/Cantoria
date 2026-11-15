@@ -61,6 +61,34 @@ differences become proposals in the inbox; nothing changes until the
 catalog librarian accepts them. Pieces that are in the choir system but not
 released for it are listed so that they can be removed there.
 
+### Preparing the export
+
+The app finds a piece by its shelf mark at the start of a cell, so the
+choir system has to carry the shelf mark somewhere in its list of pieces.
+Agree on one field for it, one that the export contains, and fill it once
+for every piece, e.g. `2-3` or `2-3 #advent`. The title works as well
+("2-3 Am Brunnen vor dem Tore"), but the singers then see the shelf mark
+in the title.
+
+- **CSV or XLSX.** The "Excel" button of many web tables gives an old
+  Excel file (`.xls`) or a web page. The app does not read such a file and
+  does not offer it for the comparison; choose CSV instead.
+- **All pieces, not only the page on screen.** Many tables export only the
+  rows shown. Check that the export has as many rows as the choir system
+  has pieces: a piece missing from the export becomes a proposal "removed
+  from the singers' portal". The dry run shows it before anything happens.
+- **The whole list, not a plan.** The list of one rehearsal or concert is
+  no export of the repertoire: every piece not in it would count as
+  removed.
+
+**Example: Singste** (as of November 2026). Write the shelf mark as the
+first word in the field **Hashtags** of each piece, and check with one
+piece that the export shows it at the start of the cell. Export the list
+under **Repertoire → Gesamtliste nach Titeln** as CSV. The field
+**Buchnummer** would fit better, but that table export does not contain it.
+The CSV of the song plan of a date (**Liedplanung**) holds only the pieces
+of that date; do not use it for the comparison.
+
 ## Concerts
 
 Concerts stay in Cantoria, because the programme decides which versions
