@@ -716,8 +716,12 @@ excerpt.
 **Links** in the navigation lists every active link with its circle
 (**Internal**, **For choir members**, **Public**), what it shares
 (**Whole piece** or the measures, and **with scan (PDF)**), validity and
-number of calls; *"Ends in … days"* warns in the last week. **Revoke link**
-stops a link at once for everyone. **Extend** gives it a new last day; the
+number of calls; *"Ends in … days"* warns in the last week. Links that end
+within a week stand first in the list and are counted above it, and the
+start page has a card for the links you can extend that end within a week
+or have ended. **Revoke link** stops a link at once for everyone; what
+choir members kept on a device goes the next time the page opens there
+with a network. **Extend** gives it a new last day; the
 dialog names the latest day and why: at most six months from today, at most
 a year after the link was made, and never past the end of the license that
 releases the piece. The link keeps its address: whoever got it by message
@@ -1629,7 +1633,9 @@ protected.
 
 **Protection terms** lists what to check: versions marked protected that are
 public domain by the life dates, versions marked public domain that the
-recorded persons do not allow, and protected versions with a known end.
+recorded persons do not allow, versions confirmed as public domain whose
+suggestion is now "unknown" because the arranger of an arrangement is not
+recorded, and protected versions with a known end.
 
 > [!IMPORTANT]
 > The suggestion never changes the rights status. A music librarian checks it

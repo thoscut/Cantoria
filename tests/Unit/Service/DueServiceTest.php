@@ -9,31 +9,52 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Tests\Unit\Service;
 
+use OCA\Cantoria\Db\ArchiveFileMapper;
 use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\Event;
 use OCA\Cantoria\Db\EventItemMapper;
 use OCA\Cantoria\Db\EventMapper;
+use OCA\Cantoria\Db\ExcerptLink;
+use OCA\Cantoria\Db\ExcerptLinkMapper;
 use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\ProposalMapper;
 use OCA\Cantoria\Db\WorkMapper;
+use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
+use OCA\Cantoria\Service\AuditLog;
 use OCA\Cantoria\Service\DueService;
+use OCA\Cantoria\Service\LinkService;
+use OCA\Cantoria\Service\LinkTokens;
+use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\ReleaseListService;
 use OCA\Cantoria\Service\RepertoireService;
+use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\RightsService;
 use OCA\Cantoria\Service\Roles;
+use OCA\Cantoria\Service\ScanService;
+use OCA\Cantoria\Service\ScoreService;
 use OCA\Cantoria\Service\TaskService;
+use OCA\Cantoria\Tests\Unit\Support\FakeCrypto;
 use OCA\Cantoria\Tests\Unit\Support\ModuleSwitches;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IUserManager;
+use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Concerts with a deadline on the start page "due" (and so in the dashboard
- * widget): for the roles the notifications go to, and only for the modules
- * that are on.
+ * The start page "due" (and so the dashboard widget): concerts with a
+ * deadline for the roles the notifications go to, hired material to return
+ * and the links the account may extend that end soon or ended, each only
+ * for the modules that are on.
  */
 #[CoversClass(DueService::class)]
+#[UsesClass(LinkService::class)]
+#[UsesClass(RightsPolicy::class)]
+#[UsesClass(LinkTokens::class)]
+#[UsesClass(ExcerptLink::class)]
 final class DueServiceTest extends TestCase {
 	use ModuleSwitches;
 
@@ -43,10 +64,12 @@ final class DueServiceTest extends TestCase {
 	 * @param list<string> $roles
 	 * @param list<string> $off modules switched off
 	 * @param list<Copy> $copies
+	 * @param list<ExcerptLink> $links
 	 */
-	private function service(array $roles, array $off = [], ?TaskService $tasks = null, array $copies = []): DueService {
+	private function service(array $roles, array $off = [], ?TaskService $tasks = null, array $copies = [], array $links = []): DueService {
 		$roleService = $this->createStub(Roles::class);
 		$roleService->method('rolesOf')->willReturn($roles);
+		$roleService->method('hasAnyRole')->willReturnCallback(fn (string $uid, array $allowed): bool => array_intersect($roles, $allowed) !== []);
 		$rights = $this->createStub(RightsService::class);
 		$rights->method('today')->willReturn(self::TODAY);
 		$events = $this->createStub(EventMapper::class);
@@ -71,7 +94,45 @@ final class DueServiceTest extends TestCase {
 		return new DueService($roleService, $tasks, $proposals,
 			$this->createStub(ReleaseListService::class), $this->createStub(LicenseMapper::class), $this->createStub(WorkVersionMapper::class),
 			$this->createStub(WorkMapper::class), $rights, $this->createStub(RepertoireService::class), $this->createStub(EventItemMapper::class),
-			$events, $this->modulesWithout($off), $copyMapper);
+			$events, $this->modulesWithout($off), $copyMapper, $this->linkService($links, $roleService, $rights));
+	}
+
+	/**
+	 * The real list of links (LinkService::active) over the given links, all
+	 * of copy 1 of version 11: the card counts in what the view "Links" shows.
+	 *
+	 * @param list<ExcerptLink> $links
+	 */
+	private function linkService(array $links, Roles $roles, RightsService $rights): LinkService {
+		$mapper = $this->createStub(ExcerptLinkMapper::class);
+		$mapper->method('findByCopy')->willReturn($links);
+		$copy = new Copy();
+		$copy->setId(1);
+		$copy->setVersionId(11);
+		$copies = $this->createStub(CopyMapper::class);
+		$copies->method('findAll')->willReturn([$copy]);
+		$version = new WorkVersion();
+		$version->setId(11);
+		$versions = $this->createStub(WorkVersionMapper::class);
+		$versions->method('findAllById')->willReturn([11 => $version]);
+		$random = $this->createStub(ISecureRandom::class);
+		$random->method('generate')->willReturn('abcdefghijABCDEFGHIJ0123456789xy');
+		return new LinkService($mapper, $copies, $versions, $this->createStub(ArchiveFileMapper::class), $this->createStub(ScoreService::class),
+			new RightsPolicy($roles, $rights, $this->createStub(LicenseMapper::class)), $rights, $this->createStub(AuditLog::class), $roles,
+			$this->createStub(IUserManager::class), new LinkTokens(new FakeCrypto(), $random), $this->createStub(ITimeFactory::class),
+			$this->createStub(Modules::class), $this->createStub(ScanService::class));
+	}
+
+	/** An internal link made on 1 October 2026. */
+	private static function link(int $id, string $expires, string $creator = 'carla'): ExcerptLink {
+		$link = new ExcerptLink();
+		$link->setId($id);
+		$link->setCopyId(1);
+		$link->setCircle(ExcerptLink::CIRCLE_INTERNAL);
+		$link->setCreatedBy($creator);
+		$link->setExpires($expires);
+		$link->setCreated((int)strtotime('2026-10-01 12:00:00'));
+		return $link;
 	}
 
 	private static function concert(int $id, string $date, string $status = 'draft', bool $imported = false): Event {
@@ -135,5 +196,58 @@ final class DueServiceTest extends TestCase {
 		self::assertContains(['key' => 'hired_return', 'count' => 2, 'label' => 'Hired material to return'], $cards);
 		self::assertNotContains('hired_return', array_column($this->service([Roles::CONDUCTOR], [], null, $copies)->forUser('carla')['cards'], 'key'));
 		self::assertNotContains('hired_return', array_column($this->service([Roles::LIBRARIAN])->forUser('lena')['cards'], 'key'));
+	}
+
+	public function testLinksTheAccountMayExtendThatEndSoonOrEnded(): void {
+		$revoked = self::link(6, '2026-10-25');
+		$revoked->setRevoked(1);
+		$links = [
+			self::link(1, '2026-10-25'),            // ends in 3 days
+			self::link(2, '2026-10-29'),            // ends in 7 days
+			self::link(3, '2026-10-30'),            // ends in 8 days: not soon
+			self::link(4, '2026-09-23'),            // ended 29 days ago
+			self::link(5, '2026-09-21'),            // ended 31 days ago: no longer in the view "Links"
+			$revoked,                               // revoked: cannot be extended
+			self::link(7, '2026-10-25', 'anna'),    // of somebody else
+			self::link(8, self::TODAY, 'anna'),     // of somebody else, ends today
+		];
+		$card = fn (array $roles, array $off = []): array => array_values(array_filter(
+			$this->service($roles, $off, null, [], $links)->forUser('carla')['cards'], fn (array $card): bool => $card['key'] === 'links_ending'));
+
+		self::assertSame([['key' => 'links_ending', 'count' => 3, 'label' => 'Links ending or ended']], $card([Roles::CONDUCTOR]),
+			'the own links: ending within 7 days, or ended within 30 days');
+		self::assertSame(5, $card([Roles::LIBRARIAN])[0]['count'], 'the catalog librarian extends the links of everybody');
+		self::assertSame(3, $card([Roles::OPERATIONS])[0]['count']);
+		self::assertSame([], $card([Roles::READER]), 'a role that extends no links, even for its own links of earlier');
+		self::assertSame([], $card([Roles::CONTRIBUTOR]));
+		self::assertSame([], $card([Roles::CONDUCTOR], ['excerpt_links']), 'not without the module of the links');
+		self::assertSame([], $card([Roles::CONDUCTOR], ['score_viewer']), 'nor without a module it needs');
+	}
+
+	public function testNoCardWithoutLinksToExtend(): void {
+		$links = [self::link(1, '2026-10-30'), self::link(2, '2026-10-25', 'anna')];
+		self::assertNotContains('links_ending', array_column($this->service([Roles::CONDUCTOR], [], null, [], $links)->forUser('carla')['cards'], 'key'));
+	}
+
+	public function testTheListOfLinksIsNotReadWithoutTheRoleOrTheModule(): void {
+		$links = $this->createMock(ExcerptLinkMapper::class);
+		$links->expects(self::never())->method('findByCopy');
+		$none = $this->createStub(Roles::class);
+		$rights = $this->createStub(RightsService::class);
+		$rights->method('today')->willReturn(self::TODAY);
+		$linkService = new LinkService($links, $this->createStub(CopyMapper::class), $this->createStub(WorkVersionMapper::class),
+			$this->createStub(ArchiveFileMapper::class), $this->createStub(ScoreService::class),
+			new RightsPolicy($none, $rights, $this->createStub(LicenseMapper::class)), $rights, $this->createStub(AuditLog::class), $none,
+			$this->createStub(IUserManager::class), new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
+			$this->createStub(ITimeFactory::class), $this->createStub(Modules::class), $this->createStub(ScanService::class));
+		foreach ([[[Roles::READER], []], [[Roles::CONDUCTOR], ['excerpt_links']]] as [$of, $off]) {
+			$roles = $this->createStub(Roles::class);
+			$roles->method('rolesOf')->willReturn($of);
+			$due = new DueService($roles, $this->createStub(TaskService::class), $this->createStub(ProposalMapper::class),
+				$this->createStub(ReleaseListService::class), $this->createStub(LicenseMapper::class), $this->createStub(WorkVersionMapper::class),
+				$this->createStub(WorkMapper::class), $rights, $this->createStub(RepertoireService::class), $this->createStub(EventItemMapper::class),
+				$this->createStub(EventMapper::class), $this->modulesWithout($off), $this->createStub(CopyMapper::class), $linkService);
+			self::assertSame([], $due->forUser('carla')['cards']);
+		}
 	}
 }

@@ -109,7 +109,12 @@ $settings = function () use ($appConfig): array {
 };
 $originalSwitches = $switches();
 $originalSettings = $settings();
-$archiveListing = fn (): array => array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+// sorted: the order of a directory listing is not fixed (PostgreSQL returns it in any order)
+$archiveListing = function () use ($archive): array {
+	$listed = array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+	sort($listed);
+	return $listed;
+};
 $archiveBefore = $archiveListing();
 $suffix = bin2hex(random_bytes(3));
 $targetName = 'Cantoria hand-over test ' . $suffix;
@@ -203,6 +208,21 @@ try {
 	$check('a second sync changes nothing', $again['copied'] === [] && $again['replaced'] === [] && $again['removed'] === [],
 		json_encode($again) ?: '');
 
+	// ---- a MusicXML file of an older cleaning is written again (0.18) -------------------------------
+	// Before the marker the manifest held only the ETag of the source: such a row no longer matches.
+	$scoreRow = $manifest->findAllByName(HandoverService::HANDOVER_MIRROR)[$musicxml] ?? null;
+	$stamp = $scoreRow === null ? '' : (string)$scoreRow->getSourceEtag();
+	$check('the manifest marks the MusicXML with the version of the cleaning', str_ends_with($stamp, ';' . HandoverService::CLEANING), $stamp);
+	if ($scoreRow !== null) {
+		$scoreRow->setSourceEtag(substr($stamp, 0, -strlen(';' . HandoverService::CLEANING)));
+		$manifest->update($scoreRow);
+		$recleaned = $handover->sync($uid, false);
+		$check('the MusicXML of an older cleaning is written again, the scan is not', in_array($musicxml, $names($recleaned['replaced']), true)
+			&& !in_array($pdf, $names($recleaned['replaced']), true) && $recleaned['copied'] === [], json_encode($recleaned) ?: '');
+		$after = $handover->sync($uid, false);
+		$check('and then no more', $after['copied'] === [] && $after['replaced'] === [], json_encode($after) ?: '');
+	}
+
 	// ---- the export of the choir system: differences become proposals --------------------------------
 	$compare = Server::get(ChoirSystemCompareService::class);
 	$proposals = Server::get(ProposalService::class);
@@ -234,7 +254,10 @@ try {
 	$removed = $handover->sync($uid, false);
 	$check('scan, MusicXML and notes are removed', array_diff([$pdf, $musicxml, $notes], $names($removed['removed'])) === []
 		&& !$target->nodeExists($pdf) && !$target->nodeExists($notes), json_encode($removed) ?: '');
-	$check('nothing was written into the archive folder', $archiveListing() === $archiveBefore);
+	$archiveAfter = $archiveListing();
+	$check('nothing was written into the archive folder', $archiveAfter === $archiveBefore, json_encode([
+		'new' => array_values(array_diff($archiveAfter, $archiveBefore)), 'gone' => array_values(array_diff($archiveBefore, $archiveAfter)),
+	]) ?: '');
 
 	// ---- switched off ------------------------------------------------------------------------------
 	$l = Server::get(IFactory::class)->get(Application::APP_ID, 'en');

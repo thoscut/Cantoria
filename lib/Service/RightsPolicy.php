@@ -168,9 +168,11 @@ class RightsPolicy {
 	}
 
 	/**
+	 * The licenses of a version; while remembering() runs, read once.
+	 *
 	 * @return list<License>
 	 */
-	private function licensesOf(WorkVersion $version): array {
+	public function licensesOf(WorkVersion $version): array {
 		$id = $version->getId();
 		if ($this->remembered === null) {
 			return $this->licenses->findByVersion($id);

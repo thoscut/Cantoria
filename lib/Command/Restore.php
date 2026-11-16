@@ -38,15 +38,49 @@ class Restore extends Command {
 	#[\Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$path = (string)$input->getArgument('file');
-		$content = is_readable($path) ? file_get_contents($path) : false;
-		if ($content === false) {
+		// as a stream: also a backup larger than the memory of PHP
+		$stream = self::open($path);
+		if ($stream === null) {
 			$output->writeln('<error>Cannot read ' . $path . '</error>');
 			return 1;
 		}
-		$restored = $this->backup->restore($content, (string)($input->getArgument('user') ?? 'occ'));
+		try {
+			$restored = $this->backup->restoreStream($stream, (string)($input->getArgument('user') ?? 'occ'));
+		} finally {
+			fclose($stream);
+		}
 		foreach ($restored as $table => $rows) {
 			$output->writeln(sprintf('%-28s %6d', $table, $rows));
 		}
 		return 0;
+	}
+
+	/**
+	 * The backup as a stream that can be rewound (it is read twice). A
+	 * regular file is opened as it is; a pipe (`/dev/stdin`, a process
+	 * substitution of the shell) is copied into a temporary stream first,
+	 * which moves to disk when it grows.
+	 *
+	 * @return resource|null null when the path cannot be read
+	 */
+	public static function open(string $path) {
+		if (is_dir($path) || !is_readable($path)) {
+			return null;
+		}
+		$source = @fopen($path, 'rb');
+		if ($source === false) {
+			return null;
+		}
+		if (is_file($path)) {
+			return $source;
+		}
+		$copy = fopen('php://temp/maxmemory:' . (2 * 1024 * 1024), 'w+b');
+		$copied = $copy === false ? false : stream_copy_to_stream($source, $copy);
+		fclose($source);
+		if ($copy === false || $copied === false) {
+			return null;
+		}
+		rewind($copy);
+		return $copy;
 	}
 }

@@ -107,3 +107,27 @@ its identifier, so importing the file again updates the entries.
    each file.
 3. Once a month or before a concert, export the list of the choir system and
    compare it; decide the proposals in the inbox.
+
+## Cantoria and the Orchestra Scores Manager
+
+The
+[Orchestra Scores Manager](https://apps.nextcloud.com/apps/orchestrascoresmanager)
+is another Nextcloud app for sheet music. The two are different apps for
+different ensembles. Cantoria started as a fork of it; thanks to its
+authors. What this section says about the Orchestra Scores Manager is as of
+November 2026 and comes from its own description.
+
+- **Orchestra Scores Manager** is a score archive for orchestras: the
+  scores with their metadata, folders with a version history, tags, score
+  books and setlists. Its description names no rights or licenses and no
+  sharing with the musicians. It also runs on SQLite, which Cantoria does
+  not support.
+- **Cantoria** is made for choirs: works, versions and copies with shelf
+  marks, the rights and licenses of each version, the voices of a score
+  for playback and practising, and the release of pieces for the singers,
+  in Nextcloud or through the choir system.
+
+Choose the Orchestra Scores Manager if you keep the scores of an orchestra
+and want folders and setlists for them. Choose Cantoria if you keep the
+stock of a choir and have to know what the rights allow before a piece
+goes out to the singers.

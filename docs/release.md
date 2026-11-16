@@ -139,7 +139,16 @@ the checksum of a listed file.
    to build otherwise.
 3. Move the entries under `[Unreleased]` in `CHANGELOG.md` to the new version
    with its date.
-4. Run the checks: `composer test:unit`, `composer psalm`,
+4. Keep the summary at the top of the version's section in
+   `CHANGELOG.md` current: the block `### Since <version> at a glance`,
+   five to eight plain bullets for choir people, not for developers, that
+   say nothing the entries below them do not say. The heading names the
+   version the summary starts from, normally the release before (the
+   first one starts from 0.16). The block moves with the entries of
+   step 3 and stays directly under the heading of the version, before
+   `### Added`: the app store shows the `CHANGELOG.md` section of the
+   released version, and a reader sees its first lines first.
+5. Run the checks: `composer test:unit`, `composer psalm`,
    `composer cs:check`, `npm run lint`, `npm run stylelint`, `npm test`,
    `npm run typecheck`, `npm run l10n` (fails on
    missing translations), and the integration tests in `tests/Integration`
@@ -152,7 +161,7 @@ the checksum of a listed file.
    the job `archive` built (`tools/release/package.sh --unreleased`). When
    the supported range in `<dependencies>` changes, change the Nextcloud
    versions of the `integration` job as well.
-5. Tag the version (`git tag -a v<version>`) and push the tag. The
+6. Tag the version (`git tag -a v<version>`) and push the tag. The
    workflow **Release** (`.github/workflows/release.yml`):
    - runs the whole CI for the tag; its job `archive` builds the archive
      with all checks of a final version (clean checkout, the tag on `HEAD`,
@@ -175,7 +184,7 @@ the checksum of a listed file.
    compiled into Verovio with their copyright notices) and nothing internal
    or for development. It is reproducible: files sorted, times of the last
    commit, no owner names.
-6. **Test the upgrade before the upload.** On a test instance that runs the
+7. **Test the upgrade before the upload.** On a test instance that runs the
    previous release (with data, e.g. the demo data of `tools/demo`), replace
    `apps/cantoria` with the content of
    `cantoria-<version>-unsigned.tar.gz` of the draft release (remove the old
@@ -186,7 +195,7 @@ the checksum of a listed file.
    archive is fine for a test instance; Nextcloud only reports the missing
    signature in the integrity check.) A failure here costs a new tag, not a
    broken update for every choir.
-7. **Sign the archive of the draft release** on a machine with PHP, OpenSSL
+8. **Sign the archive of the draft release** on a machine with PHP, OpenSSL
    and `occ` of a Nextcloud server archive that is unpacked but not
    installed (for `occ integrity:sign-app`); Node.js and npm are not needed,
    nothing is built there. A Nextcloud that is not installed registers its
@@ -211,15 +220,15 @@ the checksum of a listed file.
    checks with `tools/release/compare.sh` that only
    `appinfo/signature.json` was added, checks the archive signature against
    the certificate and prints it.
-8. Attach `build/release/signed/cantoria-<version>.tar.gz` to the draft
+9. Attach `build/release/signed/cantoria-<version>.tar.gz` to the draft
    release, publish the release (the app store downloads the archive from a
    public HTTPS URL), and upload that URL with the printed signature on
    apps.nextcloud.com (account → upload app release). Mark pre-releases as
    nightly or with a pre-release version such as `1.0.0-rc.1` (built with
    all checks of a final version, see above).
-9. After the app store has published the release, update a test instance
-   from the app store once more and check that the update arrives.
-10. Raise `<version>` on `main` to the next pre-release (e.g. `0.18.0-dev.1`).
+10. After the app store has published the release, update a test instance
+    from the app store once more and check that the update arrives.
+11. Raise `<version>` on `main` to the next pre-release (e.g. `0.18.0-dev.1`).
 
 Any change to a file after signing invalidates the code signature; sign the
 archive of the draft release again instead of editing the signed archive.

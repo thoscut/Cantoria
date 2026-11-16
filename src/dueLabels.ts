@@ -43,6 +43,8 @@ export function dueCardLabel(key: string, count: number, fallback: string): stri
 		return n('cantoria', 'Current repertoire: version with photocopies without a license', 'Current repertoire: versions with photocopies without a license', count)
 	case 'hired_return':
 		return n('cantoria', 'Hired copy to return', 'Hired copies to return', count)
+	case 'links_ending':
+		return n('cantoria', 'Link ending or ended', 'Links ending or ended', count)
 	case 'valid_missing':
 		return n('cantoria', 'Current repertoire: work without a chosen valid version', 'Current repertoire: works without a chosen valid version', count)
 	default:

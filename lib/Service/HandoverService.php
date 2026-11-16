@@ -69,6 +69,15 @@ class HandoverService extends PrintMirrorService {
 	/** A file of the role "musicxml" that is no MusicXML score */
 	public const NOT_MUSICXML = 'not_musicxml';
 
+	/**
+	 * Version of the cleaning of MusicXML (content()), kept in the manifest
+	 * with the ETag of the source (sourceStamp). Raise it whenever the
+	 * cleaning removes more: the next sync writes every MusicXML file of
+	 * the folder again that the app wrote and nobody changed since. Files
+	 * from before the marker (without it) are cleaned again once.
+	 */
+	public const CLEANING = 'clean-1';
+
 	/** Roles of archive files that go into the folder */
 	private const ROLES = ['score_pdf', 'musicxml', 'audio'];
 
@@ -391,6 +400,21 @@ class HandoverService extends PrintMirrorService {
 			throw new InvalidInputException('This file is not a MusicXML score.');
 		}
 		return MusicXmlExcerpt::whole($this->scores->scoreText($content)['xml']);
+	}
+
+	/**
+	 * The ETag of a MusicXML file with the version of the cleaning; that of
+	 * a scan or a recording as it is. Within the 64 characters of the
+	 * column: a long ETag goes in as its hash.
+	 */
+	#[\Override]
+	protected function sourceStamp(ArchiveFile $file, File $source): string {
+		$etag = parent::sourceStamp($file, $source);
+		if ($file->getRole() !== 'musicxml') {
+			return $etag;
+		}
+		$suffix = ';' . self::CLEANING;
+		return (strlen($etag) + strlen($suffix) > 64 ? hash('sha1', $etag, false) : $etag) . $suffix;
 	}
 
 	/**

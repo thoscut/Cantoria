@@ -45,7 +45,10 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 
 	const update = (): void => {
 		if (container && header.value) {
-			const room = `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
+			// A header that does not stick (a low window, D-2) covers nothing: no room
+			const room = getComputedStyle(header.value).position === 'static'
+				? ''
+				: `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
 			if (options.within) {
 				container.style.setProperty(STICKY_OFFSET, room)
 			} else {
@@ -58,6 +61,7 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 	const release = (): void => {
 		observer?.disconnect()
 		observer = null
+		window.removeEventListener('resize', update)
 		// Another view may already have taken over the container
 		if (container && container.dataset.stickyOwner === String(owner)) {
 			container.style.scrollPaddingTop = ''
@@ -80,6 +84,8 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 			observer = new ResizeObserver(update)
 			observer.observe(element)
 		}
+		// whether the header sticks depends on the height of the window (D-2), which does not resize the header
+		window.addEventListener('resize', update)
 	}, { immediate: true, flush: 'post' })
 
 	onBeforeUnmount(release)

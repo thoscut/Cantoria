@@ -77,7 +77,9 @@ $lifeCases = [
 	'1789-1860' => ['1789', 'year', '1860', 'year'],
 	'1789–1860' => ['1789', 'year', '1860', 'year'],
 	'(1789 - 1860)' => ['1789', 'year', '1860', 'year'],
+	// a birth without a death means living, as catalogs write it, unless it is more than 120 years ago
 	'geb. 1928' => ['1928', 'year', null, 'living'],
+	'geb. 1850' => ['1850', 'year', null, 'unknown'],
 	'† 1955' => [null, 'unknown', '1955', 'year'],
 	'*1944, lebend' => ['1944', 'year', null, 'living'],
 	'20./21. Jahrhundert' => [null, 'unknown', null, 'unknown'],

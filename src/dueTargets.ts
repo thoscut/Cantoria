@@ -47,6 +47,8 @@ export function dueTarget(key: string): DueTarget {
 		return { view: 'licenses' }
 	case 'hired_return':
 		return { view: 'catalog', catalog: { hiredReturn: true } }
+	case 'links_ending':
+		return { view: 'links' }
 	case 'copies_unlicensed':
 		return { view: 'catalog', catalog: { repertoire: 'current', copiesUnlicensed: true } }
 	default:

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\Cantoria\Controller;
 
 use OCA\Cantoria\AppInfo\Application;
+use OCA\Cantoria\Middleware\ModuleMiddleware;
 use OCA\Cantoria\Service\Modules;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -114,6 +115,70 @@ class OfflineController extends Controller {
 			],
 			$built,
 		);
+	}
+
+	/**
+	 * The manifest for the home screen of a public link: it opens the link,
+	 * not the start page of the app with its login (milestone 0.19, U25).
+	 * It says nothing about the link, not even whether it exists or whether
+	 * public links are on: the same answer for every token of the right
+	 * form, which is why it stands here and not behind the module of
+	 * PublicLinkController. The page itself checks the link. As many calls
+	 * as the page, which the browser fetches it with.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod a route
+	 */
+	#[PublicPage]
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 60, period: 600)]
+	#[UserRateLimit(limit: 60, period: 600)]
+	#[BruteForceProtection(action: 'cantoria_public_link')]
+	#[FrontpageRoute(verb: 'GET', url: '/p/{token}/manifest')]
+	public function linkManifest(string $token): Response {
+		if (preg_match('/^[A-Za-z0-9]{32}$/D', $token) !== 1) {
+			return ModuleMiddleware::notFoundPage();
+		}
+		return self::manifestResponse($this->l->t('Score'),
+			$this->urls->linkToRoute(Application::APP_ID . '.publicLink.show', ['token' => $token]), $this->urls->imagePath(Application::APP_ID, 'app.svg'));
+	}
+
+	/**
+	 * The manifest for the home screen of a page that keeps pieces
+	 * (milestone 0.19, U25): Nextcloud links every page to the manifest of
+	 * the theming app, whose start is the start page of the app; for the
+	 * conductor that is the archive, for a visitor of a public link the
+	 * login. The concert folder and a public link put their own in its
+	 * place (src/offline/manifest.ts), so that an entry on the home screen
+	 * opens that page. It holds no data.
+	 */
+	public static function manifestResponse(string $name, string $start, string $icon): DataDisplayResponse {
+		$response = new DataDisplayResponse(json_encode(self::manifest($name, $start, $icon),
+			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+			Http::STATUS_OK, ['Content-Type' => 'application/manifest+json; charset=utf-8']);
+		$response->addHeader('X-Content-Type-Options', 'nosniff');
+		return $response;
+	}
+
+	/**
+	 * A web app manifest whose start and scope are one page of the app; its
+	 * id is the page, so that the folder and every link are entries of
+	 * their own. A function of its own for the unit tests.
+	 *
+	 * @return array{id: string, name: string, short_name: string, start_url: string, scope: string, display: string,
+	 *     icons: list<array{src: string, type: string, sizes: string}>}
+	 */
+	public static function manifest(string $name, string $start, string $icon): array {
+		$title = $name === 'Cantoria' ? $name : 'Cantoria – ' . $name;
+		return [
+			'id' => $start,
+			'name' => $title,
+			'short_name' => $name,
+			'start_url' => $start,
+			'scope' => $start,
+			'display' => 'standalone',
+			'icons' => [['src' => $icon, 'type' => 'image/svg+xml', 'sizes' => 'any']],
+		];
 	}
 
 	/** The worker while the module is off: it removes what the app kept on the device. */

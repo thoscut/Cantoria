@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\Cantoria\Service;
 
 use OCA\Cantoria\Db\ArchiveFileMapper;
+use OCA\Cantoria\Db\Contribution;
 use OCA\Cantoria\Db\ContributionMapper;
 use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
@@ -19,7 +20,6 @@ use OCA\Cantoria\Db\EventItemMapper;
 use OCA\Cantoria\Db\EventMapper;
 use OCA\Cantoria\Db\ExcerptLink;
 use OCA\Cantoria\Db\ExcerptLinkMapper;
-use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\PersonMapper;
 use OCA\Cantoria\Db\Work;
 use OCA\Cantoria\Db\WorkMapper;
@@ -108,7 +108,6 @@ class SharedLinkService {
 		private LinkTokens $tokens,
 		private ContributionMapper $contributions,
 		private PersonMapper $persons,
-		private LicenseMapper $licenses,
 		private EventMapper $events,
 		private EventItemMapper $items,
 		private PageKeys $keys,
@@ -135,6 +134,8 @@ class SharedLinkService {
 	 */
 	private function memberRows(string $uid, string $today): array {
 		$rows = [];
+		/** @var array<int, array{credits: list<array{role: string, name: string}>, notices: list<string>}> $attributions by version */
+		$attributions = [];
 		/** @var list<array{copy: int, version: int, programme: ?int}> $pieces per row */
 		$pieces = [];
 		foreach ($this->links->findUnrevokedByCircle(ExcerptLink::CIRCLE_MEMBERS) as $link) {
@@ -180,7 +181,8 @@ class SharedLinkService {
 				// printing the notes is a copy, too (B21)
 				'print' => $this->policy->printDenial(ExcerptLink::CIRCLE_MEMBERS, $version, $today, $copy) === null,
 				'practiceKey' => $this->keys->practice($version),
-			] + $this->attribution($version, $today);
+				// once per version: the page lists many links of the same piece (A25)
+			] + ($attributions[$version->getId()] ??= $this->attribution($version, $today));
 			$pieces[] = ['copy' => $copy->getId(), 'version' => $version->getId(), 'programme' => $link->getEventId()];
 		}
 		$programmes = $this->memberProgrammes($pieces, $today);
@@ -452,15 +454,16 @@ class SharedLinkService {
 	 */
 	private function attribution(WorkVersion $version, string $today): array {
 		$credits = [];
-		$contributions = $this->contributions->findByVersion($version->getId());
+		$contributions = array_values(array_filter($this->contributions->findByVersion($version->getId()),
+			fn (Contribution $contribution): bool => in_array($contribution->getRole(), self::CREDITED_ROLES, true)));
+		// the persons in one query, the licenses as the rights checks read them (RightsPolicy::remembering)
+		$persons = $contributions === [] ? []
+			: $this->persons->findByIds(array_map(fn (Contribution $contribution): int => $contribution->getPersonId(), $contributions));
 		foreach (self::CREDITED_ROLES as $role) {
 			foreach ($contributions as $contribution) {
-				if ($contribution->getRole() !== $role) {
-					continue;
-				}
-				try {
-					$credits[] = ['role' => $role, 'name' => $this->persons->find($contribution->getPersonId())->getName()];
-				} catch (DoesNotExistException) {
+				$person = $persons[$contribution->getPersonId()] ?? null;
+				if ($contribution->getRole() === $role && $person !== null) {
+					$credits[] = ['role' => $role, 'name' => $person->getName()];
 				}
 			}
 		}
@@ -469,7 +472,7 @@ class SharedLinkService {
 			$credits[] = ['role' => 'arranger', 'name' => $arranger];
 		}
 		$notices = [];
-		foreach ($this->licenses->findByVersion($version->getId()) as $license) {
+		foreach ($this->policy->licensesOf($version) as $license) {
 			$notice = trim((string)$license->getShareNotice());
 			if ($notice !== '' && ($license->getValidFrom() === null || $license->getValidFrom() <= $today)
 				&& ($license->getValidUntil() === null || $license->getValidUntil() >= $today)) {

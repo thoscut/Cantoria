@@ -407,7 +407,9 @@ function statusText(entry: Entry): string {
 						</span>
 					</td>
 					<td class="catalog-table__files" :title="filesTitle(entry)">
-						{{ entry.files }}
+						<!-- the number of PDFs in words too, not only as a title on hover (D-10) -->
+						<span aria-hidden="true">{{ entry.files }}</span>
+						<span class="hidden-visually">{{ filesTitle(entry) }}</span>
 						<span v-if="entry.has_musicxml" class="musicxml-tag">MusicXML</span>
 						<!-- in the narrow column: a symbol with the number, the words for screen readers and as title -->
 						<span v-if="reviewText(entry)" class="review-count" :title="reviewText(entry)">
@@ -431,8 +433,8 @@ function statusText(entry: Entry): string {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 4px 10px;
-	margin-block-start: 2px;
+	gap: var(--default-grid-baseline) calc(2.5 * var(--default-grid-baseline));
+	margin-block-start: calc(var(--default-grid-baseline) / 2);
 }
 
 .catalog__header {
@@ -447,6 +449,13 @@ function statusText(entry: Entry): string {
 	padding-inline-start: calc(var(--default-clickable-area) + 3 * var(--default-grid-baseline));
 	background-color: var(--color-main-background);
 	border-bottom: 1px solid var(--color-border);
+}
+
+/* A low window: the header scrolls with the page instead of covering it (D-2, WCAG 1.4.10) */
+@media (max-height: 560px) {
+	.catalog__header {
+		position: static;
+	}
 }
 
 .catalog__toolbar {
@@ -546,9 +555,10 @@ function statusText(entry: Entry): string {
 /* not only a colour: a bar at the start of the row and the shelf mark
    underlined, as on the pages of the choir members. The bar is a real
    border, which the contrast themes keep (they drop shadows; D21); the
-   padding gives back its width, so that the row does not move */
+   padding gives back its width, so that the row does not move: half of
+   it, the other half lies outside the cell (border-collapse; D-12) */
 .catalog-table__row--selected > td:first-child {
-	padding-inline-start: calc(2 * var(--default-grid-baseline) - 4px);
+	padding-inline-start: calc(2 * var(--default-grid-baseline) - 2px);
 	border-inline-start: 4px solid var(--color-primary-element);
 }
 
@@ -579,7 +589,7 @@ function statusText(entry: Entry): string {
 .review-count {
 	display: inline-flex;
 	align-items: center;
-	gap: 2px;
+	gap: calc(var(--default-grid-baseline) / 2);
 	margin-inline-start: var(--default-grid-baseline);
 	padding: 0 var(--default-grid-baseline);
 	border: 1px solid var(--color-border);

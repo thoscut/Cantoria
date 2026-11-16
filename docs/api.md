@@ -49,7 +49,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 | Search of Nextcloud (provider `cantoria`) | 300 in 10 minutes; at most 50 results per page |
 
 Files chosen by `fileId` for an import may be at most 20 MB, a backup for a
-restore at most 64 MB; larger files are refused with 400
+restore at most 512 MB (read as a stream); larger files are refused with 400
 (`The file is too large (at most %s MB).`).
 
 Field names are the keys from `lib/Service/Fields.php` (snake_case). User-facing
@@ -596,7 +596,11 @@ Creating a task or a link refuses fields other than the ones listed below
 Start page card keys: `tasks_open`, `tasks_answered`, `ambiguous_items`,
 `proposals`, `portal_remove`, `portal_add`, `confirm_current`, `rule1_current`,
 `licenses_expiring`, `valid_missing`, `hired_return` (librarian: copies with
-`return_date` within 30 days or past, not retired; core). The `label` is translated, always in the
+`return_date` within 30 days or past, not retired; core), `links_ending`
+(librarian, conductor, operations: the links of `GET /api/links` the account
+may extend, that is its own or, for the librarian, all, whose last day lies
+within the next 7 days or in the last 30 days; module `excerpt_links`; leads
+to the view "Links"). The `label` is translated, always in the
 plural; the UI shows its own label in singular or plural for the keys it knows
 (`src/dueLabels.ts`) and the server's label for new keys.
 
@@ -1027,15 +1031,17 @@ The entry (`GET /api/entries/{id}`) additionally contains
 Resubmission rows (`GET /api/protection/review`), versions with copies only:
 
 ```json
-[{ "versionId": 35, "kind": "ended|conflict|upcoming", "rightsStatus": "protected", "confirmed": false,
+[{ "versionId": 35, "kind": "ended|conflict|unknown|upcoming", "rightsStatus": "protected", "confirmed": false,
    "title": "…", "composer": "…", "workId": 35, "copies": [{ "id": 35, "shelfmark": "10-46", "status": "active" }],
    "protection": { … } }]
 ```
 
 `ended`: marked protected, but by the proposal free (to check); `conflict`:
 marked public domain, but the recorded persons do not allow a "public domain"
-proposal; `upcoming`: protected with a known end. Sorted in this order, then
-by date.
+proposal; `unknown`: confirmed as public domain without recorded persons,
+but the proposal is now "unknown" because the arranger of an arrangement is
+not recorded; `upcoming`: protected with a known end. Sorted in this order,
+then by date.
 
 **Person import** reads a research list (CSV, `;`, UTF-8 with or without
 BOM) with the columns `Name; Werke; Signaturen; Lebensdaten laut Verzeichnis;
@@ -1448,7 +1454,7 @@ other check of the app. The routes and their modules:
 | `public_links` | `GET /p/{token}` (the 404 page of the public pages instead of the JSON message); `POST /api/copies/{id}/links` with `circle: "public"` |
 | `public_repertoire` | `GET /repertoire` (the 404 page of the public pages); setting `work.public_repertoire` to `true` |
 | `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` is off (the concert folder keeps nothing without it) |
-| `concert_folder` | `GET /concert-folder` (the page), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
+| `concert_folder` | `GET /concert-folder` (the page), `GET /concert-folder/manifest` (the manifest for the home screen), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
 | `files_integration` | `GET /api/nextcloud-files/{fileId}/copy` (and the script of the Files app is not loaded) |
 | `tasks` | `GET /api/tasks`, `POST /api/copies/{id}/tasks`, `POST /api/tasks/{id}/answer`, `…/close` |
 | `proposals` | `GET /api/proposals`, `POST /api/proposals`, `…/accept`, `…/reject` |
@@ -1505,7 +1511,7 @@ What else follows the modules:
   `performance_import`; `proposals`: `proposals`; `portal_remove`,
   `portal_add`: `portal`; `confirm_current`, `rule1_current`,
   `licenses_expiring`: `rights`; `valid_missing`: `valid_version`;
-  `concerts`: `concerts`).
+  `links_ending`: `excerpt_links`; `concerts`: `concerts`).
 - Dashboard widget: only while `dashboard_widget` is on; its items are those
   of `GET /api/due` without the cards the account has hidden (personal view).
 - Background jobs: the checksum job does nothing without `checksums`, the
@@ -2511,6 +2517,7 @@ protected by the brute-force protection:
 |---|---|---|
 | `GET /p/{token}` | `public_links` | one piece or excerpt to view and play, in Nextcloud's public layout (template `public`, script `js/cantoria-public.mjs`) |
 | `GET /p/{token}/scan` | `public_links` | the scan the link offers, for the browser's own PDF viewer |
+| `GET /p/{token}/manifest` | – (core) | the manifest for the home screen: it opens the link, not the login; no data, the same answer for every token of the right form, also while public links are off |
 | `GET /repertoire` | `public_repertoire` | the public repertoire page, rendered on the server without script |
 | `GET /offline-worker` | – (core) | the service worker of the pages that keep pieces on a device (see "The page of the choir members") |
 

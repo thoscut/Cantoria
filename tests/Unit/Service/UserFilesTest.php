@@ -106,4 +106,54 @@ final class UserFilesTest extends TestCase {
 		$this->expectExceptionMessage('The file is too large (at most %s MB).');
 		$this->userFiles()->read('librarian', 4711, 100, new InvalidInputException('x'));
 	}
+
+	/**
+	 * A complete backup is read as a stream (milestone 0.20): a copy that
+	 * can be rewound, with the same limits and refusals as read().
+	 */
+	public function testGivesALargeFileAsAStreamThatCanBeRewound(): void {
+		// more than the 2 MB the copy keeps in memory: the rest lies on disk
+		$content = str_repeat("0123456789abcdef\n", 200_000);
+		$this->node = $this->file($content);
+		$stream = $this->userFiles()->stream('librarian', 4711, strlen($content), new InvalidInputException('x'));
+		self::assertSame(4711, $this->requestedId);
+		self::assertSame(0, ftell($stream), 'at its start');
+		self::assertSame(hash('sha256', $content), hash('sha256', (string)stream_get_contents($stream)));
+		self::assertTrue(rewind($stream), 'the restore reads it twice');
+		self::assertSame(substr($content, 0, 34), fread($stream, 34));
+		fclose($stream);
+	}
+
+	public function testRefusesAStreamOfAFileThatIsMissingAFolderOrUnreadable(): void {
+		$unreadable = $this->file('x', null, false);
+		foreach ([null, $this->createStub(Folder::class), $unreadable] as $node) {
+			$this->node = $node;
+			try {
+				$this->userFiles()->stream('librarian', 4711, 100, new InvalidInputException('The selected file is not accessible.'));
+				self::fail('no exception');
+			} catch (InvalidInputException $e) {
+				self::assertSame('The selected file is not accessible.', $e->getMessage());
+			}
+		}
+	}
+
+	public function testRefusesAStreamAboveTheLimit(): void {
+		$cases = [
+			'by its recorded size, before it is opened' => $this->file('', 101, false),
+			'by its content, when the recorded size lags behind' => $this->file(str_repeat('x', 101), 50),
+		];
+		foreach ($cases as $case => $file) {
+			$this->node = $file;
+			try {
+				$this->userFiles()->stream('librarian', 4711, 100, new InvalidInputException('x'));
+				self::fail($case);
+			} catch (InvalidInputException $e) {
+				self::assertSame('The file is too large (at most %s MB).', $e->getMessage(), $case);
+			}
+		}
+		$this->node = $this->file(str_repeat('x', 100));
+		$stream = $this->userFiles()->stream('librarian', 4711, 100, new InvalidInputException('x'));
+		self::assertSame(100, strlen((string)stream_get_contents($stream)), 'exactly the limit is accepted');
+		fclose($stream);
+	}
 }

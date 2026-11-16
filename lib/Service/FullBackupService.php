@@ -57,10 +57,10 @@ class FullBackupService {
 	public const FORMAT = 'cantoria-backup';
 	public const FORMAT_VERSION = 2;
 
-	/** Largest backup file accepted for a restore in the web interface (bytes) */
+	/** Largest backup read into memory at once: the catalog of an annual snapshot (bytes) */
 	public const MAX_BYTES = 64 * 1024 * 1024;
-	/** JSON nesting accepted when parsing; a backup needs five levels */
-	private const MAX_DEPTH = 8;
+	/** Largest backup file accepted for a restore in the web interface, read as a stream (bytes) */
+	public const MAX_RESTORE_BYTES = 512 * 1024 * 1024;
 
 	public const KIND_INTEGER = 'integer';
 	public const KIND_BOOLEAN = 'boolean';
@@ -121,15 +121,6 @@ class FullBackupService {
 		...PrivacyService::ACCOUNT_FIELDS['cantoria_events'],
 		...PrivacyService::ACCOUNT_FIELDS['cantoria_persons'],
 	];
-
-	public function export(): string {
-		$stream = $this->exportStream();
-		try {
-			return (string)stream_get_contents($stream);
-		} finally {
-			fclose($stream);
-		}
-	}
 
 	/**
 	 * The backup as a stream, written row by row into a temporary stream
@@ -219,18 +210,22 @@ class FullBackupService {
 	}
 
 	/**
-	 * Restores a backup into an empty catalog. Rows are inserted with their
-	 * original ids; the whole restore runs in one transaction.
+	 * Restores a backup into an empty catalog, read from a stream row by
+	 * row (not the whole backup in memory). The stream is read twice: first
+	 * the whole file is checked (inspect()), then the rows are written.
+	 * Rows are inserted with their original ids; the whole restore runs in
+	 * one transaction.
 	 *
 	 * Only tables from TABLES and only columns that exist in the installed
 	 * schema are written (column names from the file are never used as SQL
 	 * identifiers unchecked); every value is checked against the type, length
 	 * and nullability of its column.
 	 *
+	 * @param resource $stream a stream that can be rewound, at its start
 	 * @return array<string, int> table => restored rows
 	 */
-	public function restore(string $content, string $uid): array {
-		$backup = self::parse($content);
+	public function restoreStream($stream, string $uid): array {
+		$backup = self::inspect($stream);
 		$existing = $this->existingTables();
 
 		$restored = [];
@@ -243,44 +238,25 @@ class FullBackupService {
 				throw new InvalidInputException('A backup can only be restored into an empty catalog.');
 			}
 			$schema = $this->db->createSchema();
+			/** @var array<string, array<string, Column>> $columns by table */
+			$columns = [];
+			foreach ($backup['names'] as $table) {
+				if (in_array($table, $existing, true)) {
+					$columns[$table] = $this->columns($schema, $table);
+				}
+			}
+			rewind($stream);
+			BackupReader::read($stream, function (string $name, array $row, int $index) use ($backup, $columns): void {
+				$table = $backup['names'][$name] ?? null;
+				if ($table !== null && isset($columns[$table])) {
+					$this->insertRow($table, $columns[$table], $row, $index);
+				}
+			}, array_keys($backup['names']));
 			foreach (self::TABLES as $table) {
-				$rows = $backup['tables'][$table] ?? [];
-				if (!in_array($table, $existing, true)) {
-					continue;
+				if (isset($columns[$table])) {
+					$restored[$table] = $backup['rows'][$table];
+					$this->resetSequence($table);
 				}
-				$columns = $this->columns($schema, $table);
-				foreach ($rows as $index => $row) {
-					if ($table === 'cantoria_links' && ($row['token'] ?? '') === '') {
-						// Backups hold no tokens: the link comes back revoked.
-						// Only the hash of a token nobody knows: the link stays dead.
-						$row['token'] = ExcerptLink::hashToken($this->random->generate(LinkTokens::LENGTH, ISecureRandom::CHAR_ALPHANUMERIC));
-						$row['token_secret'] = null;
-						$row['revoked'] ??= $this->time->getTime();
-					}
-					$qb = $this->db->getQueryBuilder();
-					$qb->insert($table);
-					$written = 0;
-					foreach ($row as $name => $value) {
-						$column = $columns[$name] ?? null;
-						if ($column === null) {
-							// Unknown columns (e.g. of another app version) are left out.
-							continue;
-						}
-						$typed = self::columnValue(self::columnKind($column), self::columnLength($column), $column->getNotnull(), $value);
-						if ($typed === null) {
-							throw new InvalidInputException('The backup contains an invalid value in %1$s, row %2$s, column %3$s.',
-								[$table, $index + 1, $name]);
-						}
-						$qb->setValue($name, $qb->createNamedParameter($typed[0], $typed[1]));
-						$written++;
-					}
-					if ($written === 0) {
-						throw new InvalidInputException('The file is not a backup of the music archive.');
-					}
-					$qb->executeStatement();
-				}
-				$restored[$table] = count($rows);
-				$this->resetSequence($table);
 			}
 			$this->audit->record($this->audit->newOperation(), $uid, 'import', null, 'restore_backup', null, null,
 				'backup of ' . mb_substr($backup['created'], 0, 64) . ', app ' . mb_substr($backup['appVersion'], 0, 32));
@@ -290,6 +266,44 @@ class FullBackupService {
 			throw $e;
 		}
 		return $restored;
+	}
+
+	/**
+	 * Writes one row of a backup into its table.
+	 *
+	 * @param array<string, Column> $columns columns of the installed table
+	 * @param BackupRow $row
+	 * @param int $index place of the row in its table, from 0
+	 */
+	private function insertRow(string $table, array $columns, array $row, int $index): void {
+		if ($table === 'cantoria_links' && ($row['token'] ?? '') === '') {
+			// Backups hold no tokens: the link comes back revoked.
+			// Only the hash of a token nobody knows: the link stays dead.
+			$row['token'] = ExcerptLink::hashToken($this->random->generate(LinkTokens::LENGTH, ISecureRandom::CHAR_ALPHANUMERIC));
+			$row['token_secret'] = null;
+			$row['revoked'] ??= $this->time->getTime();
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->insert($table);
+		$written = 0;
+		foreach ($row as $name => $value) {
+			$column = $columns[$name] ?? null;
+			if ($column === null) {
+				// Unknown columns (e.g. of another app version) are left out.
+				continue;
+			}
+			$typed = self::columnValue(self::columnKind($column), self::columnLength($column), $column->getNotnull(), $value);
+			if ($typed === null) {
+				throw new InvalidInputException('The backup contains an invalid value in %1$s, row %2$s, column %3$s.',
+					[$table, $index + 1, $name]);
+			}
+			$qb->setValue($name, $qb->createNamedParameter($typed[0], $typed[1]));
+			$written++;
+		}
+		if ($written === 0) {
+			throw new InvalidInputException('The file is not a backup of the music archive.');
+		}
+		$qb->executeStatement();
 	}
 
 	/**
@@ -367,94 +381,99 @@ class FullBackupService {
 	}
 
 	/**
-	 * Checks that a file is a backup in a format this version can restore and
-	 * returns its content, with the tables by their names in the database.
-	 * Tables are named as in format version 2 (TABLE_NAMES) or, in backups
-	 * of version 1, by the names of the database tables. Unknown tables are
-	 * dropped, but a file without any known table is refused; every row
-	 * must be an object of plain values.
+	 * The names a table of this version can have in a backup: as in format
+	 * version 2 or, in version 1, as in the database. Which of the two a
+	 * file uses is only known once its head is read, and the head may come
+	 * last.
+	 *
+	 * @return list<string>
+	 */
+	private static function knownNames(): array {
+		return [...array_keys(self::TABLE_NAMES), ...self::TABLES];
+	}
+
+	/**
+	 * Checks that a stream is a backup in a format this version can restore
+	 * and tells what it holds, without keeping its rows: the whole file is
+	 * read once and checked (BackupReader). Tables are named as in format
+	 * version 2 (TABLE_NAMES) or, in backups of version 1, by the names of
+	 * the database tables. Unknown tables are dropped, whatever their shape,
+	 * but a file without any known table is refused; every row of a known
+	 * table must be an object of plain values.
+	 *
+	 * @param resource $stream at the start of the backup
+	 * @return array{formatVersion: int, created: string, appVersion: string, names: array<string, string>, rows: array<string, int>}
+	 *                                                                                                                                `names`: name of a table in the file => table in the database; `rows`: table in the database => rows
+	 * @throws InvalidInputException
+	 */
+	public static function inspect($stream): array {
+		['head' => $head, 'tables' => $counts] = BackupReader::read($stream, null, self::knownNames());
+		if (($head['format'] ?? null) !== self::FORMAT || !is_int($head['formatVersion'] ?? null)) {
+			throw new InvalidInputException('The file is not a backup of the music archive.');
+		}
+		$formatVersion = (int)$head['formatVersion'];
+		if ($formatVersion > self::FORMAT_VERSION) {
+			throw new InvalidInputException('The backup was made with a newer version of the app. Please update the app first.');
+		}
+		$names = [];
+		$rows = [];
+		foreach (self::TABLES as $table) {
+			$key = $formatVersion >= 2 ? self::logicalName($table) : $table;
+			if (array_key_exists($key, $counts)) {
+				$names[$key] = $table;
+				$rows[$table] = $counts[$key];
+			}
+		}
+		if ($names === []) {
+			throw new InvalidInputException('The file contains no table of the music archive. Is it a backup of Cantoria?');
+		}
+		return [
+			'formatVersion' => $formatVersion,
+			'created' => is_string($head['created'] ?? null) ? (string)$head['created'] : '?',
+			'appVersion' => is_string($head['appVersion'] ?? null) ? (string)$head['appVersion'] : '?',
+			'names' => $names,
+			'rows' => $rows,
+		];
+	}
+
+	/**
+	 * A backup held in memory with its rows (the catalog of an annual
+	 * snapshot, tests), with the tables by their names in the database;
+	 * checked as by inspect().
 	 *
 	 * @return Backup
 	 * @throws InvalidInputException
 	 */
 	public static function parse(string $content): array {
+		$stream = self::memoryStream($content);
 		try {
-			// A backup is nested five levels deep (file, tables, table, row, value).
-			$data = self::object(json_decode($content, true, self::MAX_DEPTH, JSON_THROW_ON_ERROR));
-		} catch (\JsonException) {
-			$data = null;
-		}
-		if ($data === null || ($data['format'] ?? null) !== self::FORMAT || !is_int($data['formatVersion'] ?? null)) {
-			throw new InvalidInputException('The file is not a backup of the music archive.');
-		}
-		$formatVersion = (int)$data['formatVersion'];
-		if ($formatVersion > self::FORMAT_VERSION) {
-			throw new InvalidInputException('The backup was made with a newer version of the app. Please update the app first.');
-		}
-		$tables = self::object($data['tables'] ?? null);
-		if ($tables === null) {
-			throw new InvalidInputException('The file is not a backup of the music archive.');
-		}
-		$parsed = [];
-		foreach (self::TABLES as $table) {
-			$name = self::logicalName($table);
-			$key = $formatVersion >= 2 ? $name : $table;
-			if (array_key_exists($key, $tables)) {
-				$parsed[$table] = self::rows($tables[$key]);
-			}
-		}
-		if ($parsed === []) {
-			throw new InvalidInputException('The file contains no table of the music archive. Is it a backup of Cantoria?');
-		}
-		return [
-			'formatVersion' => $formatVersion,
-			'created' => is_string($data['created'] ?? null) ? (string)$data['created'] : '?',
-			'appVersion' => is_string($data['appVersion'] ?? null) ? (string)$data['appVersion'] : '?',
-			'tables' => $parsed,
-		];
-	}
-
-	/**
-	 * @return list<BackupRow>
-	 * @throws InvalidInputException
-	 */
-	private static function rows(mixed $rows): array {
-		if (!is_array($rows) || !array_is_list($rows)) {
-			throw new InvalidInputException('The file is not a backup of the music archive.');
-		}
-		$result = [];
-		foreach (array_keys($rows) as $index) {
-			$row = self::object($rows[$index]);
-			if ($row === null || $row === []) {
-				throw new InvalidInputException('The file is not a backup of the music archive.');
-			}
-			$values = [];
-			foreach (array_keys($row) as $column) {
-				if (!is_string($column) || !self::isPlain($row[$column])) {
-					throw new InvalidInputException('The file is not a backup of the music archive.');
+			$backup = self::inspect($stream);
+			$tables = array_fill_keys(array_keys($backup['rows']), []);
+			rewind($stream);
+			BackupReader::read($stream, function (string $name, array $row) use ($backup, &$tables): void {
+				$table = $backup['names'][$name] ?? null;
+				if ($table !== null) {
+					$tables[$table][] = $row;
 				}
-				$values[$column] = self::plain($row[$column]);
-			}
-			$result[] = $values;
+			}, array_keys($backup['names']));
+		} finally {
+			fclose($stream);
 		}
-		return $result;
+		return ['formatVersion' => $backup['formatVersion'], 'created' => $backup['created'], 'appVersion' => $backup['appVersion'],
+			'tables' => $tables];
 	}
 
 	/**
-	 * A JSON object as array, or null for anything else.
-	 *
-	 * @return array<array-key, mixed>|null
+	 * @return resource at its start
 	 */
-	private static function object(mixed $value): ?array {
-		return is_array($value) && ($value === [] || !array_is_list($value)) ? $value : null;
-	}
-
-	private static function isPlain(mixed $value): bool {
-		return $value === null || is_scalar($value);
-	}
-
-	private static function plain(mixed $value): string|int|float|bool|null {
-		return $value === null || is_scalar($value) ? $value : null;
+	private static function memoryStream(string $content) {
+		$stream = fopen('php://memory', 'w+b');
+		if ($stream === false) {
+			throw new \RuntimeException('cannot open a temporary stream');
+		}
+		fwrite($stream, $content);
+		rewind($stream);
+		return $stream;
 	}
 
 	/**

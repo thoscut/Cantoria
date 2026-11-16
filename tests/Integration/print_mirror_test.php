@@ -99,7 +99,12 @@ $settings = function () use ($appConfig): array {
 };
 $originalSwitches = $switches();
 $originalSettings = $settings();
-$archiveListing = fn (): array => array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+// sorted: the order of a directory listing is not fixed (PostgreSQL returns it in any order)
+$archiveListing = function () use ($archive): array {
+	$listed = array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+	sort($listed);
+	return $listed;
+};
 $archiveBefore = $archiveListing();
 $targetName = 'Cantoria print station test ' . bin2hex(random_bytes(3));
 $sha = fn (File $file): string => hash('sha256', $file->getContent());
@@ -222,7 +227,10 @@ try {
 	$check('a foreign file with the name of the scan is not overwritten', $reasons($foreign, $expected) === [PrintMirrorService::FOREIGN]
 		&& ($target->get($expected) instanceof File) && $target->get($expected)->getContent() === 'changed by someone', json_encode($foreign) ?: '');
 
-	$check('nothing was written into the archive folder', $archiveListing() === $archiveBefore);
+	$archiveAfter = $archiveListing();
+	$check('nothing was written into the archive folder', $archiveAfter === $archiveBefore, json_encode([
+		'new' => array_values(array_diff($archiveAfter, $archiveBefore)), 'gone' => array_values(array_diff($archiveBefore, $archiveAfter)),
+	]) ?: '');
 
 	// ---- switched off --------------------------------------------------------------------------
 	$l = Server::get(IFactory::class)->get(Application::APP_ID, 'en');

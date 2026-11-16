@@ -648,7 +648,10 @@ Vorhandenes wird überschrieben.
 3. Bestätige, dass es die richtige und neueste Sicherung ist, und wähle
    **Jetzt wiederherstellen**.
 
-In der Weboberfläche darf eine Sicherungsdatei höchstens 64 MB groß sein.
+Download und Wiederherstellung laufen als Datenstrom: Die Sicherung wird
+Zeile für Zeile geschrieben und gelesen und liegt nie als Ganzes im
+Arbeitsspeicher. In der Weboberfläche darf eine Sicherungsdatei höchstens
+512 MB groß sein.
 Auf selbst betriebenen Instanzen liest `occ cantoria:restore <file>
 [<account>]` die Datei ohne diese Grenze aus dem Dateisystem des Servers,
 und `occ cantoria:export --full` schreibt eine vollständige Sicherung auf

@@ -11,7 +11,9 @@
  * turns at once, at the end of a piece says what comes next and then opens
  * it, and while the next piece loads or is engraved a press skips nothing;
  * the back gesture returns to the list; the switch for a programme names
- * the pieces that stay behind; "Next" stands once.
+ * the pieces that stay behind; "Next" stands once; "End of the programme"
+ * stands only under the last piece (U-1); the empty folder leads to the
+ * concerts (U-10).
  */
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -113,7 +115,7 @@ function item(id: number, title: string, extra: Record<string, unknown> = {}) {
 	}
 }
 
-function setState(offline: boolean): void {
+function setState(offline: boolean, empty = false): void {
 	// @nextcloud/initial-state keeps what it read on the window
 	delete (window as { _nc_initial_state?: unknown })._nc_initial_state
 	const concerts = [{
@@ -129,7 +131,7 @@ function setState(offline: boolean): void {
 	const input = document.createElement('input')
 	input.type = 'hidden'
 	input.id = 'initial-state-cantoria-folder'
-	input.value = btoa(JSON.stringify({ concerts, version: '0.19.0', offline }))
+	input.value = btoa(JSON.stringify({ concerts: empty ? [] : concerts, version: '0.19.0', offline }))
 	document.body.appendChild(input)
 }
 
@@ -139,8 +141,8 @@ function pageDown(target: Element | null, key = 'PageDown'): KeyboardEvent {
 	return event
 }
 
-async function mountFolder(offline = false) {
-	setState(offline)
+async function mountFolder(offline = false, empty = false) {
+	setState(offline, empty)
 	const { default: ConcertFolderApp } = await import('../sharing/ConcertFolderApp.vue')
 	const wrapper = mount(ConcertFolderApp, { attachTo: document.body, global: { stubs: { ExcerptViewer } } })
 	await flushPromises()
@@ -210,6 +212,30 @@ describe('concert folder at the music stand', () => {
 		const next = wrapper.findAll('button').filter((button) => button.text().startsWith('Next'))
 		expect(next).toHaveLength(1)
 		expect(next[0].attributes('aria-label')).toBe('Next: Ave verum')
+		wrapper.unmount()
+	})
+
+	it('says "End of the programme" only under the last piece, not on paper (U-1)', async () => {
+		const wrapper = await mountFolder()
+		const pieces = wrapper.findAll('.folder-app__open')
+		// a middle piece with its notes in view: "Next" is in the bar, the programme goes on
+		await pieces[1].trigger('click')
+		await flushPromises()
+		expect(wrapper.find('.excerpt-viewer').attributes('data-xml')).toContain('id="2"')
+		expect(wrapper.find('.folder-app__piece').text()).not.toContain('End of the programme')
+		await pieces[2].trigger('click')
+		await flushPromises()
+		const end = wrapper.findAll('.folder-app__end').filter((line) => line.text().includes('End of the programme "Herbstkonzert".'))
+		expect(end).toHaveLength(1)
+		expect(end[0].classes()).toContain('no-print')
+		wrapper.unmount()
+	})
+
+	it('leads from the empty folder to the concerts of the archive (U-10)', async () => {
+		const wrapper = await mountFolder(false, true)
+		const link = wrapper.findAll('a').filter((anchor) => anchor.text() === 'To the concerts')
+		expect(link).toHaveLength(1)
+		expect(link[0].attributes('href')).toMatch(/\/apps\/cantoria\/\?view=concerts$/)
 		wrapper.unmount()
 	})
 

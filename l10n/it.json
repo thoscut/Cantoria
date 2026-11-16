@@ -840,6 +840,7 @@
         "Public": "Pubblico",
         "Internal": "Interno",
         "The link has been revoked.": "Il link è stato revocato.",
+        "Ends today": "Scade oggi",
         "The link is valid until {date}.": "Il link è valido fino al {date}.",
         "No active links.": "Nessun link attivo.",
         "Valid until {date}": "Valido fino al {date}",
@@ -850,10 +851,11 @@
         "Revoke link": "Revoca il link",
         "Revoke": "Revoca",
         "The link stops working immediately for everyone. This cannot be undone.": "Il link smette subito di funzionare per tutti. Questa operazione non può essere annullata.",
+        "What was kept on devices for use without a network is removed the next time the page opens there with a network.": "Ciò che è stato salvato sui dispositivi per l'uso senza rete viene rimosso la prossima volta che la pagina vi si apre con la rete.",
         "Extend link": "Proroga il link",
         "The link keeps its address: whoever has it can go on using it, and what the choir members keep on their devices stays.": "Il link mantiene il suo indirizzo: chi lo ha può continuare a usarlo, e ciò che i componenti del coro hanno salvato sui loro dispositivi resta.",
-        "All active excerpt links: internal links for the archive roles, links for choir members and public links. Each entry says who can open it. The server checks the rights on every call. Calls are counted without names.": "Tutti i link attivi agli estratti: link interni per i ruoli dell'archivio, link per i componenti del coro e link pubblici. Ogni link indica chi può aprirlo. Il server verifica i diritti a ogni accesso. Gli accessi vengono contati senza nomi.",
-        "All active excerpt links. They are only opened by people with a role in the music archive; the server checks the rights on every call. Calls are counted without names.": "Tutti i link attivi agli estratti. Possono aprirli solo le persone con un ruolo nell'archivio di spartiti; il server verifica i diritti a ogni accesso. Gli accessi vengono contati senza nomi.",
+        "All active links to pieces and excerpts: internal links for the archive roles, links for choir members and public links. Each entry says who can open it. The server checks the rights on every call. Calls are counted without names.": "Tutti i link attivi a brani ed estratti: link interni per i ruoli dell'archivio, link per i componenti del coro e link pubblici. Ogni link indica chi può aprirlo. Il server verifica i diritti a ogni accesso. Gli accessi vengono contati senza nomi.",
+        "All active links to pieces and excerpts. They are only opened by people with a role in the music archive; the server checks the rights on every call. Calls are counted without names.": "Tutti i link attivi a brani ed estratti. Possono aprirli solo le persone con un ruolo nell'archivio di spartiti; il server verifica i diritti a ogni accesso. Gli accessi vengono contati senza nomi.",
         "The links could not be loaded": "Impossibile caricare i link",
         "No active links": "Nessun link attivo",
         "Links are created in the score view: open a copy in the catalog, then “Score”.": "I link si creano nella vista dello spartito: apri un esemplare nel catalogo, poi “Spartito”.",
@@ -1099,6 +1101,7 @@
         "Mixer": "Mixer",
         "Only the sound moves; the notes stay as written.": "Si sposta solo il suono; le note restano come scritte.",
         "The level of each voice, on top of \"Voices during playback\". 0 % mutes a voice.": "Il volume di ogni voce, in aggiunta a «Voci durante la riproduzione». A 0 % una voce è muta.",
+        "{percent} %": "{percent} %",
         "All voices at 100 %": "Tutte le voci al 100 %",
         "Choose the hand-over folder for the choir system": "Scegli la cartella di consegna per il sistema del coro",
         "Choose the target folder of the print station": "Scegli la cartella di destinazione della postazione di stampa",
@@ -1164,6 +1167,7 @@
         "Reject proposal": "Rifiuta proposta",
         "Accept and apply": "Accetta e applica",
         "The value is changed with your rights and recorded in the audit log.": "Il valore viene modificato con i tuoi permessi e annotato nel registro delle attività.",
+        "Confirmed as public domain, but the proposal is now unknown": "Confermato come pubblico dominio, ma la proposta ora indica «sconosciuto»",
         "Protected with a known end": "Protetto con fine nota",
         "public domain since {date}": "di pubblico dominio dal {date}",
         "protected until {date}": "protetto fino al {date}",
@@ -1171,6 +1175,7 @@
         "Resubmission by the life dates of the persons involved: protection ends at the end of the 70th year after the death of the last of them. A proposal only; it never changes the rights status and is no legal advice.": "Promemoria in base alle date di nascita e morte delle persone coinvolte: la protezione termina alla fine del 70° anno dopo la morte dell'ultima di esse. È solo una proposta: non modifica mai lo stato dei diritti e non costituisce consulenza legale.",
         "Nothing to resubmit": "Nessun promemoria",
         "No version needs a check by the life dates.": "Nessuna versione deve essere verificata in base alle date di nascita e morte.",
+        "A shelf mark opens the rights of the copy, where the status is decided.": "Una segnatura apre i diritti dell'esemplare, dove si decide lo stato.",
         "Proposal": "Proposta",
         "Reason": "Motivazione",
         "confirmed": "confermato",
@@ -1320,12 +1325,6 @@
         "Tempo in the score: {mark}": "Tempo nello spartito: {mark}",
         "Editorial tempo (not printed): {mark}": "Tempo editoriale (non stampato): {mark}",
         "The file gives no tempo; {mark} is assumed.": "Il file non indica un tempo; si assume {mark}.",
-        "End of playback.": "Riproduzione terminata.",
-        "Paused at measure {number}.": "In pausa alla battuta {number}.",
-        "Count-in, then playing from measure {number}.": "Conteggio iniziale, poi riproduzione dalla battuta {number}.",
-        "Playing from measure {number}.": "Riproduzione dalla battuta {number}.",
-        "Start at measure {number}.": "Inizio alla battuta {number}.",
-        "Stopped.": "Fermato.",
         "Loop on: measures {from} to {to} play again and again.": "Ripetizione attiva: le battute da {from} a {to} vengono suonate in continuazione.",
         "Loop off.": "Ripetizione disattivata.",
         "{percent} % ({mark})": "{percent} % ({mark})",
@@ -1348,7 +1347,6 @@
         "Voice, measures and practising": "Voce, battute ed esercizio",
         "Scroll along": "Scorrimento automatico",
         "Volume: {percent} %": "Volume: {percent} %",
-        "{percent} % volume": "Volume {percent} %",
         "Practice files …": "File per lo studio …",
         "This passage": "Questo passaggio",
         "Copy text reference": "Copia riferimento testuale",
@@ -1742,6 +1740,12 @@
         "This version is an internal preservation copy: it stays internal and is never shared, played or exported, whatever the rights status.": "Questa versione è una copia di conservazione interna: resta interna e non viene mai condivisa, riprodotta o esportata, qualunque sia lo stato dei diritti.",
         "After the confirmation this becomes possible: {uses}.": "Dopo la conferma diventa possibile: {uses}.",
         "A protected version needs a valid license for each of these uses: {uses}.": "Una versione protetta richiede una licenza valida per ciascuno di questi usi: {uses}.",
+        "End of playback.": "Riproduzione terminata.",
+        "Paused at measure {number}.": "In pausa alla battuta {number}.",
+        "Count-in, then playing from measure {number}.": "Conteggio iniziale, poi riproduzione dalla battuta {number}.",
+        "Playing from measure {number}.": "Riproduzione dalla battuta {number}.",
+        "Start at measure {number}.": "Inizio alla battuta {number}.",
+        "Stopped.": "Fermato.",
         "You are no longer logged in. Please reload the page and log in again.": "Non sei più connesso. Ricarica la pagina e accedi di nuovo.",
         "Your account may not do this. The administration assigns the roles; about a shared piece, ask the conductor.": "Il tuo account non può farlo. L'amministrazione assegna i ruoli; per un brano condiviso chiedi alla direzione del coro.",
         "This no longer exists or is switched off. Please reload the page.": "Questo non esiste più o è disattivato. Ricarica la pagina.",
@@ -1776,6 +1780,7 @@
         "No network, and no piece is available without a network on this device.": "Nessuna rete e nessun brano è disponibile senza rete su questo dispositivo.",
         "No programme to be sung": "Nessun programma da cantare",
         "Concerts and song lists in draft or fixed appear here, the next one first.": "Concerti ed elenchi di spartiti in bozza o definiti compaiono qui, il prossimo per primo.",
+        "To the concerts": "Ai concerti",
         "Hide the programme": "Nascondi il programma",
         "Programme: {title}, piece {position} of {count}": "Programma: {title}, brano {position} di {count}",
         "Programme fixed": "Programma definito",
@@ -1795,6 +1800,7 @@
         "The browser keeps them even when space runs short.": "Il browser li conserva anche quando lo spazio scarseggia.",
         "The browser may delete them when space runs short.": "Il browser può eliminarli quando lo spazio scarseggia.",
         "This browser cannot keep pieces for practising without a network.": "Questo browser non può salvare brani per studiare senza rete.",
+        "This happens in a private window, for example. A normal window or another browser usually works.": "Succede, per esempio, in una finestra privata. Di solito funziona in una finestra normale o in un altro browser.",
         "Discard the recording?": "Scartare la registrazione?",
         "Your recording is not saved. If you open \"{title}\" now, it is gone.": "La tua registrazione non è salvata. Se apri “{title}” adesso, andrà persa.",
         "Discard and open": "Scarta e apri",
@@ -1843,6 +1849,7 @@
         "When the conductor or the music librarians share a piece or an excerpt with the choir members, it appears here. Each link is valid for at most six months.": "Quando la direzione del coro o la gestione dell'archivio condividono un brano o un estratto con i componenti del coro, compare qui. Ogni link è valido al massimo sei mesi.",
         "Guide for choir members (opens in a new tab)": "Guida per i coristi (si apre in una nuova scheda)",
         "Without the scans; each piece can take its scan along.": "Senza le scansioni; ogni brano può portare con sé la sua scansione.",
+        "The conductor or the music librarians can extend the link.": "La direzione del coro o la gestione dell'archivio può prorogare il link.",
         "Making it available without a network …": "Lo rendo disponibile senza rete …",
         "Choose a piece from the list to see and hear it.": "Scegli un brano dall'elenco per vederlo e ascoltarlo.",
         "Safari and the home screen keep pieces apart: open this page the way you want to use it without a network.": "Safari e la schermata Home tengono i brani separati: apri questa pagina nel modo in cui vuoi usarla senza rete.",
@@ -1947,6 +1954,7 @@
         "The archive folder is the whole of the files of the account %s, so the backups would lie inside it. An administrator chooses a sub folder as archive folder.": "La cartella dell'archivio comprende tutti i file dell'account %s, quindi i backup si troverebbero al suo interno. Un amministratore sceglie una sottocartella come cartella dell'archivio.",
         "The account %s may not create the backup folder in its files.": "L'account %s non può creare la cartella dei backup nei suoi file.",
         "Music archive backups": "Backup dell'archivio di spartiti",
+        "The file is not a backup of the music archive.": "Il file non è un backup dell'archivio di spartiti.",
         "The CSV file is empty.": "Il file CSV è vuoto.",
         "Internal preservation copy: only the catalog librarian and the conductor may view it.": "Copia di conservazione interna: solo il ruolo “Catalogo” e la direzione del coro possono visualizzarla.",
         "Unknown level: %s": "Livello sconosciuto: %s",
@@ -2010,6 +2018,7 @@
         "Current repertoire: check originals of preservation copies": "Repertorio attuale: verificare gli originali delle copie di conservazione",
         "Current repertoire: photocopies without a license": "Repertorio attuale: fotocopie senza licenza",
         "Licenses ending or ended": "Licenze in scadenza o scadute",
+        "Links ending or ended": "Link in scadenza o scaduti",
         "Current repertoire: no valid version chosen": "Repertorio attuale: nessuna versione valida scelta",
         "The new order must contain every item exactly once.": "Il nuovo ordine deve contenere ogni elemento esattamente una volta.",
         "Only concerts can be cancelled.": "Solo i concerti possono essere annullati.",
@@ -2165,7 +2174,6 @@
         "Number or name": "Numero o nome",
         "A backup can only be restored into an empty catalog.": "Un backup può essere ripristinato solo in un catalogo vuoto.",
         "The backup contains an invalid value in %1$s, row %2$s, column %3$s.": "Il backup contiene un valore non valido in %1$s, riga %2$s, colonna %3$s.",
-        "The file is not a backup of the music archive.": "Il file non è un backup dell'archivio di spartiti.",
         "The backup was made with a newer version of the app. Please update the app first.": "Il backup è stato creato con una versione più recente dell'app. Aggiorna prima l'app.",
         "Hand-over to the choir system: folder of the music archive": "Consegna al sistema del coro: cartella dell'archivio musicale",
         "As of %s": "Aggiornato al %s",
@@ -2757,6 +2765,10 @@
             "%n è scaduta",
             "%n sono scadute"
         ],
+        "_Ends in %n day_::_Ends in %n days_": [
+            "Scade tra %n giorno",
+            "Scade tra %n giorni"
+        ],
         "_opened %n time_::_opened %n times_": [
             "aperto %n volta",
             "aperto %n volte"
@@ -2764,6 +2776,10 @@
         "_%n active link_::_%n active links_": [
             "%n link attivo",
             "%n link attivi"
+        ],
+        "_%n link ends within a week_::_%n links end within a week_": [
+            "%n link scade entro una settimana",
+            "%n link scadono entro una settimana"
         ],
         "_%n version moved_::_%n versions moved_": [
             "%n versione spostata",
@@ -2948,6 +2964,10 @@
         "_Current repertoire: version with photocopies without a license_::_Current repertoire: versions with photocopies without a license_": [
             "Repertorio attuale: versione con fotocopie senza licenza",
             "Repertorio attuale: versioni con fotocopie senza licenza"
+        ],
+        "_Link ending or ended_::_Links ending or ended_": [
+            "Link in scadenza o scaduto",
+            "Link in scadenza o scaduti"
         ],
         "_Current repertoire: work without a chosen valid version_::_Current repertoire: works without a chosen valid version_": [
             "Repertorio attuale: opera senza una versione valida scelta",

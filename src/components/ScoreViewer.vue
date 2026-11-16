@@ -20,13 +20,9 @@
  * This component is loaded lazily (own chunk); Verovio is a further chunk
  * that is only fetched when a score is opened.
  */
-import type { Click, CountInBars } from '../score/countIn.ts'
-import type { PlayMode, ScorePlayer as ScorePlayerType } from '../score/player.ts'
 import type { Mark } from '../score/marks.ts'
-import type { Mix } from '../score/practising.ts'
 import type { MeasureRange } from '../score/range.ts'
 import type { ScoreModel } from '../score/model.ts'
-import type { Timeline } from '../score/timeline.ts'
 import type { VerovioToolkit } from '../score/toolkit.ts'
 import type { Voice } from '../score/voices.ts'
 import type { RecorderState, VoiceOption } from './PlaybackSettings.vue'
@@ -76,22 +72,16 @@ import RightsBadge from './RightsBadge.vue'
 import TaskDialog from './TaskDialog.vue'
 import { adminSettingsUrl, errorMessage, errorReason, fetchFileContent, fetchReview, isPermanentHttpError, REASON_NOT_SHARED, scanUrl } from '../api.ts'
 import { translateLabel } from '../format.ts'
-import { countInFor, metronomeClicks, slotAt, storeCountIn, storedCountIn } from '../score/countIn.ts'
-import { playbackTimeline, renderPages, selectMeasures, loadScore } from '../score/model.ts'
+import { renderPages, selectMeasures, loadScore } from '../score/model.ts'
 import { markFocus } from '../score/emphasis.ts'
 import { followMeasure, turnSystem } from '../score/follow.ts'
-import { scoreTarget } from '../score/hit.ts'
 import { ArchiveLimitError, readScoreText } from '../score/mxl.ts'
 import { lyricSyllables } from '../score/lyrics.ts'
-import { timbre } from '../score/sungVoice.ts'
-import { eventVowels } from '../score/vowels.ts'
 import { groupOf, voiceColor } from '../score/voiceGroups.ts'
 import { targetNotes } from '../score/pitch.ts'
-import { ScorePlayer, voiceGains } from '../score/player.ts'
-import { mixedGains, startingTones, transposedFifths, transposeTimeline } from '../score/practising.ts'
+import { usePlayback } from '../score/usePlayback.ts'
 import { resolveRange, sameNumber } from '../score/range.ts'
 import { sanitizeSvg } from '../score/sanitize.ts'
-import { measureStarts, nextPass, noteStarts } from '../score/timeline.ts'
 import { createToolkit } from '../score/toolkit.ts'
 import { voiceLabel } from '../score/voices.ts'
 import { nextZoom, storedZoom, storeZoom, ZOOM_DEFAULT, ZOOM_STEPS } from '../score/zoom.ts'
@@ -100,7 +90,6 @@ import { useStickyHeader } from '../stickyHeader.ts'
 import { copyText } from '../clipboard.ts'
 import { focusAfterDialog } from '../focus.ts'
 import { referenceWords } from '../labels.ts'
-import { startingTonesText } from '../practiceLabels.ts'
 import { textReference } from '../references.ts'
 import { revisionLine, shownRevision } from '../revisionLabels.ts'
 import { canonicalVoice, matchVoice, pointPlace, pointRange } from '../review.ts'
@@ -184,7 +173,6 @@ let toolkit: VerovioToolkit | null = null
 let toolkitReady: Promise<VerovioToolkit> | null = null
 /** Counter of the loads: only the latest one shows its result */
 let loadRun = 0
-let player: ScorePlayerType | null = null
 let disposed = false
 let resizeObserver: ResizeObserver | null = null
 let lastWidth = 0
@@ -441,7 +429,7 @@ function selectPoint(point: ReviewPoint): void {
 async function playPoint(point: ReviewPoint): Promise<void> {
 	selectPoint(point)
 	await nextTick()
-	if (canPlay.value && !player?.isPlaying) {
+	if (canPlay.value && !isPlaying()) {
 		await togglePlay()
 	}
 }
@@ -494,10 +482,7 @@ function openCorrection(point: ReviewPoint | null = null): void {
 		return
 	}
 	correctionHint.value = ''
-	if (player?.isPlaying) {
-		player.pause()
-		playing.value = false
-	}
+	pausePlayback()
 	correction.value = { range: shown, voice, pointId: point?.id ?? null }
 }
 
@@ -589,8 +574,8 @@ function layout(): void {
 		indexElements()
 		applyFocus()
 		resetHighlights()
-		if (player?.isPlaying) {
-			updatePosition(player.currentTime())
+		if (isPlaying()) {
+			updatePosition(playbackPosition())
 		}
 	})
 }
@@ -770,7 +755,6 @@ function applyFocus(): void {
 
 // ---- playback ---------------------------------------------------------------
 
-const playing = ref(false)
 /**
  * The voice, the measures, the tempo and the tools for practising
  * (PlaybackSettings): shown on a large screen, folded on a phone and on a
@@ -806,27 +790,32 @@ function requestClose() {
 function onCompactChange(event: MediaQueryListEvent): void {
 	compact.value = event.matches
 }
-const mode = ref<PlayMode>('all')
-const repeats = ref(true)
+/** Follow the playback in the score */
 const follow = ref(true)
-/** Play the shown measures again and again */
-const loop = ref(false)
-/** Bars of count-in, remembered in this browser */
-const countInBars = ref<CountInBars>(storedCountIn())
-const countInChoice = computed<'0' | '1' | '2'>({
-	get: () => String(countInBars.value) as '0' | '1' | '2',
-	set: (value) => {
-		countInBars.value = Number(value) as CountInBars
-	},
-})
-const tempoPercent = ref(100)
 const volumePercent = ref(70)
-/** Tools for practising (milestone 0.13): level per voice, semitones, metronome */
-const mix = ref<Mix>({})
-const transpose = ref(0)
-const metronome = ref(false)
-const position = ref(0)
-const timeline = shallowRef<Timeline>({ events: [], measures: [], duration: 0 })
+/** The playback, shared with the shared pages (usePlayback) */
+const {
+	playing, mode, repeats, loop, countInBars, countInChoice, tempoPercent, mix, transpose, metronome, position, timeline, soundFifths,
+	updateTimeline, playbackPosition, isPlaying, pausePlayback, giveStartingTones, togglePlay, playFrom, onScoreClick, stepMeasure, stop,
+	setLoop, destroy: destroyPlayer,
+} = usePlayback({
+	model,
+	range,
+	focusKey,
+	focusVoice,
+	pages: pagesElement,
+	canPlay: () => canPlay.value && status.value === 'ready',
+	labelOf,
+	measureNumber: () => currentMeasureNumber.value,
+	announce,
+	onPosition: updatePosition,
+	resetHighlights,
+	applyFocus,
+	onStarted: () => {
+		lastMeasureAnnouncement = Date.now()
+	},
+	volume: volumePercent,
+})
 
 // The server sends the reason translated; translateLabel also covers an English one
 const playReason = computed(() => score.value?.reason
@@ -868,39 +857,6 @@ const tempoHint = computed(() => {
 	return t('cantoria', 'The file gives no tempo; {mark} is assumed.', { mark: tempoMark(1) })
 })
 
-function updateTimeline(): void {
-	const loaded = model.value
-	if (!loaded) {
-		return
-	}
-	stop()
-	timeline.value = transposeTimeline(playbackTimeline(loaded, range.value, repeats.value), transpose.value)
-	player?.setTimeline(timeline.value)
-	player?.setMetronome(beats())
-}
-
-function gains(): (voice: string) => number {
-	return mixedGains(voiceGains(focusVoice.value?.members ?? [], mode.value), model.value?.voices ?? [], mix.value)
-}
-
-/** Clicks of the metronome, none while it is off. */
-function beats(): Click[] {
-	return metronome.value && model.value ? metronomeClicks(model.value, timeline.value) : []
-}
-
-/** Current place of the playback, for a recording */
-function playbackPosition(): number {
-	return player?.currentTime() ?? 0
-}
-
-/** Pause without a message, at the end of a recording */
-function pausePlayback(): void {
-	if (player?.isPlaying) {
-		player.pause()
-		playing.value = false
-	}
-}
-
 /** Printed numbers of the shown measures, for a passage to remember */
 const shownRange = computed(() => rangeNumbers.value ?? { from: numberSpan.value.first, to: numberSpan.value.last })
 
@@ -938,22 +894,12 @@ const lyricsStep = ref<'0' | '1' | '2' | '3'>('0')
 /** Syllables of that voice along the playback (milestone 0.14) */
 const syllables = computed(() => model.value && lyricsVoice.value ? lyricSyllables(model.value, timeline.value, lyricsVoice.value) : [])
 
-/** The vowels the sung voice sings, from the lyrics under the notes (November 2026) */
-const vowels = computed(() => model.value ? eventVowels(model.value, timeline.value) : undefined)
-watch([timbre, vowels], () => player?.setTimbre(timbre.value, vowels.value))
-
 /** Singing along with the pitch display, and why the microphone did not work */
 const pitchShown = ref(false)
 const pitchProblem = ref('')
 
 /** Tones of the focus voice for the pitch display (milestone 0.14) */
 const pitchNotes = computed(() => focusVoice.value ? targetNotes(timeline.value, focusVoice.value) : [])
-
-/** Key signature of the sound, after transposing */
-const soundFifths = computed(() => {
-	const fifths = model.value?.signatures.fifths ?? null
-	return fifths === null ? null : transposedFifths(fifths, transpose.value)
-})
 
 // Without a focus voice there is nothing to compare with
 watch(focusVoice, (voice) => {
@@ -971,188 +917,13 @@ const focusStyle = computed(() => {
 	return group ? { '--score-focus': voiceColor(group) } : undefined
 })
 
-/**
- * Give the starting tones from the current place: of the focus voice when
- * it plays alone, otherwise of every voice the mixer does not mute.
- */
-async function giveStartingTones(): Promise<void> {
-	const loaded = model.value
-	if (!loaded || playing.value) {
-		return
-	}
-	const voices = mode.value === 'solo' && focusVoice.value
-		? [focusVoice.value]
-		: loaded.voices.filter((voice) => (mix.value[voice.key] ?? 100) > 0)
-	const tones = startingTones(timeline.value, voices, player?.currentTime() ?? 0)
-	announce(startingTonesText(tones, labelOf, soundFifths.value))
-	await ensurePlayer().playTones(tones.map((tone) => tone.pitch))
-}
-
-function ensurePlayer(): ScorePlayerType {
-	if (!player) {
-		player = new ScorePlayer({
-			onPosition: updatePosition,
-			onEnd: () => {
-				playing.value = false
-				position.value = 0
-				resetHighlights()
-				announce(t('cantoria', 'End of playback.'))
-			},
-		})
-		player.setTimeline(timeline.value)
-		player.setRate(tempoPercent.value / 100)
-		player.setVolume(volumePercent.value / 100)
-		player.setGains(gains())
-		player.setMetronome(beats())
-		player.setLoop(loop.value)
-		player.setTimbre(timbre.value, vowels.value)
-	}
-	return player
-}
-
-async function togglePlay(): Promise<void> {
-	if (!canPlay.value || status.value !== 'ready') {
-		return
-	}
-	const current = ensurePlayer()
-	if (current.isPlaying) {
-		current.pause()
-		playing.value = false
-		announce(t('cantoria', 'Paused at measure {number}.', { number: currentMeasureNumber.value }))
-		return
-	}
-	await startPlaying(current)
-}
-
-/**
- * Start playing from the player's position, with the count-in.
- *
- * @param current - the player
- */
-async function startPlaying(current: ScorePlayerType): Promise<void> {
-	resetHighlights()
-	const loaded = model.value
-	const bars = countInBars.value
-	await current.play(loaded && bars > 0 ? (time) => countInFor(loaded, timeline.value, time, bars) : undefined)
-	playing.value = current.isPlaying
-	if (playing.value) {
-		// The start message comes first; measures are announced 3 s later at the earliest
-		lastMeasureAnnouncement = Date.now()
-		updatePosition(current.currentTime())
-		const number = currentMeasureNumber.value
-		announce(bars > 0
-			? t('cantoria', 'Count-in, then playing from measure {number}.', { number })
-			: t('cantoria', 'Playing from measure {number}.', { number }))
-	}
-}
-
-/**
- * Go to a place of the playback: while playing, it continues there;
- * otherwise the next start begins there.
- *
- * @param time - position in seconds of the timeline
- */
-function moveTo(time: number): void {
-	const current = ensurePlayer()
-	current.seek(time)
-	resetHighlights()
-	updatePosition(time)
-	lastMeasureAnnouncement = Date.now()
-	const number = currentMeasureNumber.value
-	announce(current.isPlaying
-		? t('cantoria', 'Playing from measure {number}.', { number })
-		: t('cantoria', 'Start at measure {number}.', { number }))
-}
-
-/**
- * Play from a place: a clicked note or measure.
- *
- * @param time - position in seconds of the timeline
- */
-async function playFrom(time: number): Promise<void> {
-	const current = ensurePlayer()
-	if (current.isPlaying) {
-		moveTo(time)
-		return
-	}
-	current.seek(time)
-	await startPlaying(current)
-}
-
-/**
- * A click or a tap into the score: on a note or a measure (see
- * scoreTarget), the playback starts there (at its next pass from the
- * current position). One handler on the
- * container; the SVG itself carries no handlers.
- *
- * @param event - click event
- */
-function onScoreClick(event: MouseEvent): void {
-	const target = scoreTarget(event, pagesElement.value)
-	const loaded = model.value
-	if (!target || !loaded || !canPlay.value || status.value !== 'ready') {
-		return
-	}
-	const after = player?.currentTime() ?? 0
-	const note = target.closest('g.note[data-id]')
-	let time = note ? nextPass(noteStarts(timeline.value, note.getAttribute('data-id') ?? ''), after) : null
-	if (time === null) {
-		const measure = target.closest('g.measure[data-id]')
-		const index = measure ? loaded.measures.findIndex((candidate) => candidate.id === measure.getAttribute('data-id')) : -1
-		time = index === -1 ? null : nextPass(measureStarts(timeline.value, index), after)
-	}
-	if (time !== null) {
-		playFrom(time)
-	}
-}
-
-/**
- * The keyboard alternative to clicking a note: arrow left and right in the
- * score go to the previous or next measure in playing order.
- *
- * @param step - -1 back, +1 forward
- */
-function stepMeasure(step: number): void {
-	const slots = timeline.value.measures
-	if (slots.length === 0) {
-		return
-	}
-	const current = Math.max(0, slotAt(slots, player?.currentTime() ?? 0))
-	moveTo(slots[Math.min(slots.length - 1, Math.max(0, current + step))].start)
-}
-
-function stop(): void {
-	if (!player) {
-		return
-	}
-	const wasActive = player.isPlaying || player.currentTime() > 0
-	player.stop()
-	playing.value = false
-	position.value = 0
-	resetHighlights()
-	if (wasActive) {
-		announce(t('cantoria', 'Stopped.'))
-	}
-}
-
-watch([focusKey, mode], () => {
-	applyFocus()
-	player?.setGains(gains())
-})
-watch(mix, () => player?.setGains(gains()))
-watch(transpose, () => updateTimeline())
-watch(metronome, () => player?.setMetronome(beats()))
-watch(tempoPercent, (value) => player?.setRate(value / 100))
-watch(volumePercent, (value) => player?.setVolume(value / 100))
-watch(repeats, () => updateTimeline())
-watch(countInBars, (bars) => storeCountIn(bars))
 watch(loop, (on) => {
 	// The loop takes the measures of the fields "From measure" and "To measure"
 	const applied = rangeNumbers.value ?? { from: numberSpan.value.first, to: numberSpan.value.last }
 	if (on && (!sameNumber(applied.from, rangeFrom.value || applied.from) || !sameNumber(applied.to, rangeTo.value || applied.to))) {
 		applyRange()
 	}
-	player?.setLoop(on)
+	setLoop(on)
 	const shown = rangeNumbers.value ?? { from: numberSpan.value.first, to: numberSpan.value.last }
 	announce(on
 		? t('cantoria', 'Loop on: measures {from} to {to} play again and again.', shown)
@@ -1172,7 +943,7 @@ const exportReason = computed(() => (practiceAudioOn.value && score.value?.expor
 const tempoValue = computed(() => t('cantoria', '{percent} % ({mark})', { percent: tempoPercent.value, mark: tempoMark(tempoPercent.value / 100) }))
 
 function openPractice(): void {
-	if (player?.isPlaying) {
+	if (isPlaying()) {
 		togglePlay()
 	}
 	practiceOpen.value = true
@@ -1192,7 +963,7 @@ const canLargePrint = computed(() => isModuleActive('large_print') && hasAnyRole
 	&& scoreText.value !== '' && props.detail.version.preservation_copy !== true)
 
 function openLargePrint(): void {
-	if (player?.isPlaying) {
+	if (isPlaying()) {
 		togglePlay()
 	}
 	largePrintOpen.value = true
@@ -1467,8 +1238,7 @@ onBeforeUnmount(() => {
 	if (resizeTimer !== null) {
 		clearTimeout(resizeTimer)
 	}
-	player?.destroy()
-	player = null
+	destroyPlayer()
 	toolkit?.destroy()
 	toolkit = null
 })
@@ -1680,16 +1450,18 @@ onBeforeUnmount(() => {
 							<NcCheckboxRadioSwitch v-model="follow" type="switch">
 								{{ t('cantoria', 'Scroll along') }}
 							</NcCheckboxRadioSwitch>
-							<label class="score-viewer__slider" :for="volumeId">
-								<span>{{ t('cantoria', 'Volume: {percent} %', { percent: volumePercent }) }}</span>
+							<!-- the label names the slider; its value is the level only, not "volume" again (D-7) -->
+							<div class="score-viewer__slider">
+								<!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+								<label :for="volumeId">{{ t('cantoria', 'Volume: {percent} %', { percent: volumePercent }) }}</label>
 								<input :id="volumeId"
 									v-model.number="volumePercent"
 									type="range"
 									min="0"
 									max="100"
 									step="5"
-									:aria-valuetext="t('cantoria', '{percent} % volume', { percent: volumePercent })">
-							</label>
+									:aria-valuetext="t('cantoria', '{percent} %', { percent: volumePercent })">
+							</div>
 						</template>
 					</PlaybackSettings>
 					<div v-if="canPlay && canExportAudio" class="score-viewer__buttons">
@@ -1734,11 +1506,10 @@ onBeforeUnmount(() => {
 							</template>
 							{{ t('cantoria', 'This passage') }}
 						</NcButton>
+						<!-- no group of its own: the section around it has the name already (D-8) -->
 						<div v-show="placeShown"
 							:id="placeId"
-							class="score-viewer__place score-viewer__line"
-							role="group"
-							:aria-label="t('cantoria', 'This passage')">
+							class="score-viewer__place score-viewer__line">
 							<span class="score-viewer__hint score-viewer__reference">{{ reference }}</span>
 							<NcButton variant="tertiary" @click="copyReference">
 								<template #icon>
@@ -2093,7 +1864,7 @@ onBeforeUnmount(() => {
 .score-viewer__slider {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: calc(var(--default-grid-baseline) / 2);
 	min-width: 12em;
 }
 
@@ -2311,6 +2082,13 @@ onBeforeUnmount(() => {
 		height: auto;
 		padding: 0;
 		overflow: visible;
+	}
+
+	/* a dark theme has light text: title and version line black on the white paper (D-5) */
+	.score-viewer,
+	.score-viewer__title,
+	.score-viewer__subtitle {
+		color: #000;
 	}
 
 	.score-viewer__state,

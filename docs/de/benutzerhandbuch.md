@@ -770,7 +770,12 @@ Stück wie für einen Ausschnitt.
 (**Intern**, **Für Chormitglieder**, **Öffentlich**), mit dem, was er teilt
 (**Ganzes Stück** oder die Takte, dazu **mit Scan (PDF)**), seiner
 Gültigkeit und der Zahl der Aufrufe; *„Endet in … Tagen“* warnt in der
-letzten Woche. **Link widerrufen** sperrt einen Link sofort für alle.
+letzten Woche. Links, die in einer Woche enden, stehen in der Liste vorn
+und werden darüber gezählt; die Startseite zeigt eine Karte für die Links,
+die du verlängern kannst und die in einer Woche enden oder abgelaufen
+sind. **Link widerrufen** sperrt einen Link sofort für alle; was
+Chormitglieder auf einem Gerät behalten haben, verschwindet dort, sobald
+die Seite das nächste Mal mit Netz geöffnet wird.
 **Verlängern** gibt ihm einen neuen letzten Tag; der Dialog nennt den
 spätesten Tag und den Grund: höchstens sechs Monate ab heute, höchstens ein
 Jahr nach dem Anlegen des Links und nie über das Ende der Lizenz hinaus, die
@@ -1749,8 +1754,10 @@ Zuordnungen gelten als geschützt.
 
 **Schutzfristen** listet, was zu prüfen ist: als geschützt eingetragene
 Fassungen, die nach den Lebensdaten gemeinfrei sind, als gemeinfrei
-eingetragene Fassungen, die die erfassten Personen nicht erlauben, und
-geschützte Fassungen mit bekanntem Schutzende.
+eingetragene Fassungen, die die erfassten Personen nicht erlauben, als
+gemeinfrei bestätigte Fassungen, deren Vorschlag jetzt „unbekannt“ lautet,
+weil zu einer Bearbeitung keine Person mit der Rolle **Bearbeitung**
+erfasst ist, und geschützte Fassungen mit bekanntem Schutzende.
 
 > [!IMPORTANT]
 > Der Vorschlag ändert nie den Rechtestatus. Die Archivverwaltung prüft ihn

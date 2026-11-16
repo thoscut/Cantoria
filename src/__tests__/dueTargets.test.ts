@@ -27,9 +27,13 @@ describe('dueTarget', () => {
 		expect(dueTarget('licenses_expiring')).toEqual({ view: 'licenses' })
 	})
 
+	it('leads the card of the links to the view "Links"', () => {
+		expect(dueTarget('links_ending')).toEqual({ view: 'links' })
+	})
+
 	it('knows every card key of docs/api.md', () => {
 		const keys = ['tasks_open', 'tasks_answered', 'proposals', 'portal_remove', 'portal_add', 'confirm_current',
-			'rule1_current', 'licenses_expiring', 'valid_missing', 'ambiguous_items']
+			'rule1_current', 'licenses_expiring', 'valid_missing', 'ambiguous_items', 'links_ending']
 		for (const key of keys) {
 			const target = dueTarget(key)
 			expect(target.view).toBeTruthy()

@@ -57,7 +57,7 @@ async function load(): Promise<void> {
 
 onMounted(load)
 
-const KINDS = ['ended', 'conflict', 'upcoming'] as const
+const KINDS = ['ended', 'conflict', 'unknown', 'upcoming'] as const
 
 const groups = computed(() => KINDS
 	.map((kind) => ({ kind, rows: rows.value.filter((row) => row.kind === kind) }))
@@ -66,7 +66,7 @@ const groups = computed(() => KINDS
 /**
  * Heading of a group.
  *
- * @param kind - ended, conflict or upcoming
+ * @param kind - ended, conflict, unknown or upcoming
  */
 function kindTitle(kind: string): string {
 	switch (kind) {
@@ -74,6 +74,8 @@ function kindTitle(kind: string): string {
 		return t('cantoria', 'Marked protected, but public domain by the life dates')
 	case 'conflict':
 		return t('cantoria', 'Marked public domain, but the persons do not allow it')
+	case 'unknown':
+		return t('cantoria', 'Confirmed as public domain, but the proposal is now unknown')
 	default:
 		return t('cantoria', 'Protected with a known end')
 	}
@@ -127,6 +129,10 @@ function dateText(row: ProtectionReviewRow): string {
 					<NcIconSvgWrapper :path="mdiCheckCircleOutline" />
 				</template>
 			</NcEmptyContent>
+			<!-- what to do with the list, not only what is wrong (U-12) -->
+			<p v-if="groups.length > 0" class="protection-view__hint no-print">
+				{{ t('cantoria', 'A shelf mark opens the rights of the copy, where the status is decided.') }}
+			</p>
 			<section v-for="group in groups"
 				:key="group.kind"
 				class="protection-view__group"
@@ -193,6 +199,11 @@ function dateText(row: ProtectionReviewRow): string {
 	flex-direction: column;
 	gap: calc(5 * var(--default-grid-baseline));
 	padding: calc(3 * var(--default-grid-baseline));
+}
+
+.protection-view__hint {
+	margin: 0;
+	color: var(--color-text-maxcontrast);
 }
 
 .protection-view__group h3 {

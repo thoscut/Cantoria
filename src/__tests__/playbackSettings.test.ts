@@ -100,6 +100,17 @@ describe('PlaybackSettings', () => {
 		expect(wrapper.find('input[type="range"]').exists()).toBe(false)
 	})
 
+	it('names the tempo slider by its label only; the hint is its description (D-7)', () => {
+		const wrapper = mount(PlaybackSettings, { props: props() })
+		const slider = wrapper.find('input[type="range"]')
+		const label = wrapper.find(`label[for="${slider.attributes('id')}"]`)
+		expect(label.text()).toBe('Tempo: 100 %')
+		expect(label.text()).not.toContain('Percent of the tempo in the score.')
+		// neither the slider nor the hint inside the label: screen readers would read them twice
+		expect(label.element.contains(slider.element)).toBe(false)
+		expect(wrapper.find(`[id="${slider.attributes('aria-describedby')}"]`).text()).toBe('Percent of the tempo in the score.')
+	})
+
 	it('shows the measures typed in', async () => {
 		const wrapper = mount(PlaybackSettings, { props: props() })
 		await wrapper.find('form').trigger('submit')

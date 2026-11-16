@@ -34,10 +34,19 @@ class Export extends Command {
 
 	#[\Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
-		$content = $input->getOption('full')
-			? $this->fullBackup->export()
-			: $this->export->csv((bool)$input->getOption('extended'));
-		$output->write($content, false, OutputInterface::OUTPUT_RAW);
+		if ($input->getOption('full')) {
+			// block by block: the backup is never held in memory as a whole
+			$stream = $this->fullBackup->exportStream();
+			try {
+				while (!feof($stream) && ($block = fread($stream, 1024 * 1024)) !== false && $block !== '') {
+					$output->write($block, false, OutputInterface::OUTPUT_RAW);
+				}
+			} finally {
+				fclose($stream);
+			}
+			return 0;
+		}
+		$output->write($this->export->csv((bool)$input->getOption('extended')), false, OutputInterface::OUTPUT_RAW);
 		return 0;
 	}
 }

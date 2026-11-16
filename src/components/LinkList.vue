@@ -70,6 +70,18 @@ function place(link: ExcerptLink): string {
 }
 
 /**
+ * Shelf mark and title of the copy, for the dialogs of the list across
+ * copies: many links read the same there, and revoking cannot be undone
+ * (U-4).
+ *
+ * @param link - excerpt link
+ */
+function pieceName(link: ExcerptLink): string {
+	const entry = entriesById.value.get(link.copy_id)
+	return `${entry?.shelfmark ?? link.copy_id} ${entry?.title ?? ''}`.trim()
+}
+
+/**
  * Who can open the link, as text (not only as a color).
  *
  * @param link - excerpt link
@@ -302,6 +314,7 @@ async function extend(): Promise<void> {
 						<NcButton v-if="link.token !== null && section.key !== 'ended'"
 							variant="tertiary"
 							:aria-label="t('cantoria', 'Copy link')"
+							:title="t('cantoria', 'Copy link')"
 							@click="copy(link)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiContentCopy" />
@@ -318,6 +331,7 @@ async function extend(): Promise<void> {
 						<NcButton v-if="canRevoke(link)"
 							variant="tertiary"
 							:aria-label="t('cantoria', 'Revoke link')"
+							:title="t('cantoria', 'Revoke link')"
 							@click="revoking = link; error = ''">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiLinkOff" />
@@ -337,7 +351,14 @@ async function extend(): Promise<void> {
 			@submit="revoke"
 			@close="revoking = null">
 			<p>{{ t('cantoria', 'The link stops working immediately for everyone. This cannot be undone.') }}</p>
+			<!-- only links for choir members and public links are kept on devices (U-5) -->
+			<p v-if="revoking.circle !== 'internal'">
+				{{ t('cantoria', 'What was kept on devices for use without a network is removed the next time the page opens there with a network.') }}
+			</p>
 			<p class="link-list__title">
+				<template v-if="showCopy">
+					{{ pieceName(revoking) }} ·
+				</template>
 				{{ place(revoking) }}
 			</p>
 		</ActionDialog>
@@ -350,6 +371,9 @@ async function extend(): Promise<void> {
 			@submit="extend"
 			@close="extending = null">
 			<p class="link-list__title">
+				<template v-if="showCopy">
+					{{ pieceName(extending) }} ·
+				</template>
 				{{ place(extending) }}
 			</p>
 			<p v-if="extending.circle === 'public' && hasEnded(extending.expires, today)">
@@ -378,6 +402,8 @@ async function extend(): Promise<void> {
 
 .link-list__item {
 	display: flex;
+	/* narrow (320px, the sidebar): the buttons go below the text instead of squeezing it (D-3) */
+	flex-wrap: wrap;
 	justify-content: space-between;
 	gap: calc(2 * var(--default-grid-baseline));
 	padding-block: calc(2 * var(--default-grid-baseline));
@@ -413,6 +439,7 @@ async function extend(): Promise<void> {
 }
 
 .link-list__body {
+	flex: 1 1 16em;
 	min-width: 0;
 }
 
@@ -460,5 +487,6 @@ async function extend(): Promise<void> {
 	display: flex;
 	flex-shrink: 0;
 	align-items: flex-start;
+	margin-inline-start: auto;
 }
 </style>

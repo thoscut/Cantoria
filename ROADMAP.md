@@ -125,11 +125,11 @@ interne Zwischenstände heißen `0.7.0-dev.1` usw. (siehe `docs/release.md`).
 
 ### Stand auf einen Blick
 
-Stand: 3. November 2026. **Fertig** heißt: im Code, getestet und in einer
+Stand: 16. November 2026. **Fertig** heißt: im Code, getestet und in einer
 Version auf `main`. **Auf `main`** heißt: im Code, getestet und in `main`
-zusammengeführt, aber noch in keiner Version. **Im Review** heißt: fertig
-im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
-**Geplant** heißt: noch nicht begonnen.
+zusammengeführt, aber noch in keiner Version mit Tag. **Im Review** heißt:
+fertig im Code und grün in der CI, aber noch nicht in `main`
+zusammengeführt. **Geplant** heißt: noch nicht begonnen.
 
 | Meilenstein | Stand | Wo |
 |---|---|---|
@@ -144,29 +144,33 @@ im Code und grün in der CI, aber noch nicht in `main` zusammengeführt.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | Version 0.17.0 vorbereitet; offen beim Maintainer: Markenprüfung, Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys (heute `thoscut/Cantoria`) | PR #14, #15, #16, Version 0.17.0 |
-| 0.18 Rechte auf allen neuen Wegen | im Review bis auf drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) | PR #14, #16 |
-| 0.19 Üben und Vortragen am Gerät | im Review bis auf `usePlayback`, eigene Startadresse des Home-Bildschirms und Abnahme auf echten Geräten | PR #14, #16 |
-| 0.20 Einführen und umsteigen | im Review bis auf Screenshots aus einer echten Nextcloud und eine Demo | PR #14, #16 |
-| 1.0 Stabil | geplant | – |
+| 0.17 Bereit zur ersten Veröffentlichung | auf `main`, Version 0.17.0 vorbereitet (noch ohne Tag); offen beim Maintainer: amtliche Markenprüfung (die Registerrecherche vom 16. November 2026 steht in `docs/de/namensrecherche-cantoria.md`), Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys | PR #14, #15, #16 |
+| 0.18 Rechte auf allen neuen Wegen | auf `main`; die drei Reste (alte MusicXML neu bereinigen, Wiedervorlage bei „unbekannt“, Abfragen in `attribution()` bündeln) im Review; offen: drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) und die anwaltliche Bestätigung zu MusicXML auf Geräten (R B26) | PR #14, #16; Reste im PR vom 16. November |
+| 0.19 Üben und Vortragen am Gerät | auf `main`; `usePlayback` und die eigene Startadresse des Home-Bildschirms im Review; offen: Abnahme auf echten Geräten (auch für 0.13 bis 0.15) | PR #14, #16; Reste im PR vom 16. November |
+| 0.20 Einführen und umsteigen | auf `main`; Sicherung als Datenstrom, Abgrenzung zum Orchestra Scores Manager und Versionshinweis im Store im Review; offen: Screenshots aus einer echten Nextcloud, Demo oder Video | PR #14, #16; Reste im PR vom 16. November |
+| Zahlen aus den Noten, Programmheft, Großdruck, geführte Einrichtung, Vergleich mit dem Chorsystem | auf `main` (`0.18.0-dev.1`) | PR #17 bis #20 |
+| UX- und Design-Review vom 16. November 2026 | im Review: 26 von 27 Befunden umgesetzt; offen: ein gemeinsames CSS der beiden Notenansichten (D-14) und die Prüfung auf Geräten und mit Screenreader | PR vom 16. November |
+| 1.0 Stabil | geplant; begonnen sind die Lasttests (Sicherung mit 120 000 Zeilen, „Mit mir geteilt“ mit 200 Links) | – |
 
-Die aktuelle Version ist 0.16.1: Die App heißt jetzt Cantoria, vorher
-„Notenarchiv“. Die Meilensteine 0.10 bis 0.15 kamen mit 0.15.0 (PR #10
-bis #12). Das Experten-Review vom 29. Oktober 2026 (UX, Design und
-Barrierefreiheit, Architektur, Sicherheit, Recht, Tests und CI, Wettbewerb)
-hat auf Stand 0.16.1 keine kritischen Befunde ergeben. Seine Punkte stehen
-in den Meilensteinen 0.17 bis 0.20 und in 1.0; die Kürzel in Klammern
-verweisen auf die Befunde der Berichte (U = UX, D = Design, A = Architektur,
-S = Sicherheit, R = Recht, T = Tests und CI, W = Wettbewerb).
+Die letzte Version mit Tag ist 0.16.1: Die App heißt seitdem Cantoria,
+vorher „Notenarchiv“. `main` steht auf `0.18.0-dev.1`; die Version 0.17.0
+ist im `CHANGELOG.md` vorbereitet. Die Meilensteine 0.10 bis 0.15 kamen
+mit 0.15.0 (PR #10 bis #12). Das Experten-Review vom 29. Oktober 2026 (UX,
+Design und Barrierefreiheit, Architektur, Sicherheit, Recht, Tests und CI,
+Wettbewerb) hat auf Stand 0.16.1 keine kritischen Befunde ergeben. Seine
+Punkte stehen in den Meilensteinen 0.17 bis 0.20 und in 1.0; die Kürzel in
+Klammern verweisen auf die Befunde der Berichte (U = UX, D = Design,
+A = Architektur, S = Sicherheit, R = Recht, T = Tests und CI,
+W = Wettbewerb).
 
-PR #14 und #15 sind seit dem 30. Oktober 2026 in `main`, aber noch in
-keiner Version. Das Experten-Review vom 3. November 2026 hat den Stand auf
-`main` (Commit `e174aa5`) mit denselben sieben Fächern geprüft, wieder ohne
-kritische Befunde. Seine Punkte sind unten als *Ergänzt am 3. November
-2026* in die Meilensteine eingetragen. Die Kürzel dort nennen die
-Befundnummern der Berichte vom 3. November (z. B. U22, D18, S N12, R B19,
-W B14); die älteren Kürzel wie „U 7“ zählen anders und bleiben, wie sie
-sind.
+PR #14 und #15 sind seit dem 30. Oktober 2026 in `main`, PR #16 seit dem
+4. November 2026, aber noch in keiner Version mit Tag. Das Experten-Review
+vom 3. November 2026 hat den Stand auf `main` (Commit `e174aa5`) mit
+denselben sieben Fächern geprüft, wieder ohne kritische Befunde. Seine
+Punkte sind unten als *Ergänzt am 3. November 2026* in die Meilensteine
+eingetragen. Die Kürzel dort nennen die Befundnummern der Berichte vom
+3. November (z. B. U22, D18, S N12, R B19, W B14); die älteren Kürzel wie
+„U 7“ zählen anders und bleiben, wie sie sind.
 
 Am Nachmittag des 3. November 2026 hat eine zweite Runde mit denselben
 sieben Fächern den Stand von PR #16 (Commit `a2073a5`, `0.17.0-dev.2`)
@@ -178,6 +182,44 @@ fehlende Angabe, dass Cantoria in Nextcloud All-in-One nicht läuft
 (W B23). Ihre Punkte stehen als *Ergänzt am 3. November 2026, zweite
 Runde* in den Meilensteinen; die Nummern setzen die Berichte vom
 Vormittag fort (z. B. U37, D27, A22, S N16, R B24, T24, W B22).
+
+Am 16. November 2026 haben ein UX- und ein Design-Review den Stand auf
+`main` (`0.18.0-dev.1`) noch einmal durchgesehen, diesmal nur die
+Oberfläche: 13 und 14 Befunde, keiner kritisch. Ihre Kürzel tragen einen
+Bindestrich (U-1 bis U-13, D-1 bis D-14) und stehen so auch in den
+Kommentaren im Code. Umgesetzt und im Review sind 26 davon:
+
+- **Geteilte Seiten:** „Ende des Programms“ steht nur noch unter dem
+  letzten Stück (U-1, ein Fehler); ein Link, der in einer Woche endet,
+  sagt das und wer ihn verlängern kann (U-2); was vom Gerät entfernt
+  wurde, ist zu lesen und nicht nur zu hören (U-11); leere
+  Zustände nennen den nächsten Schritt (U-8 bis U-10); lange
+  Beschriftungen von Knöpfen brechen um statt mit „…“ zu enden (D-1); die
+  Leiste der Noten bricht um (D-4); Druck in Schwarz (D-5); das Tempo wird
+  einmal angesagt statt bei jedem Schritt (D-6); die gewählte Stimme hat
+  einen Haken und nicht nur eine Farbe (D-9).
+- **Archiv:** Die Startseite zeigt eine Karte für Links, die in einer
+  Woche enden oder abgelaufen sind, für alle, die sie verlängern dürfen
+  (U-3); die Ansicht „Links“ stellt sie nach vorn und zählt sie (U-7);
+  die Dialoge zum Widerrufen und Verlängern nennen das Stück (U-4) und
+  was das Widerrufen für Geräte bedeutet (U-5); „Schutz“ sagt, wohin die
+  Signatur führt (U-12); in einem niedrigen Fenster bleibt der Kopf nicht
+  stehen und verdeckt nichts (D-2, WCAG 1.4.10); die Regler haben eine
+  Beschriftung nur mit ihrem Namen (D-7); Szenarien der Einrichtung
+  stehen als Überschrift (D-11); Abstände im Raster (D-12, D-13).
+
+Offen bleibt D-14, ein gemeinsames CSS für die Notenansicht des Archivs
+und der geteilten Seiten: Das ändert das Notenbild an vielen Stellen und
+braucht den Vergleich in einem echten Browser. Dort ist auch zu prüfen,
+ob in einem niedrigen Fenster, in dem der Kopf nicht mehr stehen bleibt,
+der Fokus unter den Knopf der Navigation geraten kann. Zwei unabhängige
+Durchsichten des Codes (Server und Oberfläche) haben 13 Punkte gefunden,
+keinen kritischen; sie sind behoben, darunter Grenzen für den Speicher
+beim Lesen einer Sicherung und ein Manifest öffentlicher Links, das
+nicht verrät, ob das Modul eingeschaltet ist. Geprüft ist alles in
+Tests und mit den Werkzeugen, nicht auf Geräten und nicht mit einem
+Screenreader; das gehört zur Geräteabnahme (0.19) und zum Nutzertest
+(1.0).
 
 ### 0.1 Fundament
 
@@ -680,7 +722,7 @@ Store nur noch schwer zu ändern ist, kommt zuerst.
   `composer audit` als Pflichtschritt in der CI, Dependabot oder Renovate
   (S N10, T).
 
-*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf die
+*Ergänzt am 3. November 2026; auf `main` (PR #16), umgesetzt bis auf die
 Klärung der Schriftlizenz Liberation in Verovio (Version 1.04 von 2007
 stand unter GPL-2.0 mit Font-Ausnahme, Verovio nennt OFL; Sache des
 Maintainers, gegebenenfalls anwaltlich) und die amtliche Markenprüfung.
@@ -722,7 +764,7 @@ ersten Tag.*
   vorhandenen Bestand, neben dem Chorsystem; README verlinkt
   `alongside-a-choir-system.md` und `for-choir-members.md` (W B13, W B14).
 
-*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+*Ergänzt am 3. November 2026, zweite Runde; auf `main` (PR #16), umgesetzt
 bis auf den Probelauf der Release-Kette (erst nach dem Merge möglich), den
 Vergleich der Migrationsliste mit dem vorigen Tag und die Punkte des
 Maintainers: Branch-Schutz mit dem Pflicht-Check „CI result“, Angaben des
@@ -861,7 +903,7 @@ Links (R B2) und die Exporte (S N1).
   dem Abmelden auf dem Gerät bleibt; `SECURITY.md` danach berichtigen
   (S N6).
 
-*Ergänzt am 3. November 2026; im Review (PR #16). Mit PR #16 sind auch die
+*Ergänzt am 3. November 2026; auf `main` (PR #16). Mit PR #16 sind auch die
 früheren Punkte dieses Meilensteins umgesetzt (Exporte, Scan in
 öffentlichen Links, Übergabeordner, Nutzungsarten, Lizenzende, § 66 UrhG,
 Aufgaben, Delegation, Protokoll, Datenschutz-Paket, Abmelden am
@@ -899,15 +941,22 @@ dieses Kontos, sonst hält die Sicherung an).*
 - **Bestätigungsdialog** um die neuen Wege ergänzen, Bestätigung beim
   Abspielen nach außen prüfen (R B14, B15, M4).
 
-*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+*Ergänzt am 3. November 2026, zweite Runde; auf `main` (PR #16), umgesetzt
 bis auf: ob ein Schutzstatus „unbekannt“ auch als Rechtekonflikt gilt
-(würde viele öffentliche Links schließen; Entscheidung des Maintainers),
-eine Markierung im Manifest, um alte MusicXML im Übergabeordner neu zu
-bereinigen, die Wiedervorlage bestätigter Fassungen, deren Vorschlag jetzt
-„unbekannt“ lautet, und das Bündeln der Rollenprüfung und der
-Lizenzabfrage in `attribution()` mit Lasttest (Rest von A25, 1.0). Die
-Entscheidung zu MusicXML auf Geräten (R B26) ist vorsichtig getroffen und
-sollte vor 1.0 anwaltlich bestätigt werden.*
+(würde viele öffentliche Links schließen; Entscheidung des Maintainers).
+Die Entscheidung zu MusicXML auf Geräten (R B26) ist vorsichtig getroffen
+und sollte vor 1.0 anwaltlich bestätigt werden.*
+
+*Am 16. November 2026 nachgezogen (im Review):* Das Manifest des
+Übergabeordners merkt sich bei MusicXML neben dem Stand der Quelle auch
+die Fassung der Bereinigung (`HandoverService::CLEANING`); ändert sie
+sich, schreibt der nächste Lauf alle alten Dateien neu. Unter „Schutz“
+kommen bestätigte gemeinfreie Fassungen wieder vor, deren Vorschlag jetzt
+„unbekannt“ lautet, weil der Bearbeiter fehlt (eigene Gruppe, zählt bei
+den offenen Rechten der Startseite mit; Links schließt das nicht).
+„Mit mir geteilt“ liest die Personen aller Beteiligten eines Stücks in
+einer Abfrage und die Lizenzen je Fassung einmal je Aufruf; ein Lasttest
+mit 200 Links auf 50 Stücke zählt die Abfragen (Rest von A25).
 
 - **Eine Regel für Behalten und Drucken:** heute steht sie an fünf
   Stellen, und öffentliche Links prüfen bei einem Rechtekonflikt nur
@@ -961,9 +1010,9 @@ in der Höhe begrenzt, Vortragsmodus der Konzertmappe, ein Muster für „ohne
 Netz speichern“ mit Hinweis auf den Home-Bildschirm, Skripte bei jedem
 Start mit Netz, Programm mit dem Chor teilen und Links verlängern,
 Kontrastmodus und Auswahl nicht nur über Farbe, Druck der Noten.
-*Offen:* Scan am Handy als eigene Ansicht, gemeinsames `usePlayback` und
-`useKeptPieces`, Vortragsmodus in der Notenansicht des Archivs, Abnahme
-auf echten Geräten.
+*Offen:* Scan am Handy als eigene Ansicht, gemeinsames `useKeptPieces`,
+Vortragsmodus in der Notenansicht des Archivs, Abnahme auf echten Geräten.
+Das gemeinsame `usePlayback` kam am 16. November 2026 (im Review).
 
 - **Sängeransicht neu ordnen:** zuerst die Stimme, dann was von ihr
   abhängt; die Übe-Werkzeuge in benannte Abschnitte statt über 20
@@ -996,11 +1045,18 @@ auf echten Geräten.
   echten Nextcloud, mit Protokoll; das schließt die offene Abnahme von
   0.13 bis 0.15 ein.
 
-*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf
-`usePlayback` (die gemeinsame Abspiel-Logik bleibt bis zur Geräteabnahme
-doppelt) und eine eigene Startadresse für den Home-Bildschirm (U25: der
-Core bindet das Manifest des Themings ein; die Seiten erklären statt dessen
-den Weg über Lesezeichen). Auf echten Geräten geprüft ist nichts davon.*
+*Ergänzt am 3. November 2026; auf `main` (PR #16). Auf echten Geräten
+geprüft ist nichts davon.*
+
+*Am 16. November 2026 nachgezogen (im Review):* Die Abspiel-Logik steht
+einmal in `src/score/usePlayback.ts`; die Notenansicht des Archivs und die
+geteilten Seiten nutzen sie beide, mit eigenem Test. Konzertmappe und
+öffentliche Links liefern ein eigenes Manifest mit ihrer Adresse als
+Startadresse (`/concert-folder/manifest`, `/p/{token}/manifest`) und
+setzen es an die Stelle des Manifests des Themings (U25). Ob iPhone,
+iPad und Android das Symbol damit wirklich auf die Seite legen, gehört
+zur Geräteabnahme; bis dahin bleibt der Hinweis auf das Lesezeichen in
+der Konzertmappe stehen.
 
 - **Bühnenansicht reparieren:** Vollbild für das ganze Dokument statt nur
   für den Abschnitt des Stücks, damit Rückfragen und Auswahllisten
@@ -1029,7 +1085,7 @@ den Weg über Lesezeichen). Auf echten Geräten geprüft ist nichts davon.*
 - **Die Abnahme auf Geräten** umfasst Bühnenansicht, Pedal, Querformat und
   Scan (D2, D8, D19).
 
-*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+*Ergänzt am 3. November 2026, zweite Runde; auf `main` (PR #16), umgesetzt
 und in Chromium geprüft; Escape im echten Vollbild, die Zurück-Geste auf
 Android und iOS und die Lage der Noten auf echten Geräten gehören zur
 Geräteabnahme.*
@@ -1070,9 +1126,9 @@ Anleitung für Chormitglieder, neues App-Icon, Store-Text.
 Mit PR #16 dazu: Import aus CSV, XLSX und ODS mit Vorlage und neutralem
 Spaltennamen, Doku für Hoster, Sicherung mit logischen Tabellennamen und
 `cantoria_mirror_files`.
-*Offen:* Screenshots aus einem echten Nextcloud, Download und
-Wiederherstellung der Sicherung als Datenstrom, Demo, freie Zuordnung der
-Spalten (nach 1.0).
+*Offen:* Screenshots aus einem echten Nextcloud, Demo, freie Zuordnung der
+Spalten (nach 1.0). Download und Wiederherstellung der Sicherung als
+Datenstrom kamen am 16. November 2026 (im Review).
 
 - **Import-Assistent:** XLSX und ODS neben CSV, eine Vorlagedatei und
   neutrale Spaltennamen (heute z. B. „Auf Singste seit“); die freie
@@ -1096,7 +1152,7 @@ Spalten (nach 1.0).
 - **Zeigen, was es kann:** Demo oder kurzes Video, Store-Text und
   Doku-Seite „Cantoria neben anderen Lösungen“ (W).
 
-*Ergänzt am 3. November 2026; im Review (PR #16), umgesetzt bis auf die
+*Ergänzt am 3. November 2026; auf `main` (PR #16), umgesetzt bis auf die
 neuen Bilder: Das Werkzeug kennt die neuen Szenen und prüft mit
 axe-core, aufnehmen lässt es sich nur in einer Nextcloud mit den
 Demodaten.*
@@ -1130,11 +1186,19 @@ Demodaten.*
 - **Doku für Hoster:** Datenbankprüfung und MusicSheet Viewer ergänzen
   (W B11).
 
-*Ergänzt am 3. November 2026, zweite Runde; im Review (PR #16), umgesetzt
+*Ergänzt am 3. November 2026, zweite Runde; auf `main` (PR #16), umgesetzt
 bis auf die neuen Bilder selbst (das Werkzeug ist repariert und kennt die
-Szenen, aufnehmen geht nur in einer Nextcloud mit den Demodaten), die
-Abgrenzung zum Orchestra Scores Manager in `alongside-a-choir-system.md`
-und im Store-Text (steht im README) und den Versionshinweis im Store.*
+Szenen, aufnehmen geht nur in einer Nextcloud mit den Demodaten).*
+
+*Am 16. November 2026 nachgezogen (im Review):* Die Sicherung wird beim
+Herunterladen Block für Block gesendet und beim Wiederherstellen Zeile
+für Zeile gelesen (`BackupReader`), erst ganz geprüft und dann in einer
+Transaktion geschrieben; die Obergrenze liegt bei 512 MB statt beim
+Arbeitsspeicher von PHP, ein Lasttest liest 120 000 Zeilen mit weniger
+als 2 MB Zuwachs. Die Abgrenzung zum Orchestra Scores Manager steht in
+`alongside-a-choir-system.md` (deutsch und englisch) und mit einem Satz
+im Store-Text. Der Versionshinweis für den Store („Seit 0.16 auf einen
+Blick“) steht im `CHANGELOG.md`, `docs/release.md` nennt den Schritt.
 
 - **Abgelaufene Links zeigen:** Sie erscheinen heute nirgends, also lässt
   sich ein Link nach dem Ablauf nicht mehr verlängern (U40).
@@ -1198,7 +1262,9 @@ und im Store-Text (steht im README) und den Versionshinweis im Store.*
   `XMLReader` lesen oder die Zahl der Elemente vor `loadXML` begrenzen,
   weil `memory_limit` beim DOM nicht greift (S N18); Abfragen je Link
   bündeln (heute etwa 14), die Rollenprüfung an einer Stelle, toter Code
-  in `RightsPolicy`, im Lasttest messen (A25); Auskunft und Löschung ohne
+  in `RightsPolicy`, im Lasttest messen (A25; die Personen und Lizenzen
+  in `attribution()` sind seit dem 16. November 2026 gebündelt und im
+  Lasttest gezählt, im Review); Auskunft und Löschung ohne
   `occ` (R B34); eine Anleitung in der App
   und der Nutzertest mit Chorleitung und Sängern (U)
 
@@ -1215,10 +1281,13 @@ und im Store-Text (steht im README) und den Versionshinweis im Store.*
 - Offene Lizenzen (CC, CPDL) und Hinweis auf das anwendbare Recht
   (R B16, B17)
 - Feinschliff aus dem Review vom 3. November 2026: die Sperrseite weist
-  auf den neuen Tab hin, Szenario-Namen als Überschrift statt `strong`
-  (Rest von D26; App-Icon, Icon der Konzertmappe, ein „Nächstes“ und
-  `aria-haspopup` sind mit PR #16 erledigt); ein Satz in der Doku zu Partituren, die MuseScore aus Scans
-  erkennt, und warum die Prüfung der Übertragung dann zählt (W B19)
+  auf den neuen Tab hin (Rest von D26; App-Icon, Icon der Konzertmappe,
+  ein „Nächstes“ und `aria-haspopup` sind mit PR #16 erledigt, die
+  Szenario-Namen sind seit dem 16. November 2026 Überschriften); ein Satz
+  in der Doku zu Partituren, die MuseScore aus Scans erkennt, und warum
+  die Prüfung der Übertragung dann zählt (W B19)
+- Ein gemeinsames CSS für die Notenansicht des Archivs und der geteilten
+  Seiten (D-14 aus dem Review vom 16. November 2026)
 
 ## Bewusst nicht vorgesehen
 

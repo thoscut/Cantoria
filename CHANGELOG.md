@@ -10,6 +10,36 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Since 0.16 at a glance
+
+The short version for the app store; the details follow below and under
+0.17.0.
+
+- **Runs on PostgreSQL** as well as MySQL and MariaDB, and so also in
+  Nextcloud All-in-One.
+- **Easier to set up:** a guided setup leads through the first
+  configuration one page at a time, and four scenarios in plain words
+  (keep an archive, plan concerts, support singers, show the repertoire
+  publicly) choose what Cantoria does for your choir.
+- **Bring your catalog along:** import from Excel (.xlsx) and OpenDocument
+  (.ods) as well as CSV, with a template to fill in.
+- **Share a whole programme with the choir** in one step, with a message
+  to copy; links can be extended, also up to 30 days after they ended.
+- **For the choir members:** "Shared with me" lists the pieces of a
+  programme in its order and remembers the chosen voice; one switch keeps
+  pieces for practising without a network; the concert folder has a stage
+  view that keeps the screen on.
+- **To print:** songbooks with cover, contents and page numbers, a
+  programme booklet for the audience and large-print parts for singers
+  with a visual impairment, each only as far as the rights allow.
+- **Finding and planning repertoire:** filters by scoring, language and
+  duration, sorting by the last performance, a new programme from an
+  existing one, the ranges of the voices with a choir profile, and a pitch
+  sheet for a programme.
+- **Stricter with rights:** the scan of a public link needs a license for
+  its download, and a link ends at the latest when the license that
+  releases it ends.
+
 ### Added
 
 - **Guided setup.** On a new instance the settings page opens a dialog that
@@ -61,6 +91,31 @@ All notable changes to this app are documented in this file. The format follows
 - **Guides** in English and German for all of the above, the legal
   background of lyrics in a booklet and of large print (§ 45b UrhG), and
   the new routes in `docs/api.md`.
+- **A backup of any size.** The complete backup is sent block by block
+  when it is downloaded and read row by row when it is restored, so its
+  size no longer depends on the memory of PHP. A restore still checks the
+  whole file before it writes anything and writes in one transaction. The
+  limit for a restore is 512 MB; `occ cantoria:restore` and
+  `occ cantoria:export` work the same way. Tables a backup of a later
+  version may bring are skipped, whatever their shape.
+- **Home screen.** The concert folder and a public link bring their own
+  web app manifest (`/concert-folder/manifest`, `/p/{token}/manifest`), so
+  an icon on the home screen opens that page and not the Nextcloud start
+  page. The manifest of a link holds no data and answers the same whether
+  or not the link exists and public links are on. Not yet checked on real
+  devices; the hint about the bookmark in the concert folder stays until
+  then.
+- **Protection:** confirmed public-domain versions whose proposal now
+  reads "unknown" because the arranger is missing come up again under
+  "Protection", in a group of their own, and count among the open rights
+  on the start page. Links stay as they are.
+- **Hand-over folder:** the manifest remembers how a MusicXML file was
+  cleaned. When the cleaning changes with a later version, the next run
+  writes the old files again.
+- **Links that end soon.** The start page has a card for links that end
+  within a week or have ended, for everyone who may extend them; the view
+  "Links" lists them first and counts them. "Shared with me" says when a
+  link ends within a week and who can extend it.
 - **Performance import counts as the choir does.** The counting rule can
   be set in the dry run: several participations that count (the own choir
   and joint concerts), the words in the state that exclude a line (now also
@@ -105,6 +160,35 @@ All notable changes to this app are documented in this file. The format follows
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
 - The version on `main` is 0.18.0-dev.1 for the new table and routes.
+- **"Shared with me" with many links** reads the authors of a piece in one
+  query and the licenses of a version once per request; a load test with
+  200 links counts the queries.
+- **One playback** for the score view of the archive and the shared pages
+  (`src/score/usePlayback.ts`) instead of two copies, with a test.
+- **Docs and store text:** "Cantoria alongside a choir system" (English
+  and German) and the store description say how Cantoria differs from the
+  Orchestra Scores Manager; `docs/release.md` has a step for the summary
+  of the version in the store.
+- **After the UX and design review of 16 November 2026:**
+  - Concert folder: "End of the programme" stands only under the last
+    piece, no longer under every piece with notes. An empty folder leads
+    to the concerts.
+  - Shared pages: what was removed from the device can be read and not
+    only heard; long button labels wrap instead of ending in
+    "…"; the bar of the notes wraps on a narrow screen; the chosen voice
+    has a tick, not only a colour; the tempo is announced once per change;
+    a browser that cannot keep pieces says what usually helps; a public
+    link shows until when it is valid, and a page that could not load
+    offers to reload.
+  - Links: the dialogs to revoke and to extend name the piece; revoking
+    says what happens to pieces kept on devices; "Copy link" and "Revoke
+    link" have a tooltip.
+  - In a low window (up to 560 px high, for example a phone held
+    sideways) the header of a view scrolls with the page instead of
+    covering it.
+  - Sliders for tempo, level and volume have a label with their name
+    only; the names of the scenarios in the settings are headings;
+    "Protection" says where a shelf mark leads; spacing on the grid.
 - **Comparing with the choir system.** A file that is neither CSV nor
   XLSX (an old Excel file, a web page, XML or OpenDocument) is refused with
   what to do instead, not with "no shelf mark". The guide "Cantoria
