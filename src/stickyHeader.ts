@@ -61,6 +61,7 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 	const release = (): void => {
 		observer?.disconnect()
 		observer = null
+		window.removeEventListener('resize', update)
 		// Another view may already have taken over the container
 		if (container && container.dataset.stickyOwner === String(owner)) {
 			container.style.scrollPaddingTop = ''
@@ -83,6 +84,8 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 			observer = new ResizeObserver(update)
 			observer.observe(element)
 		}
+		// whether the header sticks depends on the height of the window (D-2), which does not resize the header
+		window.addEventListener('resize', update)
 	}, { immediate: true, flush: 'post' })
 
 	onBeforeUnmount(release)

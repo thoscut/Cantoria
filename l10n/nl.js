@@ -841,6 +841,7 @@ OC.L10N.register(
         "Public": "Openbaar",
         "Internal": "Intern",
         "The link has been revoked.": "De link is ingetrokken.",
+        "Ends today": "Loopt vandaag af",
         "The link is valid until {date}.": "De link is geldig tot {date}.",
         "No active links.": "Geen actieve links.",
         "Valid until {date}": "Geldig tot {date}",
@@ -2764,6 +2765,10 @@ OC.L10N.register(
         "_%n has ended_::_%n have ended_": [
             "%n is afgelopen",
             "%n zijn afgelopen"
+        ],
+        "_Ends in %n day_::_Ends in %n days_": [
+            "Loopt over %n dag af",
+            "Loopt over %n dagen af"
         ],
         "_opened %n time_::_opened %n times_": [
             "%n keer geopend",

@@ -251,7 +251,7 @@ class FullBackupService {
 				if ($table !== null && isset($columns[$table])) {
 					$this->insertRow($table, $columns[$table], $row, $index);
 				}
-			});
+			}, array_keys($backup['names']));
 			foreach (self::TABLES as $table) {
 				if (isset($columns[$table])) {
 					$restored[$table] = $backup['rows'][$table];
@@ -381,13 +381,25 @@ class FullBackupService {
 	}
 
 	/**
+	 * The names a table of this version can have in a backup: as in format
+	 * version 2 or, in version 1, as in the database. Which of the two a
+	 * file uses is only known once its head is read, and the head may come
+	 * last.
+	 *
+	 * @return list<string>
+	 */
+	private static function knownNames(): array {
+		return [...array_keys(self::TABLE_NAMES), ...self::TABLES];
+	}
+
+	/**
 	 * Checks that a stream is a backup in a format this version can restore
 	 * and tells what it holds, without keeping its rows: the whole file is
 	 * read once and checked (BackupReader). Tables are named as in format
 	 * version 2 (TABLE_NAMES) or, in backups of version 1, by the names of
-	 * the database tables. Unknown tables are dropped, but a file without
-	 * any known table is refused; every row must be an object of plain
-	 * values.
+	 * the database tables. Unknown tables are dropped, whatever their shape,
+	 * but a file without any known table is refused; every row of a known
+	 * table must be an object of plain values.
 	 *
 	 * @param resource $stream at the start of the backup
 	 * @return array{formatVersion: int, created: string, appVersion: string, names: array<string, string>, rows: array<string, int>}
@@ -395,7 +407,7 @@ class FullBackupService {
 	 * @throws InvalidInputException
 	 */
 	public static function inspect($stream): array {
-		['head' => $head, 'tables' => $counts] = BackupReader::read($stream);
+		['head' => $head, 'tables' => $counts] = BackupReader::read($stream, null, self::knownNames());
 		if (($head['format'] ?? null) !== self::FORMAT || !is_int($head['formatVersion'] ?? null)) {
 			throw new InvalidInputException('The file is not a backup of the music archive.');
 		}
@@ -443,7 +455,7 @@ class FullBackupService {
 				if ($table !== null) {
 					$tables[$table][] = $row;
 				}
-			});
+			}, array_keys($backup['names']));
 		} finally {
 			fclose($stream);
 		}

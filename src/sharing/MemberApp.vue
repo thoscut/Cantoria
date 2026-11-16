@@ -148,6 +148,23 @@ const keepProgress = ref('')
 /** The heading "Without a network": the focus after everything is deleted (D28) */
 const deviceHeading = ref<HTMLElement | null>(null)
 const deviceStatus = ref('')
+/**
+ * Whether the message is also to be read, not only heard (U-11): what
+ * left the device. What was kept already shows in the count above, in the
+ * same words; twice, or with another number, it would confuse.
+ */
+const deviceStatusShown = ref(false)
+
+/**
+ * A message of the section "Without a network".
+ *
+ * @param text - the message
+ * @param shown - also to be read
+ */
+function reportDevice(text: string, shown: boolean): void {
+	deviceStatus.value = text
+	deviceStatusShown.value = shown
+}
 /** Links that may be kept and are not yet */
 const notKept = computed(() => links.filter((link) => link.offline && !isKept(link)))
 const homeScreen = homeScreenAdvice()
@@ -204,10 +221,10 @@ async function setKept(link: MemberLink, keep: boolean, withScan: boolean): Prom
 	try {
 		if (keep) {
 			await device.keep([forDevice(link)], withScan)
-			deviceStatus.value = t('cantoria', '"{title}" is available without a network.', { title: link.title })
+			reportDevice(t('cantoria', '"{title}" is available without a network.', { title: link.title }), false)
 		} else {
 			await device.forget([link.token])
-			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: link.title })
+			reportDevice(t('cantoria', '"{title}" is removed from this device.', { title: link.title }), true)
 		}
 	} catch (error) {
 		console.warn('Cantoria: keeping a piece on this device failed', error)
@@ -228,7 +245,7 @@ async function keepAll(): Promise<void> {
 	progress(0)
 	try {
 		await device.keep(pieces.map(forDevice), false, progress)
-		deviceStatus.value = n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', pieces.length)
+		reportDevice(n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', pieces.length), false)
 	} catch (error) {
 		console.warn('Cantoria: keeping the pieces on this device failed', error)
 		const missing = pieces.filter((link) => !isKept(link)).length
@@ -264,15 +281,15 @@ const sections = (() => {
 /** New pieces, counted once even when they stand in two programmes */
 const newCount = computed(() => links.filter((link) => newTokens.value.has(link.token)).length)
 
-const today = toIsoDate(new Date())
-
 /**
  * How soon a link ends, in words, when within a week; '' otherwise (U-2,
- * the same words as in the list of links of the archive).
+ * the same words as in the list of links of the archive). By the day it
+ * is shown on: the page may stay open on a home screen for days.
  *
  * @param link - member link
  */
 function endingText(link: MemberLink): string {
+	const today = toIsoDate(new Date())
 	if (!endsSoon(link.expires, today)) {
 		return ''
 	}
@@ -285,7 +302,7 @@ async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
 	forgetVisits()
 	newTokens.value = new Set()
-	deviceStatus.value = t('cantoria', 'Everything Cantoria kept on this device is deleted.')
+	reportDevice(t('cantoria', 'Everything Cantoria kept on this device is deleted.'), true)
 }
 
 /** What "Delete everything on this device" deletes besides the pieces (U43) */
@@ -768,8 +785,8 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 						{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
 					</p>
 					<RemoveFromDevice :consequence="deleteConsequence" :remove="deleteDevice" @removed="focusAfterUpdate(deviceHeading)" />
-					<!-- To be read, too, not only heard (U-11); while empty it takes no room, and stays the live region -->
-					<p class="member-app__muted" :class="{ 'hidden-visually': deviceStatus === '' }" role="status">
+					<!-- What left the device is to be read, too, not only heard (U-11); one live region for all messages -->
+					<p class="member-app__muted" :class="{ 'hidden-visually': !deviceStatusShown }" role="status">
 						{{ deviceStatus }}
 					</p>
 				</section>

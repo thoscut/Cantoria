@@ -124,6 +124,23 @@ const keepProgress = ref('')
 /** The heading "Without a network": the focus after everything is deleted (D28) */
 const deviceHeading = ref<HTMLElement | null>(null)
 const deviceStatus = ref('')
+/**
+ * Whether the message is also to be read, not only heard (U-11): what
+ * left the device. What was kept already shows in the count above, in the
+ * same words; twice, or with another number, it would confuse.
+ */
+const deviceStatusShown = ref(false)
+
+/**
+ * A message of the section "Without a network".
+ *
+ * @param text - the message
+ * @param shown - also to be read
+ */
+function reportDevice(text: string, shown: boolean): void {
+	deviceStatus.value = text
+	deviceStatusShown.value = shown
+}
 
 /**
  * What the server says about keeping an item; the device drops it when the
@@ -236,11 +253,11 @@ async function setConcertKept(concert: FolderConcert, keep: boolean, withScans: 
 			}
 			progress(0)
 			await device.keep(items.map(forDevice), withScans, progress)
-			deviceStatus.value = n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', items.length)
+			reportDevice(n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', items.length), false)
 		} else {
 			await device.forget(items.map((item) => String(item.id)))
 			// a programme without a title has a name all the same (U-11)
-			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: concertTitle(concert) })
+			reportDevice(t('cantoria', '"{title}" is removed from this device.', { title: concertTitle(concert) }), true)
 		}
 	} catch (error) {
 		console.warn('Cantoria: keeping a programme on this device failed', error)
@@ -259,7 +276,7 @@ async function setConcertKept(concert: FolderConcert, keep: boolean, withScans: 
 /** Delete the kept items and everything remembered for practising, on this device only. */
 async function deleteDevice(): Promise<void> {
 	await device.deleteDevice()
-	deviceStatus.value = t('cantoria', 'Everything the concert folder kept on this device is deleted.')
+	reportDevice(t('cantoria', 'Everything the concert folder kept on this device is deleted.'), true)
 }
 
 /** What "Delete everything on this device" deletes besides the pieces (U43) */
@@ -839,8 +856,8 @@ onBeforeUnmount(() => {
 						{{ t('cantoria', 'This browser cannot keep pieces for practising without a network.') }}
 						{{ t('cantoria', 'This happens in a private window, for example. A normal window or another browser usually works.') }}
 					</p>
-					<!-- To be read, too, not only heard (U-11); while empty it takes no room, and stays the live region -->
-					<p class="folder-app__muted" :class="{ 'hidden-visually': deviceStatus === '' }" role="status">
+					<!-- What left the device is to be read, too, not only heard (U-11); one live region for all messages -->
+					<p class="folder-app__muted" :class="{ 'hidden-visually': !deviceStatusShown }" role="status">
 						{{ deviceStatus }}
 					</p>
 				</section>

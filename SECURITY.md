@@ -252,7 +252,7 @@ public links stop working at once.
   their controllers: `GET /apps/cantoria/p/{token}`, the scan of a public
   link `GET /apps/cantoria/p/{token}/scan`, the manifest for the home
   screen of a link `GET /apps/cantoria/p/{token}/manifest` (no data, not
-  even whether the link exists), `GET /apps/cantoria/repertoire` and the
+  even whether the link exists or whether public links are on), `GET /apps/cantoria/repertoire` and the
   script of the offline worker `GET /apps/cantoria/offline-worker`, which
   holds no data (see "Practising without a network" below). All are
   plain GET requests, limited per address (a public link 60 in 10 minutes,

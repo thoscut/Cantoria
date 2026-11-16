@@ -47,6 +47,7 @@ async function load(): Promise<void> {
 			return
 		}
 		links.value = result
+		today.value = toIsoDate(new Date())
 		loaded.value = true
 	} catch (caught) {
 		if (run === loadRun) {
@@ -64,13 +65,14 @@ onMounted(load)
 /** Links for choir members or the public can exist (modules of milestone 0.7). */
 const sharingOn = computed(() => isModuleActive('member_links') || isModuleActive('public_links'))
 
-const today = toIsoDate(new Date())
+/** The day the list was loaded on: a view left open counts by the day of its last reload */
+const today = ref(toIsoDate(new Date()))
 
 /** The links that have not ended (the others follow in a section of their own) */
-const activeCount = computed(() => links.value.filter((link) => !hasEnded(link.expires, today)).length)
+const activeCount = computed(() => links.value.filter((link) => !hasEnded(link.expires, today.value)).length)
 
 /** The links that end within a week, by the rule of the list (endsSoon; U-7) */
-const soonCount = computed(() => links.value.filter((link) => endsSoon(link.expires, today)).length)
+const soonCount = computed(() => links.value.filter((link) => endsSoon(link.expires, today.value)).length)
 
 const collator = new Intl.Collator(undefined, { numeric: true })
 
@@ -80,8 +82,8 @@ const collator = new Intl.Collator(undefined, { numeric: true })
  * ended are not among the first: the list shows them in a section below.
  */
 const sorted = computed(() => [...links.value].sort((a, b) => {
-	const soonA = endsSoon(a.expires, today)
-	const soonB = endsSoon(b.expires, today)
+	const soonA = endsSoon(a.expires, today.value)
+	const soonB = endsSoon(b.expires, today.value)
 	if (soonA !== soonB) {
 		return soonA ? -1 : 1
 	}

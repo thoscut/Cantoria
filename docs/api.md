@@ -2517,7 +2517,7 @@ protected by the brute-force protection:
 |---|---|---|
 | `GET /p/{token}` | `public_links` | one piece or excerpt to view and play, in Nextcloud's public layout (template `public`, script `js/cantoria-public.mjs`) |
 | `GET /p/{token}/scan` | `public_links` | the scan the link offers, for the browser's own PDF viewer |
-| `GET /p/{token}/manifest` | `public_links` | the manifest for the home screen: it opens the link, not the login; no data, the same answer for every token of the right form |
+| `GET /p/{token}/manifest` | – (core) | the manifest for the home screen: it opens the link, not the login; no data, the same answer for every token of the right form, also while public links are off |
 | `GET /repertoire` | `public_repertoire` | the public repertoire page, rendered on the server without script |
 | `GET /offline-worker` | – (core) | the service worker of the pages that keep pieces on a device (see "The page of the choir members") |
 

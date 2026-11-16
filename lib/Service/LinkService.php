@@ -638,7 +638,42 @@ class LinkService {
 	 * @return list<LinkView>
 	 */
 	public function active(?int $copyId, string $uid): array {
+		$rows = [];
+		foreach ($this->listed($copyId, $uid, $this->rights->today($uid), null) as [$link, $bound]) {
+			$rows[] = $this->view($link, $uid) + ['extend_until' => $bound['until'], 'extend_limit' => $bound['limit']];
+		}
+		return $rows;
+	}
+
+	/**
+	 * How many links the account may extend end within $days days or have
+	 * ended: the rows of active() with `extend_until` and such a last day,
+	 * for the card of the start page (DueService). Counted without the views
+	 * of the links (no token, no names), and the licenses of a version are
+	 * read once (RightsPolicy::remembering), because the start page asks on
+	 * every call.
+	 */
+	public function endingCount(string $uid, int $days): int {
 		$today = $this->rights->today($uid);
+		$until = (new \DateTimeImmutable($today))->modify('+' . $days . ' days')->format('Y-m-d');
+		return $this->policy->remembering(function () use ($uid, $today, $until): int {
+			$count = 0;
+			foreach ($this->listed(null, $uid, $today, $until) as [, $bound]) {
+				if ($bound['until'] !== null) {
+					$count++;
+				}
+			}
+			return $count;
+		});
+	}
+
+	/**
+	 * The links of active() with what bounds their extension.
+	 *
+	 * @param string|null $until only links whose last day is this day or earlier (null: all)
+	 * @return \Generator<int, array{ExcerptLink, array{until: ?string, limit: ?string}}>
+	 */
+	private function listed(?int $copyId, string $uid, string $today, ?string $until): \Generator {
 		$since = (new \DateTimeImmutable($today))->modify('-' . self::RECENTLY_EXPIRED_DAYS . ' days')->format('Y-m-d');
 		$mayViewPreservation = $this->policy->mayViewPreservationCopies($uid);
 		$librarian = $this->roles->hasAnyRole($uid, [Roles::LIBRARIAN]);
@@ -647,9 +682,11 @@ class LinkService {
 		foreach ($this->copies->findAll() as $copy) {
 			$copies[$copy->getId()] = $copy;
 		}
-		$rows = [];
 		foreach ($this->links->findByCopy($copyId) as $link) {
 			if ($link->getRevoked() !== null || ($link->getExpires() !== null && $link->getExpires() < $since)) {
+				continue;
+			}
+			if ($until !== null && ($link->getExpires() === null || $link->getExpires() > $until)) {
 				continue;
 			}
 			$copy = $copies[$link->getCopyId()] ?? null;
@@ -657,11 +694,9 @@ class LinkService {
 			if (!$mayViewPreservation && ($copy === null || $version === null || RightsPolicy::isPreservationCopy($version, $copy))) {
 				continue;
 			}
-			$bound = $version !== null && ($librarian || $link->getCreatedBy() === $uid)
-				? $this->extensionBound($link, $version, $today) : ['until' => null, 'limit' => null];
-			$rows[] = $this->view($link, $uid) + ['extend_until' => $bound['until'], 'extend_limit' => $bound['limit']];
+			yield [$link, $version !== null && ($librarian || $link->getCreatedBy() === $uid)
+				? $this->extensionBound($link, $version, $today) : ['until' => null, 'limit' => null]];
 		}
-		return $rows;
 	}
 
 	private static function text(string|int|float|bool|null $value, int $max): ?string {

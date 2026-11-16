@@ -128,9 +128,11 @@ final class HandoverContentTest extends TestCase {
 	}
 
 	/**
-	 * The manifest keeps the version of the cleaning with a MusicXML file:
-	 * a file written before the marker (only its ETag) or by an older
-	 * cleaning no longer matches and is cleaned again (0.18).
+	 * The manifest keeps the version of the cleaning with a MusicXML file,
+	 * so that a file written before the marker (only its ETag) or by an
+	 * older cleaning no longer matches (0.18). Here only the stamp; that
+	 * the sync then writes the file again is checked against a real
+	 * Nextcloud (tests/Integration/handover_test.php).
 	 */
 	public function testTheManifestMarksMusicXmlWithTheVersionOfTheCleaning(): void {
 		$stamp = $this->stamp('musicxml', 'abc123');

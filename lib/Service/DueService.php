@@ -142,10 +142,8 @@ class DueService {
 		}
 		if ($active['excerpt_links'] && array_intersect($roles, LinkService::CREATORS) !== []) {
 			// links the account may extend that end within LINKS_SOON_DAYS days or ended (U30, U40):
-			// the rows of the view "Links" with the button "Extend" (LinkService::active, `extend_until`)
-			$soon = (new \DateTimeImmutable($this->rights->today($uid)))->modify('+' . self::LINKS_SOON_DAYS . ' days')->format('Y-m-d');
-			$ending = count(array_filter($this->links->active(null, $uid),
-				fn (array $link): bool => $link['extend_until'] !== null && is_string($link['expires']) && $link['expires'] <= $soon));
+			// the rows of the view "Links" with the button "Extend" (LinkService::endingCount)
+			$ending = $this->links->endingCount($uid, self::LINKS_SOON_DAYS);
 			if ($ending > 0) {
 				$cards[] = ['key' => 'links_ending', 'count' => $ending, 'label' => 'Links ending or ended'];
 			}

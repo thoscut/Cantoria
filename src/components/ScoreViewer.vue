@@ -2086,6 +2086,7 @@ onBeforeUnmount(() => {
 
 	/* a dark theme has light text: title and version line black on the white paper (D-5) */
 	.score-viewer,
+	.score-viewer__title,
 	.score-viewer__subtitle {
 		color: #000;
 	}

@@ -22,7 +22,13 @@ use OCA\Cantoria\Exception\InvalidInputException;
  * (text, number, yes/no, null) and must not be empty; anything else, a
  * second "tables", a table named twice, text after the end or a value
  * nested too deep makes the file "not a backup". Values beside "tables"
- * that are plain are returned as the head; nested ones are skipped.
+ * that are plain are returned as the head; nested ones are skipped. A
+ * caller that names the tables it knows has the others skipped, whatever
+ * their shape (a later version may write more than rows).
+ *
+ * What is kept in memory is bounded by the reader, not only by the size
+ * of the file: the columns and the text of one row, the names of the
+ * tables, the values of the head.
  *
  * A caller that must know the head before it reads the rows (the format
  * version names the tables) reads the stream twice: once without a
@@ -38,6 +44,15 @@ final class BackupReader {
 	private const MAX_TEXT = 16 * 1024 * 1024;
 	/** Nesting accepted in a value beside "tables" (the whole file: eight levels) */
 	private const MAX_DEPTH = 7;
+	/** Columns of one row; the widest table of the app has fewer than 40 */
+	private const MAX_COLUMNS = 512;
+	/** Text of one row altogether (bytes, decoded) */
+	private const MAX_ROW = 32 * 1024 * 1024;
+	/** Tables named in a backup; the app has fewer than 60 */
+	private const MAX_TABLES = 256;
+	/** Plain values beside "tables", and the longest text kept of one (bytes) */
+	private const MAX_HEAD = 64;
+	private const MAX_HEAD_TEXT = 1024;
 
 	private string $buffer = '';
 	private int $position = 0;
@@ -54,11 +69,13 @@ final class BackupReader {
 	 * @param resource $stream at the start of the backup
 	 * @param (callable(string, BackupRow, int): void)|null $onRow called for every row with the name of its table as
 	 *                                                             written in the file, the row and its place in the table (from 0)
+	 * @param list<string>|null $known the names of the tables to read; every other table is skipped and not counted
+	 *                                 (null: every table is read)
 	 * @return array{head: array<string, string|int|float|bool|null>, tables: array<string, int>} the plain values beside
-	 *                                                                                            "tables", and the rows per table as named in the file
+	 *                                                                                            "tables" (a text longer than 1024 bytes is left out), and the rows per table as named in the file
 	 * @throws InvalidInputException when the stream is not a backup
 	 */
-	public static function read($stream, ?callable $onRow = null): array {
+	public static function read($stream, ?callable $onRow = null, ?array $known = null): array {
 		$reader = new self($stream);
 		$head = [];
 		$tables = null;
@@ -73,11 +90,17 @@ final class BackupReader {
 					if ($tables !== null) {
 						throw self::invalid();
 					}
-					$tables = $reader->tables($onRow);
+					$tables = $reader->tables($onRow, $known);
 				} elseif (in_array($reader->peek(), ['{', '['], true)) {
 					$reader->skip(1);
 				} else {
-					$head[$key] = $reader->plain();
+					$value = $reader->plain();
+					if (!is_string($value) || strlen($value) <= self::MAX_HEAD_TEXT) {
+						$head[$key] = $value;
+						if (count($head) > self::MAX_HEAD) {
+							throw self::invalid();
+						}
+					}
 				}
 			} while ($reader->more('}'));
 		}
@@ -89,21 +112,28 @@ final class BackupReader {
 
 	/**
 	 * @param (callable(string, BackupRow, int): void)|null $onRow
+	 * @param list<string>|null $known
 	 * @return array<string, int> rows per table
 	 */
-	private function tables(?callable $onRow): array {
+	private function tables(?callable $onRow, ?array $known): array {
 		$counts = [];
 		$this->expect('{');
 		if ($this->peek() === '}') {
 			$this->position++;
 			return $counts;
 		}
+		$named = 0;
 		do {
 			$name = $this->text();
-			if (isset($counts[$name])) {
+			if (isset($counts[$name]) || ++$named > self::MAX_TABLES) {
 				throw self::invalid();
 			}
 			$this->expect(':');
+			if ($known !== null && !in_array($name, $known, true)) {
+				// a table this version does not know: dropped, whatever its shape
+				$this->skip(1);
+				continue;
+			}
 			$this->expect('[');
 			$count = 0;
 			if ($this->peek() === ']') {
@@ -128,10 +158,16 @@ final class BackupReader {
 	private function row(): array {
 		$this->expect('{');
 		$row = [];
+		$bytes = 0;
 		do {
 			$column = $this->text();
 			$this->expect(':');
-			$row[$column] = $this->plain();
+			$value = $this->plain();
+			$bytes += strlen($column) + (is_string($value) ? strlen($value) : 0);
+			$row[$column] = $value;
+			if (count($row) > self::MAX_COLUMNS || $bytes > self::MAX_ROW) {
+				throw self::invalid();
+			}
 		} while ($this->more('}'));
 		return $row;
 	}

@@ -841,6 +841,7 @@ OC.L10N.register(
         "Public": "Público",
         "Internal": "Interno",
         "The link has been revoked.": "Se ha revocado el enlace.",
+        "Ends today": "Vence hoy",
         "The link is valid until {date}.": "El enlace es válido hasta el {date}.",
         "No active links.": "No hay enlaces activos.",
         "Valid until {date}": "Válido hasta el {date}",
@@ -2764,6 +2765,10 @@ OC.L10N.register(
         "_%n has ended_::_%n have ended_": [
             "%n ha terminado",
             "%n han terminado"
+        ],
+        "_Ends in %n day_::_Ends in %n days_": [
+            "Vence en %n día",
+            "Vence en %n días"
         ],
         "_opened %n time_::_opened %n times_": [
             "abierto %n vez",

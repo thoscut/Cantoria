@@ -44,6 +44,7 @@ What is covered:
 | Test | Subject |
 |---|---|
 | `Command/ModulesCommandTest` | `occ cantoria:modules`: the list as table and JSON, enable and disable through the settings with the changes reported, preset and scenario by exactly one name, a wrong call changes nothing and says why |
+| `Command/RestoreCommandTest` | `occ cantoria:restore` opens the backup as a stream that can be read twice: a file as it is, a pipe (`/dev/stdin`) through a temporary copy; a missing path or a folder is refused |
 | `Service/LinkListTest` | the list of links: links that ended in the last 30 days stay listed, each link names the latest day it can be extended to and why (six months, one year, the license), only for accounts that may extend it |
 | `Service/CatalogCsvTest` | CSV parsing (BOM, double BOM, `;`, quotes, CRLF in cells, empty lines), writing byte for byte like Python's `csv` module with `QUOTE_MINIMAL` and CRLF (reference output embedded), round trip, legacy publication rules, the German values of status, kind of version and rights status, the cell "Gilt für den Chor" |
 | `Service/FieldValueTest` | value checks per field type, length in characters, strict calendar dates (e.g. `2026-02-31`) |
@@ -79,7 +80,7 @@ What is covered:
 | `Service/RolesTest` | who may change the settings: admins and the groups given the settings page, without a role; fails closed |
 | `Service/ArchiveAccessTest` | the access check of the archive folder: per role and group, accounts named that cannot open it, disabled and never logged-in accounts left out, the limit, admins without a role, the person who asks |
 | `Service/ScoreServiceTest` | only real MusicXML reaches the browser (root element, document type declarations, `.mxl` contents, size limit) |
-| `Service/UserFilesTest`, `Service/RequestBoundaryTest` | reading uploaded files with a size limit, limits of request data (unknown fields, list sizes) |
+| `Service/UserFilesTest`, `Service/RequestBoundaryTest` | reading uploaded files with a size limit, as text or as a stream that can be rewound (a complete backup), limits of request data (unknown fields, list sizes) |
 | `Notification/NotifierTest` | notification texts, no internal error texts |
 | `Service/IcsWriterTest`, `Service/ConcertIcsTest` | calendar files after RFC 5545: CRLF, folding after 75 octets without splitting umlauts or other multi-octet characters, escaping of `,;\` and line breaks, time zone definitions (daylight saving time, half-hour offsets), all-day entries, stable UIDs, deadlines as separate entries, cancelled concerts |
 | `Service/ConcertDeadlinesTest`, `Service/DueServiceTest` | the deadlines 10, 8 and 6 weeks before a concert and the confirmation after it; which roles see them on the start page; the card for links that end within a week or ended, only for those who may extend them |

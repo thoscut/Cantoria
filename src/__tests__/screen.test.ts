@@ -93,7 +93,16 @@ describe('useStickyHeader', () => {
 		// the header was found, but it covers nothing
 		expect(page.dataset.stickyOwner).toBeDefined()
 		expect(page.style.scrollPaddingTop).toBe('')
+		// the window grows higher and the header sticks again: its box is the same, the room comes back
+		const header = page.firstElementChild as HTMLElement
+		header.style.position = 'sticky'
+		window.dispatchEvent(new Event('resize'))
+		expect(page.style.scrollPaddingTop).toBe('8px')
 		wrapper.unmount()
+		// and no longer once the view is gone
+		header.style.position = 'static'
+		window.dispatchEvent(new Event('resize'))
+		expect(page.style.scrollPaddingTop).toBe('')
 	})
 
 	it('finds the scrolling content of the app pages by default', async () => {

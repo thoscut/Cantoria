@@ -191,8 +191,8 @@ Kommentaren im Code. Umgesetzt und im Review sind 26 davon:
 
 - **Geteilte Seiten:** „Ende des Programms“ steht nur noch unter dem
   letzten Stück (U-1, ein Fehler); ein Link, der in einer Woche endet,
-  sagt das und wer ihn verlängern kann (U-2); die Meldungen zum Speichern
-  auf dem Gerät sind zu lesen und nicht nur zu hören (U-11); leere
+  sagt das und wer ihn verlängern kann (U-2); was vom Gerät entfernt
+  wurde, ist zu lesen und nicht nur zu hören (U-11); leere
   Zustände nennen den nächsten Schritt (U-8 bis U-10); lange
   Beschriftungen von Knöpfen brechen um statt mit „…“ zu enden (D-1); die
   Leiste der Noten bricht um (D-4); Druck in Schwarz (D-5); das Tempo wird
@@ -210,7 +210,13 @@ Kommentaren im Code. Umgesetzt und im Review sind 26 davon:
 
 Offen bleibt D-14, ein gemeinsames CSS für die Notenansicht des Archivs
 und der geteilten Seiten: Das ändert das Notenbild an vielen Stellen und
-braucht den Vergleich in einem echten Browser. Geprüft ist alles in
+braucht den Vergleich in einem echten Browser. Dort ist auch zu prüfen,
+ob in einem niedrigen Fenster, in dem der Kopf nicht mehr stehen bleibt,
+der Fokus unter den Knopf der Navigation geraten kann. Zwei unabhängige
+Durchsichten des Codes (Server und Oberfläche) haben 13 Punkte gefunden,
+keinen kritischen; sie sind behoben, darunter Grenzen für den Speicher
+beim Lesen einer Sicherung und ein Manifest öffentlicher Links, das
+nicht verrät, ob das Modul eingeschaltet ist. Geprüft ist alles in
 Tests und mit den Werkzeugen, nicht auf Geräten und nicht mit einem
 Screenreader; das gehört zur Geräteabnahme (0.19) und zum Nutzertest
 (1.0).

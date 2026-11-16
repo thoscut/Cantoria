@@ -27,6 +27,9 @@ class FakePlayer {
 	loop = false
 	destroyed = false
 	timelines = 0
+	gains = 0
+	metronomes = 0
+	timbres = 0
 	callbacks: { onPosition: (time: number) => void, onEnd: () => void }
 	constructor(callbacks: { onPosition: (time: number) => void, onEnd: () => void }) {
 		this.callbacks = callbacks
@@ -45,9 +48,18 @@ class FakePlayer {
 		this.volume = volume
 	}
 
-	setGains(): void {}
-	setMetronome(): void {}
-	setTimbre(): void {}
+	setGains(): void {
+		this.gains++
+	}
+
+	setMetronome(): void {
+		this.metronomes++
+	}
+
+	setTimbre(): void {
+		this.timbres++
+	}
+
 	setLoop(on: boolean): void {
 		this.loop = on
 	}
@@ -87,18 +99,29 @@ vi.mock('../score/player.ts', () => ({
 	voiceGains: () => () => 1,
 }))
 
+// the order of the measures is not the matter here: an empty timeline for every choice
+vi.mock('../score/model.ts', async (original) => ({
+	...await original<typeof import('../score/model.ts')>(),
+	playbackTimeline: () => ({ events: [], measures: [], duration: 0 }),
+}))
+
 const { usePlayback } = await import('../score/usePlayback.ts')
+const { storedCountIn } = await import('../score/countIn.ts')
+const { sungVoice } = await import('../score/sungVoice.ts')
 
 function setup(canPlay = true) {
 	const messages: string[] = []
 	const positions: number[] = []
 	let started = 0
+	let focused = 0
+	let reset = 0
+	const focusKey = ref('')
 	const model = shallowRef<ScoreModel | null>({ voices: [], measures: [], notesByMeasure: [], signatures: { fifths: 0 } } as unknown as ScoreModel)
 	const volume = ref(70)
 	const playback = usePlayback({
 		model,
 		range: shallowRef(null),
-		focusKey: ref(''),
+		focusKey,
 		focusVoice: computed<Voice | null>(() => null),
 		pages: ref(null),
 		canPlay: () => canPlay,
@@ -106,15 +129,19 @@ function setup(canPlay = true) {
 		measureNumber: () => '3',
 		announce: (text) => messages.push(text),
 		onPosition: (time) => positions.push(time),
-		resetHighlights: () => {},
-		applyFocus: () => {},
+		resetHighlights: () => {
+			reset++
+		},
+		applyFocus: () => {
+			focused++
+		},
 		onStarted: () => {
 			started++
 		},
 		volume,
 		initial: { tempo: 80, transpose: -2 },
 	})
-	return { playback, messages, positions, volume, started: () => started }
+	return { playback, messages, positions, volume, focusKey, started: () => started, focused: () => focused, reset: () => reset }
 }
 
 describe('usePlayback', () => {
@@ -195,5 +222,64 @@ describe('usePlayback', () => {
 		playback.countInBars.value = 2
 		await nextTick()
 		expect(playback.countInChoice.value).toBe('2')
+		expect(storedCountIn()).toBe(2)
+	})
+
+	it('hands the voices, the mixer, the metronome and the sound on to the player', async () => {
+		const { playback, focusKey, focused } = setup()
+		await playback.togglePlay()
+		const player = players[0]
+		const before = { gains: player.gains, metronomes: player.metronomes, timbres: player.timbres }
+
+		playback.mix.value = { S: 50 }
+		await nextTick()
+		expect(player.gains).toBe(before.gains + 1)
+
+		focusKey.value = 'S'
+		await nextTick()
+		expect(focused()).toBe(1)
+		expect(player.gains).toBe(before.gains + 2)
+		playback.mode.value = 'solo'
+		await nextTick()
+		expect(focused()).toBe(2)
+		expect(player.gains).toBe(before.gains + 3)
+
+		playback.metronome.value = true
+		await nextTick()
+		expect(player.metronomes).toBe(before.metronomes + 1)
+
+		sungVoice.value = !sungVoice.value
+		await nextTick()
+		expect(player.timbres).toBe(before.timbres + 1)
+		sungVoice.value = !sungVoice.value
+	})
+
+	it('builds the timeline anew for another key or without repeats, and stops for it', async () => {
+		const { playback, messages } = setup()
+		await playback.togglePlay()
+		const player = players[0]
+		const timelines = player.timelines
+
+		playback.transpose.value = 2
+		await nextTick()
+		expect(player.timelines).toBe(timelines + 1)
+		expect(playback.playing.value).toBe(false)
+		expect(messages.at(-1)).toBe('Stopped.')
+
+		playback.repeats.value = false
+		await nextTick()
+		expect(player.timelines).toBe(timelines + 2)
+	})
+
+	it('ends with a message and without marks in the score', async () => {
+		const { playback, messages, reset } = setup()
+		await playback.togglePlay()
+		const marks = reset()
+		playback.position.value = 3
+		players[0].callbacks.onEnd()
+		expect(playback.playing.value).toBe(false)
+		expect(playback.position.value).toBe(0)
+		expect(reset()).toBe(marks + 1)
+		expect(messages.at(-1)).toBe('End of playback.')
 	})
 })

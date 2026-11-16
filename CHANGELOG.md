@@ -96,12 +96,15 @@ The short version for the app store; the details follow below and under
   size no longer depends on the memory of PHP. A restore still checks the
   whole file before it writes anything and writes in one transaction. The
   limit for a restore is 512 MB; `occ cantoria:restore` and
-  `occ cantoria:export` work the same way.
+  `occ cantoria:export` work the same way. Tables a backup of a later
+  version may bring are skipped, whatever their shape.
 - **Home screen.** The concert folder and a public link bring their own
   web app manifest (`/concert-folder/manifest`, `/p/{token}/manifest`), so
   an icon on the home screen opens that page and not the Nextcloud start
-  page. Not yet checked on real devices; the hint about the bookmark in the
-  concert folder stays until then.
+  page. The manifest of a link holds no data and answers the same whether
+  or not the link exists and public links are on. Not yet checked on real
+  devices; the hint about the bookmark in the concert folder stays until
+  then.
 - **Protection:** confirmed public-domain versions whose proposal now
   reads "unknown" because the arranger is missing come up again under
   "Protection", in a group of their own, and count among the open rights
@@ -170,8 +173,8 @@ The short version for the app store; the details follow below and under
   - Concert folder: "End of the programme" stands only under the last
     piece, no longer under every piece with notes. An empty folder leads
     to the concerts.
-  - Shared pages: what was saved on or removed from the device can be
-    read and not only heard; long button labels wrap instead of ending in
+  - Shared pages: what was removed from the device can be read and not
+    only heard; long button labels wrap instead of ending in
     "…"; the bar of the notes wraps on a narrow screen; the chosen voice
     has a tick, not only a colour; the tempo is announced once per change;
     a browser that cannot keep pieces says what usually helps; a public

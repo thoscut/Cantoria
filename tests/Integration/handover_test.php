@@ -203,6 +203,21 @@ try {
 	$check('a second sync changes nothing', $again['copied'] === [] && $again['replaced'] === [] && $again['removed'] === [],
 		json_encode($again) ?: '');
 
+	// ---- a MusicXML file of an older cleaning is written again (0.18) -------------------------------
+	// Before the marker the manifest held only the ETag of the source: such a row no longer matches.
+	$scoreRow = $manifest->findAllByName(HandoverService::HANDOVER_MIRROR)[$musicxml] ?? null;
+	$stamp = $scoreRow === null ? '' : (string)$scoreRow->getSourceEtag();
+	$check('the manifest marks the MusicXML with the version of the cleaning', str_ends_with($stamp, ';' . HandoverService::CLEANING), $stamp);
+	if ($scoreRow !== null) {
+		$scoreRow->setSourceEtag(substr($stamp, 0, -strlen(';' . HandoverService::CLEANING)));
+		$manifest->update($scoreRow);
+		$recleaned = $handover->sync($uid, false);
+		$check('the MusicXML of an older cleaning is written again, the scan is not', in_array($musicxml, $names($recleaned['replaced']), true)
+			&& !in_array($pdf, $names($recleaned['replaced']), true) && $recleaned['copied'] === [], json_encode($recleaned) ?: '');
+		$after = $handover->sync($uid, false);
+		$check('and then no more', $after['copied'] === [] && $after['replaced'] === [], json_encode($after) ?: '');
+	}
+
 	// ---- the export of the choir system: differences become proposals --------------------------------
 	$compare = Server::get(ChoirSystemCompareService::class);
 	$proposals = Server::get(ProposalService::class);

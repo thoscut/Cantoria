@@ -136,6 +136,10 @@ final class BackupReaderTest extends TestCase {
 		yield 'an escape that is none' => ['{"tables":{"works":[{"title":"Ave\\q"}]}}'];
 		yield 'text that is not UTF-8' => ["{\"tables\":{\"works\":[{\"title\":\"\xff\"}]}}"];
 		yield 'nested too deep beside the tables' => ['{"extra":' . str_repeat('[', 20) . str_repeat(']', 20) . ',"tables":{}}'];
+		// what the reader keeps in memory is bounded by the reader, not only by the size of the file
+		yield 'a row with too many columns' => ['{"tables":{"works":[{' . implode(',', array_map(fn (int $i): string => '"c' . $i . '":1', range(0, 512))) . '}]}}'];
+		yield 'too many tables' => ['{"tables":{' . implode(',', array_map(fn (int $i): string => '"t' . $i . '":[]', range(0, 256))) . '}}'];
+		yield 'too many values beside the tables' => ['{' . implode(',', array_map(fn (int $i): string => '"k' . $i . '":1', range(0, 64))) . ',"tables":{}}'];
 	}
 
 	#[DataProvider('notABackup')]
@@ -143,5 +147,36 @@ final class BackupReaderTest extends TestCase {
 		$this->expectException(InvalidInputException::class);
 		$this->expectExceptionMessage('The file is not a backup of the music archive.');
 		BackupReader::read(self::stream($content));
+	}
+
+	/**
+	 * A caller that names its tables has the others skipped, whatever their
+	 * shape: a later version may write more than rows, and an older one
+	 * must still restore what it knows.
+	 */
+	public function testSkipsTablesTheCallerDoesNotKnow(): void {
+		$content = '{"tables":{"future":{"a":1},"works":[{"id":1}],"later":[{"a":[1]},{}],"audit":[],"more":7},"formatVersion":2}';
+		$rows = [];
+		$read = BackupReader::read(self::stream($content), function (string $table, array $row) use (&$rows): void {
+			$rows[] = [$table, $row];
+		}, ['works', 'audit']);
+		self::assertSame(['works' => 1, 'audit' => 0], $read['tables'], 'only the known tables are counted');
+		self::assertSame([['works', ['id' => 1]]], $rows);
+		self::assertSame(['formatVersion' => 2], $read['head']);
+
+		// a known table keeps the strict shape
+		$this->expectException(InvalidInputException::class);
+		BackupReader::read(self::stream('{"tables":{"works":{"a":1}}}'), null, ['works']);
+	}
+
+	public function testALongTextBesideTheTablesIsNotKept(): void {
+		$read = BackupReader::read(self::stream('{"note":"' . str_repeat('x', 1025) . '","created":"' . str_repeat('y', 1024) . '","tables":{}}'));
+		self::assertSame(['created' => str_repeat('y', 1024)], $read['head']);
+	}
+
+	public function testARowAtTheLimitOfItsColumnsIsRead(): void {
+		$columns = implode(',', array_map(fn (int $i): string => '"c' . $i . '":1', range(1, 512)));
+		$read = BackupReader::read(self::stream('{"tables":{"works":[{' . $columns . '}]}}'));
+		self::assertSame(['works' => 1], $read['tables']);
 	}
 }

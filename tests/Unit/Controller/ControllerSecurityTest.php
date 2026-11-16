@@ -199,6 +199,8 @@ final class ControllerSecurityTest extends TestCase {
 		'ModuleController::settings', 'ModuleController::update', 'ModuleController::personalView',
 		// the service worker (milestone 0.15): with its modules off it removes what was kept, so it is always there
 		'OfflineController::worker',
+		// the manifest of a public link (milestone 0.19): the same answer whether or not public links are on
+		'OfflineController::linkManifest',
 	];
 
 	/**
@@ -225,7 +227,7 @@ final class ControllerSecurityTest extends TestCase {
 		// The concert folder (milestone 0.15), a page opened by the browser, as the app page.
 		'ConcertFolderController::page',
 		// The manifests for the home screen (milestone 0.19), fetched by the browser itself; no data.
-		'ConcertFolderController::manifest', 'PublicLinkController::manifest',
+		'ConcertFolderController::manifest', 'OfflineController::linkManifest',
 	];
 
 	/** Expensive endpoints: limited per user (the statistics aggregate the whole archive) */
@@ -245,7 +247,7 @@ final class ControllerSecurityTest extends TestCase {
 		'MemberController::score', 'MemberController::practiceAudio', 'MemberController::scan',
 		'MemberController::links', 'OfflineController::worker',
 		'ConcertFolderController::concerts', 'ConcertFolderController::score', 'ConcertFolderController::scan',
-		'PublicLinkController::show', 'PublicLinkController::scan', 'PublicLinkController::manifest', 'ConcertFolderController::manifest',
+		'PublicLinkController::show', 'PublicLinkController::scan', 'OfflineController::linkManifest', 'ConcertFolderController::manifest',
 		'PublicRepertoireController::index',
 		// the folder book writes, and the print station reads and writes files
 		'FolderBookController::createFolder', 'FolderBookController::updateFolder', 'FolderBookController::issue',
@@ -276,10 +278,11 @@ final class ControllerSecurityTest extends TestCase {
 	private const PUBLIC_ROUTES = [
 		'PublicLinkController::show' => 'public_links',
 		'PublicLinkController::scan' => 'public_links',
-		// the manifest for the home screen (milestone 0.19): no data, not even whether the link exists
-		'PublicLinkController::manifest' => 'public_links',
 		'PublicRepertoireController::index' => 'public_repertoire',
 		'OfflineController::worker' => null,
+		// the manifest for the home screen of a link (milestone 0.19): no data, not even whether the link
+		// exists or whether public links are on, hence core
+		'OfflineController::linkManifest' => null,
 	];
 
 	/**
@@ -581,7 +584,7 @@ final class ControllerSecurityTest extends TestCase {
 		$shared->method('publicExcerpt')->willReturn($excerpt);
 		$shared->method('publicScan')->willReturn($scan === null ? null : ['file' => $scan, 'keep' => $mayKeep]);
 		return new PublicLinkController($this->createStub(IRequest::class), $shared, $this->createStub(IInitialState::class), $this->l10n(),
-			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class), $this->urls());
+			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class));
 	}
 
 	/**
@@ -1233,10 +1236,17 @@ final class ControllerSecurityTest extends TestCase {
 			'icons' => [['src' => '/apps/cantoria/img/app.svg', 'type' => 'image/svg+xml', 'sizes' => 'any']]], $manifest);
 
 		$token = str_repeat('a', 32);
-		$public = json_decode($this->publicLinkController(null)->manifest($token)->render(), true, 4, JSON_THROW_ON_ERROR);
-		self::assertSame('/apps/cantoria/p/' . $token, $public['start_url'] ?? null);
-		self::assertSame($public['start_url'], $public['scope']);
-		self::assertNotSame(Http::STATUS_OK, $this->publicLinkController(null)->manifest('../../index')->getStatus());
+		// the same answer with public links off: the manifest does not say why a link does not open
+		foreach ([[], [Modules::PUBLIC_LINKS]] as $off) {
+			$offline = new OfflineController($this->createStub(IRequest::class), $this->modulesWithout($off),
+				$this->createStub(IAppManager::class), $this->l10n(), $this->urls());
+			$public = json_decode($offline->linkManifest($token)->render(), true, 4, JSON_THROW_ON_ERROR);
+			self::assertSame('/apps/cantoria/p/' . $token, $public['start_url'] ?? null);
+			self::assertSame($public['start_url'], $public['scope']);
+			$malformed = $offline->linkManifest('../../index');
+			self::assertSame(Http::STATUS_NOT_FOUND, $malformed->getStatus());
+			self::assertTrue($malformed->isThrottled());
+		}
 	}
 
 	private function l10n(): IL10N {

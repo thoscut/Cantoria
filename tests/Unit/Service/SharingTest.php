@@ -793,8 +793,10 @@ final class SharingTest extends TestCase {
 
 	/**
 	 * Load test of "Shared with me" (A25, M4): 200 links to 50 pieces read
-	 * the authors of each piece once, the persons in one query per piece,
-	 * and the licenses not at all beside the rights checks.
+	 * the authors of each piece once and the persons in one query per
+	 * piece. The licenses come from the rights policy, a stand-in here:
+	 * that it reads them once per version while the page is built is
+	 * checked in RightsPolicyTest (remembering).
 	 */
 	public function testThePageReadsTheAuthorsOfEachPieceOnceForManyLinks(): void {
 		$links = [];

@@ -310,6 +310,7 @@ onMounted(async () => {
 
 	/* also with the dark theme: no light text on white paper (D-5) */
 	.public-excerpt,
+	.public-excerpt__title,
 	.public-excerpt__composer {
 		background: none;
 		color: #000;
