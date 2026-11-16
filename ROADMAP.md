@@ -144,7 +144,7 @@ zusammengeführt. **Geplant** heißt: noch nicht begonnen.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | auf `main`, kommt mit Version 0.18.0 (0.17.0 nie getaggt); offen beim Maintainer: amtliche Markenprüfung (die Registerrecherche vom 16. November 2026 steht in `docs/de/namensrecherche-cantoria.md`), Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys | PR #14, #15, #16 |
+| 0.17 Bereit zur ersten Veröffentlichung | auf `main`, kommt mit Version 0.18.0 (0.17.0 nie getaggt); offen beim Maintainer: amtliche Markenprüfung (die Registerrecherche vom 16. November 2026 steht in `docs/de/namensrecherche-cantoria.md`), Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, Beschreibung und Topics des Repositorys; die Schrift Liberation bleibt als GPL-2.0 mit Font-Ausnahme ausgewiesen (Entscheidung vom 16. November 2026, keine anwaltliche Klärung) | PR #14, #15, #16 |
 | 0.18 Rechte auf allen neuen Wegen | auf `main`; die drei Reste (alte MusicXML neu bereinigen, Wiedervorlage bei „unbekannt“, Abfragen in `attribution()` bündeln) auf `main`; offen: drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) und die anwaltliche Bestätigung zu MusicXML auf Geräten (R B26) | PR #14, #16, #21 |
 | 0.19 Üben und Vortragen am Gerät | auf `main`; auch `usePlayback` und die eigene Startadresse des Home-Bildschirms; offen: Abnahme auf echten Geräten (auch für 0.13 bis 0.15) | PR #14, #16, #21 |
 | 0.20 Einführen und umsteigen | auf `main`; Sicherung als Datenstrom, Abgrenzung zum Orchestra Scores Manager und Versionshinweis im Store auf `main`; offen: Screenshots aus einer echten Nextcloud, Demo oder Video | PR #14, #16, #21 |
@@ -820,9 +820,11 @@ den App Store, die noch `package.sh --sign` nennt (T3).*
 - **Store-Text und README nennen die Grenzen:** Chormitglieder
   brauchen ein Nextcloud-Konto oder einen öffentlichen Link; Abgrenzung
   zum Orchestra Scores Manager 2.0.0 (W B32, W B26).
-- **Schriftlizenz Liberation:** bis zur Klärung als GPL-2.0 mit
-  Font-Ausnahme ausweisen, mit Lizenztext und Quellverweis; bestätigt sich
-  GPL-2.0, ist der Punkt hoch (R B25).
+- **Schriftlizenz Liberation:** als GPL-2.0 mit Font-Ausnahme ausweisen,
+  mit Lizenztext und Quellverweis (R B25). *Entschieden am 16. November
+  2026: Das bleibt so, statt anwaltlich zu klären, ob Verovios Angabe OFL
+  auch für die Version 1.04 gilt; die Hinweise stimmen damit für beide
+  Fälle.*
 
 *Ergänzt am 10. November 2026: fünf Optimierungsrunden über alle Aspekte
 (PR #18), umgesetzt.*
