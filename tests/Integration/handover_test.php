@@ -109,7 +109,12 @@ $settings = function () use ($appConfig): array {
 };
 $originalSwitches = $switches();
 $originalSettings = $settings();
-$archiveListing = fn (): array => array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+// sorted: the order of a directory listing is not fixed (PostgreSQL returns it in any order)
+$archiveListing = function () use ($archive): array {
+	$listed = array_map(fn ($node): string => $node->getName(), $archive->getDirectoryListing());
+	sort($listed);
+	return $listed;
+};
 $archiveBefore = $archiveListing();
 $suffix = bin2hex(random_bytes(3));
 $targetName = 'Cantoria hand-over test ' . $suffix;
@@ -249,7 +254,10 @@ try {
 	$removed = $handover->sync($uid, false);
 	$check('scan, MusicXML and notes are removed', array_diff([$pdf, $musicxml, $notes], $names($removed['removed'])) === []
 		&& !$target->nodeExists($pdf) && !$target->nodeExists($notes), json_encode($removed) ?: '');
-	$check('nothing was written into the archive folder', $archiveListing() === $archiveBefore);
+	$archiveAfter = $archiveListing();
+	$check('nothing was written into the archive folder', $archiveAfter === $archiveBefore, json_encode([
+		'new' => array_values(array_diff($archiveAfter, $archiveBefore)), 'gone' => array_values(array_diff($archiveBefore, $archiveAfter)),
+	]) ?: '');
 
 	// ---- switched off ------------------------------------------------------------------------------
 	$l = Server::get(IFactory::class)->get(Application::APP_ID, 'en');
