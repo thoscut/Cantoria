@@ -596,7 +596,11 @@ Creating a task or a link refuses fields other than the ones listed below
 Start page card keys: `tasks_open`, `tasks_answered`, `ambiguous_items`,
 `proposals`, `portal_remove`, `portal_add`, `confirm_current`, `rule1_current`,
 `licenses_expiring`, `valid_missing`, `hired_return` (librarian: copies with
-`return_date` within 30 days or past, not retired; core). The `label` is translated, always in the
+`return_date` within 30 days or past, not retired; core), `links_ending`
+(librarian, conductor, operations: the links of `GET /api/links` the account
+may extend, that is its own or, for the librarian, all, whose last day lies
+within the next 7 days or in the last 30 days; module `excerpt_links`; leads
+to the view "Links"). The `label` is translated, always in the
 plural; the UI shows its own label in singular or plural for the keys it knows
 (`src/dueLabels.ts`) and the server's label for new keys.
 
@@ -1507,7 +1511,7 @@ What else follows the modules:
   `performance_import`; `proposals`: `proposals`; `portal_remove`,
   `portal_add`: `portal`; `confirm_current`, `rule1_current`,
   `licenses_expiring`: `rights`; `valid_missing`: `valid_version`;
-  `concerts`: `concerts`).
+  `links_ending`: `excerpt_links`; `concerts`: `concerts`).
 - Dashboard widget: only while `dashboard_widget` is on; its items are those
   of `GET /api/due` without the cards the account has hidden (personal view).
 - Background jobs: the checksum job does nothing without `checksums`, the

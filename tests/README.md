@@ -80,7 +80,7 @@ What is covered:
 | `Service/UserFilesTest`, `Service/RequestBoundaryTest` | reading uploaded files with a size limit, limits of request data (unknown fields, list sizes) |
 | `Notification/NotifierTest` | notification texts, no internal error texts |
 | `Service/IcsWriterTest`, `Service/ConcertIcsTest` | calendar files after RFC 5545: CRLF, folding after 75 octets without splitting umlauts or other multi-octet characters, escaping of `,;\` and line breaks, time zone definitions (daylight saving time, half-hour offsets), all-day entries, stable UIDs, deadlines as separate entries, cancelled concerts |
-| `Service/ConcertDeadlinesTest`, `Service/DueServiceTest` | the deadlines 10, 8 and 6 weeks before a concert and the confirmation after it; which roles see them on the start page |
+| `Service/ConcertDeadlinesTest`, `Service/DueServiceTest` | the deadlines 10, 8 and 6 weeks before a concert and the confirmation after it; which roles see them on the start page; the card for links that end within a week or ended, only for those who may extend them |
 | `Service/ConcertCalendarServiceTest` | entries in the account's own calendars (test double in `Support/FakeCalendar`): only writable calendars, roles, adding again updates instead of duplicating, cancelled concerts are only updated |
 | `Controller/PageControllerTest` | the page "No access yet" links the section of the guide about a missing role, in the language of the account |
 | `Dashboard/DueWidgetTest` | the dashboard widget: only for accounts with a role, items and deep links of the start page, short titles and an icon per kind, no personal data |

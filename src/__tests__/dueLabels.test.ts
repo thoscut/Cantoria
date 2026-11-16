@@ -10,7 +10,7 @@ import { dueCardLabel } from '../dueLabels.ts'
 
 /** Card keys of GET /api/due (docs/api.md). */
 const KEYS = ['tasks_open', 'tasks_answered', 'ambiguous_items', 'proposals', 'portal_remove', 'portal_add',
-	'confirm_current', 'rule1_current', 'licenses_expiring', 'valid_missing']
+	'confirm_current', 'rule1_current', 'licenses_expiring', 'valid_missing', 'links_ending']
 
 /**
  * Use a generated translation of the app.
@@ -35,6 +35,8 @@ describe('dueCardLabel', () => {
 		expect(dueCardLabel('proposals', 2, 'Proposals in the inbox')).toBe('Proposals in the inbox')
 		expect(dueCardLabel('portal_remove', 1, '')).toBe('Version to remove from the singers\' portal')
 		expect(dueCardLabel('licenses_expiring', 12, '')).toBe('Licenses ending or ended')
+		expect(dueCardLabel('links_ending', 1, '')).toBe('Link ending or ended')
+		expect(dueCardLabel('links_ending', 2, '')).toBe('Links ending or ended')
 	})
 
 	it('has its own singular and plural for every card', () => {

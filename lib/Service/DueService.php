@@ -29,6 +29,9 @@ use OCA\Cantoria\Db\WorkVersionMapper;
  * The same data feed the Nextcloud dashboard widget (Dashboard\DueWidget).
  */
 class DueService {
+	/** A link that ends within this many days counts as ending soon (SOON_DAYS in src/sharing/linkDates.ts) */
+	public const LINKS_SOON_DAYS = 7;
+
 	public function __construct(
 		private Roles $roles,
 		private TaskService $tasks,
@@ -43,6 +46,7 @@ class DueService {
 		private EventMapper $events,
 		private Modules $modules,
 		private CopyMapper $copies,
+		private LinkService $links,
 	) {
 	}
 
@@ -134,6 +138,16 @@ class DueService {
 			$hired = $this->copies->countReturnDue($soon);
 			if ($hired > 0) {
 				$cards[] = ['key' => 'hired_return', 'count' => $hired, 'label' => 'Hired material to return'];
+			}
+		}
+		if ($active['excerpt_links'] && array_intersect($roles, LinkService::CREATORS) !== []) {
+			// links the account may extend that end within LINKS_SOON_DAYS days or ended (U30, U40):
+			// the rows of the view "Links" with the button "Extend" (LinkService::active, `extend_until`)
+			$soon = (new \DateTimeImmutable($this->rights->today($uid)))->modify('+' . self::LINKS_SOON_DAYS . ' days')->format('Y-m-d');
+			$ending = count(array_filter($this->links->active(null, $uid),
+				fn (array $link): bool => $link['extend_until'] !== null && is_string($link['expires']) && $link['expires'] <= $soon));
+			if ($ending > 0) {
+				$cards[] = ['key' => 'links_ending', 'count' => $ending, 'label' => 'Links ending or ended'];
 			}
 		}
 		if ($isConductor && $active['valid_version']) {
