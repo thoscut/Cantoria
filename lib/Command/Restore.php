@@ -38,12 +38,17 @@ class Restore extends Command {
 	#[\Override]
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$path = (string)$input->getArgument('file');
-		$content = is_readable($path) ? file_get_contents($path) : false;
-		if ($content === false) {
+		// as a stream: also a backup larger than the memory of PHP
+		$stream = is_file($path) && is_readable($path) ? fopen($path, 'rb') : false;
+		if ($stream === false) {
 			$output->writeln('<error>Cannot read ' . $path . '</error>');
 			return 1;
 		}
-		$restored = $this->backup->restore($content, (string)($input->getArgument('user') ?? 'occ'));
+		try {
+			$restored = $this->backup->restoreStream($stream, (string)($input->getArgument('user') ?? 'occ'));
+		} finally {
+			fclose($stream);
+		}
 		foreach ($restored as $table => $rows) {
 			$output->writeln(sprintf('%-28s %6d', $table, $rows));
 		}

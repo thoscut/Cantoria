@@ -31,9 +31,9 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\Attribute\UserRateLimit;
-use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
@@ -265,9 +265,12 @@ class WorkflowController extends Controller {
 				Http::STATUS_FORBIDDEN);
 		}
 		$name = 'cantoria-backup-' . gmdate('Ymd-His') . '.json';
-		$content = $this->fullBackupService->export();
+		// as a stream: the backup is written row by row and sent from there, never held in memory as a whole
+		$stream = $this->fullBackupService->exportStream();
 		$this->audit->record($this->audit->newOperation(), $this->userId, 'export', null, 'download_backup', null, null, $name);
-		$response = new DataDownloadResponse($content, $name, 'application/json');
+		$response = new StreamResponse($stream, Http::STATUS_OK, ['Content-Type' => 'application/json']);
+		// the name holds only letters, digits, a hyphen and a dot
+		$response->addHeader('Content-Disposition', 'attachment; filename="' . $name . '"');
 		$response->addHeader('X-Content-Type-Options', 'nosniff');
 		return $response;
 	}
@@ -284,9 +287,14 @@ class WorkflowController extends Controller {
 			if (!$this->roles->isAdmin($uid)) {
 				$this->roles->requireRole($uid, [Roles::LIBRARIAN]);
 			}
-			$file = $this->userFiles->read($uid, $fileId, FullBackupService::MAX_BYTES,
+			// as a stream: the file is copied to a temporary file and read from there row by row
+			$stream = $this->userFiles->stream($uid, $fileId, FullBackupService::MAX_RESTORE_BYTES,
 				new InvalidInputException('The selected file is not accessible.'));
-			return ['restored' => $this->fullBackupService->restore($file['content'], $uid)];
+			try {
+				return ['restored' => $this->fullBackupService->restoreStream($stream, $uid)];
+			} finally {
+				fclose($stream);
+			}
 		});
 	}
 }

@@ -46,6 +46,47 @@ class UserFiles {
 	}
 
 	/**
+	 * A file the user chose, as a stream that can be rewound: copied block
+	 * by block into a temporary stream that moves to disk when it grows, so
+	 * that a large file (a complete backup) is never held in memory and a
+	 * storage that cannot seek does not matter. The caller closes it.
+	 *
+	 * @param UserFacingException $notAccessible thrown when the file is missing, no file or cannot be read
+	 * @return resource at its start
+	 * @throws UserFacingException
+	 */
+	public function stream(string $uid, int $fileId, int $maxBytes, UserFacingException $notAccessible) {
+		$file = $fileId > 0 ? $this->rootFolder->getUserFolder($uid)->getFirstNodeById($fileId) : null;
+		if (!$file instanceof File) {
+			throw $notAccessible;
+		}
+		if ($file->getSize() > $maxBytes) {
+			throw self::tooLarge($maxBytes);
+		}
+		try {
+			$handle = $file->fopen('r');
+		} catch (NotPermittedException|LockedException) {
+			$handle = false;
+		}
+		$copy = fopen('php://temp/maxmemory:' . (2 * 1024 * 1024), 'w+b');
+		if ($handle === false || $copy === false) {
+			throw $notAccessible;
+		}
+		try {
+			// One byte more than allowed: the size in the file cache may lag behind the content.
+			$copied = stream_copy_to_stream($handle, $copy, $maxBytes + 1);
+		} finally {
+			fclose($handle);
+		}
+		if ($copied === false || $copied > $maxBytes) {
+			fclose($copy);
+			throw $copied === false ? $notAccessible : self::tooLarge($maxBytes);
+		}
+		rewind($copy);
+		return $copy;
+	}
+
+	/**
 	 * Content of a file, at most $maxBytes long.
 	 *
 	 * @param UserFacingException $notAccessible thrown when the file cannot be read

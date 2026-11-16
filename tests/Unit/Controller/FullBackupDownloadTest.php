@@ -21,6 +21,8 @@ use OCA\Cantoria\Service\Roles;
 use OCA\Cantoria\Service\UserFiles;
 use OCA\Cantoria\Service\ValidVersionService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
@@ -47,7 +49,6 @@ final class FullBackupDownloadTest extends TestCase {
 			$this->recorded[] = [$uid, $type, $action];
 		});
 		$backup = $this->createStub(FullBackupService::class);
-		$backup->method('export')->willReturn('{"format":"cantoria-backup"}');
 		$l = $this->createStub(IL10N::class);
 		$l->method('t')->willReturnArgument(0);
 		return new WorkflowController($this->createStub(IRequest::class), 'kim', $roles, $this->createStub(RightsService::class),
@@ -57,14 +58,15 @@ final class FullBackupDownloadTest extends TestCase {
 	}
 
 	public function testEveryDownloadIsRecorded(): void {
-		try {
-			$this->controller(true, false, true)->fullBackup();
-		} catch (\Error $e) {
-			// Without a Nextcloud server the download response lacks a Symfony
-			// class; the audit entry comes before the response.
-			self::assertStringContainsString('HeaderUtils', $e->getMessage());
-		}
+		$response = $this->controller(true, false, true)->fullBackup();
 		self::assertSame([['kim', 'export', 'download_backup']], $this->recorded);
+		// sent as a stream, row by row, never as one text in memory (milestone 0.20)
+		self::assertInstanceOf(StreamResponse::class, $response);
+		$headers = (new \ReflectionProperty(Response::class, 'headers'))->getValue($response);
+		self::assertIsArray($headers);
+		self::assertMatchesRegularExpression('/^attachment; filename="cantoria-backup-\d{8}-\d{6}\.json"$/', (string)($headers['Content-Disposition'] ?? ''));
+		self::assertSame('application/json', $headers['Content-Type'] ?? null);
+		self::assertSame('nosniff', $headers['X-Content-Type-Options'] ?? null);
 	}
 
 	public function testARefusedDownloadIsNotRecorded(): void {

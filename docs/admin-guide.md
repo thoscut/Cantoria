@@ -531,7 +531,9 @@ reinstalling the app. Nothing existing is overwritten.
 2. Choose a `…_backup_….json` file.
 3. Confirm that it is the right and most recent backup and **Restore now**.
 
-In the web interface a backup file may be at most 64 MB. On self-hosted
+Download and restore run as a stream: the backup is written and read row
+by row and is never held in memory as a whole. In the web interface a
+backup file may be at most 512 MB. On self-hosted
 instances `occ cantoria:restore <file> [<account>]` reads the file from the
 server's file system without that limit, and
 `occ cantoria:export --full` writes a complete backup to standard output.

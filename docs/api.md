@@ -49,7 +49,7 @@ Request bodies are checked strictly: unknown fields are refused with 400
 | Search of Nextcloud (provider `cantoria`) | 300 in 10 minutes; at most 50 results per page |
 
 Files chosen by `fileId` for an import may be at most 20 MB, a backup for a
-restore at most 64 MB; larger files are refused with 400
+restore at most 512 MB (read as a stream); larger files are refused with 400
 (`The file is too large (at most %s MB).`).
 
 Field names are the keys from `lib/Service/Fields.php` (snake_case). User-facing
