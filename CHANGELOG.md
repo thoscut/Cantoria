@@ -91,6 +91,24 @@ The short version for the app store; the details follow below and under
 - **Guides** in English and German for all of the above, the legal
   background of lyrics in a booklet and of large print (§ 45b UrhG), and
   the new routes in `docs/api.md`.
+- **A backup of any size.** The complete backup is sent block by block
+  when it is downloaded and read row by row when it is restored, so its
+  size no longer depends on the memory of PHP. A restore still checks the
+  whole file before it writes anything and writes in one transaction. The
+  limit for a restore is 512 MB; `occ cantoria:restore` and
+  `occ cantoria:export` work the same way.
+- **Home screen.** The concert folder and a public link bring their own
+  web app manifest (`/concert-folder/manifest`, `/p/{token}/manifest`), so
+  an icon on the home screen opens that page and not the Nextcloud start
+  page. Not yet checked on real devices; the hint about the bookmark in the
+  concert folder stays until then.
+- **Protection:** confirmed public-domain versions whose proposal now
+  reads "unknown" because the arranger is missing come up again under
+  "Protection", in a group of their own, and count among the open rights
+  on the start page. Links stay as they are.
+- **Hand-over folder:** the manifest remembers how a MusicXML file was
+  cleaned. When the cleaning changes with a later version, the next run
+  writes the old files again.
 
 ### Changed
 
@@ -99,6 +117,15 @@ The short version for the app store; the details follow below and under
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
 - The version on `main` is 0.18.0-dev.1 for the new table and routes.
+- **"Shared with me" with many links** reads the authors of a piece in one
+  query and the licenses of a version once per request; a load test with
+  200 links counts the queries.
+- **One playback** for the score view of the archive and the shared pages
+  (`src/score/usePlayback.ts`) instead of two copies, with a test.
+- **Docs and store text:** "Cantoria alongside a choir system" (English
+  and German) and the store description say how Cantoria differs from the
+  Orchestra Scores Manager; `docs/release.md` has a step for the summary
+  of the version in the store.
 - **Comparing with the choir system.** A file that is neither CSV nor
   XLSX (an old Excel file, a web page, XML or OpenDocument) is refused with
   what to do instead, not with "no shelf mark". The guide "Cantoria
