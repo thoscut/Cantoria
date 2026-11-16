@@ -10,6 +10,10 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-16
+
+The first version for the Nextcloud app store.
+
 ### Since 0.16 at a glance
 
 The short version for the app store; the details follow below and under
@@ -159,7 +163,6 @@ The short version for the app store; the details follow below and under
   folder or unsaved role groups asks first.
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
-- The version on `main` is 0.18.0-dev.1 for the new table and routes.
 - **"Shared with me" with many links** reads the authors of a piece in one
   query and the licenses of a version once per request; a load test with
   200 links counts the queries.
@@ -198,7 +201,8 @@ The short version for the app store; the details follow below and under
 
 ## [0.17.0] - 2026-11-04
 
-The first version for the Nextcloud app store.
+Prepared as the first version for the app store, but never tagged or
+published; its changes reach the app store with 0.18.0.
 
 ### Added
 
