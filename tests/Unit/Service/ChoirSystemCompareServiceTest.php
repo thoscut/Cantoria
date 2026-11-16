@@ -113,8 +113,8 @@ final class ChoirSystemCompareServiceTest extends TestCase {
 		return [
 			'old Excel file' => ["\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1rest", 'export.xls'],
 			'web page named .xls' => ["\xEF\xBB\xBF<html><table><tr><td>2-3</td></tr></table></html>", 'export.xls'],
-			'web page named .csv' => ["  <table><tr><td>2-3</td></tr></table>", 'export.csv'],
-			'XML' => ["<?xml version=\"1.0\"?><rows><row>2-3</row></rows>", 'export.xml'],
+			'web page named .csv' => ['  <table><tr><td>2-3</td></tr></table>', 'export.csv'],
+			'XML' => ['<?xml version="1.0"?><rows><row>2-3</row></rows>', 'export.xml'],
 			'OpenDocument' => ["PK\x03\x04rest", 'export.ods'],
 		];
 	}
