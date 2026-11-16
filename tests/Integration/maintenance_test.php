@@ -77,7 +77,7 @@ $lifeCases = [
 	'1789-1860' => ['1789', 'year', '1860', 'year'],
 	'1789–1860' => ['1789', 'year', '1860', 'year'],
 	'(1789 - 1860)' => ['1789', 'year', '1860', 'year'],
-	'geb. 1928' => ['1928', 'year', null, 'unknown'],
+	'geb. 1928' => ['1928', 'year', null, 'living'],
 	'† 1955' => [null, 'unknown', '1955', 'year'],
 	'*1944, lebend' => ['1944', 'year', null, 'living'],
 	'20./21. Jahrhundert' => [null, 'unknown', null, 'unknown'],
@@ -179,11 +179,11 @@ try {
 		&& $again['snapshot'] !== null, (string)$again['snapshot']);
 
 	// The import leaves the roles open; a "free" proposal needs composer and lyricist.
-	// Names of the demo data (CI) and of other test data.
+	// Names of the demo data (CI) and of other test data (a hyphen in a name is read as a blank).
 	$importedRoles = ['Friedrich Silcher' => 'composer', 'Simon Dach' => 'lyricist', 'Johann Gottfried Herder' => 'translator',
 		'Felix Mendelssohn Bartholdy' => 'composer', 'Joseph von Eichendorff' => 'lyricist'];
 	foreach ($persons->forVersion($versionFree) as $row) {
-		$role = $importedRoles[$row['person']['name'] ?? ''] ?? null;
+		$role = $importedRoles[str_replace('-', ' ', $row['person']['name'] ?? '')] ?? null;
 		if ($role !== null) {
 			$persons->updateContribution((int)$row['id'], ['role' => $role], $uid);
 		}
