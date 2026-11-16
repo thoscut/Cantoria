@@ -159,7 +159,7 @@ The short version for the app store; the details follow below and under
   folder or unsaved role groups asks first.
 - The mixer shows the voice group of each voice; the note with a shared
   piece is a slip beside the notes.
-- The version on `main` is 0.18.0-dev.1 for the new table and routes.
+- The version on `main` is 0.18.0-dev.2 for the new table and routes.
 - **"Shared with me" with many links** reads the authors of a piece in one
   query and the licenses of a version once per request; a load test with
   200 links counts the queries.
