@@ -57,7 +57,7 @@ async function load(): Promise<void> {
 
 onMounted(load)
 
-const KINDS = ['ended', 'conflict', 'upcoming'] as const
+const KINDS = ['ended', 'conflict', 'unknown', 'upcoming'] as const
 
 const groups = computed(() => KINDS
 	.map((kind) => ({ kind, rows: rows.value.filter((row) => row.kind === kind) }))
@@ -66,7 +66,7 @@ const groups = computed(() => KINDS
 /**
  * Heading of a group.
  *
- * @param kind - ended, conflict or upcoming
+ * @param kind - ended, conflict, unknown or upcoming
  */
 function kindTitle(kind: string): string {
 	switch (kind) {
@@ -74,6 +74,8 @@ function kindTitle(kind: string): string {
 		return t('cantoria', 'Marked protected, but public domain by the life dates')
 	case 'conflict':
 		return t('cantoria', 'Marked public domain, but the persons do not allow it')
+	case 'unknown':
+		return t('cantoria', 'Confirmed as public domain, but the proposal is now unknown')
 	default:
 		return t('cantoria', 'Protected with a known end')
 	}

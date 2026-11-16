@@ -334,11 +334,36 @@ class PersonService {
 	}
 
 	/**
-	 * Resubmission list for the catalog librarian:
+	 * Why a version is resubmitted, or null:
 	 * - `ended`: marked protected, but by the proposal the protection has ended
 	 * - `conflict`: marked public domain, but the recorded persons do not allow
 	 *   a "public domain" proposal
+	 * - `unknown`: confirmed as public domain, without recorded persons, but
+	 *   the proposal is now "unknown" because the arranger of an arrangement
+	 *   is not recorded (R B24): e.g. a folk song setting confirmed before
+	 *   the rule; the persons are not the reason, so it is no `conflict`
 	 * - `upcoming`: marked protected, with a known end of protection
+	 *
+	 * The statistics count `ended` and `conflict` by the same rule.
+	 *
+	 * @param array{status: string, reason?: string, persons?: int, ...} $proposal
+	 */
+	public static function reviewKind(WorkVersion $version, array $proposal): ?string {
+		$status = $version->getRightsStatus();
+		$persons = $proposal['persons'] ?? 0;
+		return match (true) {
+			$status === 'protected' && $proposal['status'] === ProtectionTerm::FREE => 'ended',
+			$status === 'public_domain' && $persons > 0 && $proposal['status'] !== ProtectionTerm::FREE => 'conflict',
+			$status === 'public_domain' && $version->isConfirmed() && $proposal['status'] === ProtectionTerm::UNKNOWN
+				&& ($proposal['reason'] ?? '') === 'arranger_missing' => 'unknown',
+			$status === 'protected' && $proposal['status'] === ProtectionTerm::PROTECTED => 'upcoming',
+			default => null,
+		};
+	}
+
+	/**
+	 * Resubmission list for the catalog librarian, by reviewKind(), with
+	 * the versions that have a copy.
 	 *
 	 * @return list<ReviewRow>
 	 */
@@ -349,15 +374,10 @@ class PersonService {
 		$context = $this->versionContext();
 		$rows = [];
 		$keys = [];
-		$order = ['ended' => 0, 'conflict' => 1, 'upcoming' => 2];
+		$order = ['ended' => 0, 'conflict' => 1, 'unknown' => 2, 'upcoming' => 3];
 		foreach ($versions as $versionId => $version) {
 			$proposal = $proposals[$versionId];
-			$kind = match (true) {
-				$version->getRightsStatus() === 'protected' && $proposal['status'] === ProtectionTerm::FREE => 'ended',
-				$version->getRightsStatus() === 'public_domain' && ($proposal['persons'] ?? 0) > 0 && $proposal['status'] !== ProtectionTerm::FREE => 'conflict',
-				$version->getRightsStatus() === 'protected' && $proposal['status'] === ProtectionTerm::PROTECTED => 'upcoming',
-				default => null,
-			};
+			$kind = self::reviewKind($version, $proposal);
 			$info = $context[$versionId] ?? null;
 			if ($kind === null || $info === null || $info['copies'] === []) {
 				continue;

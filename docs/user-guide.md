@@ -1629,7 +1629,9 @@ protected.
 
 **Protection terms** lists what to check: versions marked protected that are
 public domain by the life dates, versions marked public domain that the
-recorded persons do not allow, and protected versions with a known end.
+recorded persons do not allow, versions confirmed as public domain whose
+suggestion is now "unknown" because the arranger of an arrangement is not
+recorded, and protected versions with a known end.
 
 > [!IMPORTANT]
 > The suggestion never changes the rights status. A music librarian checks it

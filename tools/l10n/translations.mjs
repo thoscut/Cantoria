@@ -1852,6 +1852,7 @@ export const singular = {
 	'The person has been deleted.': 'Die Person ist gelöscht.',
 	'Marked protected, but public domain by the life dates': 'Als geschützt markiert, nach den Lebensdaten aber gemeinfrei',
 	'Marked public domain, but the persons do not allow it': 'Als gemeinfrei markiert, die erfassten Personen lassen das aber nicht zu',
+	'Confirmed as public domain, but the proposal is now unknown': 'Als gemeinfrei bestätigt, der Vorschlag lautet jetzt aber „unbekannt“',
 	'Protected with a known end': 'Geschützt mit bekanntem Ende',
 	'public domain since {date}': 'gemeinfrei seit {date}',
 	'protected until {date}': 'geschützt bis {date}',

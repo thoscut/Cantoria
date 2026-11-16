@@ -1749,8 +1749,10 @@ Zuordnungen gelten als geschützt.
 
 **Schutzfristen** listet, was zu prüfen ist: als geschützt eingetragene
 Fassungen, die nach den Lebensdaten gemeinfrei sind, als gemeinfrei
-eingetragene Fassungen, die die erfassten Personen nicht erlauben, und
-geschützte Fassungen mit bekanntem Schutzende.
+eingetragene Fassungen, die die erfassten Personen nicht erlauben, als
+gemeinfrei bestätigte Fassungen, deren Vorschlag jetzt „unbekannt“ lautet,
+weil zu einer Bearbeitung keine Person mit der Rolle **Bearbeitung**
+erfasst ist, und geschützte Fassungen mit bekanntem Schutzende.
 
 > [!IMPORTANT]
 > Der Vorschlag ändert nie den Rechtestatus. Die Archivverwaltung prüft ihn

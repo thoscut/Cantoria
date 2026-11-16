@@ -1308,7 +1308,7 @@ export interface Protection {
 
 export interface ProtectionReviewRow {
 	versionId: number
-	kind: 'ended' | 'conflict' | 'upcoming'
+	kind: 'ended' | 'conflict' | 'unknown' | 'upcoming'
 	rightsStatus: string | null
 	confirmed: boolean
 	title: string | null

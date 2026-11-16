@@ -666,9 +666,11 @@ class StatisticsService {
 			if ($proposal === null || ($copiesByVersion[$versionId] ?? []) === []) {
 				continue;
 			}
-			if ($status === 'protected' && $proposal['status'] === ProtectionTerm::FREE) {
+			// the rule of the resubmission list
+			$kind = PersonService::reviewKind($version, $proposal);
+			if ($kind === 'ended') {
 				$result['protectionEnded']++;
-			} elseif ($status === 'public_domain' && ($proposal['persons'] ?? 0) > 0 && $proposal['status'] !== ProtectionTerm::FREE) {
+			} elseif ($kind === 'conflict') {
 				$result['conflicts']++;
 			}
 		}

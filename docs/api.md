@@ -1027,15 +1027,17 @@ The entry (`GET /api/entries/{id}`) additionally contains
 Resubmission rows (`GET /api/protection/review`), versions with copies only:
 
 ```json
-[{ "versionId": 35, "kind": "ended|conflict|upcoming", "rightsStatus": "protected", "confirmed": false,
+[{ "versionId": 35, "kind": "ended|conflict|unknown|upcoming", "rightsStatus": "protected", "confirmed": false,
    "title": "…", "composer": "…", "workId": 35, "copies": [{ "id": 35, "shelfmark": "10-46", "status": "active" }],
    "protection": { … } }]
 ```
 
 `ended`: marked protected, but by the proposal free (to check); `conflict`:
 marked public domain, but the recorded persons do not allow a "public domain"
-proposal; `upcoming`: protected with a known end. Sorted in this order, then
-by date.
+proposal; `unknown`: confirmed as public domain without recorded persons,
+but the proposal is now "unknown" because the arranger of an arrangement is
+not recorded; `upcoming`: protected with a known end. Sorted in this order,
+then by date.
 
 **Person import** reads a research list (CSV, `;`, UTF-8 with or without
 BOM) with the columns `Name; Werke; Signaturen; Lebensdaten laut Verzeichnis;
