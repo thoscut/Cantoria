@@ -6,7 +6,7 @@
 
 ## Supported versions
 
-The app is in its 0.x series; 0.17.0 is its first release. Security fixes
+The app is in its 0.x series; 0.18.0 is its first release. Security fixes
 go into the `main` branch and into the next release; only the latest
 release receives fixes. Please update to it
 before you report an issue.

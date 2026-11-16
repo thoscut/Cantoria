@@ -144,17 +144,18 @@ zusammengeführt. **Geplant** heißt: noch nicht begonnen.
 | 0.14 Text und Tonhöhe beim Mitsingen | fertig (nicht in einem echten Nextcloud abgenommen) | Version 0.15.0 |
 | 0.15 Ohne Netz üben und vortragen | fertig bis auf die Abnahme auf echten Geräten | Version 0.15.0 |
 | Umbenennung in Cantoria (App-ID `cantoria`, Tabellen `cantoria_*`) | fertig | Version 0.16.0, 0.16.1 |
-| 0.17 Bereit zur ersten Veröffentlichung | auf `main`, Version 0.17.0 vorbereitet (noch ohne Tag); offen beim Maintainer: amtliche Markenprüfung (die Registerrecherche vom 16. November 2026 steht in `docs/de/namensrecherche-cantoria.md`), Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys | PR #14, #15, #16 |
-| 0.18 Rechte auf allen neuen Wegen | auf `main`; die drei Reste (alte MusicXML neu bereinigen, Wiedervorlage bei „unbekannt“, Abfragen in `attribution()` bündeln) im Review; offen: drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) und die anwaltliche Bestätigung zu MusicXML auf Geräten (R B26) | PR #14, #16; Reste im PR vom 16. November |
-| 0.19 Üben und Vortragen am Gerät | auf `main`; `usePlayback` und die eigene Startadresse des Home-Bildschirms im Review; offen: Abnahme auf echten Geräten (auch für 0.13 bis 0.15) | PR #14, #16; Reste im PR vom 16. November |
-| 0.20 Einführen und umsteigen | auf `main`; Sicherung als Datenstrom, Abgrenzung zum Orchestra Scores Manager und Versionshinweis im Store im Review; offen: Screenshots aus einer echten Nextcloud, Demo oder Video | PR #14, #16; Reste im PR vom 16. November |
-| Zahlen aus den Noten, Programmheft, Großdruck, geführte Einrichtung, Vergleich mit dem Chorsystem | auf `main` (`0.18.0-dev.1`) | PR #17 bis #20 |
-| UX- und Design-Review vom 16. November 2026 | im Review: 26 von 27 Befunden umgesetzt; offen: ein gemeinsames CSS der beiden Notenansichten (D-14) und die Prüfung auf Geräten und mit Screenreader | PR vom 16. November |
+| 0.17 Bereit zur ersten Veröffentlichung | auf `main`, kommt mit Version 0.18.0 (0.17.0 nie getaggt); offen beim Maintainer: amtliche Markenprüfung (die Registerrecherche vom 16. November 2026 steht in `docs/de/namensrecherche-cantoria.md`), Signaturzertifikat und Registrierung im App Store, Branch-Schutz mit „CI result“, anwaltliche Klärung der Schrift Liberation, Beschreibung und Topics des Repositorys | PR #14, #15, #16 |
+| 0.18 Rechte auf allen neuen Wegen | auf `main`; die drei Reste (alte MusicXML neu bereinigen, Wiedervorlage bei „unbekannt“, Abfragen in `attribution()` bündeln) auf `main`; offen: drei Entscheidungen des Maintainers (R B9, S N2, ob „unbekannt“ als Rechtekonflikt gilt) und die anwaltliche Bestätigung zu MusicXML auf Geräten (R B26) | PR #14, #16, #21 |
+| 0.19 Üben und Vortragen am Gerät | auf `main`; auch `usePlayback` und die eigene Startadresse des Home-Bildschirms; offen: Abnahme auf echten Geräten (auch für 0.13 bis 0.15) | PR #14, #16, #21 |
+| 0.20 Einführen und umsteigen | auf `main`; Sicherung als Datenstrom, Abgrenzung zum Orchestra Scores Manager und Versionshinweis im Store auf `main`; offen: Screenshots aus einer echten Nextcloud, Demo oder Video | PR #14, #16, #21 |
+| Zahlen aus den Noten, Programmheft, Großdruck, geführte Einrichtung, Vergleich mit dem Chorsystem | auf `main`, Version 0.18.0 | PR #17 bis #20 |
+| UX- und Design-Review vom 16. November 2026 | auf `main`: 26 von 27 Befunden umgesetzt; offen: ein gemeinsames CSS der beiden Notenansichten (D-14) und die Prüfung auf Geräten und mit Screenreader | PR #21 |
 | 1.0 Stabil | geplant; begonnen sind die Lasttests (Sicherung mit 120 000 Zeilen, „Mit mir geteilt“ mit 200 Links) | – |
 
 Die letzte Version mit Tag ist 0.16.1: Die App heißt seitdem Cantoria,
-vorher „Notenarchiv“. `main` steht auf `0.18.0-dev.1`; die Version 0.17.0
-ist im `CHANGELOG.md` vorbereitet. Die Meilensteine 0.10 bis 0.15 kamen
+vorher „Notenarchiv“. Die Version 0.18.0 ist
+vorbereitet und wird die erste im App Store; 0.17.0 wurde nie getaggt, ihr
+Inhalt kommt mit 0.18.0. Die Meilensteine 0.10 bis 0.15 kamen
 mit 0.15.0 (PR #10 bis #12). Das Experten-Review vom 29. Oktober 2026 (UX,
 Design und Barrierefreiheit, Architektur, Sicherheit, Recht, Tests und CI,
 Wettbewerb) hat auf Stand 0.16.1 keine kritischen Befunde ergeben. Seine
