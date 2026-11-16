@@ -342,7 +342,8 @@ class PrintMirrorService {
 				continue;
 			}
 			/** @var MirrorFile $row */
-			if ($row->getSourceId() === $entry['archiveFile']->getId() && $row->getSourceEtag() === $entry['node']->getEtag()) {
+			if ($row->getSourceId() === $entry['archiveFile']->getId()
+				&& $row->getSourceEtag() === $this->sourceStamp($entry['archiveFile'], $entry['node'])) {
 				$report['unchanged']++;
 				continue;
 			}
@@ -542,7 +543,7 @@ class PrintMirrorService {
 		$row->setSha256(self::sha256($file));
 		$row->setCopyId($entry['copyId']);
 		$row->setSourceId($entry['archiveFile']->getId());
-		$row->setSourceEtag($source->getEtag());
+		$row->setSourceEtag($this->sourceStamp($entry['archiveFile'], $source));
 		$row->setWritten($this->time->getTime());
 		$this->mirrorFiles->insert($row);
 		$this->audit->record($operation, $uid, $this->objectType(), $entry['copyId'], 'mirror_copied', 'file', null, $name);
@@ -568,10 +569,21 @@ class PrintMirrorService {
 		$row->setSha256(self::sha256($existing));
 		$row->setCopyId($entry['copyId']);
 		$row->setSourceId($entry['archiveFile']->getId());
-		$row->setSourceEtag($source->getEtag());
+		$row->setSourceEtag($this->sourceStamp($entry['archiveFile'], $source));
 		$row->setWritten($this->time->getTime());
 		$this->mirrorFiles->update($row);
 		$this->audit->record($operation, $uid, $this->objectType(), $entry['copyId'], 'mirror_replaced', 'file', $row->getName(), $row->getName());
+	}
+
+	/**
+	 * What the manifest keeps of the source of a written file (column
+	 * source_etag): its ETag. A file whose source has another stamp is
+	 * written again. A subclass that writes a cleaned copy adds the version
+	 * of its cleaning, so that files written by an older cleaning are
+	 * cleaned again at the next sync (0.18).
+	 */
+	protected function sourceStamp(ArchiveFile $file, File $source): string {
+		return $source->getEtag();
 	}
 
 	/**

@@ -116,4 +116,34 @@ final class HandoverContentTest extends TestCase {
 		self::assertIsResource($written);
 		self::assertSame('%PDF-1.7 <!-- kept -->', stream_get_contents($written));
 	}
+
+	private function stamp(string $role, string $etag): string {
+		$file = new ArchiveFile();
+		$file->setRole($role);
+		$source = $this->createStub(File::class);
+		$source->method('getEtag')->willReturn($etag);
+		$method = new \ReflectionMethod(HandoverService::class, 'sourceStamp');
+		/** @var string */
+		return $method->invoke($this->service(true), $file, $source);
+	}
+
+	/**
+	 * The manifest keeps the version of the cleaning with a MusicXML file:
+	 * a file written before the marker (only its ETag) or by an older
+	 * cleaning no longer matches and is cleaned again (0.18).
+	 */
+	public function testTheManifestMarksMusicXmlWithTheVersionOfTheCleaning(): void {
+		$stamp = $this->stamp('musicxml', 'abc123');
+		self::assertSame('abc123;' . HandoverService::CLEANING, $stamp);
+		self::assertNotSame('abc123', $stamp);
+		self::assertSame('abc123', $this->stamp('score_pdf', 'abc123'));
+		self::assertSame('abc123', $this->stamp('audio', 'abc123'));
+	}
+
+	public function testALongETagStaysWithinTheColumn(): void {
+		$stamp = $this->stamp('musicxml', str_repeat('e', 64));
+		self::assertLessThanOrEqual(64, strlen($stamp));
+		self::assertStringEndsWith(';' . HandoverService::CLEANING, $stamp);
+		self::assertNotSame($stamp, $this->stamp('musicxml', str_repeat('e', 63) . 'f'));
+	}
 }
