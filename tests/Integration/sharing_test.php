@@ -87,6 +87,7 @@ use OCP\IDBConnection;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
@@ -166,7 +167,7 @@ $isNotFoundPage = fn (Response $response): bool => $response instanceof NotFound
 	&& $response->isThrottled() && $response->getParams() === [];
 
 $publicController = new PublicLinkController(Server::get(IRequest::class), $shared, $initialState, $l, Server::get(LoggerInterface::class),
-	Server::get(IAppManager::class));
+	Server::get(IAppManager::class), Server::get(IURLGenerator::class));
 $middleware = new ModuleMiddleware($modules, $l);
 /** The answer of the public route: the middleware first, then the method. */
 $publicPage = function (string $token) use ($middleware, $publicController): Response {

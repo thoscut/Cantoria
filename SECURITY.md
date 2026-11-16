@@ -248,14 +248,16 @@ public links stop working at once.
 
 **The public pages.**
 
-- Exactly four routes are public (`#[PublicPage]`), the only routes of
+- Exactly five routes are public (`#[PublicPage]`), the only routes of
   their controllers: `GET /apps/cantoria/p/{token}`, the scan of a public
-  link `GET /apps/cantoria/p/{token}/scan`, `GET /apps/cantoria/repertoire`
-  and the script of the offline worker `GET /apps/cantoria/offline-worker`,
-  which holds no data (see "Practising without a network" below). All are
+  link `GET /apps/cantoria/p/{token}/scan`, the manifest for the home
+  screen of a link `GET /apps/cantoria/p/{token}/manifest` (no data, not
+  even whether the link exists), `GET /apps/cantoria/repertoire` and the
+  script of the offline worker `GET /apps/cantoria/offline-worker`, which
+  holds no data (see "Practising without a network" below). All are
   plain GET requests, limited per address (a public link 60 in 10 minutes,
-  its scan 30) and per account and protected by Nextcloud's brute-force
-  protection; the first three need their module. The unit test checks this
+  its scan and its manifest 30) and per account and protected by Nextcloud's brute-force
+  protection; all but the worker need their module. The unit test checks this
   list.
 - Tokens are 32 alphanumeric characters from Nextcloud's secure random
   generator. The database holds only their SHA-256 hash, by which a link is

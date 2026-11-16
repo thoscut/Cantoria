@@ -224,6 +224,8 @@ final class ControllerSecurityTest extends TestCase {
 		'OfflineController::worker',
 		// The concert folder (milestone 0.15), a page opened by the browser, as the app page.
 		'ConcertFolderController::page',
+		// The manifests for the home screen (milestone 0.19), fetched by the browser itself; no data.
+		'ConcertFolderController::manifest', 'PublicLinkController::manifest',
 	];
 
 	/** Expensive endpoints: limited per user (the statistics aggregate the whole archive) */
@@ -243,7 +245,8 @@ final class ControllerSecurityTest extends TestCase {
 		'MemberController::score', 'MemberController::practiceAudio', 'MemberController::scan',
 		'MemberController::links', 'OfflineController::worker',
 		'ConcertFolderController::concerts', 'ConcertFolderController::score', 'ConcertFolderController::scan',
-		'PublicLinkController::show', 'PublicLinkController::scan', 'PublicRepertoireController::index',
+		'PublicLinkController::show', 'PublicLinkController::scan', 'PublicLinkController::manifest', 'ConcertFolderController::manifest',
+		'PublicRepertoireController::index',
 		// the folder book writes, and the print station reads and writes files
 		'FolderBookController::createFolder', 'FolderBookController::updateFolder', 'FolderBookController::issue',
 		'FolderBookController::takeBack', 'PrintMirrorController::preview', 'PrintMirrorController::sync',
@@ -273,6 +276,8 @@ final class ControllerSecurityTest extends TestCase {
 	private const PUBLIC_ROUTES = [
 		'PublicLinkController::show' => 'public_links',
 		'PublicLinkController::scan' => 'public_links',
+		// the manifest for the home screen (milestone 0.19): no data, not even whether the link exists
+		'PublicLinkController::manifest' => 'public_links',
 		'PublicRepertoireController::index' => 'public_repertoire',
 		'OfflineController::worker' => null,
 	];
@@ -576,7 +581,7 @@ final class ControllerSecurityTest extends TestCase {
 		$shared->method('publicExcerpt')->willReturn($excerpt);
 		$shared->method('publicScan')->willReturn($scan === null ? null : ['file' => $scan, 'keep' => $mayKeep]);
 		return new PublicLinkController($this->createStub(IRequest::class), $shared, $this->createStub(IInitialState::class), $this->l10n(),
-			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class));
+			$this->createStub(LoggerInterface::class), $this->createStub(IAppManager::class), $this->urls());
 	}
 
 	/**
@@ -753,7 +758,7 @@ final class ControllerSecurityTest extends TestCase {
 
 	private function concertFolderController(?string $uid, ConcertFolderService $folder): ConcertFolderController {
 		return new ConcertFolderController($this->createStub(IRequest::class), $uid, $folder, $this->createStub(IInitialState::class),
-			$this->createStub(IAppManager::class), $this->l10n(), $this->createStub(LoggerInterface::class));
+			$this->createStub(IAppManager::class), $this->l10n(), $this->createStub(LoggerInterface::class), $this->urls());
 	}
 
 	/**
@@ -1200,6 +1205,38 @@ final class ControllerSecurityTest extends TestCase {
 		return new TaskController($this->createStub(IRequest::class), 'conductor', $this->createStub(Roles::class),
 			$this->createStub(TaskService::class), $links, $this->createStub(DueService::class), $this->l10n(),
 			$this->createStub(LoggerInterface::class));
+	}
+
+	private function urls(): IURLGenerator {
+		$urls = $this->createStub(IURLGenerator::class);
+		$urls->method('linkToRoute')->willReturnCallback(fn (string $route, array $parameters = []): string => match ($route) {
+			'cantoria.concertFolder.page' => '/apps/cantoria/concert-folder',
+			'cantoria.publicLink.show' => '/apps/cantoria/p/' . ($parameters['token'] ?? ''),
+			default => '/apps/cantoria/',
+		});
+		$urls->method('imagePath')->willReturn('/apps/cantoria/img/app.svg');
+		return $urls;
+	}
+
+	/**
+	 * The home screen opens the page that keeps the pieces, not the start
+	 * page of the app (milestone 0.19, U25): the concert folder and a
+	 * public link have a manifest of their own; it holds no data, and a
+	 * token that is none gets the 404 page.
+	 */
+	public function testTheHomeScreenOpensTheConcertFolderOrTheLink(): void {
+		$folder = $this->concertFolderController('conductor', $this->createStub(ConcertFolderService::class))->manifest();
+		self::assertSame('application/manifest+json; charset=utf-8', self::headers($folder)['Content-Type'] ?? null);
+		$manifest = json_decode($folder->render(), true, 4, JSON_THROW_ON_ERROR);
+		self::assertSame(['id' => '/apps/cantoria/concert-folder', 'name' => 'Cantoria – Concert folder', 'short_name' => 'Concert folder',
+			'start_url' => '/apps/cantoria/concert-folder', 'scope' => '/apps/cantoria/concert-folder', 'display' => 'standalone',
+			'icons' => [['src' => '/apps/cantoria/img/app.svg', 'type' => 'image/svg+xml', 'sizes' => 'any']]], $manifest);
+
+		$token = str_repeat('a', 32);
+		$public = json_decode($this->publicLinkController(null)->manifest($token)->render(), true, 4, JSON_THROW_ON_ERROR);
+		self::assertSame('/apps/cantoria/p/' . $token, $public['start_url'] ?? null);
+		self::assertSame($public['start_url'], $public['scope']);
+		self::assertNotSame(Http::STATUS_OK, $this->publicLinkController(null)->manifest('../../index')->getStatus());
 	}
 
 	private function l10n(): IL10N {

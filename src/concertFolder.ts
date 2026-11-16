@@ -12,8 +12,11 @@
 import './design/tokens.css'
 import { createApp } from 'vue'
 import { claimDevice } from './offline/device.ts'
+import { useOwnManifest } from './offline/manifest.ts'
 import ConcertFolderApp from './sharing/ConcertFolderApp.vue'
 
+// the home screen opens the folder, not the archive (U25)
+useOwnManifest('folder')
 claimDevice('folder').then((reload) => {
 	if (reload) {
 		window.location.reload()

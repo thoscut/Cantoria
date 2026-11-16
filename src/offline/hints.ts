@@ -10,14 +10,15 @@
  * (also "Make all … available", U27):
  * - "Shared with me": the home screen first, then sign in there.
  * - a public link: the home screen first; nobody signs in there.
- * - the concert folder: Nextcloud's home screen entry opens the start page
- *   of the app (the manifest of the theming app, which Cantoria cannot set
- *   per page; U25), and for the conductor that is the archive, which does
- *   not open without a network. So the folder stays in Safari, from a
- *   bookmark, and Safari may delete what a page keeps after some days
- *   without a visit: the hint asks to open the folder once with a network
- *   the day before the concert, which also checks the pieces (U38). The
- *   guides say the same.
+ * - the concert folder: Nextcloud's home screen entry opened the start page
+ *   of the app (the manifest of the theming app; U25), for the conductor
+ *   the archive, which does not open without a network. Since 0.19 the
+ *   folder and a public link have a manifest of their own (manifest.ts),
+ *   but that is not yet checked on an iPhone or iPad. Until then the folder
+ *   stays in Safari, from a bookmark, and Safari may delete what a page
+ *   keeps after some days without a visit: the hint asks to open the
+ *   folder once with a network the day before the concert, which also
+ *   checks the pieces (U38). The guides say the same.
  * The hint stands once per page, not at every programme (U38).
  */
 import { t } from '../l10n.ts'

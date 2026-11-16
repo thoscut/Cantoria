@@ -31,6 +31,7 @@ use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -60,6 +61,7 @@ class PublicLinkController extends Controller {
 		private IL10N $l,
 		private LoggerInterface $logger,
 		private IAppManager $apps,
+		private IURLGenerator $urls,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -101,6 +103,29 @@ class PublicLinkController extends Controller {
 		$response->addHeader(OfflineController::KEEP_HEADER, $excerpt['offline'] ? '1' : '0');
 		$response->cacheFor(0, false, false);
 		return $response;
+	}
+
+	/**
+	 * The manifest for the home screen: it opens the link, not the start
+	 * page of the app with its login (U25, OfflineController::manifestResponse).
+	 * It says nothing about the link, not even whether it exists; the page
+	 * itself checks it.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod a route
+	 */
+	#[PublicPage]
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 30, period: 600)]
+	#[UserRateLimit(limit: 60, period: 600)]
+	#[BruteForceProtection(action: 'cantoria_public_link')]
+	#[FrontpageRoute(verb: 'GET', url: '/p/{token}/manifest')]
+	public function manifest(string $token): Response {
+		if (preg_match('/^[A-Za-z0-9]{32}$/D', $token) !== 1) {
+			return ModuleMiddleware::notFoundPage();
+		}
+		return OfflineController::manifestResponse($this->l->t('Score'),
+			$this->urls->linkToRoute(Application::APP_ID . '.publicLink.show', ['token' => $token]), $this->urls->imagePath(Application::APP_ID, 'app.svg'));
 	}
 
 	/**

@@ -29,6 +29,7 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,6 +55,7 @@ class ConcertFolderController extends Controller {
 		private IAppManager $apps,
 		private IL10N $l,
 		private LoggerInterface $logger,
+		private IURLGenerator $urls,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -82,6 +84,21 @@ class ConcertFolderController extends Controller {
 		// The service worker keeps only this page of the archive on the device
 		$response->addHeader('X-Cantoria-Page', 'concert-folder');
 		return $response;
+	}
+
+	/**
+	 * The manifest for the home screen: it opens the folder, not the
+	 * archive (U25, OfflineController::manifestResponse).
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod a route
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[UserRateLimit(limit: 60, period: 600)]
+	#[FrontpageRoute(verb: 'GET', url: '/concert-folder/manifest')]
+	public function manifest(): Response {
+		return OfflineController::manifestResponse($this->l->t('Concert folder'),
+			$this->urls->linkToRoute(Application::APP_ID . '.concertFolder.page'), $this->urls->imagePath(Application::APP_ID, 'app.svg'));
 	}
 
 	/**

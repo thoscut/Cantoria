@@ -1450,7 +1450,7 @@ other check of the app. The routes and their modules:
 | `public_links` | `GET /p/{token}` (the 404 page of the public pages instead of the JSON message); `POST /api/copies/{id}/links` with `circle: "public"` |
 | `public_repertoire` | `GET /repertoire` (the 404 page of the public pages); setting `work.public_repertoire` to `true` |
 | `offline` | `GET /api/member/links` (and `member_links`); `GET /offline-worker` serves the worker that removes itself and everything kept while `offline` is off (the concert folder keeps nothing without it) |
-| `concert_folder` | `GET /concert-folder` (the page), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
+| `concert_folder` | `GET /concert-folder` (the page), `GET /concert-folder/manifest` (the manifest for the home screen), `GET /api/concert-folder`, `GET /api/concert-folder/items/{id}/score`, `…/scan` |
 | `files_integration` | `GET /api/nextcloud-files/{fileId}/copy` (and the script of the Files app is not loaded) |
 | `tasks` | `GET /api/tasks`, `POST /api/copies/{id}/tasks`, `POST /api/tasks/{id}/answer`, `…/close` |
 | `proposals` | `GET /api/proposals`, `POST /api/proposals`, `…/accept`, `…/reject` |
@@ -2513,6 +2513,7 @@ protected by the brute-force protection:
 |---|---|---|
 | `GET /p/{token}` | `public_links` | one piece or excerpt to view and play, in Nextcloud's public layout (template `public`, script `js/cantoria-public.mjs`) |
 | `GET /p/{token}/scan` | `public_links` | the scan the link offers, for the browser's own PDF viewer |
+| `GET /p/{token}/manifest` | `public_links` | the manifest for the home screen: it opens the link, not the login; no data, the same answer for every token of the right form |
 | `GET /repertoire` | `public_repertoire` | the public repertoire page, rendered on the server without script |
 | `GET /offline-worker` | – (core) | the service worker of the pages that keep pieces on a device (see "The page of the choir members") |
 

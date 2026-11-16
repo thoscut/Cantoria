@@ -116,6 +116,44 @@ class OfflineController extends Controller {
 		);
 	}
 
+	/**
+	 * The manifest for the home screen of a page that keeps pieces
+	 * (milestone 0.19, U25): Nextcloud links every page to the manifest of
+	 * the theming app, whose start is the start page of the app; for the
+	 * conductor that is the archive, for a visitor of a public link the
+	 * login. The concert folder and a public link put their own in its
+	 * place (src/offline/manifest.ts), so that an entry on the home screen
+	 * opens that page. It holds no data.
+	 */
+	public static function manifestResponse(string $name, string $start, string $icon): DataDisplayResponse {
+		$response = new DataDisplayResponse(json_encode(self::manifest($name, $start, $icon),
+			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+			Http::STATUS_OK, ['Content-Type' => 'application/manifest+json; charset=utf-8']);
+		$response->addHeader('X-Content-Type-Options', 'nosniff');
+		return $response;
+	}
+
+	/**
+	 * A web app manifest whose start and scope are one page of the app; its
+	 * id is the page, so that the folder and every link are entries of
+	 * their own. A function of its own for the unit tests.
+	 *
+	 * @return array{id: string, name: string, short_name: string, start_url: string, scope: string, display: string,
+	 *     icons: list<array{src: string, type: string, sizes: string}>}
+	 */
+	public static function manifest(string $name, string $start, string $icon): array {
+		$title = $name === 'Cantoria' ? $name : 'Cantoria – ' . $name;
+		return [
+			'id' => $start,
+			'name' => $title,
+			'short_name' => $name,
+			'start_url' => $start,
+			'scope' => $start,
+			'display' => 'standalone',
+			'icons' => [['src' => $icon, 'type' => 'image/svg+xml', 'sizes' => 'any']],
+		];
+	}
+
 	/** The worker while the module is off: it removes what the app kept on the device. */
 	public const REMOVING_WORKER = <<<'JS'
 		self.addEventListener('install', () => self.skipWaiting())
