@@ -4,10 +4,11 @@
 -->
 <script setup lang="ts">
 /**
- * All active excerpt links, for review by the board and the auditors: who
- * can open them, where they point, until when they are valid, how often
- * they were opened (a count only, never who). Below them the links that
- * ended in the last 30 days, which can still be extended (U40).
+ * All active links to pieces and excerpts, for review by the board and the
+ * auditors: who can open them, where they point, until when they are
+ * valid, how often they were opened (a count only, never who). Those that
+ * end within a week come first and are counted (U-7). Below them the links
+ * that ended in the last 30 days, which can still be extended (U40).
  */
 import type { ExcerptLink } from '../types.ts'
 
@@ -25,7 +26,7 @@ import { errorMessage, fetchLinks } from '../api.ts'
 import { canonicalShelfmark } from '../catalog.ts'
 import { toIsoDate } from '../format.ts'
 import { navigate } from '../navigation.ts'
-import { hasEnded } from '../sharing/linkDates.ts'
+import { endsSoon, hasEnded } from '../sharing/linkDates.ts'
 import { entriesById, isModuleActive } from '../store.ts'
 
 const links = ref<ExcerptLink[]>([])
@@ -63,23 +64,42 @@ onMounted(load)
 /** Links for choir members or the public can exist (modules of milestone 0.7). */
 const sharingOn = computed(() => isModuleActive('member_links') || isModuleActive('public_links'))
 
+const today = toIsoDate(new Date())
+
 /** The links that have not ended (the others follow in a section of their own) */
-const activeCount = computed(() => links.value.filter((link) => !hasEnded(link.expires, toIsoDate(new Date()))).length)
+const activeCount = computed(() => links.value.filter((link) => !hasEnded(link.expires, today)).length)
+
+/** The links that end within a week, by the rule of the list (endsSoon; U-7) */
+const soonCount = computed(() => links.value.filter((link) => endsSoon(link.expires, today)).length)
 
 const collator = new Intl.Collator(undefined, { numeric: true })
 
-const sorted = computed(() => [...links.value].sort((a, b) => collator.compare(
-	canonicalShelfmark(entriesById.value.get(a.copy_id)?.shelfmark ?? ''),
-	canonicalShelfmark(entriesById.value.get(b.copy_id)?.shelfmark ?? ''),
-) || (a.expires ?? '').localeCompare(b.expires ?? '')))
+/**
+ * Links that end within a week first, the soonest at the top, so that they
+ * do not hide in the list (U-7); the others by shelf mark. Links that have
+ * ended are not among the first: the list shows them in a section below.
+ */
+const sorted = computed(() => [...links.value].sort((a, b) => {
+	const soonA = endsSoon(a.expires, today)
+	const soonB = endsSoon(b.expires, today)
+	if (soonA !== soonB) {
+		return soonA ? -1 : 1
+	}
+	const byDay = (a.expires ?? '').localeCompare(b.expires ?? '')
+	const byShelfmark = collator.compare(
+		canonicalShelfmark(entriesById.value.get(a.copy_id)?.shelfmark ?? ''),
+		canonicalShelfmark(entriesById.value.get(b.copy_id)?.shelfmark ?? ''),
+	)
+	return soonA ? byDay || byShelfmark : byShelfmark || byDay
+}))
 </script>
 
 <template>
 	<div class="links-view">
 		<ViewHeader :title="t('cantoria', 'Links')"
 			:description="sharingOn
-				? t('cantoria', 'All active excerpt links: internal links for the archive roles, links for choir members and public links. Each entry says who can open it. The server checks the rights on every call. Calls are counted without names.')
-				: t('cantoria', 'All active excerpt links. They are only opened by people with a role in the music archive; the server checks the rights on every call. Calls are counted without names.')"
+				? t('cantoria', 'All active links to pieces and excerpts: internal links for the archive roles, links for choir members and public links. Each entry says who can open it. The server checks the rights on every call. Calls are counted without names.')
+				: t('cantoria', 'All active links to pieces and excerpts. They are only opened by people with a role in the music archive; the server checks the rights on every call. Calls are counted without names.')"
 			printable
 			reloadable
 			:loading="loading"
@@ -122,6 +142,9 @@ const sorted = computed(() => [...links.value].sort((a, b) => collator.compare(
 				<p class="links-view__count">
 					{{ n('cantoria', '%n active link', '%n active links', activeCount) }}
 				</p>
+				<p v-if="soonCount > 0" class="links-view__count links-view__count--soon">
+					{{ n('cantoria', '%n link ends within a week', '%n links end within a week', soonCount) }}
+				</p>
 				<LinkList :links="sorted" show-copy @changed="load" />
 			</template>
 		</div>
@@ -136,5 +159,11 @@ const sorted = computed(() => [...links.value].sort((a, b) => collator.compare(
 .links-view__count {
 	margin: 0;
 	color: var(--color-text-maxcontrast);
+}
+
+/* something to do: as strong as "Ends in … days" in the list (U-7) */
+.links-view__count--soon {
+	color: var(--color-main-text);
+	font-weight: bold;
 }
 </style>

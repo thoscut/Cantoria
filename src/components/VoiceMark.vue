@@ -38,7 +38,7 @@ const groupName = computed(() => groupLabel(props.group))
 	--voice: var(--cantoria-voice-none);
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: calc(1.5 * var(--default-grid-baseline));
 	color: var(--color-main-text);
 	white-space: nowrap;
 }

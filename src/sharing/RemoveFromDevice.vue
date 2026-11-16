@@ -80,7 +80,9 @@ async function confirm(): Promise<void> {
 				{{ consequence }}
 			</p>
 			<div class="remove-from-device__buttons">
+				<!-- the label is a sentence: it wraps on a phone (D-1) -->
 				<NcButton ref="confirmButton"
+					class="cantoria-button-wrap"
 					variant="error"
 					:disabled="busy"
 					:aria-describedby="consequenceId"

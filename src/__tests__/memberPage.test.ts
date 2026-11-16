@@ -9,7 +9,8 @@
  * the score view: the list names pieces and excerpts, a programme reads as
  * the heading of its pieces, "New" is part of the name of a piece's button
  * (U49, D35); one entry in the history for the pieces (U39); the stage view
- * shows only the title, the bar and the notes (U48, D27).
+ * shows only the title, the bar and the notes (U48, D27); a piece whose link
+ * ends within a week says so in the list and at the piece (U-2).
  */
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -41,7 +42,7 @@ const ExcerptViewer = defineComponent({
 
 const ADVENT = { key: 'p1', title: 'Adventskonzert', date: '2026-12-13', order: 0, position: 0 }
 
-function link(token: string, title: string, programmes = [ADVENT]) {
+function link(token: string, title: string, programmes = [ADVENT], expires = '2026-12-27') {
 	return {
 		token: token.repeat(32),
 		title,
@@ -52,7 +53,7 @@ function link(token: string, title: string, programmes = [ADVENT]) {
 		verse: null,
 		tempo: null,
 		note: 'Bitte die zweite Strophe.',
-		expires: '2026-12-27',
+		expires,
 		canPlay: true,
 		canExportAudio: false,
 		reason: null,
@@ -85,6 +86,7 @@ describe('"Shared with me"', () => {
 
 	afterEach(() => {
 		document.body.innerHTML = ''
+		vi.useRealTimers()
 	})
 
 	it('names pieces and excerpts, and a programme apart from its pieces with its date muted (U49, D35)', async () => {
@@ -108,6 +110,33 @@ describe('"Shared with me"', () => {
 		expect(buttons[0].text()).toBe('Der Mond ist aufgegangen')
 		// the visible word is not read twice
 		expect(wrapper.find('.member-app__new').attributes('aria-hidden')).toBe('true')
+		wrapper.unmount()
+	})
+
+	it('says in the list and at the piece that a link ends within a week, and who can extend it (U-2)', async () => {
+		// only the clock of the page: 22 December 2026, at noon
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(new Date(2026, 11, 22, 12))
+		const wrapper = await mountPage([
+			link('a', 'Der Mond ist aufgegangen'),
+			link('b', 'Großer Gott', [ADVENT], '2026-12-22'),
+			link('c', 'Tochter Zion', [ADVENT], '2027-01-15'),
+		])
+		const items = wrapper.findAll('.member-app__item')
+		// words beside "Valid until", with an icon: not a color alone
+		expect(items[0].find('.member-app__meta').text()).toMatch(/^Valid until .* Ends in 5 days$/s)
+		expect(items[0].find('.member-app__ending svg').exists()).toBe(true)
+		expect(items[1].find('.member-app__ending').text()).toBe('Ends today')
+		expect(items[2].find('.member-app__ending').exists()).toBe(false)
+		await items[0].find('.member-app__open').trigger('click')
+		await flushPromises()
+		const atPiece = wrapper.find('.member-app__excerpt .member-app__ending')
+		expect(atPiece.text()).toContain('Ends in 5 days')
+		expect(atPiece.text()).toContain('The conductor or the music librarians can extend the link.')
+		// a piece that lasts longer says nothing of it
+		await items[2].find('.member-app__open').trigger('click')
+		await flushPromises()
+		expect(wrapper.find('.member-app__excerpt .member-app__ending').exists()).toBe(false)
 		wrapper.unmount()
 	})
 

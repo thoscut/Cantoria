@@ -72,6 +72,8 @@ const stageButton = ref<FocusTarget>(null)
 const viewer = ref<InstanceType<typeof ExcerptViewer> | null>(null)
 const pieceElement = ref<HTMLElement | null>(null)
 const archiveUrl = generateUrl('/apps/cantoria/')
+/** The concerts of the archive: where a programme is made (U-10; `?view=` as in src/startParams.ts) */
+const concertsUrl = archiveUrl + '?view=concerts'
 const homeScreen = homeScreenAdvice()
 
 const selectedId = ref<number | null>(null)
@@ -237,7 +239,8 @@ async function setConcertKept(concert: FolderConcert, keep: boolean, withScans: 
 			deviceStatus.value = n('cantoria', '%n piece is available without a network.', '%n pieces are available without a network.', items.length)
 		} else {
 			await device.forget(items.map((item) => String(item.id)))
-			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: concert.title })
+			// a programme without a title has a name all the same (U-11)
+			deviceStatus.value = t('cantoria', '"{title}" is removed from this device.', { title: concertTitle(concert) })
 		}
 	} catch (error) {
 		console.warn('Cantoria: keeping a programme on this device failed', error)
@@ -570,14 +573,20 @@ onBeforeUnmount(() => {
 					<template #icon>
 						<EmptyArt kind="stand" />
 					</template>
+					<!-- The next step: a programme is made in the archive, which needs a network (U-10) -->
+					<template v-if="!withoutNetwork" #action>
+						<NcButton :href="concertsUrl">
+							{{ t('cantoria', 'To the concerts') }}
+						</NcButton>
+					</template>
 				</NcEmptyContent>
 
 				<div v-else class="folder-app__layout">
 					<div class="folder-app__programmes no-print">
-						<!-- On a narrow screen the list folds away once a piece is open -->
+						<!-- On a narrow screen the list folds away once a piece is open; its label carries a title and wraps (D-1) -->
 						<NcButton v-if="selected"
 							variant="secondary"
-							class="folder-app__list-toggle"
+							class="folder-app__list-toggle cantoria-button-wrap"
 							:aria-expanded="listOpen ? 'true' : 'false'"
 							:aria-controls="listId"
 							@click="listOpen = !listOpen">
@@ -684,7 +693,7 @@ onBeforeUnmount(() => {
 						</div>
 						<!-- "Next" stands once, in the bar of the notes (or at the end without notes) -->
 						<div v-if="neighbours.previous" class="folder-app__turn folder-app__off-stage no-print">
-							<NcButton variant="tertiary" @click="select(neighbours.previous)">
+							<NcButton variant="tertiary" class="cantoria-button-wrap" @click="select(neighbours.previous)">
 								{{ t('cantoria', 'Previous: {title}', { title: neighbours.previous.title }) }}
 							</NcButton>
 						</div>
@@ -755,6 +764,7 @@ onBeforeUnmount(() => {
 								<!-- At the end of the piece the pedal offers the next one: it says so in the bar, not only by the focus (U37) -->
 								<NcButton v-if="neighbours.next"
 									ref="nextButton"
+									class="cantoria-button-wrap"
 									:variant="offerNext ? 'primary' : 'secondary'"
 									:aria-label="t('cantoria', 'Next: {title}', { title: neighbours.next.title })"
 									@click="select(neighbours.next)">
@@ -774,10 +784,13 @@ onBeforeUnmount(() => {
 								</NcButton>
 							</template>
 						</ExcerptViewer>
-						<!-- Without notes in view: on to the next piece at the end -->
+						<!-- Without notes in view: on to the next piece at the end. The end of
+						     the programme stands only under the last piece, also once its notes
+						     are in view, and not on paper (U-1) -->
 						<div v-if="neighbours.next && scoreStatus !== 'ready'" class="folder-app__end no-print">
 							<NcButton ref="nextButton"
 								variant="primary"
+								class="cantoria-button-wrap"
 								@click="select(neighbours.next)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiArrowRight" />
@@ -785,7 +798,7 @@ onBeforeUnmount(() => {
 								{{ t('cantoria', 'Next: {title}', { title: neighbours.next.title }) }}
 							</NcButton>
 						</div>
-						<p v-else-if="selectedConcert" class="folder-app__muted folder-app__end">
+						<p v-else-if="selectedConcert && !neighbours.next" class="folder-app__muted folder-app__end no-print">
 							{{ t('cantoria', 'End of the programme "{title}".', { title: concertTitle(selectedConcert) }) }}
 						</p>
 						<p class="hidden-visually" role="status">
@@ -822,9 +835,12 @@ onBeforeUnmount(() => {
 						<RemoveFromDevice :consequence="deleteConsequence" :remove="deleteDevice" @removed="focusAfterUpdate(deviceHeading)" />
 					</template>
 					<p v-else class="folder-app__muted">
+						<!-- with the next step (U-8) -->
 						{{ t('cantoria', 'This browser cannot keep pieces for practising without a network.') }}
+						{{ t('cantoria', 'This happens in a private window, for example. A normal window or another browser usually works.') }}
 					</p>
-					<p class="hidden-visually" role="status">
+					<!-- To be read, too, not only heard (U-11); while empty it takes no room, and stays the live region -->
+					<p class="folder-app__muted" :class="{ 'hidden-visually': deviceStatus === '' }" role="status">
 						{{ deviceStatus }}
 					</p>
 				</section>
@@ -1019,8 +1035,11 @@ onBeforeUnmount(() => {
 	list-style: decimal;
 }
 
+/* at the start as wide as the bar and the padding of the chosen piece, so
+   that choosing moves nothing (D-12) */
 .folder-app__item {
-	padding: var(--default-grid-baseline) 0;
+	padding-block: var(--default-grid-baseline);
+	padding-inline: calc(var(--default-grid-baseline) + 4px) 0;
 }
 
 /* the chosen piece: a bar at the start, not only a color (WCAG 1.4.1) */

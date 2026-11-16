@@ -123,6 +123,13 @@ function print(): void {
 	background-color: var(--color-main-background);
 }
 
+/* A low window: the header scrolls with the page instead of covering it (D-2, WCAG 1.4.10) */
+@media (max-height: 560px) {
+	.view-header {
+		position: static;
+	}
+}
+
 /* The text takes the room that is left; only below 20em do the actions
    move under it (narrow windows, large zoom). */
 .view-header__text {

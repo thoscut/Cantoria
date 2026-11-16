@@ -103,6 +103,17 @@ body[data-themes*='dark'] {
 	max-block-size: none !important;
 }
 
+/* A label that is a sentence or carries a title wraps instead of ending in "…" (D29) */
+.button-vue.cantoria-button-wrap {
+	max-inline-size: 100%;
+}
+
+.button-vue.cantoria-button-wrap .button-vue__text {
+	white-space: normal;
+	overflow-wrap: anywhere;
+	text-align: start;
+}
+
 /* Public pages in the look of the choir: a band in the colour of the
    Nextcloud's theming with its logo, above what the choir shares. */
 .cantoria-choir-band {

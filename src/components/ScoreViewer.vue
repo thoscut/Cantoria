@@ -1450,16 +1450,18 @@ onBeforeUnmount(() => {
 							<NcCheckboxRadioSwitch v-model="follow" type="switch">
 								{{ t('cantoria', 'Scroll along') }}
 							</NcCheckboxRadioSwitch>
-							<label class="score-viewer__slider" :for="volumeId">
-								<span>{{ t('cantoria', 'Volume: {percent} %', { percent: volumePercent }) }}</span>
+							<!-- the label names the slider; its value is the level only, not "volume" again (D-7) -->
+							<div class="score-viewer__slider">
+								<!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+								<label :for="volumeId">{{ t('cantoria', 'Volume: {percent} %', { percent: volumePercent }) }}</label>
 								<input :id="volumeId"
 									v-model.number="volumePercent"
 									type="range"
 									min="0"
 									max="100"
 									step="5"
-									:aria-valuetext="t('cantoria', '{percent} % volume', { percent: volumePercent })">
-							</label>
+									:aria-valuetext="t('cantoria', '{percent} %', { percent: volumePercent })">
+							</div>
 						</template>
 					</PlaybackSettings>
 					<div v-if="canPlay && canExportAudio" class="score-viewer__buttons">
@@ -1504,11 +1506,10 @@ onBeforeUnmount(() => {
 							</template>
 							{{ t('cantoria', 'This passage') }}
 						</NcButton>
+						<!-- no group of its own: the section around it has the name already (D-8) -->
 						<div v-show="placeShown"
 							:id="placeId"
-							class="score-viewer__place score-viewer__line"
-							role="group"
-							:aria-label="t('cantoria', 'This passage')">
+							class="score-viewer__place score-viewer__line">
 							<span class="score-viewer__hint score-viewer__reference">{{ reference }}</span>
 							<NcButton variant="tertiary" @click="copyReference">
 								<template #icon>
@@ -1863,7 +1864,7 @@ onBeforeUnmount(() => {
 .score-viewer__slider {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: calc(var(--default-grid-baseline) / 2);
 	min-width: 12em;
 }
 
@@ -2081,6 +2082,12 @@ onBeforeUnmount(() => {
 		height: auto;
 		padding: 0;
 		overflow: visible;
+	}
+
+	/* a dark theme has light text: title and version line black on the white paper (D-5) */
+	.score-viewer,
+	.score-viewer__subtitle {
+		color: #000;
 	}
 
 	.score-viewer__state,

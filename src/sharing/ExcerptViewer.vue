@@ -385,6 +385,8 @@ function toggleVoice(key: string): void {
  */
 function tempoBy(delta: number): void {
 	tempoPercent.value = Math.max(TEMPO_MIN, Math.min(TEMPO_MAX, Math.round((tempoPercent.value + delta) / 5) * 5))
+	// said once, by the status line: the slider of the settings says its own value (D-6)
+	announce(tempoText.value)
 }
 
 function applyFocus(): void {
@@ -1027,7 +1029,7 @@ onBeforeUnmount(() => {
 								<NcIconSvgWrapper :path="mdiMinus" />
 							</template>
 						</NcButton>
-						<span class="excerpt-viewer__tempo-value" aria-live="polite">{{ tempoText }}</span>
+						<span class="excerpt-viewer__tempo-value">{{ tempoText }}</span>
 						<NcButton variant="tertiary"
 							:aria-label="t('cantoria', 'Faster')"
 							:disabled="tempoPercent >= TEMPO_MAX"
@@ -1300,11 +1302,14 @@ onBeforeUnmount(() => {
 	box-shadow: var(--cantoria-shadow);
 }
 
-/* The place in the piece and the tempo, like the display of a player */
+/* The place in the piece and the tempo, like the display of a player;
+   on a narrow phone the tempo goes below the place (D-4) */
 .excerpt-viewer__transport {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--default-grid-baseline);
+	min-width: 0;
 }
 
 .excerpt-viewer__measure,
@@ -1315,7 +1320,7 @@ onBeforeUnmount(() => {
 
 .excerpt-viewer__measure {
 	min-inline-size: 5.5em;
-	padding: 2px 10px;
+	padding: calc(var(--default-grid-baseline) / 2) calc(2.5 * var(--default-grid-baseline));
 	border-radius: var(--border-radius-pill, 999px);
 	background: var(--color-background-dark);
 	font-weight: 600;
@@ -1336,17 +1341,18 @@ onBeforeUnmount(() => {
 .excerpt-viewer__voices {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: calc(1.5 * var(--default-grid-baseline));
 }
 
 .excerpt-viewer__chip {
 	--voice: var(--cantoria-voice-none);
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: calc(1.5 * var(--default-grid-baseline));
 	min-block-size: var(--default-clickable-area, 34px);
 	margin: 0;
-	padding: 2px 12px 2px 4px;
+	padding-block: calc(var(--default-grid-baseline) / 2);
+	padding-inline: var(--default-grid-baseline) calc(3 * var(--default-grid-baseline));
 	border: 2px solid var(--voice);
 	border-radius: var(--border-radius-pill, 999px);
 	background: var(--color-main-background);
@@ -1373,11 +1379,17 @@ onBeforeUnmount(() => {
 	font-weight: 700;
 }
 
-/* chosen: filled, bold and with a tick of the border – not the colour alone */
+/* chosen: filled, bold and with a tick – not the colour alone */
 .excerpt-viewer__chip--chosen {
 	background: var(--voice);
 	color: var(--color-main-background);
 	font-weight: 700;
+}
+
+/* the tick (D-9); screen readers hear aria-pressed */
+.excerpt-viewer__chip--chosen::after {
+	content: '✓' / '';
+	margin-inline-start: calc(var(--default-grid-baseline) / 2);
 }
 
 .excerpt-viewer__chip--chosen .excerpt-viewer__chip-letter {

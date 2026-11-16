@@ -39,6 +39,9 @@ describe('screen sizes of the score views', () => {
 	})
 })
 
+// The styles of the components are not loaded here: the bar says itself that it sticks
+const STICKY = 'position: sticky'
+
 describe('useStickyHeader', () => {
 	it('keeps the focus below a bar that appears later, in the container named', async () => {
 		const shown = ref(false)
@@ -46,7 +49,7 @@ describe('useStickyHeader', () => {
 			setup() {
 				const bar = ref<HTMLElement | null>(null)
 				useStickyHeader(bar, '.score-viewer')
-				return () => h('div', { class: 'score-viewer' }, shown.value ? [h('div', { ref: bar, class: 'bar' })] : [])
+				return () => h('div', { class: 'score-viewer' }, shown.value ? [h('div', { ref: bar, class: 'bar', style: STICKY })] : [])
 			},
 		}), { attachTo: document.body })
 		const container = wrapper.find('.score-viewer').element as HTMLElement
@@ -65,7 +68,7 @@ describe('useStickyHeader', () => {
 			setup() {
 				const bar = ref<HTMLElement | null>(null)
 				useStickyHeader(bar, '.app-content', { within: true })
-				return () => h('div', { class: 'app-content' }, [h('h2', 'List'), h('div', { class: 'excerpt-viewer' }, [h('div', { ref: bar })])])
+				return () => h('div', { class: 'app-content' }, [h('h2', 'List'), h('div', { class: 'excerpt-viewer' }, [h('div', { ref: bar, style: STICKY })])])
 			},
 		}), { attachTo: document.body })
 		await nextTick()
@@ -77,12 +80,28 @@ describe('useStickyHeader', () => {
 		expect(view.style.getPropertyValue(STICKY_OFFSET)).toBe('')
 	})
 
+	it('keeps no room below a header that does not stick (a low window, D-2)', async () => {
+		const wrapper = mount(defineComponent({
+			setup() {
+				const bar = ref<HTMLElement | null>(null)
+				useStickyHeader(bar)
+				return () => h('div', { class: 'app-content' }, [h('div', { ref: bar, style: 'position: static' })])
+			},
+		}), { attachTo: document.body })
+		await nextTick()
+		const page = wrapper.find('.app-content').element as HTMLElement
+		// the header was found, but it covers nothing
+		expect(page.dataset.stickyOwner).toBeDefined()
+		expect(page.style.scrollPaddingTop).toBe('')
+		wrapper.unmount()
+	})
+
 	it('finds the scrolling content of the app pages by default', async () => {
 		const wrapper = mount(defineComponent({
 			setup() {
 				const bar = ref<HTMLElement | null>(null)
 				useStickyHeader(bar)
-				return () => h('div', { id: 'app-content-vue' }, [h('div', { ref: bar })])
+				return () => h('div', { id: 'app-content-vue' }, [h('div', { ref: bar, style: STICKY })])
 			},
 		}), { attachTo: document.body })
 		await nextTick()

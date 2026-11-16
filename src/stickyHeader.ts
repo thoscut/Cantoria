@@ -45,7 +45,10 @@ export function useStickyHeader(header: Readonly<Ref<HTMLElement | null>>, conta
 
 	const update = (): void => {
 		if (container && header.value) {
-			const room = `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
+			// A header that does not stick (a low window, D-2) covers nothing: no room
+			const room = getComputedStyle(header.value).position === 'static'
+				? ''
+				: `${Math.ceil(header.value.getBoundingClientRect().height) + GAP}px`
 			if (options.within) {
 				container.style.setProperty(STICKY_OFFSET, room)
 			} else {

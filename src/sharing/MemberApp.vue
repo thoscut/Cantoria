@@ -33,7 +33,7 @@ import type { FocusTarget } from '../focus.ts'
 import type { PieceForDevice } from '../offline/rules.ts'
 import type { MemberLink, MemberPageState, MemberPracticeAudioInput } from '../types.ts'
 
-import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiFullscreen, mdiFullscreenExit, mdiNoteTextOutline, mdiOpenInNew } from '@mdi/js'
+import { mdiAlertCircleOutline, mdiArrowUp, mdiCellphoneCheck, mdiClockAlertOutline, mdiFullscreen, mdiFullscreenExit, mdiNoteTextOutline, mdiOpenInNew } from '@mdi/js'
 import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '../l10n.ts'
@@ -55,14 +55,14 @@ import RemoveFromDevice from './RemoveFromDevice.vue'
 import ScanFrame from './ScanFrame.vue'
 import { membersGuideUrl } from '../docs.ts'
 import { focusAfterUpdate, focusElement } from '../focus.ts'
-import { formatDate } from '../format.ts'
+import { formatDate, toIsoDate } from '../format.ts'
 import { deviceErrorText } from '../offline/errors.ts'
 import { homeScreenHint } from '../offline/hints.ts'
 import { homeScreenAdvice } from '../offline/platform.ts'
 import { useKeptPieces } from '../offline/useKeptPieces.ts'
 import { authorizeMemberPracticeAudio, fetchMemberLinks, fetchMemberScore } from './api.ts'
 import { useLeaveGuard } from './leaveGuard.ts'
-import { deviceUntil } from './linkDates.ts'
+import { daysLeft, deviceUntil, endsSoon } from './linkDates.ts'
 import { scopeText } from './linkScope.ts'
 import { forgetVisits, groupByProgramme, newSinceLastVisit } from './memberList.ts'
 import { useStage } from './stage.ts'
@@ -263,6 +263,22 @@ const sections = (() => {
 })()
 /** New pieces, counted once even when they stand in two programmes */
 const newCount = computed(() => links.filter((link) => newTokens.value.has(link.token)).length)
+
+const today = toIsoDate(new Date())
+
+/**
+ * How soon a link ends, in words, when within a week; '' otherwise (U-2,
+ * the same words as in the list of links of the archive).
+ *
+ * @param link - member link
+ */
+function endingText(link: MemberLink): string {
+	if (!endsSoon(link.expires, today)) {
+		return ''
+	}
+	const days = daysLeft(link.expires, today) ?? 0
+	return days === 0 ? t('cantoria', 'Ends today') : n('cantoria', 'Ends in %n day', 'Ends in %n days', days)
+}
 
 /** Delete the kept pieces and everything remembered for practising, on this device only. */
 async function deleteDevice(): Promise<void> {
@@ -512,7 +528,9 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 								<NcNoteCard v-if="keepAllHint" type="info" class="member-app__hint">
 									{{ homeScreenHint('member') }}
 								</NcNoteCard>
+								<!-- the label is a sentence: it wraps on a phone (D-1) -->
 								<NcButton variant="secondary"
+									class="cantoria-button-wrap"
 									:disabled="keeping !== null"
 									:aria-describedby="keepErrors.all ? `${listHeadingId}-error` : undefined"
 									@click="keepAll">
@@ -563,6 +581,11 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 										<p v-if="link.expires || (offlineOn && (isKept(link) || withoutNetwork))" class="member-app__meta">
 											<span v-if="link.expires" class="member-app__muted">
 												{{ t('cantoria', 'Valid until {date}', { date: formatDate(link.expires) }) }}
+											</span>
+											<!-- ends within a week: an icon and words, not only a color (U-2) -->
+											<span v-if="endingText(link)" class="member-app__ending">
+												<NcIconSvgWrapper :path="mdiClockAlertOutline" :size="16" aria-hidden="true" />
+												{{ endingText(link) }}
 											</span>
 											<span v-if="offlineOn && isKept(link) && !(withoutNetwork && lockText(link) !== '')" class="member-app__badge">
 												<NcIconSvgWrapper :path="mdiCellphoneCheck" :size="16" aria-hidden="true" />
@@ -627,6 +650,11 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 									· {{ t('cantoria', 'Valid until {date}', { date: formatDate(selected.expires) }) }}
 								</template>
 								· {{ abilities(selected) }}
+							</p>
+							<!-- ends within a week: said in time, with who can help (U-2) -->
+							<p v-if="endingText(selected)" class="member-app__ending member-app__off-stage no-print">
+								<NcIconSvgWrapper :path="mdiClockAlertOutline" :size="16" aria-hidden="true" />
+								<span>{{ endingText(selected) }} · {{ t('cantoria', 'The conductor or the music librarians can extend the link.') }}</span>
 							</p>
 							<KeepOffline v-if="offlineOn"
 								:key="selected.token"
@@ -731,14 +759,17 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 						</p>
 					</template>
 					<p v-else-if="offlineConfig.enabled" class="member-app__muted">
+						<!-- with the next step (U-8) -->
 						{{ t('cantoria', 'This browser cannot keep pieces for practising without a network.') }}
+						{{ t('cantoria', 'This happens in a private window, for example. A normal window or another browser usually works.') }}
 					</p>
 					<p class="member-app__muted">
 						{{ t('cantoria', 'Passages and settings for practising are remembered in this browser only. On a shared device, delete them when you are done.') }}
 						{{ t('cantoria', 'Signing out of Nextcloud usually deletes all of this too, in some browsers only the next time Cantoria opens on this device.') }}
 					</p>
 					<RemoveFromDevice :consequence="deleteConsequence" :remove="deleteDevice" @removed="focusAfterUpdate(deviceHeading)" />
-					<p class="hidden-visually" role="status">
+					<!-- To be read, too, not only heard (U-11); while empty it takes no room, and stays the live region -->
+					<p class="member-app__muted" :class="{ 'hidden-visually': deviceStatus === '' }" role="status">
 						{{ deviceStatus }}
 					</p>
 				</section>
@@ -886,7 +917,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 .member-app__slip {
 	align-self: flex-start;
 	max-inline-size: 36rem;
-	padding: 10px 14px 12px;
+	padding: calc(2.5 * var(--default-grid-baseline)) calc(3.5 * var(--default-grid-baseline)) calc(3 * var(--default-grid-baseline));
 	border: 1px solid var(--color-border-maxcontrast);
 	border-inline-start: 4px solid var(--color-primary-element);
 	border-radius: 2px 10px 10px 2px;
@@ -898,8 +929,8 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 .member-app__slip-heading {
 	display: flex;
 	align-items: center;
-	gap: 6px;
-	margin: 0 0 4px;
+	gap: calc(1.5 * var(--default-grid-baseline));
+	margin: 0 0 var(--default-grid-baseline);
 	color: var(--color-text-maxcontrast);
 	font-size: var(--font-size-small, 13px);
 	font-weight: 600;
@@ -958,8 +989,10 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 	font-size: 0.9em;
 }
 
-/* the chosen excerpt: a bar at the start, not only a color (WCAG 1.4.1) */
+/* the chosen excerpt: a bar at the start, not only a color (WCAG 1.4.1);
+   the padding gives way to the bar, so that choosing moves nothing (D-12) */
 .member-app__item--selected {
+	padding-inline-start: calc(2 * var(--default-grid-baseline) - 4px);
 	border-inline-start: 4px solid var(--color-primary-element);
 	background-color: var(--color-background-hover);
 }
@@ -990,8 +1023,9 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 	gap: 0 calc(2 * var(--default-grid-baseline));
 }
 
-/* "available without a network": an icon and words, not only a color */
-.member-app__badge {
+/* "available without a network", "ends in 3 days": an icon and words, not only a color */
+.member-app__badge,
+.member-app__ending {
 	display: inline-flex;
 	align-items: center;
 	gap: calc(var(--default-grid-baseline) / 2);

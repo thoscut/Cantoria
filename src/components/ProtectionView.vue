@@ -129,6 +129,10 @@ function dateText(row: ProtectionReviewRow): string {
 					<NcIconSvgWrapper :path="mdiCheckCircleOutline" />
 				</template>
 			</NcEmptyContent>
+			<!-- what to do with the list, not only what is wrong (U-12) -->
+			<p v-if="groups.length > 0" class="protection-view__hint no-print">
+				{{ t('cantoria', 'A shelf mark opens the rights of the copy, where the status is decided.') }}
+			</p>
 			<section v-for="group in groups"
 				:key="group.kind"
 				class="protection-view__group"
@@ -195,6 +199,11 @@ function dateText(row: ProtectionReviewRow): string {
 	flex-direction: column;
 	gap: calc(5 * var(--default-grid-baseline));
 	padding: calc(3 * var(--default-grid-baseline));
+}
+
+.protection-view__hint {
+	margin: 0;
+	color: var(--color-text-maxcontrast);
 }
 
 .protection-view__group h3 {

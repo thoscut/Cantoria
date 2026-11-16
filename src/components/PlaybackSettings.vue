@@ -199,8 +199,11 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 				</template>
 			</p>
 			<div v-if="canPlay" class="playback-settings__row">
-				<label class="playback-settings__slider" :for="tempoId">
-					<span>{{ tempoLabel }}</span>
+				<!-- the label holds the name only: the hint is the description and is not read twice (D-7) -->
+				<div class="playback-settings__slider">
+					<!-- tied to the slider by its id, not wrapped around it -->
+					<!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+					<label :for="tempoId">{{ tempoLabel }}</label>
 					<input :id="tempoId"
 						v-model.number="tempo"
 						type="range"
@@ -210,7 +213,7 @@ const describedBy = computed(() => props.rangeError !== '' ? `${rangeErrorId} ${
 						:aria-describedby="tempoHintId"
 						:aria-valuetext="t('cantoria', '{percent} % of the tempo', { percent: tempo })">
 					<span :id="tempoHintId" class="playback-settings__hint">{{ tempoHint }}</span>
-				</label>
+				</div>
 				<NcRadioGroup v-model="countIn" :label="t('cantoria', 'Count-in')">
 					<NcRadioGroupButton value="0" :label="t('cantoria', 'Off')" />
 					<NcRadioGroupButton value="1" :label="t('cantoria', '1 bar')" />

@@ -25,6 +25,7 @@ import { mdiAlertCircleOutline } from '@mdi/js'
 import { loadState } from '@nextcloud/initial-state'
 import { t } from '../l10n.ts'
 import { computed, onMounted, ref, useId } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
@@ -32,7 +33,7 @@ import Attribution from './Attribution.vue'
 import ExcerptViewer from './ExcerptViewer.vue'
 import KeepOffline from './KeepOffline.vue'
 import ScanFrame from './ScanFrame.vue'
-import { formatDateTime } from '../format.ts'
+import { formatDate, formatDateTime } from '../format.ts'
 import { forgetPieces, offlineSupported } from '../offline/device.ts'
 import { deviceErrorText } from '../offline/errors.ts'
 import { MAX_DAYS_UNCHECKED } from '../offline/rules.ts'
@@ -131,6 +132,11 @@ async function setKept(keep: boolean, withScan: boolean): Promise<void> {
 	}
 }
 
+/** The next step when the page came without its score (U-9) */
+function reload(): void {
+	window.location.reload()
+}
+
 /** Why the kept piece will not open again without a network, or '' */
 const lockText = computed(() => kept.value ? device.lockText(token) : '')
 
@@ -161,6 +167,10 @@ onMounted(async () => {
 			</h2>
 			<p v-if="excerpt.composer" class="public-excerpt__composer">
 				{{ excerpt.composer }}
+			</p>
+			<!-- "while the link is valid" has a date (U-9) -->
+			<p v-if="excerpt.expires" class="public-excerpt__composer public-excerpt__expires">
+				{{ t('cantoria', 'Valid until {date}', { date: formatDate(excerpt.expires) }) }}
 			</p>
 			<Attribution :credits="excerpt.credits ?? []" :notices="excerpt.notices ?? []" />
 			<NcNoteCard type="info">
@@ -226,6 +236,12 @@ onMounted(async () => {
 			<template #icon>
 				<NcIconSvgWrapper :path="mdiAlertCircleOutline" />
 			</template>
+			<!-- "Please reload the page" has its button (U-9) -->
+			<template #action>
+				<NcButton @click="reload">
+					{{ t('cantoria', 'Reload') }}
+				</NcButton>
+			</template>
 		</NcEmptyContent>
 	</main>
 </template>
@@ -290,6 +306,13 @@ onMounted(async () => {
 @media print {
 	.no-print {
 		display: none !important;
+	}
+
+	/* also with the dark theme: no light text on white paper (D-5) */
+	.public-excerpt,
+	.public-excerpt__composer {
+		background: none;
+		color: #000;
 	}
 }
 </style>

@@ -110,8 +110,11 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 				{{ changed ? t('cantoria', 'Mixer (changed)') : t('cantoria', 'Mixer') }}
 			</NcButton>
 		</div>
-		<label class="practice-tools__slider" :for="transposeId">
-			<span>{{ transposeLabel }}</span>
+		<!-- the label holds the name only: the hint is the description and is not read twice (D-7) -->
+		<div class="practice-tools__slider">
+			<!-- tied to the slider by its id, not wrapped around it -->
+			<!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+			<label :for="transposeId">{{ transposeLabel }}</label>
 			<input :id="transposeId"
 				v-model.number="transpose"
 				type="range"
@@ -123,7 +126,7 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 			<span :id="transposeHintId" class="practice-tools__hint">
 				{{ t('cantoria', 'Only the sound moves; the notes stay as written.') }}
 			</span>
-		</label>
+		</div>
 		<div v-show="mixerShown"
 			:id="mixerId"
 			class="practice-tools__mixer"
@@ -132,24 +135,25 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 			<p class="practice-tools__hint">
 				{{ t('cantoria', 'The level of each voice, on top of "Voices during playback". 0 % mutes a voice.') }}
 			</p>
-			<label v-for="voice in voices"
+			<div v-for="voice in voices"
 				:key="voice.key"
-				class="practice-tools__slider"
-				:for="idOf(voice.key)">
-				<span class="practice-tools__voice">
+				class="practice-tools__slider">
+				<!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+				<label class="practice-tools__voice" :for="idOf(voice.key)">
 					<!-- the letter in the colour of the voice; the text beside it names it -->
 					<VoiceMark v-if="voice.group" :group="voice.group" aria-hidden="true" />
 					{{ levelText(voice.label, levelOf(voice.key)) }}
-				</span>
+				</label>
+				<!-- the value is the level only: the label names the voice already (D-7) -->
 				<input :id="idOf(voice.key)"
 					:value="levelOf(voice.key)"
 					type="range"
 					min="0"
 					max="100"
 					step="10"
-					:aria-valuetext="levelText(voice.label, levelOf(voice.key))"
+					:aria-valuetext="t('cantoria', '{percent} %', { percent: levelOf(voice.key) })"
 					@input="setLevel(voice.key, $event)">
-			</label>
+			</div>
 			<NcButton variant="tertiary" :disabled="!changed" @click="resetMix">
 				{{ t('cantoria', 'All voices at 100 %') }}
 			</NcButton>
@@ -161,7 +165,7 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 .practice-tools__voice {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: calc(1.5 * var(--default-grid-baseline));
 }
 
 .practice-tools {
@@ -201,7 +205,7 @@ const idOf = (key: string) => `${mixerId}-${props.voices.findIndex((voice) => vo
 .practice-tools__slider {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: calc(var(--default-grid-baseline) / 2);
 	min-width: 12em;
 }
 

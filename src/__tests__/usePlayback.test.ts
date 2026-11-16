@@ -27,7 +27,9 @@ class FakePlayer {
 	loop = false
 	destroyed = false
 	timelines = 0
-	constructor(public callbacks: { onPosition: (time: number) => void, onEnd: () => void }) {
+	callbacks: { onPosition: (time: number) => void, onEnd: () => void }
+	constructor(callbacks: { onPosition: (time: number) => void, onEnd: () => void }) {
+		this.callbacks = callbacks
 		FakePlayer.all.push(this)
 	}
 

@@ -8,7 +8,8 @@
  * The list of links (src/components/LinkList.vue), mounted: links that
  * ended in the last 30 days stand under a heading of their own and can be
  * extended (U40); the dialog suggests the latest day the server allows and
- * says what sets it (U41).
+ * says what sets it (U41). In the list across copies the dialogs name the
+ * piece (U-4); revoking says what happens to pieces kept on devices (U-5).
  */
 import type { ExcerptLink } from '../types.ts'
 
@@ -24,7 +25,7 @@ vi.mock('../api.ts', () => ({
 	revokeLink: vi.fn(),
 }))
 vi.mock('../store.ts', () => ({
-	entriesById: computed(() => new Map()),
+	entriesById: computed(() => new Map([[1, { shelfmark: '6-8', title: 'Abendlied' }]])),
 	isLibrarian: ref(false),
 	openEntry: vi.fn(),
 }))
@@ -111,6 +112,43 @@ describe('LinkList', () => {
 		const wrapper = mountList([link(1, day(3), { extend_until: null, extend_limit: 'age' })])
 		expect(wrapper.text()).toContain('Made more than a year ago: it cannot be extended.')
 		expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('Extend')
+	})
+
+	it('names the piece in both dialogs of the list across copies (U-4)', async () => {
+		const wrapper = mount(LinkList, {
+			props: { links: [link(1, day(40), { extend_until: day(150), extend_limit: 'six_months' })], showCopy: true },
+			global: { stubs: { ActionDialog, DateField } },
+		})
+		await wrapper.find('[aria-label="Revoke link"]').trigger('click')
+		expect(wrapper.find('.dialog[data-name="Revoke link"]').text()).toMatch(/6-8 Abendlied ·\s+Whole piece/)
+		await wrapper.findAll('button').find((button) => button.text() === 'Extend')?.trigger('click')
+		expect(wrapper.find('.dialog[data-name="Extend link"]').text()).toMatch(/6-8 Abendlied ·\s+Whole piece/)
+	})
+
+	it('names only the place in the dialogs of the list of one copy', async () => {
+		const wrapper = mountList([link(1, day(40))])
+		await wrapper.find('[aria-label="Revoke link"]').trigger('click')
+		const dialog = wrapper.find('.dialog').text()
+		expect(dialog).toContain('Whole piece')
+		expect(dialog).not.toContain('Abendlied')
+	})
+
+	it('says on revoking what happens to pieces kept on devices, not for internal links (U-5)', async () => {
+		const kept = 'What was kept on devices for use without a network is removed the next time the page opens there with a network.'
+		const wrapper = mountList([link(1, day(40)), link(2, day(40), { circle: 'internal' })])
+		const buttons = wrapper.findAll('[aria-label="Revoke link"]')
+		await buttons[0].trigger('click')
+		expect(wrapper.find('.dialog').text()).toContain(kept)
+		await buttons[1].trigger('click')
+		expect(wrapper.find('.dialog').text()).toContain('This cannot be undone.')
+		expect(wrapper.find('.dialog').text()).not.toContain(kept)
+	})
+
+	it('gives the buttons without text a tooltip with their name (U-6)', () => {
+		const wrapper = mountList([link(1, day(40))])
+		for (const name of ['Copy link', 'Revoke link']) {
+			expect(wrapper.find(`[aria-label="${name}"]`).attributes('title')).toBe(name)
+		}
 	})
 
 	it('gives the heading the level below the list', () => {

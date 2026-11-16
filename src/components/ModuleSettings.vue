@@ -383,7 +383,10 @@ function alsoOnText(module: ModuleInfo): string {
 					<li v-for="scenario in settings.scenarios"
 						:key="scenario.key"
 						:class="['module-settings__scenario', { 'module-settings__scenario--current': isCurrent(scenario) }]">
-						<strong class="module-settings__scenario-title">{{ scenario.label }}</strong>
+						<!-- a heading under "What should Cantoria do …", looking as before (D-11) -->
+						<h4 class="module-settings__scenario-title">
+							{{ scenario.label }}
+						</h4>
 						<span :id="`module-scenario-${scenario.key}-description`" class="module-settings__scenario-text">
 							<span>{{ scenario.description }}</span>
 							<span v-if="scenario.rights" class="module-settings__muted">{{ scenario.rights }}</span>
@@ -634,6 +637,12 @@ function alsoOnText(module: ModuleInfo): string {
 /* the current one: a thicker border, and the word "Current" says it too */
 .module-settings__scenario--current {
 	border: 2px solid var(--color-primary-element);
+}
+
+.module-settings__scenario-title {
+	margin: 0;
+	font-size: inherit;
+	font-weight: bold;
 }
 
 .module-settings__scenario-text {
