@@ -237,11 +237,69 @@ final class CatalogCsvTest extends TestCase {
 		yield 'rights status: open' => ['Rechtestatus', 'open', 'offen'];
 		yield 'rights status: unknown value passes' => ['Rechtestatus', 'something', 'something'];
 		yield 'rights key in another column stays' => ['version.rights_status_import', 'public_domain', 'public_domain'];
+		yield 'copy status: active' => ['Status', 'active', 'aktiv'];
+		yield 'copy status: missing' => ['Status', 'missing', 'vermisst'];
+		yield 'copy status: retired' => ['Status', 'retired', 'ausgemustert'];
+		yield 'copy status: lent' => ['Status', 'lent', 'verliehen'];
+		yield 'copy status key in the extended column stays' => ['copy.status', 'active', 'active'];
+		yield 'kind: arrangement' => ['Fassung', 'arrangement', 'Bearbeitung'];
+		yield 'kind: adaptation' => ['Fassung', 'adaptation', 'Einrichtung'];
+		yield 'kind: new engraving' => ['Fassung', 'new_engraving', 'Neusatz'];
+		yield 'kind: manuscript copy' => ['Fassung', 'manuscript_copy', 'Abschrift'];
+		yield 'kind: excerpt' => ['Fassung', 'excerpt', 'Auszug'];
+		yield 'kind: original' => ['Fassung', 'original', 'Original'];
+		yield 'kind: transposition' => ['Fassung', 'transposition', 'Transposition'];
+		yield 'relation is text' => ['Bezug', 'Werkgruppe 1-23: 6-8 ist Verweis auf 1-23', 'Werkgruppe 1-23: 6-8 ist Verweis auf 1-23'];
 	}
 
 	#[DataProvider('csvValues')]
 	public function testToCsv(string $header, mixed $value, string $expected): void {
 		self::assertSame($expected, CatalogCsv::toCsv($header, $value));
+	}
+
+	/**
+	 * The columns of the source catalog since November 2026 are legacy
+	 * columns with German values; every German value has its choice key in
+	 * the field registry, and a key the export wrote is read back as itself.
+	 */
+	public function testTheNewerLegacyColumnsHaveTheirValues(): void {
+		$legacy = array_keys(CatalogCsv::LEGACY_COLUMNS);
+		self::assertSame(['Werkgruppe', 'Status', 'Fassung', 'Bezug', 'Gilt für den Chor'], array_slice($legacy, -5), 'in the order of the source catalog');
+		self::assertSame(36, count($legacy));
+		self::assertSame([Fields::WORK, 'work_no'], CatalogCsv::LEGACY_COLUMNS[CatalogCsv::GROUP_COLUMN]);
+		self::assertSame([Fields::VERSION, 'valid_since'], CatalogCsv::LEGACY_COLUMNS[CatalogCsv::VALID_COLUMN]);
+
+		self::assertSame(array_values(CatalogCsv::LEGACY_COPY_STATUS), array_keys(Fields::COPY_STATUS), 'every status, in the order of the registry');
+		self::assertSame([], array_diff(CatalogCsv::LEGACY_VERSION_KIND, array_keys(Fields::VERSION_KIND)));
+		self::assertCount(count(Fields::VERSION_KIND), CatalogCsv::LEGACY_VERSION_KIND, 'every kind has a German value');
+
+		self::assertSame('missing', CatalogCsv::legacyValue('Status', 'vermisst'));
+		self::assertSame('missing', CatalogCsv::legacyValue('Status', ' Vermisst '), 'case and blanks do not matter');
+		self::assertSame('missing', CatalogCsv::legacyValue('Status', 'missing'), 'an exported key passes');
+		self::assertSame('arrangement', CatalogCsv::legacyValue('Fassung', 'Bearbeitung'));
+		self::assertSame('public_domain', CatalogCsv::legacyValue('Rechtestatus', 'gemeinfrei'));
+		self::assertSame('vielleicht', CatalogCsv::legacyValue('Rechtestatus', 'vielleicht'), 'an unknown value is left to the field check');
+		self::assertSame('Original', CatalogCsv::legacyValue('Titel', 'Original'), 'other columns are not translated');
+	}
+
+	/**
+	 * "Gilt für den Chor" is one cell of date and name on export and is read
+	 * back only into an empty catalog (ImportService); the cell must survive
+	 * that round trip.
+	 */
+	public function testTheValidVersionCellIsComposedAndReadBack(): void {
+		self::assertSame('', CatalogCsv::validForChoir(null, null));
+		self::assertSame('', CatalogCsv::validForChoir(null, 'Lena Beispiel'), 'no date, no valid version');
+		self::assertSame('2026-11-03', CatalogCsv::validForChoir('2026-11-03', null));
+		self::assertSame('2026-11-03 Lena Beispiel', CatalogCsv::validForChoir('2026-11-03', ' Lena Beispiel '));
+
+		self::assertSame(['2026-11-03', 'Lena Beispiel'], CatalogCsv::parseValidForChoir('2026-11-03 Lena Beispiel'));
+		self::assertSame(['2026-11-03', null], CatalogCsv::parseValidForChoir(' 2026-11-03 '));
+		self::assertSame(['2026-11-03', 'L. B.'], CatalogCsv::parseValidForChoir(CatalogCsv::validForChoir('2026-11-03', 'L. B.')), 'round trip');
+		self::assertNull(CatalogCsv::parseValidForChoir(''));
+		self::assertNull(CatalogCsv::parseValidForChoir('Lena Beispiel 2026-11-03'), 'the date comes first');
+		self::assertNull(CatalogCsv::parseValidForChoir('2026-02-31 Lena'), 'a real date');
+		self::assertNull(CatalogCsv::parseValidForChoir('ja'));
 	}
 
 	public function testLegacyColumnsAreTheLegacyCatalogFormat(): void {

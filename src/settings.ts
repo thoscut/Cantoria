@@ -127,7 +127,7 @@ export function normalizeSettings(data: unknown): Settings {
 		backups: { path: typeof backups.path === 'string' ? backups.path : null },
 		repertoire: raw.repertoire === null || raw.repertoire === undefined
 			? null
-			: { current: count(thresholds.current), dormant: count(thresholds.dormant) },
+			: { current: count(thresholds.current), dormant: count(thresholds.dormant), referenceYear: count(thresholds.referenceYear) },
 		catalog: { copies: count(catalog.copies), files: count(catalog.files) },
 		modulesChosen: raw.modulesChosen === true,
 		concertFolder: raw.concertFolder === true,
@@ -269,20 +269,26 @@ export function needsAction(report: AccessReport): boolean {
 /**
  * Problems of the repertoire thresholds the form shows before saving:
  * whole years, "current" at least 1 and at most 50, "dormant" at least as
- * long as "current" and at most 100 (the server clamps to the same).
+ * long as "current" and at most 100 (the server clamps to the same); the
+ * reference year empty (today) or a year 1900–2999.
  *
  * @param current - years for "current", as typed
  * @param dormant - years for "dormant", as typed
+ * @param referenceYear - the reference year, as typed; empty: the current year
  * @return the thresholds, or null when they are not valid
  */
-export function parseThresholds(current: string, dormant: string): RepertoireThresholds | null {
+export function parseThresholds(current: string, dormant: string, referenceYear = ''): RepertoireThresholds | null {
 	const values = [current, dormant].map((value) => (/^\s*\d+\s*$/.test(value) ? Number(value) : Number.NaN))
 	const [currentYears, dormantYears] = values as [number, number]
 	if (!Number.isInteger(currentYears) || !Number.isInteger(dormantYears)
 		|| currentYears < 1 || currentYears > 50 || dormantYears < currentYears || dormantYears > 100) {
 		return null
 	}
-	return { current: currentYears, dormant: dormantYears }
+	const year = referenceYear.trim() === '' ? 0 : (/^\s*\d{4}\s*$/.test(referenceYear) ? Number(referenceYear) : Number.NaN)
+	if (year !== 0 && (!Number.isInteger(year) || year < 1900 || year > 2999)) {
+		return null
+	}
+	return { current: currentYears, dormant: dormantYears, referenceYear: year }
 }
 
 /** State of a setup step, shown as text and icon (never by colour alone). */

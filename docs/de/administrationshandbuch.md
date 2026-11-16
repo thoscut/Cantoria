@@ -202,7 +202,11 @@ sie ab.
 **Repertoire** in denselben Einstellungen legt fest, wann ein Werk zum
 aktuellen Repertoire zählt (standardmäßig in den letzten 3 Jahren gesungen)
 und wann als ruhend (innerhalb von 10 Jahren); ältere Aufführungen machen es
-zu „früher“.
+zu „früher“. Die Jahre werden vom **Stichjahr** zurückgezählt: leer heißt
+das laufende Jahr, die Grenzen wandern also zu jedem Jahreswechsel; ein
+festes Jahr hält sie, wo sie sind. Ein Chor, der „aktuell“ als „ab 2023
+gesungen“ festlegt, trägt das Stichjahr 2026 mit 3 Jahren für „aktuell“ ein
+und ändert die Einstellung erst, wenn er es beschließt.
 
 ### Die Einstellungen einer Gruppe übertragen
 
@@ -380,6 +384,23 @@ Arbeitsmappe zusammen auch nicht mehr. Ein Chor ohne Verzeichnisdatei
    **Personen** (CSV-Rechercheliste der Personen aus Komposition, Text und
    Bearbeitung). Beide beginnen ebenfalls mit einem Probelauf.
 
+   Der Probelauf der Aufführungen zeigt die **Zählregel** und lässt sie vor
+   dem Import berichtigen: Eine Programmzeile zählt als belegte Aufführung,
+   wenn ihre Mitwirkung eine der *zählenden Mitwirkungen* ist (leer: die
+   häufigste in der Datei, meist der eigene Chor; gemeinsame Konzerte
+   ergänzt du mit `|`, zum Beispiel `Chor A | gemeinsam`), wenn ihr Stand
+   keines der *nicht zählenden Stände* enthält (Entwürfe, Reservestücke,
+   Zugaben „nach Bedarf“, fragliche Zeilen, bloße Werk- oder Notenlisten)
+   und wenn ihre Signatur sicher zugeordnet ist. Eine Zeile eines Ereignisses,
+   das nur mit Jahr oder Monat datiert ist (eine Jahresliste), zählt nicht,
+   wenn dasselbe Werk im selben Jahr oder Monat schon in einem Konzert mit
+   Tagesdatum zählt; der Bericht weist diese Zeilen als „nicht doppelt
+   gezählt“ aus. Daten bleiben, wie die Datei sie hat: ein Tag, ein Monat
+   (`2019-06`) oder ein Jahr. Bei einer unklaren Zeile, die einen Komponisten
+   nennt, stellt der Import den Kandidaten voran, dessen Komponist oder
+   Bearbeiter passt, und vermerkt das; die Entscheidung bleibt bei dir unter
+   „Unklare Programmpunkte“.
+
 > [!IMPORTANT]
 > Ein Import trifft nie die Entscheidungen, die Menschen zustehen: Er
 > bestätigt keine Rechte und legt keine geltende Fassung fest. Nur das
@@ -436,7 +457,8 @@ Format stammt, und in jeder Sprache der Oberfläche gleich.
   sich nach der Endung des Dateinamens (`.xlsx`, `.ods`, sonst CSV); eine
   ältere Excel-Datei (`.xls`) speicherst du zuerst als `.xlsx`.
 - Werte sind Text. Ein Import bestätigt nie Rechte und legt nie eine
-  geltende Fassung fest, gleich was in den Spalten steht.
+  geltende Fassung fest, gleich was in den Spalten steht, und er
+  überschreibt keinen Rechtestatus, den jemand in der App bestätigt hat.
 
 | Spalte | Bedeutung | Beispiel |
 |---|---|---|
@@ -448,7 +470,7 @@ Format stammt, und in jeder Sprache der Oberfläche gleich.
 | Bearbeiter/Text | Bearbeitung und Text der Fassung | `Text: Lukas 24,29` |
 | Anmerkung | Anmerkung zur Fassung | |
 | Rechte-Ersteinschätzung | Die erste Einschätzung der Rechte in Worten | `Komponist gestorben 1901` |
-| Rechtestatus | `gemeinfrei`, `geschützt` oder `offen`: eine Empfehlung, bis die Archivverwaltung ihn in der App bestätigt | `gemeinfrei` |
+| Rechtestatus | `gemeinfrei`, `geschützt` oder `offen`: eine Empfehlung, bis die Archivverwaltung ihn in der App bestätigt; `lizenziert` wird als `geschützt` gelesen, mit dem Hinweis, die Lizenz zu erfassen | `gemeinfrei` |
 | Rechte bestätigt | Ein Vermerk über eine frühere Bestätigung, als Text | |
 | Im Chorportal seit | Seit wann die Fassung im Chorportal ist, als Text; der frühere Spaltenname „Auf Singste seit“ wird beim Import weiter gelesen | |
 | Verlag / Bestellnummer | Verlag und Bestellnummer | |
@@ -457,8 +479,13 @@ Format stammt, und in jeder Sprache der Oberfläche gleich.
 | Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Vermerke des ursprünglichen Werkverzeichnisses zum Exemplar: Fassungen, PDF-Dateien, Quelle des Titels, Seiten, Formate und Dateien der Scans | `4` (Seiten) |
 | MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | Die MusicXML-Datei, die geltende, ihr Datum, ihre Herkunft und ihre Prüfung, als Text | |
 | Veröffentlichung | Vermerk zur Veröffentlichung; einer, der mit `frei`, `gesperrt` oder `zu klären` beginnt, setzt den Veröffentlichungsstatus, `nein … Erhaltungskopie` kennzeichnet eine interne Erhaltungskopie | |
-| Veröffentlichung-Begründung | Begründung des Vermerks | |
+| Veröffentlichung-Begründung | Begründung des Vermerks; bei einer internen Erhaltungskopie setzt `ZU PRÜFEN` darin „Original zur Erhaltungskopie“ auf die Arbeitsannahme des Vorstands | |
 | Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Zahlen des ursprünglichen Werkverzeichnisses, als Text; Repertoire und „zuletzt gesungen“ leitet die App aus den Konzerten ab, die sie festhält | |
+| Werkgruppe | Zeilen mit demselben Wert sind Fassungen **eines Werks**: Der Wert ist die Signatur seines Hauptexemplars (oder eine Werknummer). Titel und Komposition des Werks kommen aus der Zeile dieser Signatur. Eine Zeile, deren Exemplar schon zu einem anderen Werk gehört, meldet der Bericht; führe die Werke in der App zusammen, der Import verschiebt nie Fassungen. Eine leere Zelle lässt eine Werknummer stehen, die ein Zusammenführen vergeben hat | `1-23` |
+| Status | Status des Exemplars: `aktiv`, `ausgemustert`, `vermisst` oder `verliehen`; leer heißt `aktiv`. Der Bericht zählt die Exemplare je Status, damit Lücken, die als `vermisst` erfasst sind, nicht für Werke gehalten werden | `aktiv` |
+| Fassung | Art der Fassung: `Original`, `Bearbeitung`, `Einrichtung`, `Neusatz`, `Abschrift`, `Transposition` oder `Auszug` | `Bearbeitung` |
+| Bezug | Bezug zu anderen Signaturen, in Worten | `Exemplar von 1-23` |
+| Gilt für den Chor | Welche Fassung für den Chor gilt: Datum und wer es festgelegt hat, geschrieben vom Export. Der Import lässt die Spalte aus und sagt es; die geltende Fassung legt die Chorleitung in der App fest. Nur eine Wiederherstellung in ein leeres Werkverzeichnis liest sie zurück | `2026-11-03 Lena Beispiel` |
 
 Der vollständige Export (**Herunterladen (vollständig)**) hängt jedes weitere Feld
 als Spalte `Ebene.Feld` an, z. B. `version.key_signature`; er ist für eine
@@ -468,6 +495,55 @@ MusicXML aus einer Notenerkennung, etwa eine Partitur, die MuseScore aus
 einem PDF oder Foto erkannt hat, enthält meist falsche Noten. Halte ihre
 Herkunft in **MusicXML-Herkunft** fest und prüfe sie mit der Prüfung Punkt für
 Punkt und den Ständen (Benutzerhandbuch), bevor sie geteilt wird.
+
+### Beteiligte aus dem Werkverzeichnis ableiten
+
+Die Spalten `Komponist` und `Bearbeiter/Text` bleiben im Werkverzeichnis
+Text. Das Personenregister und der Schutzfristvorschlag brauchen aber
+Personen mit ihren Rollen: Der Vorschlag wartet auf eine Komposition und,
+bei einer Fassung mit Text, auf einen Text, bei einer Bearbeitung auf eine
+Bearbeitung. **Archivverwaltung → Personen importieren → Beteiligte aus dem
+Werkverzeichnis ableiten** liest die Texte und trägt sie ein, damit die
+Archivverwaltung nicht jede Rolle von Hand setzen muss.
+
+Die Texte werden als Abschnitte gelesen, getrennt durch `;` oder ` / `, jeder
+mit Rollenangabe, Name und Lebensdaten in Klammern:
+
+| Text im Werkverzeichnis | Wird zu |
+|---|---|
+| `Josef Rheinberger (1839–1901)` in `Komponist` | der Komposition, mit Geburts- und Sterbejahr |
+| `Text: Matthias Claudius (1740–1815)` | einem Text |
+| `dt. Text:`, `Deutscher Text:`, `Übersetzung:`, `Deutsch von …` | einer Übersetzung |
+| `Satz:`, `Bearbeitung:`, `Einrichtung:`, `Tonsatz von …` | einer Bearbeitung |
+| `Musik:`, `Melodie:`, `Weise:` | einer Komposition |
+| `Deutscher Text und Satz: …` | einer Übersetzung und einer Bearbeitung (eine Person, zwei Beteiligungen) |
+| `Volkslied`, `Volksweise`, `Spiritual`, `traditionell` in `Komponist` | keiner Person; die Weise wird als traditionell gekennzeichnet, wenn noch nichts eingetragen ist |
+| `… zugeschrieben`, `?`, `vermutlich` | einer Person, deren Zuordnung „unsicher“ ist |
+| `(* 1944)` | geboren 1944 und lebend: ein Geburtsjahr ohne Sterbejahr bedeutet lebend |
+| `(1902–1983, GND 134446216)` | den Lebensdaten und der GND-Nummer der Person |
+
+Ein Abschnitt in `Bearbeiter/Text` ohne Rollenangabe (etwa ein bloßer Name
+in einem Sammelheft) wird **nicht** eingetragen; der Bericht führt ihn unter
+„Abschnitte ohne Rollenangabe“ mit seiner Signatur auf, damit er von Hand
+zugeordnet werden kann.
+
+1. **Prüfen (Probelauf)** führt die ganze Ableitung aus und nimmt sie
+   zurück; der Bericht zeigt, was geschehen würde: gelesene Fassungen und
+   Abschnitte, neue und vorhandene Personen, neue Beteiligungen, gesetzte
+   Rollen an Beteiligungen mit der Rolle „nicht angegeben“ (aus dem
+   Personenimport), traditionelle Weisen, unsichere Zuordnungen, die Rollen
+   nach Zahl und die Hinweise.
+2. Prüfe die Liste **Lebensdaten weichen ab**: eine Person, die schon mit
+   anderen Lebensdaten im Register steht, als das Werkverzeichnis nennt. Dort
+   wird nichts geändert; entscheide im Register, welche Daten stimmen.
+3. **Jetzt ableiten** trägt das Ergebnis ein. Personen werden nach dem Namen
+   gefunden; eine neue Person ist höchstens „wahrscheinlich zugeordnet“, eine
+   vorhandene wird nach der Prüfung nie geändert, sonst werden nur leere
+   Angaben gefüllt. Gelöscht wird nichts, und eine Beteiligung, die schon
+   eine andere Rolle hat, behält sie.
+
+Die Ableitung lässt sich nach einer Korrektur des Werkverzeichnisses
+wiederholen; sie ergänzt nur, was fehlt.
 
 ## 5. Sicherung und Wiederherstellung
 

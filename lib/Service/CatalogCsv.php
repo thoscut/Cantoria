@@ -64,7 +64,28 @@ final class CatalogCsv {
 		'Aufführungen belegt' => [Fields::WORK, 'performances_import'],
 		'Zuletzt aufgeführt' => [Fields::WORK, 'last_performed_import'],
 		'Notenliste' => [Fields::WORK, 'song_lists_import'],
+		// Columns of the source catalog since November 2026: the work group
+		// (shelf mark of the main copy of a work), the status of the copy, the
+		// kind of version, its relation to other shelf marks and the version
+		// that is valid for the choir (VALID_COLUMN, composed on export).
+		'Werkgruppe' => [Fields::WORK, 'work_no'],
+		'Status' => [Fields::COPY, 'status'],
+		'Fassung' => [Fields::VERSION, 'kind'],
+		'Bezug' => [Fields::VERSION, 'relation'],
+		self::VALID_COLUMN => [Fields::VERSION, 'valid_since'],
 	];
+
+	/**
+	 * The column that says which version is valid for the choir, as "date
+	 * and who set it" (`2026-11-03 Lena Beispiel`). The export composes it
+	 * from `valid_since` and `valid_set_by`; the import never chooses a valid
+	 * version from it (the conductor does that in the app) and reads it only
+	 * when restoring a backup into an empty catalog.
+	 */
+	public const VALID_COLUMN = 'Gilt für den Chor';
+
+	/** The column whose value groups the rows of one work (its shelf mark or a work number) */
+	public const GROUP_COLUMN = 'Werkgruppe';
 
 	/**
 	 * The example row of the import template (template()): an invented copy
@@ -89,10 +110,17 @@ final class CatalogCsv {
 
 	/**
 	 * Former headers that the import still reads as the current one: the
-	 * column of the singers' portal had the name of one provider.
+	 * column of the singers' portal had the name of one provider, and the
+	 * extended format of version 0.17 and earlier wrote the fields of the
+	 * columns since November 2026 as `level.field`.
 	 */
 	public const FORMER_HEADERS = [
 		'Auf Singste seit' => 'Im Chorportal seit',
+		'work.work_no' => 'Werkgruppe',
+		'copy.status' => 'Status',
+		'version.kind' => 'Fassung',
+		'version.relation' => 'Bezug',
+		'version.valid_since' => self::VALID_COLUMN,
 	];
 
 	/** Legacy values of the rights status column => choice key */
@@ -101,6 +129,85 @@ final class CatalogCsv {
 		'geschützt' => 'protected',
 		'offen' => 'open',
 	];
+
+	/**
+	 * A value of the rights status column that is no status: the version is
+	 * protected and has a license, which the app records as a license
+	 * (LicenseService). The import takes it as `protected` and says so.
+	 */
+	public const LEGACY_RIGHTS_STATUS_LICENSED = 'lizenziert';
+
+	/** Legacy values of the status column of a copy => choice key */
+	public const LEGACY_COPY_STATUS = [
+		'aktiv' => 'active',
+		'ausgemustert' => 'retired',
+		'vermisst' => 'missing',
+		'verliehen' => 'lent',
+	];
+
+	/** Legacy values of the kind of version => choice key */
+	public const LEGACY_VERSION_KIND = [
+		'Original' => 'original',
+		'Bearbeitung' => 'arrangement',
+		'Einrichtung' => 'adaptation',
+		'Neusatz' => 'new_engraving',
+		'Abschrift' => 'manuscript_copy',
+		'Transposition' => 'transposition',
+		'Auszug' => 'excerpt',
+	];
+
+	/** Columns with German values in the legacy format: header => legacy value => choice key */
+	public const LEGACY_VALUES = [
+		'Rechtestatus' => self::LEGACY_RIGHTS_STATUS,
+		'Status' => self::LEGACY_COPY_STATUS,
+		'Fassung' => self::LEGACY_VERSION_KIND,
+	];
+
+	/**
+	 * The choice key of a cell of a column with German values, or the cell
+	 * itself (trimmed) when it is no legacy value: an exported key passes.
+	 */
+	public static function legacyValue(string $header, string $cell): string {
+		$cell = trim($cell);
+		$values = self::LEGACY_VALUES[$header] ?? [];
+		if (isset($values[$cell])) {
+			return $values[$cell];
+		}
+		foreach ($values as $legacy => $key) {
+			if (mb_strtolower($legacy) === mb_strtolower($cell)) {
+				return $key;
+			}
+		}
+		return $cell;
+	}
+
+	/**
+	 * The cell of VALID_COLUMN: the date since when the version is valid for
+	 * the choir and who set it, separated by a blank; empty when the version
+	 * is not valid.
+	 */
+	public static function validForChoir(?string $since, ?string $setBy): string {
+		if ($since === null || trim($since) === '') {
+			return '';
+		}
+		$setBy = trim((string)$setBy);
+		return trim($since) . ($setBy === '' ? '' : ' ' . $setBy);
+	}
+
+	/**
+	 * Reads a cell of VALID_COLUMN back: the date (YYYY-MM-DD) and who set it,
+	 * or null when the cell is empty or does not start with a date.
+	 *
+	 * @return array{0: string, 1: ?string}|null
+	 */
+	public static function parseValidForChoir(string $cell): ?array {
+		$cell = trim($cell);
+		if ($cell === '' || !preg_match('/^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$/su', $cell, $m) || !FieldValue::isDate($m[1])) {
+			return null;
+		}
+		$setBy = trim($m[2] ?? '');
+		return [$m[1], $setBy === '' ? null : $setBy];
+	}
 
 	/**
 	 * Columns for import and export: the legacy columns in their order and, in
@@ -175,8 +282,8 @@ final class CatalogCsv {
 		if ($value === null) {
 			return '';
 		}
-		if ($header === 'Rechtestatus') {
-			$legacy = array_search($value, self::LEGACY_RIGHTS_STATUS, true);
+		if (isset(self::LEGACY_VALUES[$header])) {
+			$legacy = array_search($value, self::LEGACY_VALUES[$header], true);
 			return $legacy === false ? (string)$value : $legacy;
 		}
 		if (is_bool($value)) {

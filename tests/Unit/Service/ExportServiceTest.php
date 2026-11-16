@@ -10,8 +10,11 @@ declare(strict_types=1);
 namespace OCA\Cantoria\Tests\Unit\Service;
 
 use OCA\Cantoria\Db\AuditEntryMapper;
+use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
+use OCA\Cantoria\Db\Work;
 use OCA\Cantoria\Db\WorkMapper;
+use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Service\AppSettings;
 use OCA\Cantoria\Service\CatalogCsv;
@@ -19,6 +22,7 @@ use OCA\Cantoria\Service\ExportService;
 use OCA\Cantoria\Service\FullBackupService;
 use OCA\Cantoria\Service\OdsWriter;
 use OCA\Cantoria\Service\PersonService;
+use OCA\Cantoria\Service\RightsPolicy;
 use OCA\Cantoria\Service\Roles;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
@@ -26,16 +30,21 @@ use OCP\Files\Folder;
 use OCP\IAppConfig;
 use OCP\IDateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
  * The complete backup goes into the backup folder (outside the archive
  * folder), only the newest weekly backups are kept, and the backup holds no
- * link tokens and, for an annual snapshot, no accounts.
+ * link tokens and, for an annual snapshot, no accounts. The legacy export
+ * composes the cell "Gilt für den Chor" and counts the preservation copies
+ * an export into the archive folder leaves out.
  */
 #[CoversClass(ExportService::class)]
 #[CoversClass(FullBackupService::class)]
+#[UsesClass(CatalogCsv::class)]
+#[UsesClass(RightsPolicy::class)]
 final class ExportServiceTest extends TestCase {
 	public function testOnlyTheNewestWeeklyBackupsAreKept(): void {
 		$deleted = [];
@@ -125,6 +134,56 @@ final class ExportServiceTest extends TestCase {
 			self::assertNotContains($table, FullBackupService::SNAPSHOT_TABLES, $table . ' names people or holds tokens');
 			self::assertContains($table, FullBackupService::TABLES);
 		}
+	}
+
+	/**
+	 * The legacy format writes "Gilt für den Chor" as date and name in one
+	 * cell and the German values of status and kind; an export into the
+	 * archive folder says how many internal preservation copies it leaves out.
+	 */
+	public function testTheLegacyExportComposesTheValidVersionCellAndCountsOmittedPreservationCopies(): void {
+		$work = new Work();
+		$work->setId(1);
+		$work->setValue('title', 'Abendlied');
+		$valid = new WorkVersion();
+		$valid->setId(10);
+		$valid->setWorkId(1);
+		$valid->setValue('valid_since', '2026-11-03');
+		$valid->setValue('valid_set_by', 'Lena Beispiel');
+		$valid->setValue('kind', 'arrangement');
+		$internal = new WorkVersion();
+		$internal->setId(11);
+		$internal->setWorkId(1);
+		$internal->setValue('preservation_copy', true);
+		$copies = [];
+		foreach ([[100, 10, '1-1', 1, 'missing'], [101, 11, '1-2', 2, 'active']] as [$id, $versionId, $shelfmark, $number, $status]) {
+			$copy = new Copy();
+			$copy->setId($id);
+			$copy->setVersionId($versionId);
+			$copy->setShelfmark($shelfmark);
+			$copy->setBinder(1);
+			$copy->setNumber($number);
+			$copy->setStatus($status);
+			$copies[] = $copy;
+		}
+		$works = $this->createStub(WorkMapper::class);
+		$works->method('findAllById')->willReturn([1 => $work]);
+		$versions = $this->createStub(WorkVersionMapper::class);
+		$versions->method('findAllById')->willReturn([10 => $valid, 11 => $internal]);
+		$copyMapper = $this->createStub(CopyMapper::class);
+		$copyMapper->method('findAll')->willReturn($copies);
+		$service = new ExportService($works, $versions, $copyMapper, $this->createStub(AppSettings::class), $this->createStub(ITimeFactory::class),
+			$this->createStub(IDateTimeZone::class), $this->createStub(AuditEntryMapper::class), $this->createStub(OdsWriter::class),
+			$this->createStub(PersonService::class), $this->createStub(FullBackupService::class), $this->createStub(IAppConfig::class),
+			$this->createStub(Roles::class), $this->createStub(LoggerInterface::class));
+
+		$parsed = CatalogCsv::parse($service->csv(false));
+		self::assertSame(array_keys(CatalogCsv::LEGACY_COLUMNS), $parsed['header']);
+		$first = array_combine($parsed['header'], $parsed['rows'][0]);
+		self::assertSame(['Abendlied', '2026-11-03 Lena Beispiel', 'vermisst', 'Bearbeitung'], [$first['Titel'], $first['Gilt für den Chor'], $first['Status'], $first['Fassung']]);
+		$second = array_combine($parsed['header'], $parsed['rows'][1]);
+		self::assertSame(['', 'aktiv', ''], [$second['Gilt für den Chor'], $second['Status'], $second['Fassung']]);
+		self::assertSame(1, $service->omittedPreservationCopies(), 'the internal preservation copy 1-2');
 	}
 
 	/**

@@ -909,6 +909,9 @@ function ageLabel(key: typeof TASK_AGE_KEYS[number]): string {
 								fromPerformances: formatNumber(data.repertoire.sources.performances),
 								fromImport: formatNumber(data.repertoire.sources.import),
 							}) }}
+							<template v-if="data.repertoire.thresholds.referenceYear">
+								{{ t('cantoria', 'The years are counted back from the fixed reference year {year}.', { year: data.repertoire.thresholds.referenceYear }) }}
+							</template>
 						</p>
 
 						<table class="statistics-table">

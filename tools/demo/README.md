@@ -43,7 +43,7 @@ Cantoria-Demo/
                            two transcription reports "… - Bericht.json" (1-1, 2-1)
   LIESMICH.txt             short note in German; ignored by the file sync
   _Import/                 skipped by the file sync (folder name starts with "_")
-    catalog.csv            catalog in the legacy format (31 German columns)
+    catalog.csv            catalog in the legacy format (36 German columns)
     catalog-supplement.csv copy status, kinds, scoring etc. (extended columns)
     persons.csv            research list of persons (person import)
     performances.csv       programme lines of concerts (performance import)

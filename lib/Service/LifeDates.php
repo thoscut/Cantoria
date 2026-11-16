@@ -14,20 +14,23 @@ namespace OCA\Cantoria\Service;
  * research lists, into dates with a precision.
  *
  * Recognised, among others: "1789-1860", "1789–1860", "(1789 - 1860)",
- * "12.03.1850–05.11.1910", "geb. 1928", "* 1944, lebend", "† 1955",
- * "gest. 1955", "ca. 1850-1910", "1850-ca. 1910", "1850?-1910", "185?",
- * "20./21. Jahrhundert", "-65--8" and "65-8 v. Chr.".
+ * "12.03.1850–05.11.1910", "geb. 1928", "* 1944", "* 1944, lebend",
+ * "† 1955", "gest. 1955", "ca. 1850-1910", "1850-ca. 1910", "1850?-1910",
+ * "185?", "20./21. Jahrhundert", "-65--8" and "65-8 v. Chr.".
  *
  * Precision: `exact` (full date, stored as YYYY-MM-DD), `year` (YYYY),
  * `circa` (approximate; the year may be missing), `living` (death only) and
  * `unknown`. Whatever cannot be read safely becomes `unknown`; the caller
  * always keeps the raw text. A plausible but approximate value ("ca.") is
- * never turned into a secured year.
+ * never turned into a secured year. A birth marker without a death ("* 1944")
+ * means living, as catalogs write it, unless the birth is too long ago.
  *
  * Pure function without Nextcloud dependencies, so that it can be unit
  * tested.
  */
 final class LifeDates {
+	/** Nobody born more than this many years ago counts as living without a word saying so */
+	private const MAX_AGE = 120;
 	private const TOKEN = '/(?<prefix>\b(?:ca\.?|um|circa|c\.)\s*|~\s*)?(?<!\d)(?<value>\d{4}-\d{2}-\d{2}|\d{1,2}\.\s?\d{1,2}\.\s?\d{3,4}|\d{3,4})(?!\d)(?<suffix>\?)?/u';
 
 	/**
@@ -69,11 +72,13 @@ final class LifeDates {
 		}
 
 		$born = null;
+		$bornMarked = false;
 		$died = null;
 		$unassigned = [];
 		foreach ($tokens as $token) {
 			if (preg_match('/(\*|\bgeb\b|geb\.|\bborn\b|\bb\.)\s*$/u', rtrim($token['before'])) === 1) {
 				$born ??= $token;
+				$bornMarked = true;
 			} elseif (preg_match('/(†|\+|\bgest\b|gest\.|\bdied\b|\bd\.)\s*$/u', rtrim($token['before'])) === 1) {
 				$died ??= $token;
 			} else {
@@ -100,6 +105,14 @@ final class LifeDates {
 			$died = $unassigned[0];
 		} elseif ($died !== null && $born === null && $unassigned !== [] && $unassigned[0]['start'] < $died['start']) {
 			$born = $unassigned[0];
+		}
+
+		// A birth marker without any death ("* 1944", "geb. 1928") means that
+		// the person is living: catalogs write a year of death as soon as it
+		// is known. Not for someone born more than 120 years ago.
+		if ($bornMarked && $died === null && preg_match('/†|\+|\bgest\b|gest\.|\bdied\b|\bd\./u', $t) !== 1) {
+			$bornYear = self::year($born['value'] ?? null);
+			$living = $living || $bornYear === null || $bornYear > (int)date('Y') - self::MAX_AGE;
 		}
 
 		$result = $unknown;

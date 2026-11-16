@@ -183,7 +183,12 @@ these two may view internal preservation copies, and nobody plays them.
 
 **Repertoire** in the same settings sets when a work counts as current
 repertoire (sung within the last 3 years by default) and when as dormant
-(within 10 years); earlier performances make it "earlier".
+(within 10 years); earlier performances make it "earlier". The years are
+counted back from the **reference year**: empty means the current year, so
+the limits move on every New Year; a fixed year keeps them where they are.
+A choir that defines "current" as "sung in 2023 or later" enters the
+reference year 2026 with 3 years for "current" and changes the setting
+only when it decides to.
 
 ### Giving the settings to a group
 
@@ -352,6 +357,22 @@ accession**.
    **persons** (CSV research list of composers, lyricists and arrangers).
    Both start with a dry run as well.
 
+   The dry run of the performances shows the **counting rule** and lets you
+   correct it before importing: a programme line counts as a documented
+   performance when its participation is one of the *participations that
+   count* (empty: the most frequent one in the file, usually the own choir;
+   add joint concerts with `|`, for example `Chor A | joint`), when its
+   state contains none of the *states that do not count* (drafts, reserve
+   pieces, encores "if needed", uncertain lines, mere work or song lists)
+   and when its shelf mark is assigned with certainty. A line of an event
+   dated only by a year or a month (an annual list) does not count when the
+   same work counts already in a concert with a day date in that year or
+   month; the report shows these lines as "not counted twice". Dates are
+   kept as the file has them: a day, a month (`2019-06`) or a year. For an
+   unclear line that names a composer, the import puts the candidate whose
+   composer or arranger matches first and adds a note; the decision stays
+   with you under "Unclear programme lines".
+
 > [!IMPORTANT]
 > An import never takes the decisions that belong to people: it does not
 > confirm rights and does not choose a valid version. Only restoring an
@@ -405,7 +426,8 @@ the same in every language of the interface.
   follows the extension of the file name (`.xlsx`, `.ods`, otherwise CSV);
   an older Excel file (`.xls`) has to be saved as `.xlsx` first.
 - Values are text. An import never confirms rights and never chooses a valid
-  version, whatever the columns say.
+  version, whatever the columns say, and it does not overwrite a rights
+  status that someone confirmed in the app.
 
 | Column | Meaning | Example |
 |---|---|---|
@@ -417,7 +439,7 @@ the same in every language of the interface.
 | Bearbeiter/Text | Arranger and lyricist of the version | `Text: Lukas 24,29` |
 | Anmerkung | Notes on the version | |
 | Rechte-Ersteinschätzung | The first assessment of the rights in words | `Komponist gestorben 1901` |
-| Rechtestatus | `gemeinfrei`, `geschützt` or `offen`: a recommendation until a music librarian confirms it in the app | `gemeinfrei` |
+| Rechtestatus | `gemeinfrei`, `geschützt` or `offen`: a recommendation until a music librarian confirms it in the app; `lizenziert` is read as `geschützt` with a note to record the license | `gemeinfrei` |
 | Rechte bestätigt | A note on an earlier confirmation, kept as text | |
 | Im Chorportal seit | Since when the version is in the singers' portal, as text; the former column name "Auf Singste seit" is still read on import | |
 | Verlag / Bestellnummer | Publisher and order number | |
@@ -426,8 +448,13 @@ the same in every language of the interface.
 | Fassungen, PDF-Dateien, Titelquelle, Seiten, Formate, Dateien | Notes of the original catalog on the copy: versions, PDF files, source of the title, pages, formats and files of the scans | `4` (Seiten) |
 | MusicXML, MusicXML-gilt, MusicXML-Stand, MusicXML-Herkunft, MusicXML-Prüfstand | The MusicXML file, the valid one, its date, its origin and its review, as text | |
 | Veröffentlichung | Publication note; one starting with `frei`, `gesperrt` or `zu klären` sets the publication status, `nein … Erhaltungskopie` marks an internal preservation copy | |
-| Veröffentlichung-Begründung | Reasoning of the publication note | |
+| Veröffentlichung-Begründung | Reasoning of the publication note; for an internal preservation copy, `ZU PRÜFEN` (to be checked) in it sets "Original for the preservation copy" to the working assumption of the board | |
 | Repertoire, Aufführungen belegt, Zuletzt aufgeführt, Notenliste | Figures of the original catalog, kept as text; the app derives repertoire and "last sung" from the concerts it documents | |
+| Werkgruppe | Rows with the same value are versions of **one work**: the value is the shelf mark of its main copy (or a work number). Title and composer of the work come from the row of that shelf mark. A row whose copy already belongs to another work is reported; merge the works in the app, the import never moves versions. An empty cell leaves a work number a merge gave the work | `1-23` |
+| Status | Status of the copy: `aktiv`, `ausgemustert`, `vermisst` or `verliehen`; empty means `aktiv`. The report counts the copies per status, so that gaps recorded as `vermisst` are not taken for works | `aktiv` |
+| Fassung | Kind of version: `Original`, `Bearbeitung`, `Einrichtung`, `Neusatz`, `Abschrift`, `Transposition` or `Auszug` | `Bearbeitung` |
+| Bezug | Relation to other shelf marks, in words | `Exemplar von 1-23` |
+| Gilt für den Chor | Which version is valid for the choir: date and who set it, written by the export. The import leaves the column out and says so; the conductor sets the valid version in the app. Only a restore into an empty catalog reads it back | `2026-11-03 Lena Beispiel` |
 
 The complete export (**Download (complete)**) adds every other field as a
 column `level.field`, e.g. `version.key_signature`; it is meant for a
@@ -437,6 +464,52 @@ MusicXML that a notation scanner produced, for example a score MuseScore
 recognised from a PDF or a photo, usually has wrong notes. Record its origin
 in **MusicXML-Herkunft**, and check it with the review point by point and the
 revisions (user guide) before it is shared.
+
+### Deriving contributors from the catalog
+
+The columns `Komponist` and `Bearbeiter/Text` stay text in the catalog. The
+register of persons and the protection proposal, however, need persons with
+their roles: the proposal waits for a composer and, for a version with text,
+a lyricist, and for an arrangement an arranger. **Archive management → Import
+persons → Derive contributors from the catalog** reads the texts and records
+them, so that the music librarian does not have to set every role by hand.
+
+The texts are read as segments separated by `;` or ` / `, each with a role
+phrase, the name and the life dates in brackets:
+
+| Text in the catalog | Becomes |
+|---|---|
+| `Josef Rheinberger (1839–1901)` in `Komponist` | the composer, with the years of birth and death |
+| `Text: Matthias Claudius (1740–1815)` | a lyricist |
+| `dt. Text:`, `Deutscher Text:`, `Übersetzung:`, `Deutsch von …` | a translator |
+| `Satz:`, `Bearbeitung:`, `Einrichtung:`, `Tonsatz von …` | an arranger |
+| `Musik:`, `Melodie:`, `Weise:` | a composer |
+| `Deutscher Text und Satz: …` | a translator and an arranger (one person, two contributions) |
+| `Volkslied`, `Volksweise`, `Spiritual`, `traditionell` in `Komponist` | no person; the melody is marked as traditional if nothing is recorded yet |
+| `… zugeschrieben`, `?`, `vermutlich` | a person whose identification is "uncertain" |
+| `(* 1944)` | born 1944 and living: a birth year without a death means living |
+| `(1902–1983, GND 134446216)` | the life dates and the GND number of the person |
+
+A segment of `Bearbeiter/Text` without a role phrase (for example a bare
+name in a collection) is **not** recorded; the report lists it under
+"segments without a role phrase" with its shelf mark, so that it can be
+assigned by hand.
+
+1. **Check (dry run)** runs the whole derivation and takes it back; the
+   report shows what would happen: versions and segments read, new and
+   existing persons, new contributions, roles set on contributions that had
+   the role "unspecified" (from the person import), traditional melodies,
+   uncertain attributions, the roles by number and the notes.
+2. Check the list **Life dates differ**: a person who is already in the
+   register with other life dates than the catalog gives. Nothing is changed
+   there; decide in the register which dates are right.
+3. **Derive now** records the result. Persons are found by name; a new
+   person is at most "probable", an existing one is never changed once
+   checked, otherwise only empty values are filled. Nothing is deleted, and a
+   contribution that already has another role keeps it.
+
+The derivation can be repeated after the catalog has been corrected; it only
+adds what is missing.
 
 ## 5. Backups and restore
 

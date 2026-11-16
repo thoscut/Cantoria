@@ -26,6 +26,9 @@ const counts = computed(() => [
 	{ label: t('cantoria', 'Changed fields in total'), value: props.report.fieldsChanged },
 	{ label: t('cantoria', 'With MusicXML'), value: props.report.withMusicxml },
 	{ label: t('cantoria', 'Internal preservation copies'), value: props.report.preservationCopies },
+	{ label: t('cantoria', 'Of them with the original as working assumption ("ZU PRÜFEN")'), value: props.report.rule1Assumed ?? 0 },
+	{ label: t('cantoria', 'Work groups in the file'), value: props.report.workGroups ?? 0 },
+	{ label: t('cantoria', 'Copies that joined the work of their group'), value: props.report.groupedCopies ?? 0 },
 ])
 
 type Distribution = { label: string, rows: { label: string, count: number }[] }
@@ -46,6 +49,10 @@ function rows(values: Record<string, number> | unknown[] | undefined, label: (ke
 }
 
 const distributions = computed<Distribution[]>(() => [
+	{
+		label: t('cantoria', 'Status of the copies'),
+		rows: rows(props.report.distribution?.status, (key) => choiceLabel('copy', 'status', key)),
+	},
 	{
 		label: t('cantoria', 'Rights status'),
 		rows: rows(props.report.distribution?.rightsStatus, (key) => choiceLabel('version', 'rights_status', key)),
@@ -73,6 +80,9 @@ const distributions = computed<Distribution[]>(() => [
 			:heading="t('cantoria', 'Import completed')">
 			<template v-if="report.snapshot">
 				{{ t('cantoria', 'The previous state was saved as a snapshot: {path}', { path: report.snapshot }) }}
+				<template v-if="report.snapshotOmitted > 0">
+					{{ n('cantoria', 'The snapshot in the archive folder leaves out %n internal preservation copy; the complete state is in the backup folder.', 'The snapshot in the archive folder leaves out %n internal preservation copies; the complete state is in the backup folder.', report.snapshotOmitted) }}
+				</template>
 			</template>
 			<template v-else>
 				{{ t('cantoria', 'Every change is recorded in the audit log.') }}

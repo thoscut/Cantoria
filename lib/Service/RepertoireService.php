@@ -20,17 +20,27 @@ use OCP\IAppConfig;
 /**
  * Repertoire figures derived from documented performances instead of being
  * maintained by hand: number of performance days, first and last date, and a
- * class relative to today:
+ * class relative to a reference year:
  * - `current`: performed within the last N years (setting, default 3)
  * - `dormant`: performed within the last M years (setting, default 10)
  * - `earlier`: performed before that
  * - `none`: no documented performance (which does not mean "never sung")
+ *
+ * The reference year is the current year (setting 0, the default: the
+ * classes roll on every New Year) or a fixed year (setting
+ * `repertoire_reference_year`). A choir that defines "current" as "sung in
+ * 2023 or later" sets the reference year 2026 and 3 years for "current";
+ * the limit then stays at 2023 until the setting is changed.
  *
  * Song lists are reported separately: a song list is no proof of performance.
  */
 class RepertoireService {
 	public const DEFAULT_CURRENT_YEARS = 3;
 	public const DEFAULT_DORMANT_YEARS = 10;
+	/** Reference year "today" */
+	public const REFERENCE_TODAY = 0;
+	public const MIN_REFERENCE_YEAR = 1900;
+	public const MAX_REFERENCE_YEAR = 2999;
 
 	public function __construct(
 		private EventMapper $events,
@@ -42,20 +52,37 @@ class RepertoireService {
 	}
 
 	/**
-	 * @return array{current: int, dormant: int}
+	 * @return array{current: int, dormant: int, referenceYear: int} referenceYear 0: the current year
 	 */
 	public function thresholds(): array {
 		return [
 			'current' => $this->appConfig->getValueInt(Application::APP_ID, 'repertoire_current_years', self::DEFAULT_CURRENT_YEARS),
 			'dormant' => $this->appConfig->getValueInt(Application::APP_ID, 'repertoire_dormant_years', self::DEFAULT_DORMANT_YEARS),
+			'referenceYear' => $this->appConfig->getValueInt(Application::APP_ID, 'repertoire_reference_year', self::REFERENCE_TODAY),
 		];
 	}
 
-	public function setThresholds(int $current, int $dormant): void {
+	/**
+	 * @param int $referenceYear a year, or 0 for the current year; anything outside 1900–2999 counts as 0
+	 */
+	public function setThresholds(int $current, int $dormant, int $referenceYear = self::REFERENCE_TODAY): void {
 		$current = max(1, min($current, 50));
 		$dormant = max($current, min($dormant, 100));
+		if ($referenceYear < self::MIN_REFERENCE_YEAR || $referenceYear > self::MAX_REFERENCE_YEAR) {
+			$referenceYear = self::REFERENCE_TODAY;
+		}
 		$this->appConfig->setValueInt(Application::APP_ID, 'repertoire_current_years', $current);
 		$this->appConfig->setValueInt(Application::APP_ID, 'repertoire_dormant_years', $dormant);
+		$this->appConfig->setValueInt(Application::APP_ID, 'repertoire_reference_year', $referenceYear);
+	}
+
+	/**
+	 * The year the classes are measured from: the fixed reference year, or
+	 * the current year.
+	 */
+	public function referenceYear(): int {
+		$fixed = $this->thresholds()['referenceYear'];
+		return $fixed === self::REFERENCE_TODAY ? (int)$this->time->getDateTime()->format('Y') : $fixed;
 	}
 
 	/**
@@ -110,7 +137,7 @@ class RepertoireService {
 		}
 
 		$thresholds = $this->thresholds();
-		$year = (int)$this->time->getDateTime()->format('Y');
+		$year = $this->referenceYear();
 		$result = [];
 		foreach (array_unique(array_merge(array_keys($dates), array_keys($songLists))) as $workId) {
 			// Array keys like "2003" (a year only) become integers in PHP; cast back.

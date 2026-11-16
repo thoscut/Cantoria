@@ -243,25 +243,36 @@ class EventController extends Controller {
 	#[AuthorizedAdminSetting(settings: Admin::class)]
 	#[RequiresModule('repertoire')]
 	#[FrontpageRoute(verb: 'PUT', url: '/api/repertoire/thresholds')]
-	public function setThresholds(int $current = RepertoireService::DEFAULT_CURRENT_YEARS, int $dormant = RepertoireService::DEFAULT_DORMANT_YEARS): JSONResponse {
-		return $this->run(function (string $uid) use ($current, $dormant) {
+	public function setThresholds(int $current = RepertoireService::DEFAULT_CURRENT_YEARS, int $dormant = RepertoireService::DEFAULT_DORMANT_YEARS, int $referenceYear = 0): JSONResponse {
+		return $this->run(function (string $uid) use ($current, $dormant, $referenceYear) {
 			$this->roles->requireSettingsAccess($uid);
-			$this->repertoire->setThresholds($current, $dormant);
+			$this->repertoire->setThresholds($current, $dormant, $referenceYear);
 			return $this->repertoire->thresholds();
 		});
 	}
 
+	/**
+	 * `ownChoir` (one counting participation) stays for older clients;
+	 * `countingParticipations` and `excludedStates` are lists separated by
+	 * `|` or `,`. An empty list of participations means the most frequent
+	 * one; an empty list of states (parameter omitted) means the default
+	 * (PerformanceImportService::DEFAULT_EXCLUDED_STATES).
+	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 30, period: 600)]
 	#[RequiresModule('performance_import')]
 	#[FrontpageRoute(verb: 'POST', url: '/api/performances/import')]
-	public function importPerformances(int $fileId, bool $dryRun = true, ?string $ownChoir = null): JSONResponse {
-		return $this->run(function (string $uid) use ($fileId, $dryRun, $ownChoir) {
+	public function importPerformances(int $fileId, bool $dryRun = true, ?string $ownChoir = null, ?string $countingParticipations = null, ?string $excludedStates = null): JSONResponse {
+		return $this->run(function (string $uid) use ($fileId, $dryRun, $ownChoir, $countingParticipations, $excludedStates) {
 			$this->roles->requireRole($uid, [Roles::LIBRARIAN]);
 			$file = $this->userFiles->read($uid, $fileId, UserFiles::MAX_IMPORT_BYTES,
 				new InvalidInputException('The selected file is not accessible.'));
-			return $this->performanceImport->import($file['content'], $file['name'], $uid, $dryRun,
-				$ownChoir === null || trim($ownChoir) === '' ? null : trim($ownChoir));
+			$counting = PerformanceImportService::splitList($countingParticipations);
+			if ($counting === [] && $ownChoir !== null && trim($ownChoir) !== '') {
+				$counting = [trim($ownChoir)];
+			}
+			return $this->performanceImport->import($file['content'], $file['name'], $uid, $dryRun, $counting,
+				$excludedStates === null ? null : PerformanceImportService::splitList($excludedStates));
 		});
 	}
 

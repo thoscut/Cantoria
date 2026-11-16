@@ -45,7 +45,7 @@ What is covered:
 |---|---|
 | `Command/ModulesCommandTest` | `occ cantoria:modules`: the list as table and JSON, enable and disable through the settings with the changes reported, preset and scenario by exactly one name, a wrong call changes nothing and says why |
 | `Service/LinkListTest` | the list of links: links that ended in the last 30 days stay listed, each link names the latest day it can be extended to and why (six months, one year, the license), only for accounts that may extend it |
-| `Service/CatalogCsvTest` | CSV parsing (BOM, double BOM, `;`, quotes, CRLF in cells, empty lines), writing byte for byte like Python's `csv` module with `QUOTE_MINIMAL` and CRLF (reference output embedded), round trip, legacy publication rules |
+| `Service/CatalogCsvTest` | CSV parsing (BOM, double BOM, `;`, quotes, CRLF in cells, empty lines), writing byte for byte like Python's `csv` module with `QUOTE_MINIMAL` and CRLF (reference output embedded), round trip, legacy publication rules, the German values of status, kind of version and rights status, the cell "Gilt für den Chor" |
 | `Service/FieldValueTest` | value checks per field type, length in characters, strict calendar dates (e.g. `2026-02-31`) |
 | `Service/FieldsTest` | the field registry against the schema of the migrations: every column has a field or is listed as internal, `max` equals the column length, types and NOT NULL fit, every legacy CSV column maps to a field |
 | `Db/EntitySchemaTest` | every entity against the table of its mapper: columns, types, nullability |
@@ -53,16 +53,18 @@ What is covered:
 | `Service/RightsServiceTest` | releases for the singers' portal and the print station, licenses, confirmation, portal workflow, transactions |
 | `Service/RightsPolicyTest` | viewing and playback of scores, practice audio files (roles, confirmed public domain or license), preservation copies |
 | `Service/PracticeAudioServiceTest` | the gatekeeper for practice audio files: an allowed export is recorded with measures, voice, mode and format; refused and invalid requests are not |
-| `Service/ImportServiceTest` | CSV import: invalid values skipped, decision fields never overwritten, shelf marks normalized, dry run rolled back, snapshot before a real import |
+| `Service/ImportServiceTest` | CSV import: invalid values skipped, decision fields and a confirmed rights status never overwritten, shelf marks normalized, dry run rolled back, snapshot before a real import, work groups become one work, status and kind of version translated, "Gilt für den Chor" read only into an empty catalog, "lizenziert" as protected, "ZU PRÜFEN" as working assumption |
 | `Service/ProposalServiceTest` | proposed values stored exactly (also `0`, `false`, `""`), accepting applies them |
-| `Service/LifeDatesTest` | life dates from free text with their precision (ranges, full dates, "ca.", "?", living, before Christ) |
+| `Service/LifeDatesTest` | life dates from free text with their precision (ranges, full dates, "ca.", "?", living, a birth marker without a death, before Christ) |
+| `Service/ContributorDerivationServiceTest` | persons and roles derived from the composer and arranger texts of the catalog: role phrases (also compound ones and "… von"), the composer without a phrase, traditional melodies set `melody_origin`, life dates and GND from the bracket, "* year" means living, an "unspecified" contribution gets its role, checked persons stay unchanged, differing life dates reported, segments without a phrase listed as unassigned, dry run rolled back; the shared phrase table and the name cleaning |
 | `Service/ProtectionTermTest` | protection proposal: 70 years after the end of the year of death, the last person decides, "unknown means protected" |
 | `Service/FullBackupServiceTest` | format check of the complete backup before a restore |
 | `Service/BackupReaderTest` | the complete backup read from a stream row by row: the same rows as PHP's JSON reader also across the blocks of the stream, a load test with 120 000 rows in memory that does not grow with the file, nothing that is no backup |
 | `Service/XlsxReaderTest` | reading a synthetic .xlsx: shared and rich text, inline strings, gaps, sheet order, damaged files |
 | `Service/OdsReaderTest` | reading a synthetic .ods as LibreOffice writes it (runs of repeated cells and rows, typed values, paragraphs, groups), what `OdsWriter` writes; refused: no spreadsheet, damaged XML, document type declarations, a part that unpacks too large, repeats that would inflate the sheet |
 | `Service/OdsWriterTest` | the written .ods: package structure, sheets, escaping |
-| `Service/PerformanceImportServiceTest` | counting rule for documented performances, detection of the own choir |
+| `Service/PerformanceImportServiceTest` | counting rule for documented performances (counting participations, excluded states, defaults), detection of the own choir, list parameters, dates `YYYY-MM-DD`/`YYYY-MM`/`YYYY`, a dry run of programme lines without a database: deduplication of annual and monthly lists against day dates, composer rule as a suggestion, the older parameter `ownChoir` |
+| `Service/RepertoireServiceTest` | thresholds as settings with clamping, repertoire classes from documented performances, rolling or fixed reference year, song lists apart |
 | `Service/CatalogServiceTest` | repertoire figures (documented or imported), works after merges |
 | `Service/StatisticsServiceTest` | aggregation of the statistics without a database: period, copies per binder, new copies per year (audit log or creation date, time zone of the user), rights states, valid versions, license groups, concerts and pieces per year, most performed works and composers, repertoire classes, works not sung for a long time, tasks by age, protection terms, open rights questions, licenses and accessions of the annual report; 2,000 copies aggregated in well under a second |
 | `Service/StatisticsCsvTest` | CSV of the statistics and the annual report: every table under its heading, translated labels, formula cells neutralized |

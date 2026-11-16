@@ -67,7 +67,7 @@ use OCP\IDBConnection;
  * @psalm-type Performances = array{years: list<YearRow>, undated: int, topWorks: list<TopWork>, topComposers: list<TopComposer>}
  * @psalm-type LongRow = array{workId: int, title: ?string, composer: ?string, class: string, performances: ?int, last: ?string, copyId: int, shelfmark: string}
  * @psalm-type Repertoire = array{years: list<YearRow>, undated: int, topWorks: list<TopWork>, topComposers: list<TopComposer>,
- *     classes: array<string, int>, sources: array{performances: int, import: int}, thresholds: array{current: int, dormant: int},
+ *     classes: array<string, int>, sources: array{performances: int, import: int}, thresholds: array{current: int, dormant: int, referenceYear: int},
  *     longNotSung: list<LongRow>, longNotSungTotal: int}
  * @psalm-type TaskAgeRow = array{addressee: string, open: int, answered: int, days30: int, days90: int, days365: int, older: int}
  * @psalm-type ProtectionRow = array{versionId: int, title: ?string, composer: ?string, until: string, rightsStatus: ?string, confirmed: bool, copies: list<CopyRef>}
