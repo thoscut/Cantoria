@@ -10,6 +10,36 @@ All notable changes to this app are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Since 0.16 at a glance
+
+The short version for the app store; the details follow below and under
+0.17.0.
+
+- **Runs on PostgreSQL** as well as MySQL and MariaDB, and so also in
+  Nextcloud All-in-One.
+- **Easier to set up:** a guided setup leads through the first
+  configuration one page at a time, and four scenarios in plain words
+  (keep an archive, plan concerts, support singers, show the repertoire
+  publicly) choose what Cantoria does for your choir.
+- **Bring your catalog along:** import from Excel (.xlsx) and OpenDocument
+  (.ods) as well as CSV, with a template to fill in.
+- **Share a whole programme with the choir** in one step, with a message
+  to copy; links can be extended, also up to 30 days after they ended.
+- **For the choir members:** "Shared with me" lists the pieces of a
+  programme in its order and remembers the chosen voice; one switch keeps
+  pieces for practising without a network; the concert folder has a stage
+  view that keeps the screen on.
+- **To print:** songbooks with cover, contents and page numbers, a
+  programme booklet for the audience and large-print parts for singers
+  with a visual impairment, each only as far as the rights allow.
+- **Finding and planning repertoire:** filters by scoring, language and
+  duration, sorting by the last performance, a new programme from an
+  existing one, the ranges of the voices with a choir profile, and a pitch
+  sheet for a programme.
+- **Stricter with rights:** the scan of a public link needs a license for
+  its download, and a link ends at the latest when the license that
+  releases it ends.
+
 ### Added
 
 - **Guided setup.** On a new instance the settings page opens a dialog that
