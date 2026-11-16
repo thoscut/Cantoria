@@ -110,8 +110,6 @@ class PublicLinkController extends Controller {
 	 * page of the app with its login (U25, OfflineController::manifestResponse).
 	 * It says nothing about the link, not even whether it exists; the page
 	 * itself checks it.
-	 *
-	 * @psalm-suppress PossiblyUnusedMethod a route
 	 */
 	#[PublicPage]
 	#[NoAdminRequired]

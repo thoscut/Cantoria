@@ -144,7 +144,21 @@ try {
 	}
 	$check('every table has records before the export', $empty === [], $empty === [] ? count($tables) . ' tables' : 'empty: ' . implode(', ', $empty));
 
-	$json = $backup->export();
+	// the backup is written and read as a stream (milestone 0.20); here from and into a text
+	$json = (string)stream_get_contents($backup->exportStream());
+	$restore = function (string $content) use ($backup, $uid): array {
+		$stream = fopen('php://temp', 'w+b');
+		if ($stream === false) {
+			throw new \RuntimeException('cannot open a temporary stream');
+		}
+		fwrite($stream, $content);
+		rewind($stream);
+		try {
+			return $backup->restoreStream($stream, $uid);
+		} finally {
+			fclose($stream);
+		}
+	};
 	$parsed = FullBackupService::parse($json);
 	$check('backup passes its own format check with all tables', count($parsed['tables']) === count($tables), count($tables) . ' tables, ' . strlen($json) . ' bytes');
 	$check('the backup holds no link tokens', ($parsed['tables']['cantoria_links'] ?? []) !== []
@@ -155,13 +169,13 @@ try {
 		&& isset($snapshot['tables']['cantoria_copies']));
 
 	try {
-		$backup->restore($json, $uid);
+		$restore($json);
 		$check('restore into a non-empty catalog is refused', false);
 	} catch (UserFacingException) {
 		$check('restore into a non-empty catalog is refused', true);
 	}
 	try {
-		$backup->restore('{"format":"something else"}', $uid);
+		$restore('{"format":"something else"}');
 		$check('foreign file is refused', false);
 	} catch (UserFacingException) {
 		$check('foreign file is refused', true);
@@ -182,23 +196,23 @@ try {
 	// A value that does not fit its column is refused and nothing is written.
 	$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 	$data['tables']['works'][0]['title'] = str_repeat('x', 501);
-	$error = IntegrationTest::throws(fn () => $backup->restore(json_encode($data, JSON_THROW_ON_ERROR), $uid));
+	$error = IntegrationTest::throws(fn () => $restore(json_encode($data, JSON_THROW_ON_ERROR)));
 	$check('a value longer than its column is refused', $error !== null && str_contains($error, 'invalid value in cantoria_works'), (string)$error);
 	$check('a refused restore writes nothing', $rowCount('cantoria_works') === 0 && $rowCount('cantoria_audit') === 0);
 	$data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 	$data['tables']['versions'][0]['preservation_copy'] = 'yes please';
-	$error = IntegrationTest::throws(fn () => $backup->restore(json_encode($data, JSON_THROW_ON_ERROR), $uid));
+	$error = IntegrationTest::throws(fn () => $restore(json_encode($data, JSON_THROW_ON_ERROR)));
 	$check('a boolean column refuses text', $error !== null && str_contains($error, 'preservation_copy'), (string)$error);
 
 	// Column names from the file are never used unchecked: unknown ones are left out.
 	$crafted = ['format' => FullBackupService::FORMAT, 'formatVersion' => FullBackupService::FORMAT_VERSION, 'tables' => [
 		'works' => [['id' => 1, 'title' => 'Crafted', 'title"; DROP TABLE oc_users; --' => 'x', 'created' => '0', 'modified' => 0]],
 	]];
-	$restored = $backup->restore(json_encode($crafted, JSON_THROW_ON_ERROR), $uid);
+	$restored = $restore(json_encode($crafted, JSON_THROW_ON_ERROR));
 	$check('unknown columns are left out', ($restored['cantoria_works'] ?? 0) === 1 && $rowCount('cantoria_works') === 1);
 	$emptyAll();
 
-	$restored = $backup->restore($json, $uid);
+	$restored = $restore($json);
 	$check('restore reports every table', count($restored) === count($tables));
 
 	foreach ($tables as $table) {

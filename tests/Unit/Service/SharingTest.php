@@ -143,10 +143,7 @@ final class SharingTest extends TestCase {
 	/**
 	 * @param array<string, string|int|null> $denials RightsPolicy method => reason (releaseEnd, deviceEnd: the day, licensedQuantity: the
 	 *                                                number); printDenial and deviceDenial also per circle, e.g. `deviceDenial:public`
-	 */
-	/**
-	 * @param array<string, ?string> $denials
-	 * @param list<License> $licenses
+	 * @param list<License> $licenses what RightsPolicy::licensesOf gives for every version
 	 */
 	private function policy(array $denials = [], array $licenses = []): RightsPolicy {
 		$policy = $this->createStub(RightsPolicy::class);

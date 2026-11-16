@@ -122,15 +122,6 @@ class FullBackupService {
 		...PrivacyService::ACCOUNT_FIELDS['cantoria_persons'],
 	];
 
-	public function export(): string {
-		$stream = $this->exportStream();
-		try {
-			return (string)stream_get_contents($stream);
-		} finally {
-			fclose($stream);
-		}
-	}
-
 	/**
 	 * The backup as a stream, written row by row into a temporary stream
 	 * that moves to disk when it grows (not the whole backup in memory).
@@ -216,21 +207,6 @@ class FullBackupService {
 			$counts[$table] = $this->count($table);
 		}
 		return $counts;
-	}
-
-	/**
-	 * Restores a backup held in memory (tests, small files); see
-	 * restoreStream().
-	 *
-	 * @return array<string, int> table => restored rows
-	 */
-	public function restore(string $content, string $uid): array {
-		$stream = self::memoryStream($content);
-		try {
-			return $this->restoreStream($stream, $uid);
-		} finally {
-			fclose($stream);
-		}
 	}
 
 	/**

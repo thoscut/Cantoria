@@ -89,8 +89,6 @@ class ConcertFolderController extends Controller {
 	/**
 	 * The manifest for the home screen: it opens the folder, not the
 	 * archive (U25, OfflineController::manifestResponse).
-	 *
-	 * @psalm-suppress PossiblyUnusedMethod a route
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
