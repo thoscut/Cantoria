@@ -181,11 +181,11 @@ try {
 		&& $again['snapshot'] !== null, (string)$again['snapshot']);
 
 	// The import leaves the roles open; a "free" proposal needs composer and lyricist.
-	// Names of the demo data (CI) and of other test data.
+	// Names of the demo data (CI) and of other test data (a hyphen in a name is read as a blank).
 	$importedRoles = ['Friedrich Silcher' => 'composer', 'Simon Dach' => 'lyricist', 'Johann Gottfried Herder' => 'translator',
 		'Felix Mendelssohn Bartholdy' => 'composer', 'Joseph von Eichendorff' => 'lyricist'];
 	foreach ($persons->forVersion($versionFree) as $row) {
-		$role = $importedRoles[$row['person']['name'] ?? ''] ?? null;
+		$role = $importedRoles[str_replace('-', ' ', $row['person']['name'] ?? '')] ?? null;
 		if ($role !== null) {
 			$persons->updateContribution((int)$row['id'], ['role' => $role], $uid);
 		}
