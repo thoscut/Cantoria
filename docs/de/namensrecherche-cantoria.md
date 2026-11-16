@@ -4,7 +4,8 @@
 -->
 # Namensrecherche: „Cantoria“
 
-Stand: 29. Oktober 2026. Diese Seite hält fest, was eine Recherche zum
+Stand: 29. Oktober 2026, Markenregister am 16. November 2026. Diese Seite
+hält fest, was eine Recherche zum
 Namen **Cantoria** als neuen, internationalen Namen der App ergeben hat. Sie
 ist eine Entscheidungsgrundlage, **keine Rechtsberatung** und **keine
 Markenrecherche durch Fachleute**.
@@ -15,10 +16,10 @@ Markenrecherche durch Fachleute**.
 |---|---|
 | Passt der Name zur App? | **Ja.** Eine Cantoria ist die Sängerempore einer Kirche, im Italienischen auch der Chor selbst. Der Name ist kurz, international lesbar und direkt auf Chöre bezogen. |
 | Gibt es eine Chor- oder Notensoftware mit diesem Namen? | **Nein**, keine gefunden. |
-| Gibt es eine eingetragene Marke? | **Ja, in den USA:** „Cantoria®“ ist eine eingetragene Marke von Monotype für eine Schriftfamilie (1986). Andere Waren, aber möglicherweise dieselbe Klasse wie Software. |
+| Gibt es eine eingetragene Marke? | **In Deutschland und der EU nein.** Lebend sind „CANTORIA“ von Monotype in den USA und im Vereinigten Königreich, jeweils in Klasse 9, aber nur für Schriften. In Brasilien ist „CANTORIAS“ unter anderem in Klasse 9 eingetragen. Siehe [Markenregister](#markenregister). |
 | Ist der Name im Nextcloud App Store frei? | **Ja**, die App-ID `cantoria` ist dort nicht vergeben. |
 | Ist eine gute Domain frei? | **Eher nicht.** `cantoria.app` gehört einer Mitsing-App; `.com`, `.org` und `.de` antworten mit Webseiten. |
-| Gesamturteil | **Gelb – verwendbar, mit zwei Prüfungen vor dem Release:** Markenregister (DPMA, EUIPO, USPTO) in den Klassen 9 und 42 sowie eine Unterzeile, die den Namen eindeutig macht. |
+| Gesamturteil | **Gelb, eher Grün – verwendbar.** Die Register in Deutschland und der EU sind frei. Außerhalb gibt es nur Marken für Schriften, Getränke, Chöre und Musik, keine für Software zur Verwaltung von Noten. Vor dem Zertifikatsantrag bleiben eine Einschätzung der Monotype-Marken (USA, UK) und der brasilianischen Marke „CANTORIAS“ durch Fachleute, falls gewünscht, und die Unterzeile, die den Namen eindeutig macht. |
 
 ## Warum ein neuer Name
 
@@ -110,6 +111,81 @@ Diese Namen sind ähnlich, aber gut unterscheidbar:
 - **Cantara**, eine Software, die Liedtexte in Gottesdiensten zeigt
 - **Canto**, eine Software zur Verwaltung digitaler Assets (siehe oben)
 
+## Markenregister
+
+Recherche vom 16. November 2026, nach „Cantoria“ als Wortbestandteil und
+nach ähnlichen Schreibweisen (Cantoría, Kantoria, Cantorya, Cantorio,
+Cantora, Cantori, Kantorei/Cantorei). Identische Treffer wurden in allen
+Klassen gesucht, ähnliche nur in den Nizza-Klassen 9 (Software), 41
+(Musik, Chöre, Kultur) und 42 (Software als Dienst). Abgefragt wurden die
+öffentlichen Suchschnittstellen der Register, ohne Anmeldung und ohne
+Umgehung von Captchas. Namen von Privatpersonen als Inhaber stehen hier
+nicht, sie sind im Register nachzulesen.
+
+### Deutschland und Europäische Union
+
+**Keine lebende Marke „Cantoria“ und keine ähnliche in den Klassen 9, 41
+und 42.** Geprüft in [DPMAregister](https://register.dpma.de) (deutsche
+Marken, Unionsmarken, IR-Marken mit Schutz für Deutschland), in
+[EUIPO eSearch plus](https://euipo.europa.eu/eSearch/) und in
+[TMview](https://www.tmdn.org/tmview).
+
+| Marke | Register, Nummer | Inhaber | Status | Klassen | Bedeutung für die App |
+|---|---|---|---|---|---|
+| CANTORIA | DE 1145328 | The Monotype Corp. | **gelöscht** am 7. Januar 2002 (Antrag des Inhabers), Schutzende 1996 | 7, 9, 16 | Keine. Sie galt für Schriftdaten und Matrizen, „ausgenommen musikalische Zeichen und Symbole, insbesondere Noten“. |
+| CANTORI (Wort-Bild) | Unionsmarke 015077241 | CANTORI s.r.l., Italien | eingetragen bis 2036 | 6, 19, 37, 42 | Gering. In Klasse 42 nur Architektur- und Bauplanung. |
+| mehrere „Kantorei“-Marken | DPMA | Chöre | alle gelöscht oder zurückgewiesen | 9, 41, 42 | Keine. Das DPMA hat „Kantorei“ als beschreibend zurückgewiesen. |
+
+Für Cantoría, Kantoria, Cantorya, Cantorio, Cantora und Cantorei gab es in
+Deutschland und der EU in den Klassen 9, 41 und 42 keinen Treffer.
+
+### USA
+
+| Marke | Nummer | Inhaber | Status | Klassen | Bedeutung für die App |
+|---|---|---|---|---|---|
+| CANTORIA (Wortmarke) | SN 73644879, RN 1470498 | The Monotype Corporation (Delaware) | **lebend**, eingetragen 1987, unanfechtbar, zuletzt 2018 verlängert; nächste Verlängerung bis 29. Dezember 2027 | 9 (Klasse 16 gelöscht) | Gering bis mittel. Das Wort ist identisch und die Klasse dieselbe, die Waren aber eng: „typefaces, typefonts, and type designs … recorded as latent images in data storage media“. Das Register vermerkt die Übersetzung „choir“. |
+| KANTORI | SN 99773954 | Baker Hughes | angemeldet, zum Widerspruch veröffentlicht | 9, 42 | Gering. Software für Bohrungen in der Öl- und Gasindustrie. |
+| CANTORA RECORDS | RN 7638639 | Cantora LLC | eingetragen 2025 | 9 | Gering. Tonaufnahmen, keine Software. |
+
+Geprüft im [USPTO-Register](https://tmsearch.uspto.gov) und in
+[TSDR](https://tsdr.uspto.gov/#caseNumber=73644879&caseType=SERIAL_NO&searchType=statusSearch).
+Für Kantoria, Cantorya, Cantorio und Cantori gab es in den Klassen 9, 41
+und 42 keinen Treffer. „CANTORIAL“ erscheint nur in zwei gelöschten Marken
+für Kantorenmusik.
+
+### Internationale Registrierungen und andere Länder
+
+**Im Madrider System gibt es keine Marke „Cantoria“**, auch keine von
+Monotype oder vom Anbieter der Mitsing-App `cantoria.app`, und **in der
+Schweiz ebenfalls nicht** (WIPO Madrid Monitor, Swissreg). Die Liste von
+TMview für „Cantoria“ weltweit (49 Einträge) enthält darüber hinaus:
+
+| Marke | Land, Nummer | Inhaber | Status | Klassen | Bedeutung für die App |
+|---|---|---|---|---|---|
+| CANTORIA | UK00001266649 | The Monotype Corporation | **eingetragen** (seit 1986) | 9 | Wie in den USA: Schriften. Gering bis mittel. Die Waren wurden nicht im Einzelnen gelesen. |
+| CANTORIA | UK00001266650; FR 1358277; CA 591312 | Monotype | abgelaufen | 16 bzw. 9, 16 | Keine. |
+| CANTORIAS | BR 908593090 u. a. | ein brasilianisches Produktionsunternehmen | eingetragen (2014) | 9, 16, 25, 28, 38, 41 | Gering bis mittel. Pluralform, Klasse 9; die Waren wurden nicht im Einzelnen gelesen. Gilt nur in Brasilien. |
+| CANTORIA | FR 3975731 | eine Gesellschaft in Gründung | abgelaufen | 35, 41, 42 | Keine. |
+| CANTORIA | GB, PT, BR | Weinbau, Getränke | eingetragen | 33 | Keine. |
+| Marken mit „Cantoria“ als Teil eines Chornamens (z. B. „Cantoria de la Merced“, „Cantoría Popular de Mujeres“, „Cantoria Lugano“) | AR, CL, BR | Chöre, Orden, Vereine | eingetragen | 41 | Keine. Sie zeigen, dass „cantoria“ im Spanischen und Portugiesischen „Chor“ oder „Volksgesang“ heißt und Chöre den Namen tragen. |
+
+Keine der Marken in TMview gehört dem Anbieter der Mitsing-App oder einem
+Anbieter von Musiksoftware.
+
+### Was offen bleibt
+
+- Die nationalen Register in Großbritannien, Benelux, Spanien, Italien,
+  Frankreich, Polen, Österreich und Brasilien ließen sich nicht direkt
+  abfragen (Captcha, Bot-Schutz oder gesperrter Zugang). Sie sind nur so
+  weit geprüft, wie TMview sie für „Cantoria“ enthält, ähnliche
+  Schreibweisen dort nicht.
+- Die Waren der Marken im Vereinigten Königreich und in Brasilien wurden
+  nicht im Einzelnen gelesen.
+- Nicht eingetragene Rechte wurden nicht geprüft: Werktitel, Firmen- und
+  Vereinsnamen, etwa die Schrift „Cantoria MT“, das Orgel-Plugin
+  „GSi Cantoria“ und die Mitsing-App `cantoria.app`.
+- Anmeldungen der letzten Wochen können in den Datenbanken noch fehlen.
+
 ## Technische Namensräume
 
 | Namensraum | Name | Stand | Wie geprüft |
@@ -120,19 +196,15 @@ Diese Namen sind ähnlich, aber gut unterscheidbar:
 | Domain `cantoria.app` | | **belegt** | Mitsing-App von BBOT LABS (siehe oben). |
 | Domains `cantoria.com`, `.org`, `.de` | | **in Benutzung, Inhaber unbekannt** | Die Seiten antworten, verbieten aber automatischen Abruf. Ob sie geparkt sind, ist offen. |
 | Weitere Domains (`.eu`, `.io`, `.net`, `getcantoria.com`) | | nicht geprüft | DNS-Abfragen waren aus dieser Umgebung nicht möglich. |
-| Markenregister DPMA, EUIPO, WIPO | | nicht geprüft | Die Register lassen sich nicht automatisch abfragen. |
+| Markenregister | „Cantoria“ | **in DE und der EU frei** | Recherche vom 16. November 2026, siehe [Markenregister](#markenregister). |
 
 ## Was vor einer Entscheidung noch zu tun ist
 
-1. **Markenregister prüfen**, jeweils nach „Cantoria“ als Wortmarke und nach
-   ähnlichen Schreibweisen (Kantoria, Cantorya), in den Nizza-Klassen 9
-   (Software) und 42 (Software als Dienst):
-   - [DPMAregister](https://register.dpma.de) für Deutschland
-   - [TMview](https://www.tmdn.org/tmview) für die EU und viele Länder
-   - [WIPO Global Brand Database](https://branddb.wipo.int) für
-     internationale Eintragungen
-   - [USPTO Trademark Search](https://tmsearch.uspto.gov), vor allem um
-     Klassen und Status der Monotype-Marke zu sehen
+1. **Markenregister prüfen:** *erledigt am 16. November 2026*, siehe
+   [Markenregister](#markenregister). Offen ist nur, ob Fachleute die
+   Monotype-Marken in den USA und im Vereinigten Königreich und die
+   brasilianische Marke „CANTORIAS“ einschätzen sollen, bevor das
+   Zertifikat beantragt wird.
 2. **Domains prüfen**, z. B. bei DENIC (`.de`) und einem Registrar. Eine
    Projektseite kann auch unter einer Unterseite liegen, etwa
    `cantoria.notenarchiv.de` oder einer GitHub-Pages-Adresse.
