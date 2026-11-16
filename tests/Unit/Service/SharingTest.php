@@ -24,7 +24,6 @@ use OCA\Cantoria\Db\EventMapper;
 use OCA\Cantoria\Db\ExcerptLink;
 use OCA\Cantoria\Db\ExcerptLinkMapper;
 use OCA\Cantoria\Db\License;
-use OCA\Cantoria\Db\LicenseMapper;
 use OCA\Cantoria\Db\Person;
 use OCA\Cantoria\Db\PersonMapper;
 use OCA\Cantoria\Db\Work;
@@ -102,6 +101,8 @@ final class SharingTest extends TestCase {
 	private array $audit = [];
 	/** @var list<int> ids of links whose call was counted */
 	private array $hits = [];
+	/** @var array<string, int> reads of the register per mapper */
+	private array $reads = [];
 	/** the link the mapper finds by its id */
 	private ?ExcerptLink $stored = null;
 
@@ -143,8 +144,13 @@ final class SharingTest extends TestCase {
 	 * @param array<string, string|int|null> $denials RightsPolicy method => reason (releaseEnd, deviceEnd: the day, licensedQuantity: the
 	 *                                                number); printDenial and deviceDenial also per circle, e.g. `deviceDenial:public`
 	 */
-	private function policy(array $denials = []): RightsPolicy {
+	/**
+	 * @param array<string, ?string> $denials
+	 * @param list<License> $licenses
+	 */
+	private function policy(array $denials = [], array $licenses = []): RightsPolicy {
 		$policy = $this->createStub(RightsPolicy::class);
+		$policy->method('licensesOf')->willReturn($licenses);
 		foreach (['viewDenial', 'memberViewDenial', 'memberPlayDenial', 'memberPracticeAudioDenial', 'memberScanDenial', 'publicViewDenial', 'publicPlayDenial',
 			'publicScanDenial', 'releaseEnd', 'deviceEnd', 'licensedQuantity'] as $method) {
 			$policy->method($method)->willReturn($denials[$method] ?? null);
@@ -651,13 +657,22 @@ final class SharingTest extends TestCase {
 		$composer->setPersonId(2);
 		$composer->setRole('composer');
 		$contributions = $this->createStub(ContributionMapper::class);
-		$contributions->method('findByVersion')->willReturn([$composer, $contribution]);
+		$contributions->method('findByVersion')->willReturnCallback(function () use ($composer, $contribution): array {
+			$this->reads['contributions'] = ($this->reads['contributions'] ?? 0) + 1;
+			return [$composer, $contribution];
+		});
 		$persons = $this->createStub(PersonMapper::class);
-		$persons->method('find')->willReturnCallback(function (int $id): Person {
-			$person = new Person();
-			$person->setName($id === 1 ? 'H. Claudius' : 'J. Rheinberger');
-			$person->setBorn('1740-08-15');
-			return $person;
+		$persons->method('findByIds')->willReturnCallback(function (array $ids): array {
+			$this->reads['persons'] = ($this->reads['persons'] ?? 0) + 1;
+			$found = [];
+			foreach ($ids as $id) {
+				$person = new Person();
+				$person->setId($id);
+				$person->setName($id === 1 ? 'H. Claudius' : 'J. Rheinberger');
+				$person->setBorn('1740-08-15');
+				$found[$id] = $person;
+			}
+			return $found;
 		});
 		$licenses = [];
 		foreach ([['By kind permission of Carus', null], ['Ended', '2026-01-01'], ['', null]] as [$notice, $until]) {
@@ -666,11 +681,9 @@ final class SharingTest extends TestCase {
 			$license->setValidUntil($until);
 			$licenses[] = $license;
 		}
-		$licenseMapper = $this->createStub(LicenseMapper::class);
-		$licenseMapper->method('findByVersion')->willReturn($licenses);
-		return new SharedLinkService($mapper, $copies, $versions, $works, $files, $scores, $this->policy($denials), $this->rights(), $roles,
+		return new SharedLinkService($mapper, $copies, $versions, $works, $files, $scores, $this->policy($denials, $licenses), $this->rights(), $roles,
 			$this->modulesWithout($off), $settings, new LinkTokens(new FakeCrypto(), $this->createStub(ISecureRandom::class)),
-			$contributions, $persons, $licenseMapper, $events, $items, new PageKeys(new FakeCrypto()));
+			$contributions, $persons, $events, $items, new PageKeys(new FakeCrypto()));
 	}
 
 	private static function programme(int $id, ?string $date, string $title): Event {
@@ -779,6 +792,23 @@ final class SharingTest extends TestCase {
 
 		$this->expectException(UnknownLinkException::class);
 		$shared->memberScore(str_repeat('i', 32), 'singer');
+	}
+
+	/**
+	 * Load test of "Shared with me" (A25, M4): 200 links to 50 pieces read
+	 * the authors of each piece once, the persons in one query per piece,
+	 * and the licenses not at all beside the rights checks.
+	 */
+	public function testThePageReadsTheAuthorsOfEachPieceOnceForManyLinks(): void {
+		$links = [];
+		for ($i = 0; $i < 200; $i++) {
+			$links[] = $this->link('members', ['token' => sprintf('t%031d', $i), 'copy_id' => 100 + $i % 50]);
+		}
+		$list = $this->shared($links)->forMember('singer');
+		self::assertCount(200, $list);
+		self::assertSame(['contributions' => 50, 'persons' => 50], $this->reads, 'once per piece, not per link');
+		self::assertSame(['By kind permission of Carus'], $list[199]['notices']);
+		self::assertSame([['role' => 'lyricist', 'name' => 'H. Claudius'], ['role' => 'arranger', 'name' => 'K. Satz']], $list[199]['credits']);
 	}
 
 	/**

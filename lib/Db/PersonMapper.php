@@ -38,6 +38,25 @@ class PersonMapper extends QBMapper {
 	}
 
 	/**
+	 * Several persons in one query (in parts of 1000 ids).
+	 *
+	 * @param list<int> $ids
+	 * @return array<int, Person> keyed by id; ids not found are missing
+	 */
+	public function findByIds(array $ids): array {
+		$result = [];
+		foreach (array_chunk(array_values(array_unique($ids)), 1000) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')->from($this->getTableName())
+				->where($qb->expr()->in('id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_INT_ARRAY)));
+			foreach ($this->findEntities($qb) as $person) {
+				$result[$person->getId()] = $person;
+			}
+		}
+		return $result;
+	}
+
+	/**
 	 * @return array<int, Person> keyed by id
 	 */
 	public function findAllById(): array {
