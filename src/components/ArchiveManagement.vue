@@ -21,7 +21,7 @@ import {
 	mdiShieldCheckOutline,
 } from '@mdi/js'
 import { FilePickerClosed, FilePickerType, getFilePickerBuilder, showSuccess } from '@nextcloud/dialogs'
-import { t } from '../l10n.ts'
+import { n, t } from '../l10n.ts'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
@@ -182,12 +182,16 @@ async function doFileSync(): Promise<void> {
 // ---- export ----
 
 const storedPath = ref('')
+/** internal preservation copies the stored export leaves out (every role group reads the archive folder) */
+const storedOmitted = ref(0)
 const storeBusy = ref(false)
 
 async function doStoreExport(): Promise<void> {
 	storeBusy.value = true
 	try {
-		storedPath.value = await storeExport()
+		const stored = await storeExport()
+		storedPath.value = stored.path
+		storedOmitted.value = stored.omitted
 		showSuccess(t('cantoria', 'The export was stored in the archive folder.'))
 	} catch (error) {
 		showError(errorMessage(error))
@@ -407,6 +411,9 @@ function onUpdateOpen(open: boolean): void {
 			</div>
 			<NcNoteCard v-if="storedPath" type="success">
 				{{ t('cantoria', 'Stored as {path} in the archive folder.', { path: storedPath }) }}
+				<template v-if="storedOmitted > 0">
+					{{ n('cantoria', 'The file leaves out %n internal preservation copy; it is not the whole catalog. The complete catalog is in the backup folder.', 'The file leaves out %n internal preservation copies; it is not the whole catalog. The complete catalog is in the backup folder.', storedOmitted) }}
+				</template>
 			</NcNoteCard>
 		</section>
 

@@ -28,19 +28,20 @@ const emit = defineEmits<{
 	saved: [thresholds: RepertoireThresholds]
 }>()
 
-const form = reactive({ current: '', dormant: '' })
+const form = reactive({ current: '', dormant: '', referenceYear: '' })
 const saving = ref(false)
 const error = ref('')
 
 watch(() => props.thresholds, (value) => {
 	form.current = String(value.current)
 	form.dormant = String(value.dormant)
+	form.referenceYear = value.referenceYear === 0 ? '' : String(value.referenceYear)
 }, { immediate: true })
 
 async function save(): Promise<void> {
-	const thresholds = parseThresholds(form.current, form.dormant)
+	const thresholds = parseThresholds(form.current, form.dormant, form.referenceYear)
 	if (thresholds === null) {
-		error.value = t('cantoria', 'Please enter whole numbers of years; "dormant" must be at least as long as "current".')
+		error.value = t('cantoria', 'Please enter whole numbers of years; "dormant" must be at least as long as "current". The reference year is a four-digit year or empty.')
 		return
 	}
 	saving.value = true
@@ -61,6 +62,9 @@ async function save(): Promise<void> {
 		<p class="settings-block__text">
 			{{ t('cantoria', 'A work belongs to the current repertoire if it was sung within the last years given here, and is dormant up to the second limit. Earlier performances make it "earlier". Documented performances come from concerts confirmed as sung and from the imported history.') }}
 		</p>
+		<p class="settings-block__text">
+			{{ t('cantoria', 'The years are counted back from the reference year: from the current year when it is empty (the limits move on every New Year), or from a fixed year. Example: reference year 2026 and 3 years keep "current" at "sung in 2023 or later" until you change it.') }}
+		</p>
 		<form class="settings-repertoire" @submit.prevent="save">
 			<NcTextField v-model="form.current"
 				type="number"
@@ -72,6 +76,9 @@ async function save(): Promise<void> {
 				min="1"
 				max="100"
 				:label="t('cantoria', 'Dormant: sung within (years)')" />
+			<NcTextField v-model="form.referenceYear"
+				inputmode="numeric"
+				:label="t('cantoria', 'Reference year (empty: today)')" />
 			<NcButton type="submit" :disabled="saving">
 				<template v-if="saving" #icon>
 					<NcLoadingIcon />

@@ -51,9 +51,8 @@ use OCP\IDBConnection;
  */
 class PersonImportService {
 	private const REQUIRED_COLUMNS = ['Name', 'Signaturen'];
-	/** Role words at the start of the name column of the research list (German source data) */
-	private const NAME_PREFIXES = ['tonsatz von', 'satz von', 'satz:', 'übertragen von', 'bearbeitung von', 'bearbeitung:', 'bearb.',
-		'text von', 'text:', 'musik von', 'musik:', 'weise:', 'melodie:', 'arr.', 'übersetzung:', 'deutsch von'];
+	/** Role words at the start of the name column of the research list (German source data), shared with the derivation */
+	private const NAME_PREFIXES = ContributorPhrases::NAME_PREFIXES;
 	/** Columns kept in the notes of a new person, as "column: value" */
 	private const NOTE_COLUMNS = ['Lebensdaten laut Verzeichnis', 'Schutz bis', 'Status', 'Geprueft am'];
 
@@ -224,7 +223,8 @@ class PersonImportService {
 	 * Removes role words and additions that are not part of the name, e.g.
 	 * "Tonsatz von Michael Prätorius" → "Michael Prätorius",
 	 * "Friedrich Silcher, op. 26" → "Friedrich Silcher",
-	 * "Franz Schubert, 1826" → "Franz Schubert".
+	 * "Franz Schubert, 1826" → "Franz Schubert",
+	 * "Carl Friedrich Zöllner, im Druck nicht genannt" → "Carl Friedrich Zöllner".
 	 */
 	public static function cleanName(string $raw): string {
 		$name = trim(ltrim(trim($raw), "+ \t"));
@@ -238,6 +238,8 @@ class PersonImportService {
 		} while ($name !== $before);
 		$name = (string)preg_replace('/,\s*(op\.?\s*\d+.*|\d{3,4}|d\s*\d+)\s*$/iu', '', $name);
 		$name = (string)preg_replace('/\s*\(\s*\d{3,4}\s*[-\x{2013}]\s*\d{3,4}\s*\)\s*$/u', '', $name);
+		// A remark after the name starts with a small letter: "Carl Friedrich Zöllner, im Druck nicht genannt".
+		$name = (string)preg_replace('/,\s*\p{Ll}.*$/u', '', $name);
 		return trim($name, " \t,;");
 	}
 

@@ -61,6 +61,41 @@ All notable changes to this app are documented in this file. The format follows
 - **Guides** in English and German for all of the above, the legal
   background of lyrics in a booklet and of large print (§ 45b UrhG), and
   the new routes in `docs/api.md`.
+- **Performance import counts as the choir does.** The counting rule can
+  be set in the dry run: several participations that count (the own choir
+  and joint concerts), the words in the state that exclude a line (now also
+  uncertain lines and mere work or song lists), and lines of annual or
+  monthly lists no longer count twice when the same work counts in a
+  concert with a day date of that year or month. Dates `YYYY-MM` are kept.
+  An unclear line that names a composer gets the matching candidate first
+  and a note, as a suggestion. The repertoire thresholds can be measured
+  from a fixed **reference year** instead of the current year.
+- **After the review against the processes of a choir of 6 November 2026
+  (import and export):**
+  - The columns `Werkgruppe`, `Status`, `Fassung`, `Bezug` and `Gilt für
+    den Chor` of the catalog format. Rows of one work group become versions
+    of one work, named by the row of the main shelf mark; status and kind of
+    version with their German values; the valid version is written by the
+    export and read only into an empty catalog, because the conductor sets
+    it in the app.
+  - A rights status confirmed in the app is not overwritten by an import;
+    `lizenziert` is read as protected, with a note to record the license.
+  - A preservation copy whose reasoning says "ZU PRÜFEN" starts with the
+    original as the working assumption of the board; a protected version
+    with MusicXML that is no preservation copy is reported.
+  - The import report counts the status of the copies, the work groups and
+    the copies that joined their group; exports and snapshots in the
+    archive folder say how many internal preservation copies they leave
+    out.
+  - **Derive contributors from the catalog** (Archive management → Import
+    persons): the texts "Komponist" and "Bearbeiter/Text" become persons
+    with their roles, life dates and GND number; "Text:", "Satz:",
+    "Bearbeitung:", "dt. Text:", "Deutscher Text und Satz:" and the like name
+    the roles, "Volkslied" and "Spiritual" mark the melody as traditional. A
+    contribution with the role "unspecified" from the person import gets
+    its role. A dry run first; the report lists segments without a role
+    phrase and persons whose life dates differ from the catalog. A birth
+    year without a death ("* 1944") now means living.
 
 ### Changed
 

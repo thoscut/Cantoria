@@ -230,7 +230,7 @@ final class ControllerSecurityTest extends TestCase {
 	private const RATE_LIMITED = [
 		'ApiController::import', 'ApiController::fileSync', 'ApiController::export', 'ApiController::exportStore',
 		'WorkflowController::backup', 'WorkflowController::fullBackup', 'WorkflowController::restore',
-		'EventController::songOrder', 'EventController::importPerformances', 'PersonController::import',
+		'EventController::songOrder', 'EventController::importPerformances', 'PersonController::import', 'PersonController::derive',
 		'PracticeAudioController::authorize',
 		'StatisticsController::overview', 'StatisticsController::report', 'StatisticsController::csv',
 		'StatisticsController::reportCsv',

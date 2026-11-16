@@ -230,11 +230,34 @@ class ExportService {
 			$row = [];
 			foreach ($columns as $header => [$level, $field]) {
 				$object = $objects[$level];
+				if ($header === CatalogCsv::VALID_COLUMN) {
+					// date and who set it, in one cell of the legacy format
+					$row[] = $version === null ? '' : CatalogCsv::validForChoir($version->getValidSince(), $version->getValidSetBy());
+					continue;
+				}
 				$row[] = $object === null ? '' : CatalogCsv::toCsv($header, $object->getValue($field));
 			}
 			$rows[] = $row;
 		}
 		return [array_keys($columns), $rows];
+	}
+
+	/**
+	 * How many copies an export into the archive folder (store, snapshot)
+	 * leaves out: the internal preservation copies, which every role group
+	 * must not see there. The number goes into the report, so that nobody
+	 * takes the file for the whole catalog.
+	 */
+	public function omittedPreservationCopies(): int {
+		$versions = $this->versions->findAllById();
+		$omitted = 0;
+		foreach ($this->copies->findAll() as $copy) {
+			$version = $versions[$copy->getVersionId()] ?? null;
+			if ($version === null || RightsPolicy::isPreservationCopy($version, $copy)) {
+				$omitted++;
+			}
+		}
+		return $omitted;
 	}
 
 	/**

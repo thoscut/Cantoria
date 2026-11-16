@@ -519,6 +519,142 @@ final class ImportServiceTest extends TestCase {
 		self::assertSame(1, $report['created']);
 	}
 
+	// ---- the columns of the source catalog since November 2026 ----
+
+	public function testStatusKindAndRelationAreTranslatedFromTheirGermanValues(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Titel', 'Status', 'Fassung', 'Bezug'],
+			['6-34', '(Signaturlücke)', 'vermisst', '', ''],
+			['6-8', 'Tischlied', 'aktiv', 'Abschrift', 'Exemplar von 1-23'],
+			['6-9', 'Hymne an Gott', '', 'Einrichtung', ''],
+		), 'catalog.csv', self::UID, true);
+
+		[$gap, $copy, $third] = $this->insertedOf(Copy::class);
+		self::assertSame('missing', $gap->getStatus());
+		self::assertSame('active', $copy->getStatus());
+		self::assertSame('active', $third->getStatus(), 'an empty cell leaves the default of the database');
+		[$v1, $v2, $v3] = $this->insertedOf(WorkVersion::class);
+		self::assertNull($v1->getValue('kind'));
+		self::assertSame('manuscript_copy', $v2->getValue('kind'));
+		self::assertSame('Exemplar von 1-23', $v2->getValue('relation'));
+		self::assertSame('adaptation', $v3->getValue('kind'));
+		self::assertSame(['active' => 2, 'missing' => 1], $report['distribution']['status'], 'the report tells active copies and gaps apart');
+		self::assertSame([], array_filter(self::warnings($report), fn (string $w): bool => str_starts_with($w, 'Unknown columns')));
+	}
+
+	/**
+	 * Work groups: rows with the same "Werkgruppe" are versions of one work,
+	 * named by the row of the main shelf mark, whichever row comes first.
+	 */
+	public function testRowsOfAWorkGroupBecomeVersionsOfOneWork(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Titel', 'Komponist', 'Werkgruppe'],
+			['1-31', 'Untreue', 'Glück', '7-5'],
+			['7-5', 'In einem kühlen Grunde', 'Friedrich Glück', '07-5'],
+			['7-6', 'Ännchen von Tharau', 'Friedrich Silcher', ''],
+		), 'catalog.csv', self::UID, true);
+
+		$works = $this->insertedOf(Work::class);
+		self::assertCount(2, $works, 'one work for the group, one for the row without a group');
+		self::assertSame(['In einem kühlen Grunde', 'Friedrich Glück', '7-5'], [$works[0]->getTitle(), $works[0]->getComposer(), $works[0]->getWorkNo()],
+			'the main copy names the work, the group value is normalized');
+		self::assertNull($works[1]->getWorkNo());
+		$versions = $this->insertedOf(WorkVersion::class);
+		self::assertCount(3, $versions);
+		self::assertSame([$works[0]->getId(), $works[0]->getId(), $works[1]->getId()], array_map(fn (WorkVersion $v): ?int => $v->getWorkId(), $versions));
+		self::assertSame([3, 1, 1], [$report['created'], $report['workGroups'], $report['groupedCopies']]);
+	}
+
+	public function testANewCopyOfAGroupJoinsTheWorkOfItsMainCopyAndASeparateWorkIsReported(): void {
+		[$work] = $this->givenEntry('1-23', ['title' => 'Tischlied']);
+		[$other] = $this->givenEntry('6-14', ['title' => 'O Täler weit']);
+		$report = $this->service->import(self::csv(['Signatur', 'Titel', 'Werkgruppe'],
+			['1-23', 'Tischlied', '1-23'],
+			['6-8', 'Tischlied', '1-23'],
+			['6-14', 'Tischlied', '1-23'],
+		), 'catalog.csv', self::UID, false);
+
+		self::assertSame([], $this->insertedOf(Work::class), 'no new work');
+		[$version] = $this->insertedOf(WorkVersion::class);
+		self::assertSame($work->getId(), $version->getWorkId(), '6-8 is a version of the work of 1-23');
+		self::assertSame('1-23', $work->getWorkNo(), 'the main copy gives the work its group as work number');
+		self::assertSame('O Täler weit', $other->getTitle(), 'the import does not move versions or rename the other work');
+		self::assertContains('Shelf mark 6-14 belongs to the work group 1-23, but is a separate work in the catalog. Merge the works in the app ("Merge"); the import does not move versions.',
+			self::warnings($report));
+		self::assertSame([1, 1], [$report['workGroups'], $report['groupedCopies']]);
+	}
+
+	public function testAnEmptyWorkGroupKeepsTheWorkNumberOfAMerge(): void {
+		[$work] = $this->givenEntry('5-1', ['work_no' => 'W-0001']);
+		$report = $this->service->import(self::csv(['Signatur', 'Werkgruppe'], ['5-1', '']), 'catalog.csv', self::UID, false);
+		self::assertSame('W-0001', $work->getWorkNo());
+		self::assertSame([], $this->updated);
+		self::assertSame(1, $report['unchanged']);
+	}
+
+	/**
+	 * "Gilt für den Chor" never chooses a valid version: the conductor does
+	 * that in the app. Only a restore into an empty catalog reads it back.
+	 */
+	public function testTheValidVersionColumnIsReadOnlyIntoAnEmptyCatalog(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Gilt für den Chor'], ['5-1', '2026-11-03 Lena Beispiel']), 'backup.csv', self::UID, false);
+		[$restored] = $this->insertedOf(WorkVersion::class);
+		self::assertSame(['2026-11-03', 'Lena Beispiel'], [$restored->getValidSince(), $restored->getValue('valid_set_by')]);
+		self::assertSame([], array_filter(self::warnings($report), fn (string $w): bool => str_contains($w, 'Gilt für den Chor')), 'read back without a word');
+
+		$this->inserted = [];
+		[, $version] = $this->givenEntry('5-2');
+		$report = $this->service->import(self::csv(['Signatur', 'Gilt für den Chor'], ['5-2', '2026-11-03 Lena Beispiel'], ['5-3', '']),
+			'catalog.csv', self::UID, false);
+		self::assertNull($version->getValidSince());
+		self::assertNull($this->insertedOf(WorkVersion::class)[0]->getValidSince());
+		self::assertContains('The column "Gilt für den Chor" was not imported (1 filled cells): which version is valid for the choir is set by the conductor in the app.',
+			self::warnings($report));
+	}
+
+	public function testLicensedIsNoRightsStatusAndBecomesProtected(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Rechtestatus'], ['5-1', 'lizenziert']), 'catalog.csv', self::UID, true);
+		[$version] = $this->insertedOf(WorkVersion::class);
+		self::assertSame(['protected', 'protected'], [$version->getRightsStatus(), $version->getValue('rights_status_import')]);
+		self::assertContains('Row 1: the rights status "lizenziert" is no status; the version was imported as "protected". Please record the license in the app.',
+			self::warnings($report));
+	}
+
+	public function testAConfirmedRightsStatusIsNotOverwritten(): void {
+		[, $confirmed] = $this->givenEntry('5-1', [], ['rights_status' => 'public_domain', 'confirmed_at' => '2026-10-01']);
+		[, $open] = $this->givenEntry('5-2', [], ['rights_status' => 'public_domain']);
+		$report = $this->service->import(self::csv(['Signatur', 'Rechtestatus'], ['5-1', 'geschützt'], ['5-2', 'geschützt']), 'catalog.csv', self::UID, false);
+
+		self::assertSame('public_domain', $confirmed->getRightsStatus());
+		self::assertSame('protected', $open->getRightsStatus(), 'without a confirmation the file leads');
+		self::assertSame([$open], $this->updated);
+		self::assertContains('Shelf mark 5-1: the rights status was confirmed in the app and is not overwritten by the import.', self::warnings($report));
+	}
+
+	public function testAPreservationCopyStillToBeCheckedStartsAsWorkingAssumptionOfTheBoard(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Rechtestatus', 'Veröffentlichung', 'Veröffentlichung-Begründung'],
+			['5-1', 'geschützt', 'nein – interne Erhaltungskopie', 'Bearbeiter geschützt bis 2070. ZU PRÜFEN: liegt das Original im Schrank?'],
+			['5-2', 'geschützt', 'nein – interne Erhaltungskopie', 'Original liegt vor'],
+			['5-3', 'gemeinfrei', 'frei', 'ZU PRÜFEN'],
+		), 'catalog.csv', self::UID, true);
+
+		[$assumed, $present, $free] = $this->insertedOf(WorkVersion::class);
+		self::assertSame('board_assumption', $assumed->getValue('rule1_status'));
+		self::assertNull($present->getValue('rule1_status'));
+		self::assertNull($free->getValue('rule1_status'), 'only preservation copies');
+		self::assertSame(1, $report['rule1Assumed']);
+	}
+
+	public function testAProtectedVersionWithMusicxmlButNoPreservationCopyIsReported(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'Rechtestatus', 'MusicXML', 'Veröffentlichung'],
+			['5-1', 'geschützt', '5-1_Satz.mxl', 'zu klären'],
+			['5-2', 'geschützt', '5-2_Satz.mxl', 'nein – interne Erhaltungskopie'],
+			['5-3', 'gemeinfrei', '5-3_Satz.mxl', 'frei'],
+			['5-4', 'geschützt', '', 'zu klären'],
+		), 'catalog.csv', self::UID, true);
+
+		$hits = array_values(array_filter(self::warnings($report), fn (string $w): bool => str_contains($w, 'protected, with a MusicXML file')));
+		self::assertSame(['Shelf mark 5-1: protected, with a MusicXML file, but not marked as internal preservation copy. Please check the column "Veröffentlichung".'], $hits);
+	}
+
 	// ---- Excel workbooks and OpenDocument spreadsheets (U32) ----
 
 	/**

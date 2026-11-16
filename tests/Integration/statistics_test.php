@@ -94,7 +94,7 @@ $db->beginTransaction();
 try {
 	if ($programmeCsv !== null && $programmeCsv !== '') {
 		$file = Server::get(\OCP\Files\IRootFolder::class)->getUserFolder($uid)->get($programmeCsv);
-		$report = Server::get(PerformanceImportService::class)->import($file->getContent(), $file->getName(), $uid, false, null);
+		$report = Server::get(PerformanceImportService::class)->import($file->getContent(), $file->getName(), $uid, false);
 		$snapshots[] = $report['snapshot'];
 		$check('performance records imported for the statistics', $report['events'] > 0, (string)$report['events']);
 	}

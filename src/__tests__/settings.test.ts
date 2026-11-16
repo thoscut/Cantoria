@@ -103,7 +103,8 @@ describe('settings of the app', () => {
 			roleLabels: { librarian: 'Catalog (music librarian)' },
 			archive: { id: 4711, path: '/Demo archive', user: 'demo-librarian' },
 			backups: { path: 'Music archive backups' },
-			repertoire: { current: 3, dormant: 10 },
+			// an older server without the reference year: today
+			repertoire: { current: 3, dormant: 10, referenceYear: 0 },
 			catalog: { copies: 23, files: 30 },
 			modulesChosen: false,
 			concertFolder: true,
@@ -201,13 +202,22 @@ describe('access check of the archive folder', () => {
 
 describe('repertoire thresholds', () => {
 	it('accepts whole years with "dormant" at least as long as "current"', () => {
-		expect(parseThresholds('3', '10')).toEqual({ current: 3, dormant: 10 })
-		expect(parseThresholds(' 5 ', '5')).toEqual({ current: 5, dormant: 5 })
+		expect(parseThresholds('3', '10')).toEqual({ current: 3, dormant: 10, referenceYear: 0 })
+		expect(parseThresholds(' 5 ', '5')).toEqual({ current: 5, dormant: 5, referenceYear: 0 })
 	})
 
 	it('refuses everything else', () => {
 		for (const [current, dormant] of [['0', '10'], ['3', '2'], ['2.5', '10'], ['', '10'], ['3', ''], ['51', '60'], ['3', '101'], ['-1', '3'], ['3a', '10']]) {
 			expect(parseThresholds(current!, dormant!)).toBeNull()
+		}
+	})
+
+	it('takes a reference year, empty meaning today', () => {
+		// "current = sung in 2023 or later" fixed: reference year 2026 and 3 years
+		expect(parseThresholds('3', '10', ' 2026 ')).toEqual({ current: 3, dormant: 10, referenceYear: 2026 })
+		expect(parseThresholds('3', '10', '   ')).toEqual({ current: 3, dormant: 10, referenceYear: 0 })
+		for (const year of ['26', '1899', '3000', '2026.5', 'now', '0']) {
+			expect(parseThresholds('3', '10', year)).toBeNull()
 		}
 	})
 })

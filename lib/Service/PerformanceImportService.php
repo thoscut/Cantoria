@@ -9,11 +9,15 @@ declare(strict_types=1);
 
 namespace OCA\Cantoria\Service;
 
+use OCA\Cantoria\Db\Copy;
 use OCA\Cantoria\Db\CopyMapper;
 use OCA\Cantoria\Db\Event;
 use OCA\Cantoria\Db\EventItem;
 use OCA\Cantoria\Db\EventItemMapper;
 use OCA\Cantoria\Db\EventMapper;
+use OCA\Cantoria\Db\Work;
+use OCA\Cantoria\Db\WorkMapper;
+use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Exception\InvalidInputException;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -33,17 +37,47 @@ use OCP\IDBConnection;
  * events planned in the app are never touched. A dry run rolls back.
  *
  * Counting rule (from the archive's own documentation): a line is a documented
- * performance when it was sung by the choir itself (participation empty or
- * equal to the own choir's name) and comes from a final programme — drafts,
- * reserve pieces and "encore if needed" do not count; ambiguous lines count
- * only once they are resolved.
+ * performance when
+ * - it was sung by the choir itself: participation empty or one of the
+ *   counting participations (default: the most frequent value of the column,
+ *   e.g. the own choir; a second value such as "joint" lets concerts sung
+ *   together with other choirs count as well),
+ * - it comes from a final programme: a state that contains one of the
+ *   excluded words (drafts, reserve pieces, "encore if needed", uncertain
+ *   lines, mere work or song lists; DEFAULT_EXCLUDED_STATES) does not count,
+ * - it is assigned to a copy with certainty; ambiguous lines count only once
+ *   they are resolved,
+ * - and it is not a duplicate of a programme with a full date: a line of an
+ *   event dated only by a year (`YYYY`, e.g. an annual list) or by a month
+ *   (`YYYY-MM`) does not count when the same work (or the same shelf mark,
+ *   when the work is unknown) counts already in an event with a day date in
+ *   that year (or month). Otherwise the same concert would be counted twice.
+ *
+ * Dates: `event_date` keeps `YYYY-MM-DD`, `YYYY-MM` and `YYYY` as the file
+ * has them (the column is a string of 10 characters). Every reader of the
+ * date checks `FieldValue::isDate()` before treating it as a calendar day,
+ * or takes the year from the first four characters.
  *
  * @psalm-type Sheet = array{sheet: string, header: list<string>, rows: list<list<string>>}
- * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, snapshot: ?string, events: int, songLists: int, items: int, certain: int, ambiguous: int, notInCatalog: int, counted: int, keptAssignments: int, ownChoir: ?string, unknownShelfmarks: list<string>, sheets: list<string>}
+ * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, snapshot: ?string, events: int, songLists: int, items: int, certain: int, ambiguous: int, notInCatalog: int, counted: int, keptAssignments: int, deduplicated: int, ownChoir: ?string, countingParticipations: list<string>, excludedStates: list<string>, unknownShelfmarks: list<string>, sheets: list<string>}
+ * @psalm-type Resolved = array{assignment: string, marks: list<string>, copy: ?Copy, version: ?WorkVersion, key: string, unknown: bool}
  */
 class PerformanceImportService {
+	/**
+	 * Words in the state of a programme line (lower case, substring) that
+	 * mark it as no documented performance: drafts, reserve pieces, encores
+	 * "if needed", uncertain lines and mere work or song lists.
+	 */
+	public const DEFAULT_EXCLUDED_STATES = ['entwurf', 'draft', 'reserve', 'nach bedarf', 'if needed',
+		'fraglich', 'werkliste', 'notenliste', 'unsicher', 'uncertain'];
+
 	private const PROGRAMME_HEADER = ['Datum', 'Anlass', 'Titel laut Programm', 'Signatur'];
 	private const SONG_LIST_HEADER = ['Liste', 'Titel wie gedruckt', 'Signatur'];
+
+	/** Words of a composer text that name no person (lower case). */
+	private const NOT_A_NAME = ['satz', 'arr', 'bearb', 'bearbeitung', 'text', 'worte', 'words', 'melodie', 'weise', 'musik', 'music',
+		'und', 'von', 'der', 'die', 'das', 'nach', 'aus', 'für', 'the', 'and', 'for', 'volkslied', 'volksweise', 'trad', 'anonym',
+		'chor', 'männerchor', 'frauenchor', 'gemischter', 'arrangement', 'arranged'];
 
 	public function __construct(
 		private IDBConnection $db,
@@ -52,6 +86,7 @@ class PerformanceImportService {
 		private EventItemMapper $items,
 		private CopyMapper $copies,
 		private WorkVersionMapper $versions,
+		private WorkMapper $works,
 		private ExportService $export,
 		private AuditLog $audit,
 		private ITimeFactory $time,
@@ -59,9 +94,11 @@ class PerformanceImportService {
 	}
 
 	/**
+	 * @param list<string> $countingParticipations participations that count (compared case-insensitively and trimmed); empty: the most frequent one
+	 * @param list<string>|null $excludedStates words in the state that exclude a line (case-insensitive substrings); null: DEFAULT_EXCLUDED_STATES
 	 * @return Report
 	 */
-	public function import(string $content, string $fileName, string $uid, bool $dryRun, ?string $ownChoir): array {
+	public function import(string $content, string $fileName, string $uid, bool $dryRun, array $countingParticipations = [], ?array $excludedStates = null): array {
 		if (str_ends_with(mb_strtolower($fileName), '.csv')) {
 			$csv = CatalogCsv::parse($content);
 			$sheets = [['name' => 'CSV', 'rows' => array_merge([$csv['header']], $csv['rows'])]];
@@ -99,15 +136,19 @@ class PerformanceImportService {
 			$copyIds[$copy->getId()] = true;
 		}
 		$versions = $this->versions->findAllById();
+		$works = $this->works->findAllById();
 		$sheetNames = [];
 		foreach ([$programme, $songLists] as $found) {
 			if ($found !== null) {
 				$sheetNames[] = $found['sheet'];
 			}
 		}
+		$counting = self::cleanList($countingParticipations);
+		$excluded = $excludedStates === null ? self::DEFAULT_EXCLUDED_STATES : self::cleanList($excludedStates);
 		$report = ['dryRun' => $dryRun, 'source' => $fileName, 'sha256' => hash('sha256', $content), 'snapshot' => null,
 			'events' => 0, 'songLists' => 0, 'items' => 0, 'certain' => 0, 'ambiguous' => 0, 'notInCatalog' => 0,
-			'counted' => 0, 'keptAssignments' => 0, 'ownChoir' => null, 'unknownShelfmarks' => [], 'sheets' => $sheetNames];
+			'counted' => 0, 'keptAssignments' => 0, 'deduplicated' => 0, 'ownChoir' => null, 'countingParticipations' => $counting, 'excludedStates' => $excluded,
+			'unknownShelfmarks' => [], 'sheets' => $sheetNames];
 
 		if (!$dryRun) {
 			$report['snapshot'] = $this->export->snapshot('before-performance-import', $uid);
@@ -119,8 +160,12 @@ class PerformanceImportService {
 		try {
 			if ($programme !== null) {
 				$beforeConcerts = $this->removeImported(Event::CONCERT);
-				$ownChoir ??= self::mostFrequent($programme, 'Mitwirkung');
-				$report['ownChoir'] = $ownChoir;
+				if ($counting === []) {
+					$detected = self::mostFrequent($programme, 'Mitwirkung');
+					$counting = $detected === null ? [] : [$detected];
+					$report['countingParticipations'] = $counting;
+				}
+				$report['ownChoir'] = $counting[0] ?? null;
 				/** @var array<string, non-empty-list<array<string, string>>> $groups */
 				$groups = [];
 				foreach ($programme['rows'] as $row) {
@@ -131,12 +176,31 @@ class PerformanceImportService {
 					$key = implode("\0", [trim($r['Datum'] ?? ''), trim($r['Anlass'] ?? ''), trim($r['Ort'] ?? '')]);
 					$groups[$key][] = $r;
 				}
+				// First pass: which work (or shelf mark) counts in which year and
+				// month on an event with a day date. Lines of events dated only by
+				// the year or the month must not count twice for the same concert.
+				$dated = [];
+				foreach ($groups as $lines) {
+					$date = self::date($lines[0]['Datum'] ?? null);
+					if ($date === null || strlen($date) !== 10) {
+						continue;
+					}
+					foreach ($lines as $r) {
+						$resolved = self::resolve($r['Signatur'] ?? '', $r['Zuordnung'] ?? '', $copies, $versions);
+						if ($resolved['assignment'] === EventItem::CERTAIN
+							&& self::countsByRule($r['Mitwirkung'] ?? null, $r['Stand'] ?? null, $counting, $excluded)) {
+							$dated[$resolved['key'] . "\0" . substr($date, 0, 4)] = true;
+							$dated[$resolved['key'] . "\0" . substr($date, 0, 7)] = true;
+						}
+					}
+				}
 				foreach ($groups as $lines) {
 					$first = $lines[0];
+					$date = self::date($first['Datum'] ?? null);
 					$event = new Event();
 					$event->setKind(Event::CONCERT);
 					$event->setValue('title', self::cut($first['Anlass'] ?? null, 500));
-					$event->setValue('event_date', self::date($first['Datum'] ?? null));
+					$event->setValue('event_date', $date);
 					$event->setValue('location', self::cut($first['Ort'] ?? null, 500));
 					$event->setStatus('sung');
 					$event->setImported(true);
@@ -147,16 +211,25 @@ class PerformanceImportService {
 					$event = $this->events->insert($event);
 					$report['events']++;
 					foreach ($lines as $position => $r) {
-						$item = $this->item($event->getId(), $position + 1, $r['Signatur'] ?? '', $r['Zuordnung'] ?? '', $copies, $versions, $report);
+						$resolved = self::resolve($r['Signatur'] ?? '', $r['Zuordnung'] ?? '', $copies, $versions);
+						$item = $this->item($event->getId(), $position + 1, $resolved, $report);
 						$item->setValue('title_text', self::cut($r['Titel laut Programm'] ?? null, 1000));
 						$item->setValue('composer_text', self::cut($r['Komponist/Satz laut Programm'] ?? null, 1000));
 						$item->setValue('participation', self::cut($r['Mitwirkung'] ?? null, 255));
 						$item->setValue('state', self::cut($r['Stand'] ?? null, 255));
 						self::keepResolved($event, $item, $beforeConcerts, $copyIds, $report);
-						$item->setCounts($item->getAssignment() === EventItem::CERTAIN
-							&& self::countsByRule($item->getParticipation(), $item->getState(), $ownChoir));
+						if ($item->getAssignment() === EventItem::AMBIGUOUS) {
+							self::composerHint($item, $resolved['marks'], $r['Komponist/Satz laut Programm'] ?? null, $copies, $versions, $works);
+						}
+						$counts = $item->getAssignment() === EventItem::CERTAIN
+							&& self::countsByRule($item->getParticipation(), $item->getState(), $counting, $excluded);
+						if ($counts && $date !== null && strlen($date) < 10 && isset($dated[$resolved['key'] . "\0" . $date])) {
+							$counts = false;
+							$report['deduplicated']++;
+						}
+						$item->setCounts($counts);
 						$this->items->insert($item);
-						$report['counted'] += $item->getCounts() === true ? 1 : 0;
+						$report['counted'] += $counts ? 1 : 0;
 					}
 				}
 			}
@@ -197,9 +270,10 @@ class PerformanceImportService {
 					foreach ($lines as $index => $r) {
 						$nr = filter_var($r['Nr'] ?? '', FILTER_VALIDATE_INT);
 						$candidates = trim($r['Kandidaten'] ?? '');
-						$item = $this->item($event->getId(), $nr === false ? $index + 1 : $nr,
+						$resolved = self::resolve(
 							$candidates !== '' && trim($r['Signatur'] ?? '') === '' ? $candidates : ($r['Signatur'] ?? ''),
-							$r['Zuordnung'] ?? '', $copies, $versions, $report);
+							$r['Zuordnung'] ?? '', $copies, $versions);
+						$item = $this->item($event->getId(), $nr === false ? $index + 1 : $nr, $resolved, $report);
 						$item->setValue('title_text', self::cut($r['Titel wie gedruckt'] ?? null, 1000));
 						$item->setValue('note', $r['Bemerkung'] ?? null);
 						self::keepResolved($event, $item, $beforeLists, $copyIds, $report);
@@ -224,15 +298,21 @@ class PerformanceImportService {
 	}
 
 	/**
-	 * The counting rule for documented performances.
+	 * The counting rule for documented performances (participation and
+	 * state; the assignment and the deduplication of annual lists are
+	 * checked by the import itself).
+	 *
+	 * @param list<string> $countingParticipations participations that count besides an empty one; empty: every participation counts
+	 * @param list<string>|null $excludedStates words that exclude a line (lower case, substring); null: DEFAULT_EXCLUDED_STATES
 	 */
-	public static function countsByRule(?string $participation, ?string $state, ?string $ownChoir): bool {
-		$participation = trim((string)$participation);
-		if ($participation !== '' && $ownChoir !== null && $ownChoir !== '' && mb_strtolower($participation) !== mb_strtolower($ownChoir)) {
+	public static function countsByRule(?string $participation, ?string $state, array $countingParticipations = [], ?array $excludedStates = null): bool {
+		$participation = mb_strtolower(trim((string)$participation));
+		$counting = array_map('mb_strtolower', self::cleanList($countingParticipations));
+		if ($participation !== '' && $counting !== [] && !in_array($participation, $counting, true)) {
 			return false;
 		}
 		$state = mb_strtolower((string)$state);
-		foreach (['entwurf', 'draft', 'reserve', 'nach bedarf', 'if needed'] as $excluded) {
+		foreach (array_map('mb_strtolower', $excludedStates === null ? self::DEFAULT_EXCLUDED_STATES : self::cleanList($excludedStates)) as $excluded) {
 			if (str_contains($state, $excluded)) {
 				return false;
 			}
@@ -241,40 +321,142 @@ class PerformanceImportService {
 	}
 
 	/**
-	 * @param array<string, \OCA\Cantoria\Db\Copy> $copies
-	 * @param array<int, \OCA\Cantoria\Db\WorkVersion> $versions
-	 * @param Report $report
+	 * Splits a parameter "a | b, c" into a list, as the API takes it.
+	 *
+	 * @return list<string>
 	 */
-	private function item(int $eventId, int $position, string $shelfmarks, string $assignment, array $copies, array $versions, array &$report): EventItem {
-		$item = new EventItem();
-		$item->setEventId($eventId);
-		$item->setPosition($position);
+	public static function splitList(?string $value): array {
+		return array_values(array_filter(array_map('trim', preg_split('/[|,]/', (string)$value) ?: []), fn (string $s): bool => $s !== ''));
+	}
+
+	/**
+	 * Trimmed, without empty values and without duplicates (compared
+	 * case-insensitively; the first spelling is kept for the report).
+	 *
+	 * @param list<string> $values
+	 * @return list<string>
+	 */
+	private static function cleanList(array $values): array {
+		$clean = [];
+		$seen = [];
+		foreach ($values as $value) {
+			$value = trim($value);
+			$lower = mb_strtolower($value);
+			if ($value !== '' && !in_array($lower, $seen, true)) {
+				$clean[] = $value;
+				$seen[] = $lower;
+			}
+		}
+		return $clean;
+	}
+
+	/**
+	 * What the shelf mark(s) and the assignment of a line say: the assignment
+	 * class, the normalized marks, the copy and version when certain, and a
+	 * key naming the work (or the shelf mark when the work is unknown) for
+	 * the deduplication.
+	 *
+	 * @param array<string, Copy> $copies
+	 * @param array<int, WorkVersion> $versions
+	 * @return Resolved
+	 */
+	private static function resolve(string $shelfmarks, string $assignment, array $copies, array $versions): array {
 		$marks = array_values(array_filter(array_map(fn (string $s): string => self::normalize($s), preg_split('/[|,]/', $shelfmarks) ?: []),
 			fn (string $mark): bool => $mark !== ''));
 		$assignmentText = mb_strtolower(trim($assignment));
+		$result = ['assignment' => EventItem::NOT_IN_CATALOG, 'marks' => $marks, 'copy' => null, 'version' => null, 'key' => '', 'unknown' => false];
 		if ($marks === [] || str_contains($assignmentText, 'nicht im')) {
-			$item->setAssignment(EventItem::NOT_IN_CATALOG);
-			$report['notInCatalog']++;
-		} elseif (count($marks) > 1 || str_contains($assignmentText, 'mehrdeutig') || str_contains($assignmentText, 'unsicher')) {
-			$item->setAssignment(EventItem::AMBIGUOUS);
+			return $result;
+		}
+		if (count($marks) > 1 || str_contains($assignmentText, 'mehrdeutig') || str_contains($assignmentText, 'unsicher')) {
+			$result['assignment'] = EventItem::AMBIGUOUS;
+			return $result;
+		}
+		if (!isset($copies[$marks[0]])) {
+			$result['unknown'] = true;
+			return $result;
+		}
+		$copy = $copies[$marks[0]];
+		$version = $versions[$copy->getVersionId()] ?? null;
+		$workId = $version?->getWorkId();
+		return ['assignment' => EventItem::CERTAIN, 'marks' => $marks, 'copy' => $copy, 'version' => $version,
+			'key' => $workId === null ? 'mark:' . $marks[0] : 'work:' . $workId, 'unknown' => false];
+	}
+
+	/**
+	 * @param Resolved $resolved
+	 * @param Report $report
+	 */
+	private function item(int $eventId, int $position, array $resolved, array &$report): EventItem {
+		$item = new EventItem();
+		$item->setEventId($eventId);
+		$item->setPosition($position);
+		$item->setAssignment($resolved['assignment']);
+		$marks = $resolved['marks'];
+		if ($resolved['assignment'] === EventItem::AMBIGUOUS) {
 			$item->setValue('candidates', implode(' | ', $marks));
 			$report['ambiguous']++;
-		} elseif (!isset($copies[$marks[0]])) {
-			$item->setAssignment(EventItem::NOT_IN_CATALOG);
-			$item->setValue('candidates', $marks[0]);
-			$report['unknownShelfmarks'][] = $marks[0];
-			$report['notInCatalog']++;
-		} else {
-			$copy = $copies[$marks[0]];
-			$version = $versions[$copy->getVersionId()] ?? null;
-			$item->setAssignment(EventItem::CERTAIN);
-			$item->setValue('copy_id', $copy->getId());
-			$item->setValue('version_id', $version?->getId());
-			$item->setValue('work_id', $version?->getWorkId());
+		} elseif ($resolved['assignment'] === EventItem::CERTAIN && $resolved['copy'] !== null) {
+			$item->setValue('copy_id', $resolved['copy']->getId());
+			$item->setValue('version_id', $resolved['version']?->getId());
+			$item->setValue('work_id', $resolved['version']?->getWorkId());
 			$report['certain']++;
+		} else {
+			if ($resolved['unknown']) {
+				// A single shelf mark that is not in the catalog
+				$item->setValue('candidates', $marks[0]);
+				$report['unknownShelfmarks'][] = $marks[0];
+			}
+			$report['notInCatalog']++;
 		}
 		$report['items']++;
 		return $item;
+	}
+
+	/**
+	 * Composer rule, as a suggestion only (the assignment stays ambiguous):
+	 * when the composer text of the programme names the composer or the
+	 * arranger of exactly one candidate, that candidate comes first in
+	 * `candidates` and the line gets a note. Names are compared by their
+	 * words of at least three letters, so "Schubert" matches "F. Schubert"
+	 * and "Schubert, arr. Smith"; words that name no person are ignored.
+	 *
+	 * @param list<string> $marks
+	 * @param array<string, Copy> $copies
+	 * @param array<int, WorkVersion> $versions
+	 * @param array<int, Work> $works
+	 */
+	private static function composerHint(EventItem $item, array $marks, ?string $composerText, array $copies, array $versions, array $works): void {
+		$named = self::nameWords($composerText);
+		if ($named === []) {
+			return;
+		}
+		$matching = [];
+		foreach ($marks as $mark) {
+			$copy = $copies[$mark] ?? null;
+			$version = $copy === null ? null : ($versions[$copy->getVersionId()] ?? null);
+			$work = $version === null ? null : ($works[$version->getWorkId()] ?? null);
+			$words = self::nameWords(($work?->getComposer() ?? '') . ' ' . ($version?->getArrangerText() ?? ''));
+			if (array_intersect($words, $named) !== []) {
+				$matching[] = $mark;
+			}
+		}
+		if (count($matching) !== 1) {
+			return;
+		}
+		$item->setValue('candidates', implode(' | ', array_merge($matching, array_values(array_diff($marks, $matching)))));
+		$item->setValue('note', 'Composer rule: ' . $matching[0] . ' matches "' . trim((string)$composerText) . '"');
+	}
+
+	/**
+	 * The words of at least three letters of a composer text that may be
+	 * names, in lower case.
+	 *
+	 * @return list<string>
+	 */
+	private static function nameWords(?string $text): array {
+		preg_match_all('/\p{L}{3,}/u', mb_strtolower((string)$text), $matches);
+		return array_values(array_diff(array_unique($matches[0]), self::NOT_A_NAME));
 	}
 
 	/**
@@ -392,14 +574,15 @@ class PerformanceImportService {
 	}
 
 	/**
-	 * Keeps YYYY-MM-DD and plain years; converts Excel serial dates.
+	 * Keeps YYYY-MM-DD, YYYY-MM (a month) and plain years; converts Excel
+	 * serial dates. Anything else is no date (null).
 	 */
-	private static function date(?string $value): ?string {
+	public static function date(?string $value): ?string {
 		$value = trim((string)$value);
 		if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $value, $m) && FieldValue::isDate($m[1])) {
 			return $m[1];
 		}
-		if (preg_match('/^\d{4}$/', $value)) {
+		if (preg_match('/^\d{4}(-(0[1-9]|1[0-2]))?$/', $value)) {
 			return $value;
 		}
 		if (preg_match('/^\d{5}(\.\d+)?$/', $value)) {

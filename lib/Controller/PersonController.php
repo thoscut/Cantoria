@@ -12,6 +12,7 @@ namespace OCA\Cantoria\Controller;
 use OCA\Cantoria\AppInfo\Application;
 use OCA\Cantoria\Attribute\RequiresModule;
 use OCA\Cantoria\Exception\InvalidInputException;
+use OCA\Cantoria\Service\ContributorDerivationService;
 use OCA\Cantoria\Service\Modules;
 use OCA\Cantoria\Service\PersonImportService;
 use OCA\Cantoria\Service\PersonService;
@@ -48,6 +49,7 @@ class PersonController extends Controller {
 		private Roles $roles,
 		private PersonService $persons,
 		private PersonImportService $personImport,
+		private ContributorDerivationService $derivation,
 		private RightsService $rights,
 		private UserFiles $userFiles,
 		private Modules $modules,
@@ -170,6 +172,20 @@ class PersonController extends Controller {
 			$file = $this->userFiles->read($uid, $fileId, UserFiles::MAX_IMPORT_BYTES,
 				new InvalidInputException('The selected CSV file is not accessible.'));
 			$report = $this->personImport->import($file['content'], $file['name'], $uid, $dryRun);
+			return ['warnings' => $this->translateWarnings($report['warnings'])] + $report;
+		});
+	}
+
+	/**
+	 * Derives persons and roles from the composer and arranger texts of the
+	 * catalog; a dry run first (the service checks the role).
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: 30, period: 600)]
+	#[FrontpageRoute(verb: 'POST', url: '/api/persons/derive')]
+	public function derive(bool $dryRun = true): JSONResponse {
+		return $this->run(function (string $uid) use ($dryRun) {
+			$report = $this->derivation->derive($uid, $dryRun);
 			return ['warnings' => $this->translateWarnings($report['warnings'])] + $report;
 		});
 	}

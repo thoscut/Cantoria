@@ -370,7 +370,7 @@ class EventService {
 			$item->setValue('work_id', $version->getWorkId());
 			$event = $this->events->find($item->getEventId());
 			$item->setCounts($event->getKind() === Event::CONCERT && $event->getStatus() === 'sung'
-				&& $item->getStruck() !== true && PerformanceImportService::countsByRule($item->getParticipation(), $item->getState(), null));
+				&& $item->getStruck() !== true && PerformanceImportService::countsByRule($item->getParticipation(), $item->getState()));
 		}
 		$this->items->update($item);
 		$this->audit->record($this->audit->newOperation(), $uid, 'event_item', $itemId, 'resolved', 'copy_id', null, $copyId);

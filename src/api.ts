@@ -18,6 +18,7 @@ import type {
 	ChoirEvent,
 	ChoirSystemReport,
 	Contribution,
+	ContributorDerivationReport,
 	CorrectionInput,
 	CorrectionOrder,
 	CorrectionResult,
@@ -407,9 +408,10 @@ export function importTemplateUrl(format: 'csv' | 'ods'): string {
 	return apiUrl('/import/template') + '?format=' + format
 }
 
-export async function storeExport(): Promise<string> {
-	const { data } = await axios.post<{ path: string }>(apiUrl('/export/store'))
-	return data.path
+/** Stores an export in the archive folder: its path, and how many internal preservation copies it leaves out. */
+export async function storeExport(): Promise<{ path: string, omitted: number }> {
+	const { data } = await axios.post<{ path: string, omitted: number }>(apiUrl('/export/store'))
+	return data
 }
 
 /** Settings of the app (admins and the groups given the settings page). */
@@ -912,11 +914,11 @@ export async function writeCalendarObject(path: string, ics: string): Promise<vo
  * Change the thresholds of the repertoire classes (a setting; read them
  * with `fetchSettings`).
  *
- * @param thresholds - years for "current" and "dormant"
+ * @param thresholds - years for "current" and "dormant", and the reference year (0: today)
  */
 export async function saveRepertoireThresholds(thresholds: RepertoireThresholds): Promise<RepertoireThresholds> {
 	const { data } = await axios.put<RepertoireThresholds>(apiUrl('/repertoire/thresholds'), thresholds)
-	return data
+	return { ...data, referenceYear: typeof data.referenceYear === 'number' ? data.referenceYear : 0 }
 }
 
 /**
@@ -924,11 +926,24 @@ export async function saveRepertoireThresholds(thresholds: RepertoireThresholds)
  *
  * @param fileId - Nextcloud file id
  * @param dryRun - only check and report
- * @param ownChoir - name of the own choir in the file, if the detection is wrong
+ * @param countingParticipations - participations that count (empty: the most frequent one in the file)
+ * @param excludedStates - words in the state that exclude a line (null: the server's default)
  */
-export async function importPerformances(fileId: number, dryRun: boolean, ownChoir: string | null): Promise<PerformanceImportReport> {
-	const { data } = await axios.post<PerformanceImportReport>(apiUrl('/performances/import'), { fileId, dryRun, ownChoir })
-	return { ...data, unknownShelfmarks: list(data.unknownShelfmarks), sheets: list(data.sheets) }
+export async function importPerformances(fileId: number, dryRun: boolean, countingParticipations: string[], excludedStates: string[] | null): Promise<PerformanceImportReport> {
+	const { data } = await axios.post<PerformanceImportReport>(apiUrl('/performances/import'), {
+		fileId,
+		dryRun,
+		countingParticipations: countingParticipations.join('|'),
+		excludedStates: excludedStates === null ? null : excludedStates.join('|'),
+	})
+	return {
+		...data,
+		deduplicated: typeof data.deduplicated === 'number' ? data.deduplicated : 0,
+		countingParticipations: list(data.countingParticipations),
+		excludedStates: list(data.excludedStates),
+		unknownShelfmarks: list(data.unknownShelfmarks),
+		sheets: list(data.sheets),
+	}
 }
 
 /**
@@ -1056,6 +1071,22 @@ export async function importPersons(fileId: number, dryRun: boolean): Promise<Pe
 		renamed: list(data.renamed),
 		unknownShelfmarks: list(data.unknownShelfmarks),
 		protectionDiffers: list(data.protectionDiffers),
+		warnings: list(data.warnings),
+	}
+}
+
+/**
+ * Derive persons and roles from the composer and arranger texts of the catalog.
+ *
+ * @param dryRun - only check and report
+ */
+export async function deriveContributors(dryRun: boolean): Promise<ContributorDerivationReport> {
+	const { data } = await axios.post<ContributorDerivationReport>(apiUrl('/persons/derive'), { dryRun })
+	return {
+		...data,
+		differs: list(data.differs),
+		unassigned: list(data.unassigned),
+		roles: data.roles ?? {},
 		warnings: list(data.warnings),
 	}
 }

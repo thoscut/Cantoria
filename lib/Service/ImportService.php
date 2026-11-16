@@ -40,10 +40,25 @@ use OCP\IDBConnection;
  * - Invalid values are reported and skipped; the stored value stays.
  * - Decision fields (e.g. rights confirmed) are filled while empty but never
  *   overwritten; a differing CSV value is reported instead.
+ * - A rights status that a person confirmed in the app (`confirmed_at`) is
+ *   not overwritten either; a differing CSV value is reported.
+ * - The column "Gilt für den Chor" (CatalogCsv::VALID_COLUMN) never chooses
+ *   a valid version: the conductor does that in the app. It is read only
+ *   when a backup is restored into an empty catalog.
  * - The preservation copy flag is derived from the legacy publication note
- *   only when a version is created, so manual corrections survive.
+ *   only when a version is created, so manual corrections survive. A
+ *   preservation copy whose reasoning says "ZU PRÜFEN" (to be checked) starts
+ *   with the original as a working assumption of the board (`rule1_status`).
  * - Read-only fields outside the legacy columns are only taken over when
  *   restoring a backup into an empty catalog.
+ *
+ * Work groups (column "Werkgruppe", CatalogCsv::GROUP_COLUMN): rows with the
+ * same value are versions of one work. The value is the shelf mark of the
+ * main copy (or a work number): the work is created once, its title and
+ * composer come from the row of that shelf mark, and every other row of the
+ * group becomes a version and a copy of the same work. A row of a group whose
+ * copy already belongs to another work is reported: the librarian merges the
+ * works in the app (MergeService), the import never moves versions.
  *
  * A dry run performs the whole import and rolls the database back afterwards.
  * Before a real import into a non-empty catalog, a snapshot is stored in the
@@ -51,9 +66,10 @@ use OCP\IDBConnection;
  *
  * @psalm-import-type FieldInfo from Fields
  * @psalm-type Warning = array{0: string, 1: list<string|int>}
- * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, operation: ?string, restore: bool, snapshot: ?string,
+ * @psalm-type Report = array{dryRun: bool, source: string, sha256: string, operation: ?string, restore: bool, snapshot: ?string, snapshotOmitted: int,
  *     rows: int, created: int, changed: int, unchanged: int, fieldsChanged: int, notInCsv: list<string>, withMusicxml: int,
- *     preservationCopies: int, distribution: array{rightsStatus: array<string, int>, repertoire: array<string, int>, publication: array<string, int>},
+ *     preservationCopies: int, rule1Assumed: int, workGroups: int, groupedCopies: int,
+ *     distribution: array{rightsStatus: array<string, int>, repertoire: array<string, int>, publication: array<string, int>, status: array<string, int>},
  *     warnings: list<Warning>}
  */
 class ImportService {
@@ -123,8 +139,10 @@ class ImportService {
 		}
 
 		$snapshot = null;
+		$snapshotOmitted = 0;
 		if (!$dryRun && !$restore) {
 			$snapshot = $this->export->snapshot('before-import', $uid);
+			$snapshotOmitted = $this->export->omittedPreservationCopies();
 		}
 
 		$operation = $this->audit->newOperation();
@@ -133,11 +151,24 @@ class ImportService {
 		$versions = $this->versions->findAllById();
 
 		$counts = ['rows' => 0, 'created' => 0, 'changed' => 0, 'unchanged' => 0, 'fieldsChanged' => 0];
-		/** @var array{rightsStatus: array<string, int>, repertoire: array<string, int>, publication: array<string, int>} $distribution */
-		$distribution = ['rightsStatus' => [], 'repertoire' => [], 'publication' => []];
+		/** @var array{rightsStatus: array<string, int>, repertoire: array<string, int>, publication: array<string, int>, status: array<string, int>} $distribution */
+		$distribution = ['rightsStatus' => [], 'repertoire' => [], 'publication' => [], 'status' => []];
 		$withMusicxml = 0;
 		$preservationCopies = 0;
+		$rule1Assumed = 0;
+		$groupedCopies = 0;
+		$validCellsSkipped = 0;
 		$seen = [];
+		/** @var array<string, Work> $groupWorks the work of each work group met so far */
+		$groupWorks = [];
+		/** @var array<string, Work> $workOfShelfmark the work of every copy in the catalog, to find the work of a group by its main shelf mark */
+		$workOfShelfmark = [];
+		foreach ($existing as $copy) {
+			$version = $versions[$copy->getVersionId()] ?? null;
+			if ($version !== null && isset($works[$version->getWorkId()])) {
+				$workOfShelfmark[$copy->getShelfmark()] = $works[$version->getWorkId()];
+			}
+		}
 
 		$this->db->beginTransaction();
 		try {
@@ -164,10 +195,36 @@ class ImportService {
 						continue;
 					}
 					$header = $csv['header'][$i];
+					$cell = $fields[$i] ?? '';
+					if ($header === CatalogCsv::VALID_COLUMN) {
+						// never chooses a valid version; read back only into an empty catalog
+						if (trim($cell) === '') {
+							continue;
+						}
+						if (!$restore) {
+							$validCellsSkipped++;
+							continue;
+						}
+						$valid = CatalogCsv::parseValidForChoir($cell);
+						if ($valid === null) {
+							$warnings[] = ['Row %s, column "%s": the value "%s" is not valid there and was not imported.', [$row, $header, mb_substr($cell, 0, 60)]];
+							continue;
+						}
+						$values[Fields::VERSION]['valid_since'] = $valid[0];
+						if ($valid[1] !== null) {
+							$values[Fields::VERSION] += ['valid_set_by' => mb_substr($valid[1], 0, Fields::info(Fields::VERSION, 'valid_set_by')['max'] ?? 200)];
+						}
+						continue;
+					}
 					if ($info['write'] === [] && !CatalogCsv::isLegacyColumn($header) && !$restore) {
 						continue;
 					}
-					[$valid, $value] = self::convert($fields[$i] ?? '', $header, $info);
+					if ($header === 'Rechtestatus' && mb_strtolower(trim($cell)) === CatalogCsv::LEGACY_RIGHTS_STATUS_LICENSED) {
+						// "lizenziert" is no status: protected, and the license is recorded in the app
+						$warnings[] = ['Row %s: the rights status "%s" is no status; the version was imported as "protected". Please record the license in the app.', [$row, trim($cell)]];
+						$cell = 'protected';
+					}
+					[$valid, $value] = self::convert($cell, $header, $info);
 					if (!$valid) {
 						$warnings[] = ['Row %s, column "%s": the value "%s" is not valid there and was not imported.', [$row, $header, mb_substr($fields[$i] ?? '', 0, 60)]];
 						continue;
@@ -207,22 +264,60 @@ class ImportService {
 				self::tally($distribution['rightsStatus'], $values[Fields::VERSION]['rights_status'] ?? null);
 				self::tally($distribution['repertoire'], $values[Fields::WORK]['repertoire_import'] ?? null);
 				self::tally($distribution['publication'], self::shorten($publication));
-				if (($values[Fields::VERSION]['musicxml_file'] ?? null) !== null) {
+				$musicxml = ($values[Fields::VERSION]['musicxml_file'] ?? null) !== null;
+				if ($musicxml) {
 					$withMusicxml++;
 				}
+
+				// The work group: the shelf mark of the main copy or a work number
+				$group = trim(self::text($values[Fields::WORK]['work_no'] ?? null) ?? '');
+				$group = $group === '' ? null : (preg_match('/^0*(\d+)-0*(\d+)$/', $group, $g) ? (int)$g[1] . '-' . (int)$g[2] : $group);
+				if ($group !== null) {
+					$values[Fields::WORK]['work_no'] = $group;
+				}
+				$isMainOfGroup = $group === null || $group === $shelfmark;
 
 				$copy = $existing[$shelfmark] ?? null;
 				if ($copy === null) {
 					if (!array_key_exists('preservation_copy', $values[Fields::VERSION])) {
 						$values[Fields::VERSION]['preservation_copy'] = CatalogCsv::isLegacyPreservationCopy($publication);
 					}
-					if ($values[Fields::VERSION]['preservation_copy'] === true) {
+					$preservation = $values[Fields::VERSION]['preservation_copy'] === true;
+					if ($preservation) {
 						$preservationCopies++;
 					}
 					if (!array_key_exists('publication_status', $values[Fields::VERSION])) {
 						$values[Fields::VERSION]['publication_status'] = CatalogCsv::legacyPublicationStatus($publication);
 					}
-					$this->create($values, $row, $now, $operation, $uid);
+					if ($preservation && ($values[Fields::VERSION]['rule1_status'] ?? null) === null
+						&& self::saysToBeChecked(self::text($values[Fields::VERSION]['publication_reason'] ?? null))) {
+						// "ZU PRÜFEN": the original has not been looked for yet, the board assumes it is there
+						$values[Fields::VERSION]['rule1_status'] = 'board_assumption';
+						$rule1Assumed++;
+					}
+					if (!$preservation && $musicxml && ($values[Fields::VERSION]['rights_status'] ?? null) === 'protected') {
+						$warnings[] = ['Shelf mark %s: protected, with a MusicXML file, but not marked as internal preservation copy. Please check the column "Veröffentlichung".', [$shelfmark]];
+					}
+					self::tally($distribution['status'], $values[Fields::COPY]['status'] ?? 'active');
+
+					$groupWork = $group === null ? null : ($groupWorks[$group] ?? $workOfShelfmark[$group] ?? null);
+					if ($groupWork === null) {
+						$groupWork = $this->createWork($values[Fields::WORK] ?? [], $now);
+						if ($group !== null) {
+							$groupWorks[$group] = $groupWork;
+						}
+					} elseif ($isMainOfGroup) {
+						// the main copy of the group names the work, whichever row came first
+						$this->apply($groupWork, Fields::WORK, $values[Fields::WORK] ?? [], $now, $operation, $uid, $shelfmark, $warnings);
+						$groupedCopies++;
+					} else {
+						$groupedCopies++;
+					}
+					if ($group !== null) {
+						$groupWorks[$group] ??= $groupWork;
+					}
+					$this->createVersionAndCopy($groupWork, $values, $row, $now, $operation, $uid);
+					$workOfShelfmark[$shelfmark] = $groupWork;
 					$counts['created']++;
 					continue;
 				}
@@ -235,9 +330,27 @@ class ImportService {
 				}
 				if ($version->getPreservationCopy() === true) {
 					$preservationCopies++;
+				} elseif ($musicxml && ($values[Fields::VERSION]['rights_status'] ?? $version->getRightsStatus()) === 'protected') {
+					$warnings[] = ['Shelf mark %s: protected, with a MusicXML file, but not marked as internal preservation copy. Please check the column "Veröffentlichung".', [$shelfmark]];
+				}
+				self::tally($distribution['status'], $values[Fields::COPY]['status'] ?? $copy->getStatus());
+
+				$workValues = $values[Fields::WORK] ?? [];
+				if ($group !== null) {
+					$groupWork = $groupWorks[$group] ?? $workOfShelfmark[$group] ?? null;
+					if ($groupWork !== null && $groupWork->getId() !== $work->getId()) {
+						$warnings[] = ['Shelf mark %s belongs to the work group %s, but is a separate work in the catalog. Merge the works in the app ("Merge"); the import does not move versions.', [$shelfmark, $group]];
+						$workValues = [];
+					} else {
+						$groupWorks[$group] ??= $work;
+						if (!$isMainOfGroup) {
+							// title, composer and figures of the work come from its main copy
+							$workValues = [];
+						}
+					}
 				}
 				$changedFields = 0;
-				$changedFields += $this->apply($work, Fields::WORK, $values[Fields::WORK], $now, $operation, $uid, $shelfmark, $warnings);
+				$changedFields += $this->apply($work, Fields::WORK, $workValues, $now, $operation, $uid, $shelfmark, $warnings);
 				$changedFields += $this->apply($version, Fields::VERSION, $values[Fields::VERSION], $now, $operation, $uid, $shelfmark, $warnings);
 				$copy->setSortOrder($row);
 				$changedFields += $this->apply($copy, Fields::COPY, $values[Fields::COPY], $now, $operation, $uid, $shelfmark, $warnings);
@@ -246,6 +359,9 @@ class ImportService {
 				}
 				$counts['fieldsChanged'] += $changedFields;
 				$counts[$changedFields > 0 ? 'changed' : 'unchanged']++;
+			}
+			if ($validCellsSkipped > 0) {
+				$warnings[] = ['The column "%s" was not imported (%s filled cells): which version is valid for the choir is set by the conductor in the app.', [CatalogCsv::VALID_COLUMN, $validCellsSkipped]];
 			}
 
 			if ($dryRun) {
@@ -271,27 +387,46 @@ class ImportService {
 			'operation' => $dryRun ? null : $operation,
 			'restore' => $restore,
 			'snapshot' => $snapshot,
+			'snapshotOmitted' => $snapshotOmitted,
 			...$counts,
 			'notInCsv' => array_values(array_diff(array_map('strval', array_keys($existing)), array_keys($seen))),
 			'withMusicxml' => $withMusicxml,
 			'preservationCopies' => $preservationCopies,
+			'rule1Assumed' => $rule1Assumed,
+			'workGroups' => count($groupWorks),
+			'groupedCopies' => $groupedCopies,
 			'distribution' => $distribution,
 			'warnings' => $warnings,
 		];
 	}
 
 	/**
-	 * @param array<string, array<string, string|int|bool|null>> $values
+	 * Whether the reasoning of the publication note says the original is
+	 * still to be checked ("ZU PRÜFEN" in the source catalog).
 	 */
-	private function create(array $values, int $sortOrder, int $now, string $operation, string $uid): void {
+	public static function saysToBeChecked(?string $reason): bool {
+		return $reason !== null && mb_stripos($reason, 'zu prüfen') !== false;
+	}
+
+	/**
+	 * @param array<string, string|int|bool|null> $values
+	 */
+	private function createWork(array $values, int $now): Work {
 		$work = new Work();
-		foreach ($values[Fields::WORK] as $field => $value) {
+		foreach ($values as $field => $value) {
 			$work->setValue($field, $value);
 		}
 		$work->setCreated($now);
 		$work->setModified($now);
-		$work = $this->works->insert($work);
+		return $this->works->insert($work);
+	}
 
+	/**
+	 * A version and its copy of a work, from one row.
+	 *
+	 * @param array<string, array<string, string|int|bool|null>> $values
+	 */
+	private function createVersionAndCopy(Work $work, array $values, int $sortOrder, int $now, string $operation, string $uid): void {
 		$version = new WorkVersion();
 		foreach ($values[Fields::VERSION] as $field => $value) {
 			$version->setValue($field, $value);
@@ -343,6 +478,15 @@ class ImportService {
 			$info = Fields::info($level, $field);
 			if (($info['decision'] ?? false) && $old !== null) {
 				$warnings[] = ['Shelf mark %s: "%s" is already set and is not overwritten by the import.', [$shelfmark, $info['label'] ?? $field]];
+				continue;
+			}
+			if ($field === 'rights_status' && $entity instanceof WorkVersion && $entity->getValue('confirmed_at') !== null) {
+				// confirmed by a person in the app, with reason and evidence: the file does not undo that
+				$warnings[] = ['Shelf mark %s: the rights status was confirmed in the app and is not overwritten by the import.', [$shelfmark]];
+				continue;
+			}
+			if ($field === 'work_no' && $new === null) {
+				// an empty "Werkgruppe" does not take the work number away that a merge gave the work
 				continue;
 			}
 			$entity->setValue($field, $new);
@@ -408,7 +552,7 @@ class ImportService {
 		$value = match ($info['type']) {
 			Fields::TYPE_NUMBER => preg_match('/^-?\d+$/', trim($text)) === 1 ? (int)trim($text) : $text,
 			Fields::TYPE_BOOLEAN => filter_var(trim($text), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? $text,
-			Fields::TYPE_CHOICE => $header === 'Rechtestatus' ? (CatalogCsv::LEGACY_RIGHTS_STATUS[trim($text)] ?? $text) : trim($text),
+			Fields::TYPE_CHOICE => CatalogCsv::legacyValue($header, $text),
 			Fields::TYPE_DATE => trim($text),
 			default => $text,
 		};

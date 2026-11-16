@@ -28,8 +28,19 @@ final class LifeDatesTest extends TestCase {
 		yield 'full dates' => ["12.03.1850\u{2013}05.11.1910", '1850-03-12', 'exact', '1910-11-05', 'exact'];
 		yield 'ISO dates' => ['1850-03-12 - 1910-11-05', '1850-03-12', 'exact', '1910-11-05', 'exact'];
 		yield 'impossible date counts as year' => ['31.02.1850-1910', '1850', 'year', '1910', 'year'];
-		yield 'born only' => ['geb. 1928', '1928', 'year', null, 'unknown'];
+		// A birth marker without a death means living (catalogs write the
+		// death as soon as it is known); before the change it was "unknown".
+		yield 'born only' => ['geb. 1928', '1928', 'year', null, 'living'];
+		yield 'born with asterisk, catalog style' => ['(* 1944)', '1944', 'year', null, 'living'];
+		yield 'born with asterisk and GND' => ['* 1944, GND 134490509', '1944', 'year', null, 'living'];
+		yield 'born with asterisk, uncertain year' => ['* 1926?', '1926', 'circa', null, 'living'];
+		yield 'born with asterisk and open range' => ["* 1950 \u{2013}", '1950', 'year', null, 'living'];
+		yield 'born with asterisk and death' => ["* 1850 \u{2013} 1910", '1850', 'year', '1910', 'year'];
+		yield 'born with asterisk and cross' => ["* 1850, \u{2020} 1910", '1850', 'year', '1910', 'year'];
+		yield 'born too long ago to be living' => ['geb. um 1600', '1600', 'circa', null, 'unknown'];
 		yield 'born, living' => ['* 1944, lebend', '1944', 'year', null, 'living'];
+		yield 'range with GND' => ["1819\u{2013}1885, GND 134446216", '1819', 'year', '1885', 'year'];
+		yield 'circa alone is ambiguous' => ['um 1600', null, 'unknown', null, 'unknown'];
 		yield 'living without year' => ['lebt', null, 'unknown', null, 'living'];
 		yield 'died with cross' => ["\u{2020} 1955", null, 'unknown', '1955', 'year'];
 		yield 'died with "gest."' => ['gest. 1955', null, 'unknown', '1955', 'year'];

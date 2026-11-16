@@ -253,7 +253,7 @@ class ApiController extends Controller {
 	public function exportStore(): JSONResponse {
 		return $this->run(function (string $uid) {
 			$this->roles->requireRole($uid, [Roles::LIBRARIAN]);
-			return ['path' => $this->export->store('export', $uid)];
+			return ['path' => $this->export->store('export', $uid), 'omitted' => $this->export->omittedPreservationCopies()];
 		});
 	}
 

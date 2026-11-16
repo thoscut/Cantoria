@@ -15,6 +15,7 @@ use OCA\Cantoria\Db\Event;
 use OCA\Cantoria\Db\EventItem;
 use OCA\Cantoria\Db\EventItemMapper;
 use OCA\Cantoria\Db\EventMapper;
+use OCA\Cantoria\Db\WorkMapper;
 use OCA\Cantoria\Db\WorkVersion;
 use OCA\Cantoria\Db\WorkVersionMapper;
 use OCA\Cantoria\Service\AuditLog;
@@ -71,9 +72,10 @@ final class PerformanceReimportTest extends TestCase {
 		$versions = $this->createStub(WorkVersionMapper::class);
 		$versions->method('findAllById')->willReturn([5 => $version]);
 		$service = new PerformanceImportService($this->createStub(IDBConnection::class), $this->createStub(XlsxReader::class), $events, $items,
-			$copies, $versions, $this->createStub(ExportService::class), $this->createStub(AuditLog::class), $this->createStub(ITimeFactory::class));
+			$copies, $versions, $this->createStub(WorkMapper::class), $this->createStub(ExportService::class),
+			$this->createStub(AuditLog::class), $this->createStub(ITimeFactory::class));
 		$csv = "Datum;Anlass;Titel laut Programm;Signatur\r\n2026-05-01;Frühjahrskonzert;Abendlied;\r\n2026-05-01;Frühjahrskonzert;Ave verum;3-4|3-5\r\n";
-		return $service->import($csv, 'auffuehrungen.csv', 'lena', true, null);
+		return $service->import($csv, 'auffuehrungen.csv', 'lena', true);
 	}
 
 	private static function line(int $position, string $title, string $assignment, ?int $copyId): EventItem {

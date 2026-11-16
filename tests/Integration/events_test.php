@@ -56,18 +56,18 @@ $db->beginTransaction();
 try {
 	// Dry run first: nothing stays
 	$programme = $userFolder->get($programmeCsv);
-	$dry = $import->import($programme->getContent(), $programme->getName(), $uid, true, null);
+	$dry = $import->import($programme->getContent(), $programme->getName(), $uid, true);
 	$check('dry run reads the programme lines', $dry['items'] > 0 && $dry['events'] > 0, json_encode(['events' => $dry['events'], 'items' => $dry['items'], 'ownChoir' => $dry['ownChoir']]));
 	$check('dry run leaves no events', $events->list(null) === []);
 
-	$report = $import->import($programme->getContent(), $programme->getName(), $uid, false, null);
+	$report = $import->import($programme->getContent(), $programme->getName(), $uid, false);
 	$snapshots[] = $report['snapshot'];
 	$check('programme imported', $report['events'] === $dry['events'] && $report['certain'] > 0,
 		json_encode(['certain' => $report['certain'], 'ambiguous' => $report['ambiguous'], 'counted' => $report['counted'], 'notInCatalog' => $report['notInCatalog']]));
 	$check('own choir detected', $report['ownChoir'] !== null, (string)$report['ownChoir']);
 
 	$lists = $userFolder->get($songListCsv);
-	$listReport = $import->import($lists->getContent(), $lists->getName(), $uid, false, null);
+	$listReport = $import->import($lists->getContent(), $lists->getName(), $uid, false);
 	$snapshots[] = $listReport['snapshot'];
 	$check('song lists imported', $listReport['songLists'] > 0, (string)$listReport['songLists']);
 

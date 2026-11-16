@@ -859,6 +859,8 @@ export interface RepertoireThresholds {
 	/** years */
 	current: number
 	dormant: number
+	/** the year the classes are measured from; 0: the current year */
+	referenceYear: number
 }
 
 /** One piece of the comparison with the choir system */
@@ -901,7 +903,14 @@ export interface PerformanceImportReport {
 	counted: number
 	/** lines that keep the assignment made by hand after the last import */
 	keptAssignments: number
+	/** lines that would count but repeat a concert with a day date (annual or monthly lists) */
+	deduplicated: number
+	/** the first counting participation (older field) */
 	ownChoir: string | null
+	/** participations that count, lower case; the most frequent one when none was given */
+	countingParticipations: string[]
+	/** words in the state that exclude a line, lower case */
+	excludedStates: string[]
 	unknownShelfmarks: string[]
 	sheets: string[]
 }
@@ -913,6 +922,8 @@ export interface ImportReport {
 	operation: string | null
 	restore: boolean
 	snapshot: string | null
+	/** internal preservation copies the snapshot in the archive folder leaves out */
+	snapshotOmitted: number
 	rows: number
 	created: number
 	changed: number
@@ -921,10 +932,18 @@ export interface ImportReport {
 	notInCsv: string[]
 	withMusicxml: number
 	preservationCopies: number
+	/** preservation copies whose original starts as a working assumption of the board ("ZU PRÜFEN") */
+	rule1Assumed: number
+	/** work groups (column "Werkgruppe") met in the file */
+	workGroups: number
+	/** copies that joined the work of their group instead of forming a work of their own */
+	groupedCopies: number
 	distribution: {
 		rightsStatus: Record<string, number>
 		repertoire: Record<string, number>
 		publication: Record<string, number>
+		/** status of the copies (active, retired, missing, lent) */
+		status: Record<string, number>
 	}
 	warnings: string[]
 }
@@ -1339,6 +1358,25 @@ export interface PersonImportReport {
 	warnings: string[]
 }
 
+/** POST /api/persons/derive */
+export interface ContributorDerivationReport {
+	dryRun: boolean
+	operation: string | null
+	versions: number
+	segments: number
+	personsCreated: number
+	personsExisting: number
+	personsUpdated: number
+	contributionsCreated: number
+	rolesSet: number
+	traditionalMelodies: number
+	uncertain: number
+	differs: { name: string, person: string, catalog: string, versions: string[] }[]
+	unassigned: { shelfmark: string, text: string }[]
+	roles: Record<string, number>
+	warnings: string[]
+}
+
 export interface MergeCandidateGroup {
 	title: string
 	works: {
@@ -1553,7 +1591,7 @@ export interface Statistics {
 		/** current, dormant, earlier, none => works */
 		classes: Record<string, number>
 		sources: { performances: number, import: number }
-		thresholds: { current: number, dormant: number }
+		thresholds: { current: number, dormant: number, referenceYear: number }
 		longNotSung: StatisticsLongRow[]
 		longNotSungTotal: number
 	}

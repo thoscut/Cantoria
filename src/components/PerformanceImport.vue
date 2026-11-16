@@ -5,9 +5,11 @@
 <script setup lang="ts">
 /**
  * Import of documented performances and song lists from a spreadsheet
- * (.xlsx or .csv): always a dry run first with a report, including the own
- * choir as detected in the file (can be corrected), then the import. A new
- * import replaces the previously imported events; planned ones stay.
+ * (.xlsx or .csv): always a dry run first with a report, including the
+ * counting rule as applied (the participations that count, detected in the
+ * file when none is given, and the states that do not count; both can be
+ * corrected), then the import. A new import replaces the previously imported
+ * events; planned ones stay.
  */
 import type { PerformanceImportReport } from '../types.ts'
 
@@ -31,7 +33,13 @@ const emit = defineEmits<{
 
 const file = ref<{ id: number, name: string } | null>(null)
 const report = ref<PerformanceImportReport | null>(null)
-const ownChoir = ref('')
+/** participations that count, separated by "|" or ","; empty: the most frequent one */
+const countingParticipations = ref('')
+/**
+ * Words in the state that exclude a line; the server's default is shown
+ * after the first dry run. Empty: the default.
+ */
+const excludedStates = ref('')
 const busy = ref(false)
 /** the running request is a dry run */
 const dryRunning = ref(false)
@@ -65,8 +73,17 @@ async function choose(): Promise<void> {
 	}
 	file.value = { id: node.fileid, name: node.displayname || node.basename }
 	report.value = null
-	ownChoir.value = ''
+	countingParticipations.value = ''
 	await run(true)
+}
+
+/**
+ * A list as typed: separated by "|" or ",", trimmed, without empty values.
+ *
+ * @param typed - the field's text
+ */
+function splitList(typed: string): string[] {
+	return typed.split(/[|,]/).map((value) => value.trim()).filter((value) => value !== '')
 }
 
 /**
@@ -81,9 +98,16 @@ async function run(dryRun: boolean): Promise<void> {
 	emit('busy', true)
 	error.value = ''
 	try {
-		report.value = await importPerformances(file.value.id, dryRun, ownChoir.value.trim() === '' ? null : ownChoir.value.trim())
-		if (dryRun && ownChoir.value === '' && report.value.ownChoir) {
-			ownChoir.value = report.value.ownChoir
+		const excluded = splitList(excludedStates.value)
+		report.value = await importPerformances(file.value.id, dryRun, splitList(countingParticipations.value), excluded.length === 0 ? null : excluded)
+		if (dryRun) {
+			// The rule as applied, so that it can be corrected and checked again
+			if (countingParticipations.value.trim() === '') {
+				countingParticipations.value = report.value.countingParticipations.join(' | ')
+			}
+			if (excludedStates.value.trim() === '') {
+				excludedStates.value = report.value.excludedStates.join(', ')
+			}
 		}
 		if (!dryRun) {
 			showSuccess(t('cantoria', 'The performances have been imported.'))
@@ -103,7 +127,7 @@ async function run(dryRun: boolean): Promise<void> {
 function reset(): void {
 	file.value = null
 	report.value = null
-	ownChoir.value = ''
+	countingParticipations.value = ''
 	error.value = ''
 }
 </script>
@@ -152,9 +176,12 @@ function reset(): void {
 					: t('cantoria', 'Import completed') }}
 			</NcNoteCard>
 			<form v-if="report.dryRun" class="performance-import__choir" @submit.prevent="run(true)">
-				<NcTextField v-model="ownChoir"
-					:label="t('cantoria', 'Own choir in the file')"
-					:helper-text="t('cantoria', 'Only lines of this choir count as performances. Correct the name if it was detected wrongly and check again.')" />
+				<NcTextField v-model="countingParticipations"
+					:label="t('cantoria', 'Participations that count')"
+					:helper-text="t('cantoria', 'Only lines with one of these participations (or none) count as performances, for example the own choir and joint concerts; separate several with \'|\'. Empty: the most frequent one in the file.')" />
+				<NcTextField v-model="excludedStates"
+					:label="t('cantoria', 'States that do not count')"
+					:helper-text="t('cantoria', 'A line whose state contains one of these words is no documented performance (drafts, reserve pieces, uncertain lines, mere lists); separate several with \',\'.')" />
 				<NcButton type="submit" :disabled="busy">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiRefresh" />
@@ -177,6 +204,12 @@ function reset(): void {
 				<dd>{{ report.notInCatalog }}</dd>
 				<dt>{{ t('cantoria', 'Counted as performances') }}</dt>
 				<dd>{{ report.counted }}</dd>
+				<dt>{{ t('cantoria', 'Not counted twice (annual or monthly lists)') }}</dt>
+				<dd>{{ report.deduplicated }}</dd>
+				<dt>{{ t('cantoria', 'Participations that count') }}</dt>
+				<dd>{{ report.countingParticipations.join(' | ') || t('cantoria', 'all') }}</dd>
+				<dt>{{ t('cantoria', 'States that do not count') }}</dt>
+				<dd>{{ report.excludedStates.join(', ') || '–' }}</dd>
 				<dt>{{ t('cantoria', 'Sheets read') }}</dt>
 				<dd>{{ report.sheets.join(', ') || '–' }}</dd>
 			</dl>
@@ -217,7 +250,7 @@ function reset(): void {
 	gap: calc(2 * var(--default-grid-baseline));
 }
 
-.performance-import__choir > :first-child {
+.performance-import__choir > :not(button) {
 	flex: 1 1 18em;
 }
 

@@ -804,6 +804,10 @@ OC.L10N.register(
         "Unchanged copies": "Unveränderte Exemplare",
         "Changed fields in total": "Geänderte Felder insgesamt",
         "Internal preservation copies": "Interne Erhaltungskopien",
+        "Of them with the original as working assumption (\"ZU PRÜFEN\")": "Davon mit dem Original als Arbeitsannahme („ZU PRÜFEN“)",
+        "Work groups in the file": "Werkgruppen in der Datei",
+        "Copies that joined the work of their group": "Exemplare, die zum Werk ihrer Gruppe kamen",
+        "Status of the copies": "Status der Exemplare",
         "Publication": "Veröffentlichung",
         "Dry run – nothing has been changed yet": "Probelauf – es wurde noch nichts geändert",
         "Please check the report. The catalog only changes when you click \"Import now\".": "Bitte prüfen Sie den Bericht. Das Werkverzeichnis ändert sich erst, wenn Sie auf „Jetzt importieren“ klicken.",
@@ -1067,11 +1071,15 @@ OC.L10N.register(
         "Choose the list of performances (.xlsx or .csv)": "Liste der Aufführungen wählen (.xlsx oder .csv)",
         "The performances have been imported.": "Die Aufführungen wurden importiert.",
         "Import report": "Importbericht",
-        "Own choir in the file": "Eigener Chor in der Datei",
-        "Only lines of this choir count as performances. Correct the name if it was detected wrongly and check again.": "Nur Zeilen dieses Chors zählen als Aufführungen. Berichtigen Sie den Namen, falls er falsch erkannt wurde, und prüfen Sie erneut.",
+        "Participations that count": "Zählende Mitwirkungen",
+        "Only lines with one of these participations (or none) count as performances, for example the own choir and joint concerts; separate several with '|'. Empty: the most frequent one in the file.": "Nur Zeilen mit einer dieser Mitwirkungen (oder ohne) zählen als Aufführung, z. B. eigener Chor und gemeinsame Konzerte; mehrere mit „|“ trennen. Leer: die häufigste in der Datei.",
+        "States that do not count": "Status, die nicht zählen",
+        "A line whose state contains one of these words is no documented performance (drafts, reserve pieces, uncertain lines, mere lists); separate several with ','.": "Eine Zeile, deren Status eines dieser Wörter enthält, ist keine belegte Aufführung (Entwürfe, Reservestücke, fragliche Zeilen, bloße Listen); mehrere mit „,“ trennen.",
         "Assigned to a copy": "Einem Exemplar zugeordnet",
         "Shelf mark unclear": "Signatur unklar",
         "Counted as performances": "Als Aufführung gezählt",
+        "Not counted twice (annual or monthly lists)": "Nicht doppelt gezählt (Jahres- oder Monatslisten)",
+        "all": "alle",
         "Sheets read": "Gelesene Tabellenblätter",
         "A new import replaces the previously imported concerts and song lists. Planned events are never touched.": "Ein neuer Import ersetzt die zuvor importierten Konzerte und Notenlisten. Geplante Termine bleiben unberührt.",
         "Please enter a name.": "Bitte geben Sie einen Namen ein.",
@@ -1080,6 +1088,7 @@ OC.L10N.register(
         "Dates as YYYY-MM-DD or YYYY (negative before Christ). Changing name, GND, Wikidata, life dates or identification removes the mark \"checked\".": "Daten als JJJJ-MM-TT oder JJJJ (negativ vor Christus). Eine Änderung an Name, GND, Wikidata, Lebensdaten oder Zuordnung nimmt die Markierung „geprüft“ zurück.",
         "Choose the list of persons (CSV)": "Personenliste wählen (CSV)",
         "The persons have been imported.": "Die Personen sind importiert.",
+        "The contributors have been derived.": "Die Beteiligten sind abgeleitet.",
         "Choose CSV file …": "CSV-Datei wählen …",
         "Rows": "Zeilen",
         "New persons": "Neue Personen",
@@ -1094,6 +1103,25 @@ OC.L10N.register(
         "Name": "Name",
         "In the list": "Laut Liste",
         "By the life dates": "Nach den Lebensdaten",
+        "Derive contributors from the catalog": "Beteiligte aus dem Werkverzeichnis ableiten",
+        "Reads the texts \"Komponist\" and \"Bearbeiter/Text\" of the catalog: \"Text:\", \"Satz:\", \"Bearbeitung:\" or \"dt. Text:\" name the role, the bracket the life dates.": "Liest die Texte „Komponist“ und „Bearbeiter/Text“ des Werkverzeichnisses: „Text:“, „Satz:“, „Bearbeitung:“ oder „dt. Text:“ nennen die Rolle, die Klammer die Lebensdaten.",
+        "A name without a phrase in \"Komponist\" is the composer; \"Volkslied\" marks the melody as traditional.": "Ein Name ohne Angabe in „Komponist“ ist die Komposition; „Volkslied“ kennzeichnet die Weise als traditionell.",
+        "A contribution with the role \"unspecified\" gets its role; checked persons are never changed. A dry run first shows what would be derived.": "Eine Beteiligung mit der Rolle „nicht angegeben“ bekommt ihre Rolle; geprüfte Personen bleiben unverändert. Ein Probelauf zeigt zuerst, was abgeleitet würde.",
+        "Check (dry run)": "Prüfen (Probelauf)",
+        "Derive now": "Jetzt ableiten",
+        "Checking the catalog (dry run) …": "Werkverzeichnis wird geprüft (Probelauf) …",
+        "Deriving …": "Wird abgeleitet …",
+        "Derivation report": "Bericht der Ableitung",
+        "Derivation completed": "Ableitung abgeschlossen",
+        "Versions with texts": "Fassungen mit Texten",
+        "Segments": "Abschnitte",
+        "Roles set on existing contributions": "Rollen an vorhandenen Beteiligungen gesetzt",
+        "Traditional melodies": "Traditionelle Weisen",
+        "Uncertain attributions": "Unsichere Zuordnungen",
+        "Roles derived": "Abgeleitete Rollen",
+        "Derived persons are at most \"probable\"; please check them in the person register. Segments without a role phrase are listed below and need to be assigned by hand.": "Abgeleitete Personen sind höchstens „wahrscheinlich zugeordnet“. Bitte prüfen Sie sie im Personenregister. Abschnitte ohne Rollenangabe stehen unten und sind von Hand zuzuordnen.",
+        "In the register": "Im Register",
+        "In the catalog": "Im Werkverzeichnis",
         "Your view has been saved.": "Ihre Ansicht wurde gespeichert.",
         "Save view": "Ansicht speichern",
         "Hide what you do not need. This only changes what you see: your permissions stay the same, and hidden areas still open through links and notifications.": "Blenden Sie aus, was Sie nicht brauchen. Das ändert nur, was Sie sehen: Ihre Rechte bleiben gleich, und ausgeblendete Bereiche öffnen sich weiterhin über Links und Benachrichtigungen.",
@@ -1652,6 +1680,7 @@ OC.L10N.register(
         "Performances are performance days. The composer is the one recorded for the work.": "Aufführungen sind Aufführungstage. Maßgeblich ist die beim Werk eingetragene Komposition.",
         "Repertoire classes of the works": "Repertoire-Klassen der Werke",
         "Current: sung within the last {current} years; dormant: within the last {dormant} years; earlier: before that. {fromPerformances} works by documented performances, {fromImport} by the imported catalog.": "Aktuell: in den letzten {current} Jahren gesungen; ruhend: in den letzten {dormant} Jahren; früher: davor. {fromPerformances} Werke nach belegten Aufführungen, {fromImport} nach dem importierten Werkverzeichnis.",
+        "The years are counted back from the fixed reference year {year}.": "Die Jahre werden vom festen Stichjahr {year} zurückgezählt.",
         "Not sung for a long time": "Lange nicht gesungen",
         "No such works.": "Keine solchen Werke.",
         "Works sung before, but not within the current repertoire, that can be sung from the archive; the most often sung first.": "Werke, die schon gesungen wurden, aber nicht zum aktuellen Repertoire gehören und aus dem Archiv gesungen werden können; die am häufigsten gesungenen zuerst.",
@@ -1773,11 +1802,13 @@ OC.L10N.register(
         "Save archive folder": "Archivordner speichern",
         "Choose groups": "Gruppen wählen",
         "The groups could not be searched: {error}": "Die Gruppen konnten nicht gesucht werden: {error}",
-        "Please enter whole numbers of years; \"dormant\" must be at least as long as \"current\".": "Bitte geben Sie ganze Jahreszahlen ein; „ruhend“ muss mindestens so lang sein wie „aktuell“.",
+        "Please enter whole numbers of years; \"dormant\" must be at least as long as \"current\". The reference year is a four-digit year or empty.": "Bitte geben Sie ganze Jahreszahlen ein; „ruhend“ muss mindestens so lang sein wie „aktuell“. Das Stichjahr ist eine vierstellige Jahreszahl oder leer.",
         "The repertoire thresholds have been saved.": "Die Repertoire-Grenzen wurden gespeichert.",
         "A work belongs to the current repertoire if it was sung within the last years given here, and is dormant up to the second limit. Earlier performances make it \"earlier\". Documented performances come from concerts confirmed as sung and from the imported history.": "Ein Werk gehört zum aktuellen Repertoire, wenn es in den hier genannten letzten Jahren gesungen wurde, und ist bis zur zweiten Grenze ruhend. Ältere Aufführungen machen es zu „früher“. Belegte Aufführungen stammen aus als gesungen bestätigten Konzerten und aus der importierten Geschichte.",
+        "The years are counted back from the reference year: from the current year when it is empty (the limits move on every New Year), or from a fixed year. Example: reference year 2026 and 3 years keep \"current\" at \"sung in 2023 or later\" until you change it.": "Die Jahre zählen vom Stichjahr zurück: vom laufenden Jahr, wenn leer (die Grenzen wandern jedes Jahr), sonst vom festen Jahr. Beispiel: Stichjahr 2026 und 3 Jahre: „aktuell“ bleibt „ab 2023 gesungen“.",
         "Current: sung within (years)": "Aktuell: gesungen innerhalb von (Jahren)",
         "Dormant: sung within (years)": "Ruhend: gesungen innerhalb von (Jahren)",
+        "Reference year (empty: today)": "Stichjahr (leer: heute)",
         "Save thresholds": "Grenzen speichern",
         "Maintains works, versions and rights; imports the catalog and runs the file sync.": "Pflegt Werke, Fassungen und Rechte; importiert das Werkverzeichnis und startet den Dateiabgleich.",
         "Maintains the status and counts of copies.": "Pflegt Status und Zählung der Exemplare.",
@@ -2460,12 +2491,17 @@ OC.L10N.register(
         "Catalog columns are missing: %s": "Spalten des Werkverzeichnisses fehlen: %s",
         "Row %s is the example row of the template and was not imported.": "Zeile %s ist die Beispielzeile der Vorlage und wurde nicht importiert.",
         "Row %s, column \"%s\": the value \"%s\" is not valid there and was not imported.": "Zeile %s, Spalte „%s“: Der Wert „%s“ ist dort nicht zulässig und wurde nicht übernommen.",
+        "Row %s: the rights status \"%s\" is no status; the version was imported as \"protected\". Please record the license in the app.": "Zeile %s: Der Rechtestatus „%s“ ist kein Status; die Fassung wurde als „geschützt“ übernommen. Bitte erfassen Sie die Lizenz in der App.",
         "Row %s: shelf mark \"%s\" is a date, not binder and number, and was skipped. Please format the column \"Signatur\" as text and type the shelf mark again.": "Zeile %s: Signatur „%s“ ist ein Datum, nicht Mappe und Nummer, und wurde übersprungen. Bitte formatieren Sie die Spalte „Signatur“ als Text und geben Sie die Signatur noch einmal ein.",
         "Row %s: shelf mark \"%s\" is invalid and was skipped. A shelf mark is binder and number, for example 12-3.": "Zeile %s: Signatur „%s“ ist ungültig und wurde übersprungen. Eine Signatur besteht aus Mappe und Nummer, zum Beispiel 12-3.",
         "Row %s: shelf mark \"%s\" was normalized to %s.": "Zeile %s: Signatur „%s“ wurde zu %s vereinheitlicht.",
         "Row %s: shelf mark %s occurs twice and was skipped.": "Zeile %s: Signatur %s kommt doppelt vor und wurde übersprungen.",
+        "Shelf mark %s: protected, with a MusicXML file, but not marked as internal preservation copy. Please check the column \"Veröffentlichung\".": "Signatur %s: geschützt, mit MusicXML-Datei, aber nicht als interne Erhaltungskopie gekennzeichnet. Bitte prüfen Sie die Spalte „Veröffentlichung“.",
         "Shelf mark %s: version or work missing in the database, skipped.": "Signatur %s: Fassung oder Werk fehlt in der Datenbank, übersprungen.",
+        "Shelf mark %s belongs to the work group %s, but is a separate work in the catalog. Merge the works in the app (\"Merge\"); the import does not move versions.": "Signatur %s gehört zur Werkgruppe %s, ist im Werkverzeichnis aber ein eigenes Werk. Führen Sie die Werke in der App zusammen („Zusammenführen“); der Import verschiebt keine Fassungen.",
+        "The column \"%s\" was not imported (%s filled cells): which version is valid for the choir is set by the conductor in the app.": "Die Spalte „%s“ wurde nicht übernommen (%s gefüllte Zellen): Welche Fassung für den Chor gilt, legt die Chorleitung in der App fest.",
         "Shelf mark %s: \"%s\" is already set and is not overwritten by the import.": "Signatur %s: „%s“ ist bereits gesetzt und wird vom Import nicht überschrieben.",
+        "Shelf mark %s: the rights status was confirmed in the app and is not overwritten by the import.": "Signatur %s: Der Rechtestatus wurde in der App bestätigt und wird vom Import nicht überschrieben.",
         "Nothing to record.": "Es gibt nichts einzutragen.",
         "Nothing was recorded. Please correct these rows and record again:": "Nichts wurde erfasst. Bitte korrigieren Sie diese Zeilen und erfassen Sie erneut:",
         "Please choose the voice of the part.": "Bitte wählen Sie die Stimme aus.",
@@ -2903,6 +2939,10 @@ OC.L10N.register(
             "manifest.csv: SHA-256-Prüfsumme, Größe und Pfad von %n Archivdatei ({size})",
             "manifest.csv: SHA-256-Prüfsumme, Größe und Pfad von %n Archivdateien (zusammen {size})"
         ],
+        "_The file leaves out %n internal preservation copy; it is not the whole catalog. The complete catalog is in the backup folder._::_The file leaves out %n internal preservation copies; it is not the whole catalog. The complete catalog is in the backup folder._": [
+            "Die Datei lässt %n interne Erhaltungskopie aus; sie ist nicht das ganze Werkverzeichnis. Das vollständige liegt im Sicherungsordner.",
+            "Die Datei lässt %n interne Erhaltungskopien aus; sie ist nicht das ganze Werkverzeichnis. Das vollständige liegt im Sicherungsordner."
+        ],
         "_Show %n more entry_::_Show %n more entries_": [
             "%n weiteren Eintrag anzeigen",
             "%n weitere Einträge anzeigen"
@@ -3043,6 +3083,10 @@ OC.L10N.register(
             "%n Ausgabe",
             "%n Ausgaben"
         ],
+        "_The snapshot in the archive folder leaves out %n internal preservation copy; the complete state is in the backup folder._::_The snapshot in the archive folder leaves out %n internal preservation copies; the complete state is in the backup folder._": [
+            "Der Schnappschuss im Archivordner lässt %n interne Erhaltungskopie aus; der vollständige Bestand liegt im Sicherungsordner.",
+            "Der Schnappschuss im Archivordner lässt %n interne Erhaltungskopien aus; der vollständige Bestand liegt im Sicherungsordner."
+        ],
         "_%n warning_::_%n warnings_": [
             "%n Warnung",
             "%n Warnungen"
@@ -3158,6 +3202,18 @@ OC.L10N.register(
         "_Protection end differs for %n person_::_Protection end differs for %n persons_": [
             "Schutzende weicht bei %n Person ab",
             "Schutzende weicht bei %n Personen ab"
+        ],
+        "_Life dates differ for %n person_::_Life dates differ for %n persons_": [
+            "Lebensdaten weichen bei %n Person ab",
+            "Lebensdaten weichen bei %n Personen ab"
+        ],
+        "_%n segment without a role phrase_::_%n segments without a role phrase_": [
+            "%n Abschnitt ohne Rollenangabe",
+            "%n Abschnitte ohne Rollenangabe"
+        ],
+        "_%n note_::_%n notes_": [
+            "%n Hinweis",
+            "%n Hinweise"
         ],
         "_%n person_::_%n persons_": [
             "%n Person",
