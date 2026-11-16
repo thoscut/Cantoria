@@ -110,10 +110,17 @@ final class CatalogCsv {
 
 	/**
 	 * Former headers that the import still reads as the current one: the
-	 * column of the singers' portal had the name of one provider.
+	 * column of the singers' portal had the name of one provider, and the
+	 * extended format of version 0.17 and earlier wrote the fields of the
+	 * columns since November 2026 as `level.field`.
 	 */
 	public const FORMER_HEADERS = [
 		'Auf Singste seit' => 'Im Chorportal seit',
+		'work.work_no' => 'Werkgruppe',
+		'copy.status' => 'Status',
+		'version.kind' => 'Fassung',
+		'version.relation' => 'Bezug',
+		'version.valid_since' => self::VALID_COLUMN,
 	];
 
 	/** Legacy values of the rights status column => choice key */

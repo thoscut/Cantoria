@@ -371,6 +371,25 @@ final class ImportServiceTest extends TestCase {
 		}
 	}
 
+	/**
+	 * An extended export of version 0.17 named status, kind and relation
+	 * `copy.status`, `version.kind` and `version.relation`; a backup like that
+	 * is still read, with the stored values as well as the German ones.
+	 */
+	public function testTheExtendedNamesOfTheNewColumnsAreStillRead(): void {
+		$report = $this->service->import(self::csv(['Signatur', 'copy.status', 'version.kind', 'version.relation'],
+			['6-8', 'missing', 'manuscript_copy', 'Exemplar von 1-23'],
+			['6-9', 'vermisst', 'Abschrift', ''],
+		), 'backup.csv', self::UID, true);
+
+		self::assertSame([], array_filter(self::warnings($report), fn (string $w): bool => str_starts_with($w, 'Unknown columns')));
+		[$first, $second] = $this->insertedOf(Copy::class);
+		self::assertSame(['missing', 'missing'], [$first->getStatus(), $second->getStatus()]);
+		[$v1, $v2] = $this->insertedOf(WorkVersion::class);
+		self::assertSame(['manuscript_copy', 'manuscript_copy'], [$v1->getValue('kind'), $v2->getValue('kind')]);
+		self::assertSame('Exemplar von 1-23', $v1->getValue('relation'));
+	}
+
 	public function testEmptyDecisionFieldsAreFilled(): void {
 		[, $version] = $this->givenEntry('5-1', [], ['rights_confirmed' => null]);
 		$report = $this->service->import(self::csv(['Signatur', 'Rechte bestätigt'], ['5-1', '2025-03-01 Notenwart']), 'catalog.csv', self::UID, false);

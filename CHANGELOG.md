@@ -77,7 +77,8 @@ All notable changes to this app are documented in this file. The format follows
     of one work, named by the row of the main shelf mark; status and kind of
     version with their German values; the valid version is written by the
     export and read only into an empty catalog, because the conductor sets
-    it in the app.
+    it in the app. Backups in the extended format of 0.17, which name these
+    fields `copy.status`, `version.kind` and so on, are still read.
   - A rights status confirmed in the app is not overwritten by an import;
     `lizenziert` is read as protected, with a note to record the license.
   - A preservation copy whose reasoning says "ZU PRÜFEN" starts with the

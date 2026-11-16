@@ -99,7 +99,7 @@ $roundTrip = function (string $name, string $content) use ($check): array {
 $shelfmarks = [];
 if (($content = $read('catalog.csv')) !== null) {
 	$csv = $roundTrip('catalog.csv', $content);
-	$check('catalog.csv: the 31 legacy columns in their order', $csv['header'] === array_keys(CatalogCsv::LEGACY_COLUMNS),
+	$check('catalog.csv: the 36 legacy columns in their order', $csv['header'] === array_keys(CatalogCsv::LEGACY_COLUMNS),
 		count($csv['header']) . ' columns');
 	$bad = [];
 	$rights = [];
@@ -140,7 +140,7 @@ if (($content = $read('catalog.csv')) !== null) {
 if (($content = $read('catalog-supplement.csv')) !== null) {
 	$csv = $roundTrip('catalog-supplement.csv', $content);
 	$columns = CatalogCsv::columns(true);
-	$unknown = array_values(array_filter($csv['header'], fn (string $h): bool => !isset($columns[$h])));
+	$unknown = array_values(array_filter($csv['header'], fn (string $h): bool => !isset($columns[CatalogCsv::currentHeader($h)])));
 	$check('catalog-supplement.csv: all columns known to the import', $unknown === [], implode(', ', $unknown));
 	$bad = [];
 	$statuses = [];
@@ -251,7 +251,7 @@ if (($content = $read('performances.csv')) !== null) {
 		$events[$r['Datum'] . "\0" . $r['Anlass'] . "\0" . $r['Ort']] = true;
 		$kind = $classify($r['Signatur'], $r['Zuordnung']);
 		$kinds[$kind] = ($kinds[$kind] ?? 0) + 1;
-		$counted += $kind === 'certain' && PerformanceImportService::countsByRule($r['Mitwirkung'], $r['Stand'], $own) ? 1 : 0;
+		$counted += $kind === 'certain' && PerformanceImportService::countsByRule($r['Mitwirkung'], $r['Stand'], $own === null ? [] : [$own]) ? 1 : 0;
 	}
 	ksort($kinds);
 	$check('performances.csv: own choir detected', $own === 'Demochor', (string)$own);

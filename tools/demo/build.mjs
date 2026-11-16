@@ -53,10 +53,11 @@ function phpConstant(source, name) {
 	return match[1]
 }
 
+const VALID_COLUMN = /const VALID_COLUMN = '([^']+)';/.exec(catalogCsvPhp)?.[1]
 /** Legacy catalog columns in their order: [header, level, field] */
 const LEGACY_COLUMNS = [...phpConstant(catalogCsvPhp, 'LEGACY_COLUMNS')
-	.matchAll(/'([^']+)' => \[Fields::(WORK|VERSION|COPY), '([a-z_]+)'\]/g)]
-	.map(([, header, level, field]) => [header, level.toLowerCase(), field])
+	.matchAll(/(?:'([^']+)'|self::VALID_COLUMN) => \[Fields::(WORK|VERSION|COPY), '([a-z_]+)'\]/g)]
+	.map(([, header, level, field]) => [header ?? VALID_COLUMN, level.toLowerCase(), field])
 const LEGACY_RIGHTS_STATUS = [...phpConstant(catalogCsvPhp, 'LEGACY_RIGHTS_STATUS').matchAll(/'([^']+)' => '([a-z_]+)'/g)]
 	.map(([, legacy]) => legacy)
 const choiceKeys = (name) => [...phpConstant(fieldsPhp, name).matchAll(/'([a-z_0-9]+)' => '/g)].map(([, key]) => key)
@@ -66,8 +67,8 @@ const CHOICES = {
 	'version.kind': choiceKeys('VERSION_KIND'),
 	'version.rule1_status': choiceKeys('RULE1_STATUS'),
 }
-if (LEGACY_COLUMNS.length !== 31) {
-	fail(`expected 31 legacy columns in CatalogCsv.php, found ${LEGACY_COLUMNS.length}`)
+if (LEGACY_COLUMNS.length !== 36 || VALID_COLUMN === undefined) {
+	fail(`expected 36 legacy columns in CatalogCsv.php, found ${LEGACY_COLUMNS.length}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -116,9 +117,14 @@ function describeCopy(copy) {
 	}
 }
 
-/** The 31 legacy cells of a copy */
+/** The 36 legacy cells of a copy; the columns since November 2026 empty (no work groups, database defaults, no valid version) */
 function legacyRow(copy, files) {
 	const values = {
+		work_no: '',
+		status: '',
+		kind: '',
+		relation: '',
+		valid_since: '',
 		...copy,
 		binder: String(files.binder),
 		number: String(files.number),
