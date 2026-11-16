@@ -149,6 +149,7 @@ zusammengeführt. **Geplant** heißt: noch nicht begonnen.
 | 0.19 Üben und Vortragen am Gerät | auf `main`; `usePlayback` und die eigene Startadresse des Home-Bildschirms im Review; offen: Abnahme auf echten Geräten (auch für 0.13 bis 0.15) | PR #14, #16; Reste im PR vom 16. November |
 | 0.20 Einführen und umsteigen | auf `main`; Sicherung als Datenstrom, Abgrenzung zum Orchestra Scores Manager und Versionshinweis im Store im Review; offen: Screenshots aus einer echten Nextcloud, Demo oder Video | PR #14, #16; Reste im PR vom 16. November |
 | Zahlen aus den Noten, Programmheft, Großdruck, geführte Einrichtung, Vergleich mit dem Chorsystem | auf `main` (`0.18.0-dev.1`) | PR #17 bis #20 |
+| UX- und Design-Review vom 16. November 2026 | im Review: 26 von 27 Befunden umgesetzt; offen: ein gemeinsames CSS der beiden Notenansichten (D-14) und die Prüfung auf Geräten und mit Screenreader | PR vom 16. November |
 | 1.0 Stabil | geplant; begonnen sind die Lasttests (Sicherung mit 120 000 Zeilen, „Mit mir geteilt“ mit 200 Links) | – |
 
 Die letzte Version mit Tag ist 0.16.1: Die App heißt seitdem Cantoria,
@@ -181,6 +182,38 @@ fehlende Angabe, dass Cantoria in Nextcloud All-in-One nicht läuft
 (W B23). Ihre Punkte stehen als *Ergänzt am 3. November 2026, zweite
 Runde* in den Meilensteinen; die Nummern setzen die Berichte vom
 Vormittag fort (z. B. U37, D27, A22, S N16, R B24, T24, W B22).
+
+Am 16. November 2026 haben ein UX- und ein Design-Review den Stand auf
+`main` (`0.18.0-dev.1`) noch einmal durchgesehen, diesmal nur die
+Oberfläche: 13 und 14 Befunde, keiner kritisch. Ihre Kürzel tragen einen
+Bindestrich (U-1 bis U-13, D-1 bis D-14) und stehen so auch in den
+Kommentaren im Code. Umgesetzt und im Review sind 26 davon:
+
+- **Geteilte Seiten:** „Ende des Programms“ steht nur noch unter dem
+  letzten Stück (U-1, ein Fehler); ein Link, der in einer Woche endet,
+  sagt das und wer ihn verlängern kann (U-2); die Meldungen zum Speichern
+  auf dem Gerät sind zu lesen und nicht nur zu hören (U-11); leere
+  Zustände nennen den nächsten Schritt (U-8 bis U-10); lange
+  Beschriftungen von Knöpfen brechen um statt mit „…“ zu enden (D-1); die
+  Leiste der Noten bricht um (D-4); Druck in Schwarz (D-5); das Tempo wird
+  einmal angesagt statt bei jedem Schritt (D-6); die gewählte Stimme hat
+  einen Haken und nicht nur eine Farbe (D-9).
+- **Archiv:** Die Startseite zeigt eine Karte für Links, die in einer
+  Woche enden oder abgelaufen sind, für alle, die sie verlängern dürfen
+  (U-3); die Ansicht „Links“ stellt sie nach vorn und zählt sie (U-7);
+  die Dialoge zum Widerrufen und Verlängern nennen das Stück (U-4) und
+  was das Widerrufen für Geräte bedeutet (U-5); „Schutz“ sagt, wohin die
+  Signatur führt (U-12); in einem niedrigen Fenster bleibt der Kopf nicht
+  stehen und verdeckt nichts (D-2, WCAG 1.4.10); die Regler haben eine
+  Beschriftung nur mit ihrem Namen (D-7); Szenarien der Einrichtung
+  stehen als Überschrift (D-11); Abstände im Raster (D-12, D-13).
+
+Offen bleibt D-14, ein gemeinsames CSS für die Notenansicht des Archivs
+und der geteilten Seiten: Das ändert das Notenbild an vielen Stellen und
+braucht den Vergleich in einem echten Browser. Geprüft ist alles in
+Tests und mit den Werkzeugen, nicht auf Geräten und nicht mit einem
+Screenreader; das gehört zur Geräteabnahme (0.19) und zum Nutzertest
+(1.0).
 
 ### 0.1 Fundament
 
@@ -1242,10 +1275,13 @@ Blick“) steht im `CHANGELOG.md`, `docs/release.md` nennt den Schritt.
 - Offene Lizenzen (CC, CPDL) und Hinweis auf das anwendbare Recht
   (R B16, B17)
 - Feinschliff aus dem Review vom 3. November 2026: die Sperrseite weist
-  auf den neuen Tab hin, Szenario-Namen als Überschrift statt `strong`
-  (Rest von D26; App-Icon, Icon der Konzertmappe, ein „Nächstes“ und
-  `aria-haspopup` sind mit PR #16 erledigt); ein Satz in der Doku zu Partituren, die MuseScore aus Scans
-  erkennt, und warum die Prüfung der Übertragung dann zählt (W B19)
+  auf den neuen Tab hin (Rest von D26; App-Icon, Icon der Konzertmappe,
+  ein „Nächstes“ und `aria-haspopup` sind mit PR #16 erledigt, die
+  Szenario-Namen sind seit dem 16. November 2026 Überschriften); ein Satz
+  in der Doku zu Partituren, die MuseScore aus Scans erkennt, und warum
+  die Prüfung der Übertragung dann zählt (W B19)
+- Ein gemeinsames CSS für die Notenansicht des Archivs und der geteilten
+  Seiten (D-14 aus dem Review vom 16. November 2026)
 
 ## Bewusst nicht vorgesehen
 

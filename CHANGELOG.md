@@ -109,6 +109,10 @@ The short version for the app store; the details follow below and under
 - **Hand-over folder:** the manifest remembers how a MusicXML file was
   cleaned. When the cleaning changes with a later version, the next run
   writes the old files again.
+- **Links that end soon.** The start page has a card for links that end
+  within a week or have ended, for everyone who may extend them; the view
+  "Links" lists them first and counts them. "Shared with me" says when a
+  link ends within a week and who can extend it.
 - **Performance import counts as the choir does.** The counting rule can
   be set in the dry run: several participations that count (the own choir
   and joint concerts), the words in the state that exclude a line (now also
@@ -162,6 +166,26 @@ The short version for the app store; the details follow below and under
   and German) and the store description say how Cantoria differs from the
   Orchestra Scores Manager; `docs/release.md` has a step for the summary
   of the version in the store.
+- **After the UX and design review of 16 November 2026:**
+  - Concert folder: "End of the programme" stands only under the last
+    piece, no longer under every piece with notes. An empty folder leads
+    to the concerts.
+  - Shared pages: what was saved on or removed from the device can be
+    read and not only heard; long button labels wrap instead of ending in
+    "…"; the bar of the notes wraps on a narrow screen; the chosen voice
+    has a tick, not only a colour; the tempo is announced once per change;
+    a browser that cannot keep pieces says what usually helps; a public
+    link shows until when it is valid, and a page that could not load
+    offers to reload.
+  - Links: the dialogs to revoke and to extend name the piece; revoking
+    says what happens to pieces kept on devices; "Copy link" and "Revoke
+    link" have a tooltip.
+  - In a low window (up to 560 px high, for example a phone held
+    sideways) the header of a view scrolls with the page instead of
+    covering it.
+  - Sliders for tempo, level and volume have a label with their name
+    only; the names of the scenarios in the settings are headings;
+    "Protection" says where a shelf mark leads; spacing on the grid.
 - **Comparing with the choir system.** A file that is neither CSV nor
   XLSX (an old Excel file, a web page, XML or OpenDocument) is refused with
   what to do instead, not with "no shelf mark". The guide "Cantoria
